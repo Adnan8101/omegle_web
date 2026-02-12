@@ -69,7 +69,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             Admin Panel
           </h1>
           <p className="text-sm text-[rgb(var(--color-text-tertiary))] mt-2 font-light">
-            Omegle Management
+            Omegle
           </p>
         </div>
 
