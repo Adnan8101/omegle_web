@@ -1,0 +1,719 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
+import { FiSun, FiMoon, FiLock, FiSend, FiCheckCircle, FiX } from 'react-icons/fi';
+import Image from 'next/image';
+import Link from 'next/link';
+
+export default function StaffApplication() {
+  const { theme, toggleTheme } = useTheme();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isApplicationsOpen, setIsApplicationsOpen] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [closedMessage, setClosedMessage] = useState('');
+  const [agreedToTOS, setAgreedToTOS] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+
+  const [formData, setFormData] = useState({
+    discordUsername: '',
+    discordUserId: '',
+    country: '',
+    timezone: '',
+    age: '',
+    aboutYourself: '',
+    whyJoin: '',
+    hoursPerWeek: '',
+    languages: '',
+    moderationExperience: '',
+    moderatorDefinition: '',
+    handlingToxicity: '',
+    conflictResolution: '',
+    discordBotExperience: '',
+    technicalSkills: '',
+    automodTools: '',
+    spamScenario: '',
+    raidScenario: '',
+    controversialTopic: '',
+    teamDisagreement: '',
+  });
+
+  useEffect(() => {
+    fetchApplicationStatus();
+  }, []);
+
+  const fetchApplicationStatus = async () => {
+    try {
+      const response = await fetch('/api/settings');
+      const result = await response.json();
+      if (result.success && result.data) {
+        setIsApplicationsOpen(result.data.isOpen);
+        setClosedMessage(result.data.closedMessage || 'Staff applications are currently closed. Please check back later.');
+      }
+    } catch (error) {
+      console.error('Error fetching application status:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/applications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setShowSuccessModal(true);
+        setFormData({
+          discordUsername: '',
+          discordUserId: '',
+          country: '',
+          timezone: '',
+          age: '',
+          aboutYourself: '',
+          whyJoin: '',
+          hoursPerWeek: '',
+          languages: '',
+          moderationExperience: '',
+          moderatorDefinition: '',
+          handlingToxicity: '',
+          conflictResolution: '',
+          discordBotExperience: '',
+          technicalSkills: '',
+          automodTools: '',
+          spamScenario: '',
+          raidScenario: '',
+          controversialTopic: '',
+          teamDisagreement: '',
+        });
+      } else {
+        const errorData = await response.json();
+        console.error('Submission error:', errorData);
+        alert('Failed to submit application. Please check all fields and try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      alert('Network error. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleContinueToForm = () => {
+    if (agreedToTOS) {
+      setShowForm(true);
+    } else {
+      alert('Please agree to the Terms of Service before continuing.');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-[rgb(var(--color-accent))] border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition">
+      {/* Navigation - Apple Style */}
+      <nav className="sticky top-0 z-50 glass-effect border-b border-[rgb(var(--color-border))] shadow-apple-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <Link href="/" className="text-2xl font-semibold text-[rgb(var(--color-text-primary))] apple-hover">
+              Omegle
+            </Link>
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 rounded-full bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] apple-hover border border-[rgb(var(--color-border))]"
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? (
+                <FiSun className="w-5 h-5 text-[rgb(var(--color-text-primary))]" />
+              ) : (
+                <FiMoon className="w-5 h-5 text-[rgb(var(--color-text-primary))]" />
+              )}
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-6 py-16">
+        {/* Success Modal */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+            <div className="glass-effect rounded-apple-xl p-8 border border-[rgb(var(--color-border))] shadow-apple-2xl max-w-md mx-4 animate-scale-in">
+              <div className="text-center space-y-6">
+                <div className="flex justify-center">
+                  <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <FiCheckCircle className="w-10 h-10 text-green-500" />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <h2 className="text-3xl font-bold text-[rgb(var(--color-text-primary))]">
+                    Application Submitted!
+                  </h2>
+                  <div className="space-y-2 text-[rgb(var(--color-text-secondary))]">
+                    <p className="text-lg">
+                      Thank you for applying to join our staff team.
+                    </p>
+                    <p className="font-medium">
+                      If you are shortlisted, you will be contacted within 2 weeks.
+                    </p>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                      Note: We do not send rejection notifications.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setShowForm(false);
+                    setAgreedToTOS(false);
+                  }}
+                  className="w-full bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 font-semibold px-6 py-3 rounded-apple-lg apple-transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isApplicationsOpen ? (
+          // Closed State - Apple Style
+          <div className="text-center space-y-8 animate-fade-in">
+            <div className="flex justify-center">
+              <div className="relative w-64 h-64 md:w-80 md:h-80 animate-float">
+                <Image
+                  src="/Resume folder-bro.svg"
+                  alt="Applications Closed"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))]">
+                <FiLock className="w-8 h-8 text-[rgb(var(--color-text-secondary))]" />
+              </div>
+              <h1 className="text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+                Applications Closed
+              </h1>
+              <p className="text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light leading-relaxed">
+                {closedMessage}
+              </p>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 font-medium px-8 py-4 rounded-apple-lg apple-transition shadow-apple-md mt-4"
+              >
+                Return Home
+              </Link>
+            </div>
+          </div>
+        ) : !showForm ? (
+          // Terms of Service Section
+          <div className="animate-fade-in space-y-8">
+            <div className="text-center space-y-4">
+              <h1 className="text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+                Staff Application
+              </h1>
+              <p className="text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light">
+                Please read and agree to our terms before proceeding
+              </p>
+            </div>
+
+            <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+              <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Terms of Service</h2>
+              
+              <div className="space-y-4 text-[rgb(var(--color-text-secondary))] max-h-96 overflow-y-auto pr-2">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">1. Staff Expectations</h3>
+                  <p className="text-sm leading-relaxed">
+                    By applying, you agree to dedicate time to moderation duties, follow server rules, and maintain professionalism at all times. Staff members are expected to be active, responsive, and fair in their decisions.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">2. Confidentiality</h3>
+                  <p className="text-sm leading-relaxed">
+                    All internal discussions, staff channels, and moderation decisions are confidential. Sharing private information or screenshots from staff channels is strictly prohibited.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">3. Code of Conduct</h3>
+                  <p className="text-sm leading-relaxed">
+                    Staff must maintain a positive attitude, treat community members with respect, and uphold the server's values. Abuse of power, harassment, or discrimination will result in immediate removal.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">4. Activity Requirements</h3>
+                  <p className="text-sm leading-relaxed">
+                    Staff members are expected to maintain consistent activity. Prolonged inactivity without notice may result in removal from the team.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">5. Application Process</h3>
+                  <p className="text-sm leading-relaxed">
+                    All information provided in this application must be truthful and accurate. False information may lead to immediate disqualification. If shortlisted, you will be contacted within 2 weeks. We do not send rejection notifications.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">6. Resignation</h3>
+                  <p className="text-sm leading-relaxed">
+                    Staff members may resign at any time by notifying the admin team. We ask for at least 1 week notice when possible to ensure smooth transitions.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-[rgb(var(--color-border))] space-y-4">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTOS}
+                    onChange={(e) => setAgreedToTOS(e.target.checked)}
+                    className="w-5 h-5 rounded border-2 border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] checked:bg-[rgb(var(--color-accent))] checked:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition cursor-pointer"
+                  />
+                  <span className="text-[rgb(var(--color-text-secondary))] group-hover:text-[rgb(var(--color-text-primary))] apple-transition">
+                    I have read and agree to the Terms of Service
+                  </span>
+                </label>
+
+                <button
+                  onClick={handleContinueToForm}
+                  disabled={!agreedToTOS}
+                  className="w-full bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed font-semibold px-8 py-4 rounded-apple-lg apple-transition shadow-apple-md text-lg"
+                >
+                  Continue to Application
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Application Form - Apple Style
+          <>
+            {/* Header */}
+            <div className="text-center space-y-6 mb-16 animate-fade-in">
+              <div className="flex justify-center">
+                <div className="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                  <Image
+                    src="/Forms-cuate.svg"
+                    alt="Staff Application"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h1 className="text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+                  Staff Application
+                </h1>
+                <p className="text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light leading-relaxed">
+                  Join our team and help build an amazing community experience.
+                </p>
+              </div>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-8 animate-slide-up">
+              {/* Discord Information */}
+              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Discord Information</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      Discord Username
+                    </label>
+                    <input
+                      type="text"
+                      name="discordUsername"
+                      value={formData.discordUsername}
+                      onChange={handleChange}
+                      placeholder="iambyte"
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      Discord User ID
+                    </label>
+                    <input
+                      type="text"
+                      name="discordUserId"
+                      value={formData.discordUserId}
+                      onChange={handleChange}
+                      placeholder="929297205796417597"
+                      pattern="^\d{17,19}$"
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal Information */}
+              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Personal Information</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      Country
+                    </label>
+                    <input
+                      type="text"
+                      name="country"
+                      value={formData.country}
+                      onChange={handleChange}
+                      placeholder="INDIA"
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      Timezone
+                    </label>
+                    <input
+                      type="text"
+                      name="timezone"
+                      value={formData.timezone}
+                      onChange={handleChange}
+                      placeholder="IST"
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      Age
+                    </label>
+                    <input
+                      type="number"
+                      name="age"
+                      value={formData.age}
+                      onChange={handleChange}
+                      placeholder="18"
+                      min="16"
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* General Questions */}
+              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">General Questions</h2>
+                
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      Tell us about yourself
+                    </label>
+                    <textarea
+                      name="aboutYourself"
+                      value={formData.aboutYourself}
+                      onChange={handleChange}
+                      placeholder="Your background, interests, hobbies, and what makes you unique..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      Why do you want to join our staff team?
+                    </label>
+                    <textarea
+                      name="whyJoin"
+                      value={formData.whyJoin}
+                      onChange={handleChange}
+                      placeholder="Share your motivation and what you hope to contribute..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      How many hours per week can you dedicate to moderation?
+                    </label>
+                    <input
+                      type="text"
+                      name="hoursPerWeek"
+                      value={formData.hoursPerWeek}
+                      onChange={handleChange}
+                      placeholder="10-15 hours"
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      What languages do you speak fluently?
+                    </label>
+                    <input
+                      type="text"
+                      name="languages"
+                      value={formData.languages}
+                      onChange={handleChange}
+                      placeholder="English, Hindi, etc."
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Moderation Questions */}
+              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Moderation Experience</h2>
+                
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      Do you have any previous moderation experience?
+                    </label>
+                    <textarea
+                      name="moderationExperience"
+                      value={formData.moderationExperience}
+                      onChange={handleChange}
+                      placeholder="Describe your previous moderation roles, communities, and responsibilities..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      What does being a good moderator mean to you?
+                    </label>
+                    <textarea
+                      name="moderatorDefinition"
+                      value={formData.moderatorDefinition}
+                      onChange={handleChange}
+                      placeholder="Define what qualities and responsibilities make an effective moderator..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      How would you handle toxic behavior in the community?
+                    </label>
+                    <textarea
+                      name="handlingToxicity"
+                      value={formData.handlingToxicity}
+                      onChange={handleChange}
+                      placeholder="Explain your approach to dealing with toxic members and maintaining a positive environment..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      How would you resolve a conflict between two members?
+                    </label>
+                    <textarea
+                      name="conflictResolution"
+                      value={formData.conflictResolution}
+                      onChange={handleChange}
+                      placeholder="Describe your conflict resolution strategy and mediation approach..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bot & Technical Questions */}
+              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Bot & Technical Knowledge</h2>
+                
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      What is your experience with Discord bots?
+                    </label>
+                    <textarea
+                      name="discordBotExperience"
+                      value={formData.discordBotExperience}
+                      onChange={handleChange}
+                      placeholder="Describe your familiarity with Discord bots, which ones you've used, and any setup experience..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      What technical skills do you have? (Programming, design, etc.)
+                    </label>
+                    <textarea
+                      name="technicalSkills"
+                      value={formData.technicalSkills}
+                      onChange={handleChange}
+                      placeholder="List any technical skills that could benefit the team..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      Are you familiar with automod tools? Which ones?
+                    </label>
+                    <textarea
+                      name="automodTools"
+                      value={formData.automodTools}
+                      onChange={handleChange}
+                      placeholder="MEE6, Dyno, Carl-bot, or any other moderation automation tools..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Situation-Based Questions */}
+              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Situation-Based Scenarios</h2>
+                
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      A user is spamming the chat repeatedly. How do you handle this?
+                    </label>
+                    <textarea
+                      name="spamScenario"
+                      value={formData.spamScenario}
+                      onChange={handleChange}
+                      placeholder="Describe step-by-step how you would address this situation..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      The server is experiencing a raid attack. What are your immediate actions?
+                    </label>
+                    <textarea
+                      name="raidScenario"
+                      value={formData.raidScenario}
+                      onChange={handleChange}
+                      placeholder="Explain how you would protect the server during a raid situation..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      Members are having a heated debate about a controversial topic. How do you moderate?
+                    </label>
+                    <textarea
+                      name="controversialTopic"
+                      value={formData.controversialTopic}
+                      onChange={handleChange}
+                      placeholder="Describe how you'd balance free discussion while maintaining civility..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      You disagree with another staff member's moderation decision. What do you do?
+                    </label>
+                    <textarea
+                      name="teamDisagreement"
+                      value={formData.teamDisagreement}
+                      onChange={handleChange}
+                      placeholder="Explain how you would handle disagreements within the staff team..."
+                      rows={4}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center gap-3 bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 disabled:opacity-50 font-semibold px-8 py-5 rounded-apple-lg apple-transition shadow-apple-lg hover:shadow-apple-xl text-lg disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white dark:border-black border-t-transparent"></div>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <FiSend className="w-5 h-5" />
+                    Submit Application
+                  </>
+                )}
+              </button>
+            </form>
+          </>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-[rgb(var(--color-border))] mt-24">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <p className="text-center text-sm text-[rgb(var(--color-text-tertiary))] font-light">
+            © 2026 Omegle Discord Community. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+}
