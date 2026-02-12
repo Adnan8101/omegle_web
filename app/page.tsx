@@ -10,50 +10,50 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition relative overflow-hidden">
       {/* Theme Toggle - Apple Style */}
-      <div className="absolute top-8 right-8 z-50">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 z-50">
         <button
           onClick={toggleTheme}
-          className="p-3 rounded-full bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] apple-hover border border-[rgb(var(--color-border))] shadow-apple-md"
+          className="p-3 sm:p-3.5 rounded-full bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] active:scale-95 apple-hover border border-[rgb(var(--color-border))] shadow-apple-md touch-manipulation"
           aria-label="Toggle theme"
         >
           {theme === 'dark' ? (
-            <FiSun className="w-5 h-5 text-[rgb(var(--color-text-primary))]" />
+            <FiSun className="w-5 h-5 sm:w-6 sm:h-6 text-[rgb(var(--color-text-primary))]" />
           ) : (
-            <FiMoon className="w-5 h-5 text-[rgb(var(--color-text-primary))]" />
+            <FiMoon className="w-5 h-5 sm:w-6 sm:h-6 text-[rgb(var(--color-text-primary))]" />
           )}
         </button>
       </div>
 
       {/* Main Content */}
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
-        <div className="max-w-5xl w-full text-center space-y-16 animate-fade-in">
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 md:px-8 py-12 sm:py-16 md:py-20">
+        <div className="max-w-5xl w-full text-center space-y-8 sm:space-y-12 md:space-y-16 animate-fade-in">
           {/* Logo/Brand - Apple Style */}
-          <div className="space-y-6">
-            <h1 className="text-7xl md:text-9xl font-bold tracking-tight text-[rgb(var(--color-text-primary))] animate-slide-up">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold tracking-tight text-[rgb(var(--color-text-primary))] animate-slide-up">
               Omegle
             </h1>
-            <p className="text-2xl md:text-3xl font-light text-[rgb(var(--color-text-secondary))] tracking-tight animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-light text-[rgb(var(--color-text-secondary))] tracking-tight animate-slide-up" style={{ animationDelay: '0.1s' }}>
               Discord Community
             </p>
           </div>
 
           {/* Coming Soon Card - Apple Glass Effect */}
-          <div className="glass-effect rounded-apple-xl p-16 border border-[rgb(var(--color-border))] shadow-apple-2xl animate-scale-in backdrop-blur-xl" style={{ animationDelay: '0.2s' }}>
-            <div className="space-y-8">
-              <h2 className="text-5xl md:text-6xl font-semibold tracking-tight text-[rgb(var(--color-text-primary))]">
+          <div className="glass-effect rounded-apple-lg sm:rounded-apple-xl p-6 sm:p-10 md:p-12 lg:p-16 border border-[rgb(var(--color-border))] shadow-apple-2xl animate-scale-in backdrop-blur-xl" style={{ animationDelay: '0.2s' }}>
+            <div className="space-y-5 sm:space-y-6 md:space-y-8">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-[rgb(var(--color-text-primary))]">
                 Coming Soon
               </h2>
-              <p className="text-xl font-light text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl font-light text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto leading-relaxed px-2">
                 We're crafting something extraordinary. An experience that redefines community connection.
               </p>
               
               {/* Staff Application Link - Apple Button Style */}
               <Link 
                 href="/staff-application"
-                className="inline-flex items-center gap-3 bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 font-medium px-10 py-5 rounded-apple-lg apple-transition shadow-apple-lg hover:shadow-apple-xl text-lg"
+                className="inline-flex items-center justify-center gap-2 sm:gap-3 bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 active:scale-95 font-medium px-6 sm:px-8 md:px-10 py-3.5 sm:py-4 md:py-5 rounded-apple-lg apple-transition shadow-apple-lg hover:shadow-apple-xl text-base sm:text-lg touch-manipulation w-full sm:w-auto"
               >
                 <svg 
-                  className="w-6 h-6" 
+                  className="w-5 h-5 sm:w-6 sm:h-6" 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -65,7 +65,7 @@ export default function Home() {
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
                   />
                 </svg>
-                Apply for Staff Position
+                <span className="whitespace-nowrap">Apply for Staff Position</span>
               </Link>
             </div>
           </div>
