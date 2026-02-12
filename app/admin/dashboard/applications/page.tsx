@@ -5,22 +5,37 @@ import { useSearchParams } from 'next/navigation';
 
 interface Application {
   _id: string;
+  // Discord & Personal Info
   discordUsername: string;
   discordUserId: string;
   country: string;
-  availableTime: string;
+  timezone: string;
   age: string;
-  aboutYourself?: string;
+  
+  // General Questions
+  aboutYourself: string;
+  whyJoin: string;
+  hoursPerWeek: string;
+  languages: string;
+  
+  // Moderation Questions
+  moderationExperience: string;
   moderatorDefinition: string;
-  experience: string;
-  voiceChat: string;
-  serviceLength: string;
-  discordBotExperience: number;
-  ethicalDilemma: string;
+  handlingToxicity: string;
   conflictResolution: string;
-  contentModeration: string;
-  priorityScenario: string;
-  patternRecognition: string;
+  
+  // Bot & Technical
+  discordBotExperience: string;
+  technicalSkills: string;
+  automodTools: string;
+  
+  // Situation-Based
+  spamScenario: string;
+  raidScenario: string;
+  controversialTopic: string;
+  teamDisagreement: string;
+  
+  // Status & Metadata
   status: 'pending' | 'considered' | 'denied';
   createdAt: string;
   updatedAt: string;
@@ -529,7 +544,7 @@ export default function ApplicationsPage() {
               {/* Basic Information */}
               <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                 <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
-                  Basic Information
+                  Discord & Personal Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -545,134 +560,151 @@ export default function ApplicationsPage() {
                     <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.country}</p>
                   </div>
                   <div>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Timezone</p>
+                    <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.timezone}</p>
+                  </div>
+                  <div className="md:col-span-2">
                     <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Age</p>
                     <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.age}</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Available Time</p>
-                    <p className="text-[rgb(var(--color-text-primary))] font-medium">
-                      {selectedApp.availableTime}
-                    </p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Voice Chat</p>
-                    <p className="text-[rgb(var(--color-text-primary))] font-medium">{selectedApp.voiceChat}</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-medium">
-                      Discord Bot Experience
-                    </p>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1 h-3 bg-[rgb(var(--color-bg-tertiary))] rounded-full overflow-hidden border border-[rgb(var(--color-border))]">
-                        <div
-                          className="h-full bg-[rgb(var(--color-accent))] rounded-full apple-transition"
-                          style={{
-                            width: `${(selectedApp.discordBotExperience / 5) * 100}%`,
-                          }}
-                        ></div>
-                      </div>
-                      <span className="text-[rgb(var(--color-text-primary))] font-bold text-lg min-w-[50px]">
-                        {selectedApp.discordBotExperience}/5
-                      </span>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* About */}
-              {selectedApp.aboutYourself && (
-                <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
-                  <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
-                    About Themselves
-                  </h3>
-                  <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap">
-                    {selectedApp.aboutYourself}
-                  </p>
-                </div>
-              )}
-
-              {/* Moderation Understanding */}
+              {/* General Questions */}
               <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                 <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
-                  Understanding of Moderation
+                  General Questions
                 </h3>
                 <div className="space-y-5">
                   <div>
                     <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
-                      What it means to be a moderator:
+                      Tell us about yourself:
                     </p>
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                      {selectedApp.aboutYourself}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Why do you want to join the staff team?</p>
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                      {selectedApp.whyJoin}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">How many hours per week can you dedicate?</p>
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                      {selectedApp.hoursPerWeek}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">What languages do you speak?</p>
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                      {selectedApp.languages}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Moderation Experience */}
+              <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
+                  Moderation Experience
+                </h3>
+                <div className="space-y-5">
+                  <div>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                      Previous moderation experience:
+                    </p>
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                      {selectedApp.moderationExperience}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">What does being a moderator mean to you?</p>
                     <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
                       {selectedApp.moderatorDefinition}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Previous Experience:</p>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">How would you handle toxic behavior?</p>
                     <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.experience}
+                      {selectedApp.handlingToxicity}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Service Commitment:</p>
-                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.serviceLength}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Scenario Responses */}
-              <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
-                <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
-                  Scenario-Based Responses
-                </h3>
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
-                      Scenario 1: Ethical Dilemma (Moderator Favoritism)
-                    </p>
-                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.ethicalDilemma}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
-                      Scenario 2: Conflict Resolution
-                    </p>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Conflict resolution approach:</p>
                     <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
                       {selectedApp.conflictResolution}
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Bot & Technical Knowledge */}
+              <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
+                  Bot & Technical Knowledge
+                </h3>
+                <div className="space-y-5">
                   <div>
-                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
-                      Scenario 3: Content Moderation Gray Area
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                      Discord bot experience:
                     </p>
                     <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.contentModeration}
+                      {selectedApp.discordBotExperience}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Technical skills:</p>
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                      {selectedApp.technicalSkills}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Automod tools familiarity:</p>
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                      {selectedApp.automodTools}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Critical Thinking */}
+              {/* Situation-Based Scenarios */}
               <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                 <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
-                  Critical Thinking & Logic
+                  Situation-Based Scenarios
                 </h3>
                 <div className="space-y-5">
                   <div>
-                    <p className="text-sm text-green-500 dark:text-green-400 font-bold mb-3">
-                      Priority Management (Multiple Emergencies)
+                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
+                      Scenario: User spamming the chat repeatedly
                     </p>
                     <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.priorityScenario}
+                      {selectedApp.spamScenario}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-green-500 dark:text-green-400 font-bold mb-3">
-                      Pattern Recognition (Subtle Instigator)
+                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
+                      Scenario: Server experiencing a raid attack
                     </p>
                     <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.patternRecognition}
+                      {selectedApp.raidScenario}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
+                      Scenario: Heated debate about controversial topic
+                    </p>
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                      {selectedApp.controversialTopic}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
+                      Scenario: Disagreement with another staff member
+                    </p>
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                      {selectedApp.teamDisagreement}
                     </p>
                   </div>
                 </div>
