@@ -454,15 +454,15 @@ export default function ApplicationsPage() {
 
       {/* Modal */}
       {showModal && selectedApp && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-discord-dark rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-700 shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto animate-fade-in">
+          <div className="glass-effect rounded-apple-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto border border-[rgb(var(--color-border))] shadow-apple-2xl">
             {/* Modal Header */}
-            <div className="sticky top-0 bg-discord-dark border-b border-gray-700 p-6 flex items-center justify-between z-10">
+            <div className="sticky top-0 glass-effect border-b border-[rgb(var(--color-border))] p-8 flex items-center justify-between z-10 backdrop-blur-xl">
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-white mb-2">
+                <h2 className="text-3xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight mb-2">
                   Application Details
                 </h2>
-                <p className="text-gray-400 text-sm">
+                <p className="text-[rgb(var(--color-text-secondary))] text-sm font-light">
                   Submitted on{' '}
                   {new Date(selectedApp.createdAt).toLocaleDateString('en-US', {
                     month: 'long',
@@ -475,10 +475,10 @@ export default function ApplicationsPage() {
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-discord-light rounded-lg transition-colors"
+                className="p-3 hover:bg-[rgb(var(--color-bg-tertiary))] rounded-apple-lg apple-transition"
               >
                 <svg
-                  className="w-6 h-6 text-gray-400"
+                  className="w-6 h-6 text-[rgb(var(--color-text-secondary))]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -494,13 +494,13 @@ export default function ApplicationsPage() {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 space-y-6">
+            <div className="p-8 space-y-6">
               {/* Status Management */}
-              <div className="bg-discord-light/50 rounded-xl p-4 border border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-3">
+              <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
                   Application Status
                 </h3>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   {['pending', 'considered', 'denied'].map((status) => (
                     <button
                       key={status}
@@ -510,10 +510,14 @@ export default function ApplicationsPage() {
                           status as 'pending' | 'considered' | 'denied'
                         )
                       }
-                      className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                      className={`px-6 py-3 rounded-apple-lg font-semibold apple-transition ${
                         selectedApp.status === status
-                          ? getStatusColor(status) + ' border'
-                          : 'bg-discord-light text-gray-400 hover:bg-discord-light/80'
+                          ? status === 'pending'
+                            ? 'bg-yellow-500 text-white border-2 border-yellow-600'
+                            : status === 'considered'
+                            ? 'bg-green-500 text-white border-2 border-green-600'
+                            : 'bg-red-500 text-white border-2 border-red-600'
+                          : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))]'
                       }`}
                     >
                       {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -523,51 +527,51 @@ export default function ApplicationsPage() {
               </div>
 
               {/* Basic Information */}
-              <div className="bg-discord-light/50 rounded-xl p-4 border border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-4">
+              <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
                   Basic Information
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <p className="text-sm text-gray-400 mb-1">Discord Username</p>
-                    <p className="text-white font-medium">{selectedApp.discordUsername}</p>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Discord Username</p>
+                    <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.discordUsername}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400 mb-1">Discord User ID</p>
-                    <p className="text-white font-mono text-sm">{selectedApp.discordUserId}</p>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Discord User ID</p>
+                    <p className="text-[rgb(var(--color-text-primary))] font-mono text-sm bg-[rgb(var(--color-bg-tertiary))] px-3 py-2 rounded-apple inline-block">{selectedApp.discordUserId}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400 mb-1">Country</p>
-                    <p className="text-white font-medium">{selectedApp.country}</p>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Country</p>
+                    <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.country}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400 mb-1">Age</p>
-                    <p className="text-white font-medium">{selectedApp.age}</p>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Age</p>
+                    <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.age}</p>
                   </div>
                   <div className="md:col-span-2">
-                    <p className="text-sm text-gray-400 mb-1">Available Time</p>
-                    <p className="text-white font-medium">
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Available Time</p>
+                    <p className="text-[rgb(var(--color-text-primary))] font-medium">
                       {selectedApp.availableTime}
                     </p>
                   </div>
                   <div className="md:col-span-2">
-                    <p className="text-sm text-gray-400 mb-1">Voice Chat</p>
-                    <p className="text-white font-medium">{selectedApp.voiceChat}</p>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Voice Chat</p>
+                    <p className="text-[rgb(var(--color-text-primary))] font-medium">{selectedApp.voiceChat}</p>
                   </div>
                   <div className="md:col-span-2">
-                    <p className="text-sm text-gray-400 mb-1">
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-medium">
                       Discord Bot Experience
                     </p>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-discord-darker rounded-full overflow-hidden">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 h-3 bg-[rgb(var(--color-bg-tertiary))] rounded-full overflow-hidden border border-[rgb(var(--color-border))]">
                         <div
-                          className="h-full bg-discord-blurple rounded-full"
+                          className="h-full bg-[rgb(var(--color-accent))] rounded-full apple-transition"
                           style={{
                             width: `${(selectedApp.discordBotExperience / 5) * 100}%`,
                           }}
                         ></div>
                       </div>
-                      <span className="text-white font-medium">
+                      <span className="text-[rgb(var(--color-text-primary))] font-bold text-lg min-w-[50px]">
                         {selectedApp.discordBotExperience}/5
                       </span>
                     </div>
@@ -577,39 +581,39 @@ export default function ApplicationsPage() {
 
               {/* About */}
               {selectedApp.aboutYourself && (
-                <div className="bg-discord-light/50 rounded-xl p-4 border border-gray-700">
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                  <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
                     About Themselves
                   </h3>
-                  <p className="text-gray-300 whitespace-pre-wrap">
+                  <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap">
                     {selectedApp.aboutYourself}
                   </p>
                 </div>
               )}
 
               {/* Moderation Understanding */}
-              <div className="bg-discord-light/50 rounded-xl p-4 border border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-4">
+              <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
                   Understanding of Moderation
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <p className="text-sm text-gray-400 mb-2">
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
                       What it means to be a moderator:
                     </p>
-                    <p className="text-gray-300 whitespace-pre-wrap">
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
                       {selectedApp.moderatorDefinition}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400 mb-2">Previous Experience:</p>
-                    <p className="text-gray-300 whitespace-pre-wrap">
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Previous Experience:</p>
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
                       {selectedApp.experience}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400 mb-2">Service Commitment:</p>
-                    <p className="text-gray-300 whitespace-pre-wrap">
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Service Commitment:</p>
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
                       {selectedApp.serviceLength}
                     </p>
                   </div>
@@ -617,32 +621,32 @@ export default function ApplicationsPage() {
               </div>
 
               {/* Scenario Responses */}
-              <div className="bg-discord-light/50 rounded-xl p-4 border border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-4">
+              <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
                   Scenario-Based Responses
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <p className="text-sm text-discord-fuchsia font-semibold mb-2">
+                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
                       Scenario 1: Ethical Dilemma (Moderator Favoritism)
                     </p>
-                    <p className="text-gray-300 whitespace-pre-wrap">
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
                       {selectedApp.ethicalDilemma}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-discord-fuchsia font-semibold mb-2">
+                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
                       Scenario 2: Conflict Resolution
                     </p>
-                    <p className="text-gray-300 whitespace-pre-wrap">
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
                       {selectedApp.conflictResolution}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-discord-fuchsia font-semibold mb-2">
+                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
                       Scenario 3: Content Moderation Gray Area
                     </p>
-                    <p className="text-gray-300 whitespace-pre-wrap">
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
                       {selectedApp.contentModeration}
                     </p>
                   </div>
@@ -650,24 +654,24 @@ export default function ApplicationsPage() {
               </div>
 
               {/* Critical Thinking */}
-              <div className="bg-discord-light/50 rounded-xl p-4 border border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-4">
+              <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
                   Critical Thinking & Logic
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <p className="text-sm text-discord-green font-semibold mb-2">
+                    <p className="text-sm text-green-500 dark:text-green-400 font-bold mb-3">
                       Priority Management (Multiple Emergencies)
                     </p>
-                    <p className="text-gray-300 whitespace-pre-wrap">
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
                       {selectedApp.priorityScenario}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-discord-green font-semibold mb-2">
+                    <p className="text-sm text-green-500 dark:text-green-400 font-bold mb-3">
                       Pattern Recognition (Subtle Instigator)
                     </p>
-                    <p className="text-gray-300 whitespace-pre-wrap">
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
                       {selectedApp.patternRecognition}
                     </p>
                   </div>
@@ -675,36 +679,36 @@ export default function ApplicationsPage() {
               </div>
 
               {/* Admin Notes */}
-              <div className="bg-discord-light/50 rounded-xl p-4 border border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-3">
+              <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
                   Admin Notes
                 </h3>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 bg-discord-darker border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-discord-blurple text-white placeholder-gray-500 resize-none"
+                  className="w-full px-4 py-4 bg-[rgb(var(--color-bg-tertiary))] border-2 border-[rgb(var(--color-border))] rounded-apple-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] resize-none apple-transition font-light"
                   placeholder="Add private notes about this applicant..."
                 />
                 <button
                   onClick={() => updateNotes(selectedApp._id)}
-                  className="mt-3 px-4 py-2 bg-discord-blurple hover:bg-discord-blurple/80 text-white font-semibold rounded-lg transition-colors"
+                  className="mt-4 px-6 py-3 bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 font-semibold rounded-apple-lg apple-transition shadow-apple-md"
                 >
                   Save Notes
                 </button>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-4">
                 <button
                   onClick={() => deleteApplication(selectedApp._id)}
-                  className="px-6 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-500 font-semibold rounded-lg transition-colors border border-red-500/30"
+                  className="px-8 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400 font-semibold rounded-apple-lg apple-transition border-2 border-red-500/30"
                 >
                   Delete Application
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-3 bg-discord-light hover:bg-discord-light/80 text-white font-semibold rounded-lg transition-colors ml-auto"
+                  className="px-8 py-4 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-bg-secondary))] text-[rgb(var(--color-text-primary))] font-semibold rounded-apple-lg apple-transition border border-[rgb(var(--color-border))] ml-auto"
                 >
                   Close
                 </button>
