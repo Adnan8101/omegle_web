@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FiHome, FiFileText, FiLogOut, FiGlobe, FiMenu, FiX } from 'react-icons/fi';
 
 interface AdminLayoutProps {
@@ -93,24 +94,44 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       `}>
         {/* Logo - Desktop Only */}
         <div className="hidden md:block p-6 lg:p-8 border-b border-[rgb(var(--color-border))]">
-          <h1 className="text-2xl lg:text-3xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="relative w-10 h-10">
+              <Image
+                src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
+                alt="Omegle Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+              Omegle
+            </h1>
+          </div>
+          <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
             Admin Panel
-          </h1>
-          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mt-2 font-light">
-            Omegle
           </p>
         </div>
 
         {/* Mobile Logo */}
         <div className="md:hidden p-6 border-b border-[rgb(var(--color-border))]">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
-                Admin Panel
-              </h1>
-              <p className="text-sm text-[rgb(var(--color-text-tertiary))] mt-1 font-light">
-                Omegle
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="relative w-8 h-8">
+                <Image
+                  src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
+                  alt="Omegle Logo"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+                  Omegle
+                </h1>
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                  Admin Panel
+                </p>
+              </div>
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
@@ -130,8 +151,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-4 px-4 md:px-5 py-3 md:py-4 rounded-apple apple-transition touch-manipulation ${ isActive
-                    ? 'bg-[rgb(var(--color-accent))] dark:bg-white text-white dark:text-black shadow-apple-md'
+                className={`flex items-center gap-4 px-4 md:px-5 py-3 md:py-4 rounded-2xl apple-transition touch-manipulation ${
+                  isActive
+                    ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-blue-glow'
                     : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-bg-tertiary))] hover:text-[rgb(var(--color-text-primary))]'
                 }`}
               >

@@ -724,7 +724,7 @@ export default function ApplicationsPage() {
                 />
                 <button
                   onClick={() => updateNotes(selectedApp._id)}
-                  className="mt-4 px-6 py-3 bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 font-semibold rounded-apple-lg apple-transition shadow-apple-md"
+                  className="mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white hover:shadow-blue-glow font-semibold rounded-apple-lg apple-transition shadow-apple-md"
                 >
                   Save Notes
                 </button>

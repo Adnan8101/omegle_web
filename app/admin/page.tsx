@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { FiLock, FiArrowLeft } from 'react-icons/fi';
 
 export default function AdminLogin() {
@@ -25,23 +26,43 @@ export default function AdminLogin() {
   };
 
   return (
-    <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6 apple-transition">
+    <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6 apple-transition relative overflow-hidden">
+      {/* Animated Blue Background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float"></div>
+        <div className="absolute top-0 -right-4 w-96 h-96 bg-blue-600/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-blue-400/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '4s' }}></div>
+      </div>
+
       <div className="w-full max-w-md">
-        {/* Logo/Header - Apple Style */}
-        <div className="text-center mb-12 animate-fade-in">
-          <h1 className="text-6xl font-bold text-[rgb(var(--color-text-primary))] mb-3 tracking-tight">
-            Admin Portal
-          </h1>
-          <p className="text-xl text-[rgb(var(--color-text-secondary))] font-light">
-            Omegle Staff Management
-          </p>
+        {/* Logo & Header */}
+        <div className="text-center mb-12 animate-fade-in space-y-6">
+          <div className="flex justify-center">
+            <div className="relative w-24 h-24">
+              <Image
+                src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
+                alt="Omegle Logo"
+                fill
+                className="object-contain drop-shadow-2xl"
+                priority
+              />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-5xl font-bold text-[rgb(var(--color-text-primary))] mb-3 tracking-tight">
+              Admin Portal
+            </h1>
+            <p className="text-xl text-blue-600 dark:text-blue-400 font-light">
+              Omeglee Community Management
+            </p>
+          </div>
         </div>
 
-        {/* Login Card - Apple Style */}
-        <div className="glass-effect rounded-apple-xl p-10 border border-[rgb(var(--color-border))] shadow-apple-2xl animate-scale-in">
+        {/* Login Card */}
+        <div className="glass-blue rounded-3xl p-10 border border-blue-500/20 shadow-blue-glow animate-scale-in">
           <div className="flex items-center justify-center mb-8">
-            <div className="p-5 bg-[rgb(var(--color-bg-tertiary))] rounded-full border border-[rgb(var(--color-border))]">
-              <FiLock className="w-10 h-10 text-[rgb(var(--color-text-primary))]" />
+            <div className="p-5 bg-blue-500/10 rounded-full border border-blue-500/30">
+              <FiLock className="w-10 h-10 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
 
@@ -58,7 +79,7 @@ export default function AdminLogin() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-4 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                className="w-full px-4 py-4 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
                 placeholder="Enter admin password"
                 autoFocus
                 required
@@ -84,11 +105,11 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 disabled:opacity-50 font-semibold px-6 py-4 rounded-apple-lg apple-transition shadow-apple-lg hover:shadow-apple-xl disabled:cursor-not-allowed text-lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white disabled:opacity-50 font-semibold px-6 py-4 rounded-2xl apple-transition shadow-apple-lg hover:shadow-blue-glow disabled:cursor-not-allowed text-lg"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white dark:border-black border-t-transparent"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                   Authenticating...
                 </span>
               ) : (
@@ -104,11 +125,11 @@ export default function AdminLogin() {
           </div>
         </div>
 
-        {/* Back Link - Apple Style */}
+        {/* Back Link */}
         <div className="text-center mt-8">
           <a
             href="/"
-            className="text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] text-sm inline-flex items-center gap-2 apple-transition font-medium"
+            className="text-[rgb(var(--color-text-secondary))] hover:text-blue-600 dark:hover:text-blue-400 text-sm inline-flex items-center gap-2 apple-transition font-medium"
           >
             <FiArrowLeft className="w-4 h-4" />
             Back to Home

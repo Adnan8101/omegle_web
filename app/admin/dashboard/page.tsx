@@ -98,7 +98,7 @@ export default function AdminDashboard() {
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="glass-effect rounded-apple-lg p-6 border border-[rgb(var(--color-border))] animate-pulse"
+              className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] animate-pulse"
             >
               <div className="h-20 bg-[rgb(var(--color-bg-tertiary))] rounded-apple"></div>
             </div>
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
           {statCards.map((card, index) => (
             <div
               key={index}
-              className="glass-effect rounded-apple-lg p-5 sm:p-6 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] active:scale-95 apple-transition shadow-apple-md hover:shadow-apple-lg touch-manipulation"
+              className="glass-blue rounded-3xl p-5 sm:p-6 border border-[rgb(var(--color-border))] hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-blue-glow active:scale-95 apple-transition shadow-apple-md hover:shadow-apple-lg touch-manipulation"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className={`p-2.5 sm:p-3 ${card.bgColor} rounded-apple`}>
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Quick Actions */}
-      <div className="glass-effect rounded-apple-lg p-5 sm:p-6 md:p-8 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-apple-md">
+      <div className="glass-blue rounded-3xl p-5 sm:p-6 md:p-8 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-apple-md">
         <h2 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-4 sm:mb-6">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           <Link
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
             className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] active:scale-95 rounded-apple border border-[rgb(var(--color-border))] apple-transition group shadow-apple-sm touch-manipulation"
           >
             <div className="p-2.5 sm:p-3 bg-[rgb(var(--color-bg-primary))] rounded-apple group-hover:scale-110 apple-transition shrink-0">
-              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[rgb(var(--color-accent))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
@@ -164,7 +164,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Activity */}
-      <div className="glass-effect rounded-apple-lg p-5 sm:p-6 md:p-8 border border-[rgb(var(--color-border))] shadow-apple-md">
+      <div className="glass-blue rounded-3xl p-5 sm:p-6 md:p-8 border border-[rgb(var(--color-border))] shadow-apple-md">
         <h2 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-4 sm:mb-6">System Information</h2>
         <div className="space-y-3 sm:space-y-4 text-[rgb(var(--color-text-secondary))]">
           <div className="flex items-center gap-3 p-3 sm:p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-apple">

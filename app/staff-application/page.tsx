@@ -133,23 +133,38 @@ export default function StaffApplication() {
   }
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition">
-      {/* Navigation - Apple Style */}
-      <nav className="sticky top-0 z-50 glass-effect border-b border-[rgb(var(--color-border))] shadow-apple-sm">
+    <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition relative overflow-hidden">
+      {/* Animated Blue Background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float"></div>
+        <div className="absolute top-0 -right-4 w-96 h-96 bg-blue-600/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-blue-400/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '4s' }}></div>
+      </div>
+
+      {/* Navigation with Logo */}
+      <nav className="sticky top-0 z-50 glass-blue border-b border-blue-500/20 shadow-apple-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
-            <Link href="/" className="text-2xl font-semibold text-[rgb(var(--color-text-primary))] apple-hover">
-              Omegle
+            <Link href="/" className="flex items-center gap-3 apple-hover">
+              <div className="relative w-10 h-10">
+                <Image
+                  src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
+                  alt="Omegle Logo"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <span className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">Omeglee Community</span>
             </Link>
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-full bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] apple-hover border border-[rgb(var(--color-border))]"
+              className="p-2.5 rounded-2xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] apple-hover border border-[rgb(var(--color-border))] hover:shadow-blue-glow"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
-                <FiSun className="w-5 h-5 text-[rgb(var(--color-text-primary))]" />
+                <FiSun className="w-5 h-5 text-blue-400" />
               ) : (
-                <FiMoon className="w-5 h-5 text-[rgb(var(--color-text-primary))]" />
+                <FiMoon className="w-5 h-5 text-blue-600" />
               )}
             </button>
           </div>
@@ -161,7 +176,7 @@ export default function StaffApplication() {
         {/* Success Modal */}
         {showSuccessModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div className="glass-effect rounded-apple-xl p-8 border border-[rgb(var(--color-border))] shadow-apple-2xl max-w-md mx-4 animate-scale-in">
+            <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-blue-glow max-w-md mx-4 animate-scale-in">
               <div className="text-center space-y-6">
                 <div className="flex justify-center">
                   <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
@@ -190,7 +205,7 @@ export default function StaffApplication() {
                     setShowForm(false);
                     setAgreedToTOS(false);
                   }}
-                  className="w-full bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 font-semibold px-6 py-3 rounded-apple-lg apple-transition"
+                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-2xl apple-transition hover:shadow-blue-glow"
                 >
                   Close
                 </button>
@@ -224,7 +239,7 @@ export default function StaffApplication() {
               </p>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 font-medium px-8 py-4 rounded-apple-lg apple-transition shadow-apple-md mt-4"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold px-8 py-4 rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow mt-4"
               >
                 Return Home
               </Link>
@@ -242,7 +257,7 @@ export default function StaffApplication() {
               </p>
             </div>
 
-            <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+            <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
               <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Terms of Service</h2>
               
               <div className="space-y-4 text-[rgb(var(--color-text-secondary))] max-h-96 overflow-y-auto pr-2">
@@ -295,7 +310,7 @@ export default function StaffApplication() {
                     type="checkbox"
                     checked={agreedToTOS}
                     onChange={(e) => setAgreedToTOS(e.target.checked)}
-                    className="w-5 h-5 rounded border-2 border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] checked:bg-[rgb(var(--color-accent))] checked:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition cursor-pointer"
+                    className="w-5 h-5 rounded border-2 border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] checked:bg-blue-600 dark:checked:bg-blue-500 checked:border-blue-600 dark:checked:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition cursor-pointer"
                   />
                   <span className="text-[rgb(var(--color-text-secondary))] group-hover:text-[rgb(var(--color-text-primary))] apple-transition">
                     I have read and agree to the Terms of Service
@@ -305,7 +320,7 @@ export default function StaffApplication() {
                 <button
                   onClick={handleContinueToForm}
                   disabled={!agreedToTOS}
-                  className="w-full bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed font-semibold px-8 py-4 rounded-apple-lg apple-transition shadow-apple-md text-lg"
+                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed font-semibold px-8 py-4 rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow text-lg"
                 >
                   Continue to Application
                 </button>
@@ -340,7 +355,7 @@ export default function StaffApplication() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-8 animate-slide-up">
               {/* Discord Information */}
-              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
                 <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Discord Information</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -355,7 +370,7 @@ export default function StaffApplication() {
                       onChange={handleChange}
                       placeholder="iambyte"
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
                     />
                   </div>
 
@@ -371,14 +386,14 @@ export default function StaffApplication() {
                       placeholder="929297205796417597"
                       pattern="^\d{17,19}$"
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Personal Information */}
-              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
                 <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Personal Information</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -393,7 +408,7 @@ export default function StaffApplication() {
                       onChange={handleChange}
                       placeholder="INDIA"
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
                     />
                   </div>
 
@@ -408,7 +423,7 @@ export default function StaffApplication() {
                       onChange={handleChange}
                       placeholder="IST"
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
                     />
                   </div>
 
@@ -424,14 +439,14 @@ export default function StaffApplication() {
                       placeholder="18"
                       min="16"
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
                     />
                   </div>
                 </div>
               </div>
 
               {/* General Questions */}
-              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
                 <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">General Questions</h2>
                 
                 <div className="space-y-6">
@@ -446,7 +461,7 @@ export default function StaffApplication() {
                       placeholder="Your background, interests, hobbies, and what makes you unique..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
 
@@ -461,7 +476,7 @@ export default function StaffApplication() {
                       placeholder="Share your motivation and what you hope to contribute..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
 
@@ -476,7 +491,7 @@ export default function StaffApplication() {
                       onChange={handleChange}
                       placeholder="10-15 hours"
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
                     />
                   </div>
 
@@ -491,14 +506,14 @@ export default function StaffApplication() {
                       onChange={handleChange}
                       placeholder="English, Hindi, etc."
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Moderation Questions */}
-              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
                 <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Moderation Experience</h2>
                 
                 <div className="space-y-6">
@@ -513,7 +528,7 @@ export default function StaffApplication() {
                       placeholder="Describe your previous moderation roles, communities, and responsibilities..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
 
@@ -528,7 +543,7 @@ export default function StaffApplication() {
                       placeholder="Define what qualities and responsibilities make an effective moderator..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
 
@@ -543,7 +558,7 @@ export default function StaffApplication() {
                       placeholder="Explain your approach to dealing with toxic members and maintaining a positive environment..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
 
@@ -558,14 +573,14 @@ export default function StaffApplication() {
                       placeholder="Describe your conflict resolution strategy and mediation approach..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Bot & Technical Questions */}
-              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
                 <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Bot & Technical Knowledge</h2>
                 
                 <div className="space-y-6">
@@ -580,7 +595,7 @@ export default function StaffApplication() {
                       placeholder="Describe your familiarity with Discord bots, which ones you've used, and any setup experience..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
 
@@ -595,7 +610,7 @@ export default function StaffApplication() {
                       placeholder="List any technical skills that could benefit the team..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
 
@@ -610,14 +625,14 @@ export default function StaffApplication() {
                       placeholder="MEE6, Dyno, Carl-bot, or any other moderation automation tools..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Situation-Based Questions */}
-              <div className="glass-effect rounded-apple-lg p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
+              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
                 <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Situation-Based Scenarios</h2>
                 
                 <div className="space-y-6">
@@ -632,7 +647,7 @@ export default function StaffApplication() {
                       placeholder="Describe step-by-step how you would address this situation..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
 
@@ -647,7 +662,7 @@ export default function StaffApplication() {
                       placeholder="Explain how you would protect the server during a raid situation..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
 
@@ -662,7 +677,7 @@ export default function StaffApplication() {
                       placeholder="Describe how you'd balance free discussion while maintaining civility..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
 
@@ -677,7 +692,7 @@ export default function StaffApplication() {
                       placeholder="Explain how you would handle disagreements within the staff team..."
                       rows={4}
                       required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] apple-transition resize-none"
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
                     />
                   </div>
                 </div>
@@ -687,7 +702,7 @@ export default function StaffApplication() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-3 bg-[rgb(var(--color-accent))] dark:bg-white dark:text-black text-white hover:opacity-80 disabled:opacity-50 font-semibold px-8 py-5 rounded-apple-lg apple-transition shadow-apple-lg hover:shadow-apple-xl text-lg disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white disabled:opacity-50 font-semibold px-8 py-5 rounded-2xl apple-transition shadow-apple-lg hover:shadow-blue-glow text-lg disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>

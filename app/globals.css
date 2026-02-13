@@ -2,85 +2,130 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Apple-inspired Design System */
+/* Modern Blue Design System */
 :root {
-  /* Light mode - Apple White Touch */
+  /* Light mode - Blue & White */
   --color-bg-primary: 255, 255, 255;
-  --color-bg-secondary: 251, 251, 253;
-  --color-bg-tertiary: 242, 242, 247;
-  --color-text-primary: 0, 0, 0;
-  --color-text-secondary: 29, 29, 31;
-  --color-text-tertiary: 86, 86, 92;
-  --color-border: 209, 209, 214;
-  --color-accent: 0, 0, 0;
-  --color-hover: 245, 245, 247;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  --color-bg-secondary: 248, 250, 252;
+  --color-bg-tertiary: 241, 245, 249;
+  --color-text-primary: 15, 23, 42;
+  --color-text-secondary: 51, 65, 85;
+  --color-text-tertiary: 100, 116, 139;
+  --color-border: 226, 232, 240;
+  --color-accent: 59, 130, 246;
+  --color-accent-hover: 37, 99, 235;
+  --color-hover: 241, 245, 249;
+  --color-blue-light: 219, 234, 254;
+  --color-blue-dark: 29, 78, 216;
+  --shadow-sm: 0 1px 3px rgba(59, 130, 246, 0.1);
+  --shadow-md: 0 4px 6px rgba(59, 130, 246, 0.12);
+  --shadow-lg: 0 10px 15px rgba(59, 130, 246, 0.15);
+  --shadow-xl: 0 20px 25px rgba(59, 130, 246, 0.18);
+  --shadow-blue: 0 10px 30px rgba(59, 130, 246, 0.25);
 }
 
 .dark {
-  /* Dark mode - Apple Black Touch */
-  --color-bg-primary: 0, 0, 0;
-  --color-bg-secondary: 18, 18, 18;
-  --color-bg-tertiary: 28, 28, 30;
-  --color-text-primary: 255, 255, 255;
-  --color-text-secondary: 235, 235, 245;
-  --color-text-tertiary: 174, 174, 178;
-  --color-border: 56, 56, 58;
-  --color-accent: 255, 255, 255;
-  --color-hover: 28, 28, 30;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+  /* Dark mode - Premium Dark Blue */
+  --color-bg-primary: 10, 15, 30;
+  --color-bg-secondary: 20, 25, 45;
+  --color-bg-tertiary: 30, 40, 65;
+  --color-text-primary: 248, 250, 252;
+  --color-text-secondary: 226, 232, 240;
+  --color-text-tertiary: 148, 163, 184;
+  --color-border: 51, 65, 105;
+  --color-accent: 96, 165, 250;
+  --color-accent-hover: 59, 130, 246;
+  --color-hover: 41, 50, 75;
+  --color-blue-light: 30, 58, 138;
+  --color-blue-dark: 147, 197, 253;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.7);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.8);
+  --shadow-blue: 0 10px 40px rgba(59, 130, 246, 0.35);
 }
 
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+/* Hardware acceleration and performance */
+*,
+*::before,
+*::after {
+  will-change: auto;
 }
 
 body {
   color: rgb(var(--color-text-primary));
   background-color: rgb(var(--color-bg-primary));
   min-height: 100vh;
-  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
-              color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
-  letter-spacing: -0.003em;
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', 'Helvetica Neue', system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  overflow-x: hidden;
 }
 
-/* Apple-style smooth animations */
+/* Modern smooth animations with hardware acceleration */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
   
   .apple-transition {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity;
   }
   
   .apple-hover {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
   }
   
   .apple-hover:hover {
-    transform: scale(1.02);
+    transform: translateY(-2px);
   }
   
   .glass-effect {
-    background: rgba(var(--color-bg-secondary), 0.8);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(var(--color-bg-secondary), 0.85);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(var(--color-accent), 0.1);
+  }
+  
+  .glass-blue {
+    background: rgba(var(--color-accent), 0.05);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(var(--color-accent), 0.2);
   }
   
   /* Touch optimization for mobile */
   .touch-manipulation {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Blue gradient backgrounds */
+  .bg-blue-gradient {
+    background: linear-gradient(135deg, rgb(var(--color-accent)), rgb(var(--color-blue-dark)));
+  }
+  
+  .bg-blue-gradient-light {
+    background: linear-gradient(135deg, rgb(var(--color-blue-light)), rgb(var(--color-accent)));
+  }
+  
+  /* Performance optimizations */
+  .will-change-transform {
+    will-change: transform;
+  }
+  
+  .will-change-opacity {
+    will-change: opacity;
   }
 }
 
