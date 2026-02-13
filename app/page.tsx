@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTheme } from '@/contexts/ThemeContext';
-import { FiSun, FiMoon, FiUsers, FiShield, FiZap } from 'react-icons/fi';
+import { FiSun, FiMoon } from 'react-icons/fi';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -117,6 +117,8 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </section>
+
       {/* Coming Soon Section */}
       <section className="relative bg-[rgb(var(--color-bg-primary))] py-16 sm:py-20 md:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
@@ -163,9 +165,7 @@ export default function Home() {
             <p className="text-base">© 2026 Omeglee. All rights reserved.</p>
           </div>
         </div>
-      </section/div>
-        </div>
-      </div>
+      </section>
     </main>
   );
 }
