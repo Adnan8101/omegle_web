@@ -25,24 +25,24 @@
 }
 
 .dark {
-  /* Dark mode - Premium Dark Blue */
-  --color-bg-primary: 10, 15, 30;
-  --color-bg-secondary: 20, 25, 45;
-  --color-bg-tertiary: 30, 40, 65;
-  --color-text-primary: 248, 250, 252;
-  --color-text-secondary: 226, 232, 240;
-  --color-text-tertiary: 148, 163, 184;
-  --color-border: 51, 65, 105;
-  --color-accent: 96, 165, 250;
-  --color-accent-hover: 59, 130, 246;
-  --color-hover: 41, 50, 75;
-  --color-blue-light: 30, 58, 138;
-  --color-blue-dark: 147, 197, 253;
+  /* Dark mode - Pure Matte Black & White */
+  --color-bg-primary: 0, 0, 0;
+  --color-bg-secondary: 18, 18, 18;
+  --color-bg-tertiary: 30, 30, 30;
+  --color-text-primary: 255, 255, 255;
+  --color-text-secondary: 220, 220, 220;
+  --color-text-tertiary: 160, 160, 160;
+  --color-border: 60, 60, 60;
+  --color-accent: 255, 255, 255;
+  --color-accent-hover: 200, 200, 200;
+  --color-hover: 40, 40, 40;
+  --color-blue-light: 50, 50, 50;
+  --color-blue-dark: 240, 240, 240;
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.7);
   --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.8);
-  --shadow-blue: 0 10px 40px rgba(59, 130, 246, 0.35);
+  --shadow-blue: 0 10px 40px rgba(255, 255, 255, 0.1);
 }
 
 * {

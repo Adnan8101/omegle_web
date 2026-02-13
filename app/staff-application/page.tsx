@@ -134,15 +134,17 @@ export default function StaffApplication() {
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition relative overflow-hidden">
-      {/* Animated Blue Background */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float"></div>
-        <div className="absolute top-0 -right-4 w-96 h-96 bg-blue-600/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-blue-400/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '4s' }}></div>
-      </div>
+      {/* Animated Blue Background - Light mode only */}
+      {theme === 'light' && (
+        <div className="fixed inset-0 -z-10">
+          <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float"></div>
+          <div className="absolute top-0 -right-4 w-96 h-96 bg-blue-600/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-blue-400/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '4s' }}></div>
+        </div>
+      )}
 
       {/* Navigation with Logo */}
-      <nav className="sticky top-0 z-50 glass-blue border-b border-blue-500/20 shadow-apple-sm">
+      <nav className="sticky top-0 z-50 glass-blue border-b border-blue-500/20 dark:border-white/10 shadow-apple-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <Link href="/" className="flex items-center gap-3 apple-hover">
@@ -162,7 +164,7 @@ export default function StaffApplication() {
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
-                <FiSun className="w-5 h-5 text-blue-400" />
+                <FiSun className="w-5 h-5 text-white" />
               ) : (
                 <FiMoon className="w-5 h-5 text-blue-600" />
               )}
@@ -205,7 +207,7 @@ export default function StaffApplication() {
                     setShowForm(false);
                     setAgreedToTOS(false);
                   }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-2xl apple-transition hover:shadow-blue-glow"
+                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-6 py-3 rounded-2xl apple-transition hover:shadow-blue-glow"
                 >
                   Close
                 </button>
@@ -239,7 +241,7 @@ export default function StaffApplication() {
               </p>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold px-8 py-4 rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow mt-4"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-8 py-4 rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow mt-4"
               >
                 Return Home
               </Link>
@@ -310,7 +312,7 @@ export default function StaffApplication() {
                     type="checkbox"
                     checked={agreedToTOS}
                     onChange={(e) => setAgreedToTOS(e.target.checked)}
-                    className="w-5 h-5 rounded border-2 border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] checked:bg-blue-600 dark:checked:bg-blue-500 checked:border-blue-600 dark:checked:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition cursor-pointer"
+                    className="w-5 h-5 rounded border-2 border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] checked:bg-blue-600 dark:checked:bg-white checked:border-blue-600 dark:checked:border-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-white apple-transition cursor-pointer"
                   />
                   <span className="text-[rgb(var(--color-text-secondary))] group-hover:text-[rgb(var(--color-text-primary))] apple-transition">
                     I have read and agree to the Terms of Service
@@ -320,7 +322,7 @@ export default function StaffApplication() {
                 <button
                   onClick={handleContinueToForm}
                   disabled={!agreedToTOS}
-                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed font-semibold px-8 py-4 rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow text-lg"
+                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black disabled:opacity-50 disabled:cursor-not-allowed font-semibold px-8 py-4 rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow text-lg"
                 >
                   Continue to Application
                 </button>
@@ -702,7 +704,7 @@ export default function StaffApplication() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white disabled:opacity-50 font-semibold px-8 py-5 rounded-2xl apple-transition shadow-apple-lg hover:shadow-blue-glow text-lg disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black disabled:opacity-50 font-semibold px-8 py-5 rounded-2xl apple-transition shadow-apple-lg hover:shadow-blue-glow text-lg disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>
