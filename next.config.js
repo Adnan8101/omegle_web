@@ -8,9 +8,6 @@ const nextConfig = {
     unoptimized: true, // For GIF animations
     formats: ['image/avif', 'image/webp'],
   },
-  experimental: {
-    optimizeCss: true,
-  },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
