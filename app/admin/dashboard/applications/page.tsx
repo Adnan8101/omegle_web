@@ -17,23 +17,19 @@ interface Application {
   whyJoin: string;
   hoursPerWeek: string;
   languages: string;
+  vcAvailability: string;
+  vcFrequency: string;
   
   // Moderation Questions
   moderationExperience: string;
   moderatorDefinition: string;
-  handlingToxicity: string;
-  conflictResolution: string;
+  leadershipExperience: string;
   
-  // Bot & Technical
+  // Bot Experience
   discordBotExperience: string;
-  technicalSkills: string;
-  automodTools: string;
-  
-  // Situation-Based
-  spamScenario: string;
-  raidScenario: string;
-  controversialTopic: string;
-  teamDisagreement: string;
+  automodKnowledge: string;
+  moderationBotsFamiliarity: string;
+  modCommandsKnowledge: string;
   
   // Status & Metadata
   status: 'pending' | 'considered' | 'denied';
@@ -626,85 +622,75 @@ export default function ApplicationsPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">How would you handle toxic behavior?</p>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Leadership experience:</p>
                     <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.handlingToxicity}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Conflict resolution approach:</p>
-                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.conflictResolution}
+                      {selectedApp.leadershipExperience}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Bot & Technical Knowledge */}
+              {/* VC Availability */}
               <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                 <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
-                  Bot & Technical Knowledge
+                  VC Availability
                 </h3>
                 <div className="space-y-5">
                   <div>
                     <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
-                      Discord bot experience:
+                      Can connect in VC regularly:
                     </p>
-                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.discordBotExperience}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Technical skills:</p>
-                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.technicalSkills}
+                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple capitalize">
+                      {selectedApp.vcAvailability === 'listen' ? 'Yes, but can listen' : selectedApp.vcAvailability}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Automod tools familiarity:</p>
-                    <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.automodTools}
-                    </p>
-                  </div>
+                  {selectedApp.vcFrequency && (
+                    <div>
+                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                        VC frequency:
+                      </p>
+                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                        {selectedApp.vcFrequency}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {/* Situation-Based Scenarios */}
               <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                 <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
-                  Situation-Based Scenarios
+                  Discord Bot Experience
                 </h3>
                 <div className="space-y-5">
                   <div>
-                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
-                      Scenario: User spamming the chat repeatedly
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                      Discord bot experience (1-5):
                     </p>
                     <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.spamScenario}
+                      {selectedApp.discordBotExperience}/5
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
-                      Scenario: Server experiencing a raid attack
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                      AutoMod knowledge:
                     </p>
                     <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.raidScenario}
+                      {selectedApp.automodKnowledge}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
-                      Scenario: Heated debate about controversial topic
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                      Moderation bots familiarity:
                     </p>
                     <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.controversialTopic}
+                      {selectedApp.moderationBotsFamiliarity}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-purple-500 dark:text-purple-400 font-bold mb-3">
-                      Scenario: Disagreement with another staff member
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                      Mod commands knowledge:
                     </p>
                     <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                      {selectedApp.teamDisagreement}
+                      {selectedApp.modCommandsKnowledge}
                     </p>
                   </div>
                 </div>

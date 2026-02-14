@@ -14,23 +14,19 @@ export interface IStaffApplication {
   whyJoin: string;
   hoursPerWeek: string;
   languages: string;
+  vcAvailability: string;
+  vcFrequency: string;
   
   // Moderation Questions
   moderationExperience: string;
   moderatorDefinition: string;
-  handlingToxicity: string;
-  conflictResolution: string;
+  leadershipExperience: string;
   
-  // Bot & Technical Questions
+  // Bot Experience
   discordBotExperience: string;
-  technicalSkills: string;
-  automodTools: string;
-  
-  // Situation-Based Questions
-  spamScenario: string;
-  raidScenario: string;
-  controversialTopic: string;
-  teamDisagreement: string;
+  automodKnowledge: string;
+  moderationBotsFamiliarity: string;
+  modCommandsKnowledge: string;
   
   status: 'pending' | 'considered' | 'denied';
   createdAt: Date;
@@ -52,23 +48,19 @@ const StaffApplicationSchema = new Schema<IStaffApplication>(
     whyJoin: { type: String, required: true },
     hoursPerWeek: { type: String, required: true },
     languages: { type: String, required: true },
+    vcAvailability: { type: String, required: true },
+    vcFrequency: { type: String, required: false },
     
     // Moderation Questions
     moderationExperience: { type: String, required: true },
     moderatorDefinition: { type: String, required: true },
-    handlingToxicity: { type: String, required: true },
-    conflictResolution: { type: String, required: true },
+    leadershipExperience: { type: String, required: true },
     
-    // Bot & Technical Questions
+    // Bot Experience
     discordBotExperience: { type: String, required: true },
-    technicalSkills: { type: String, required: true },
-    automodTools: { type: String, required: true },
-    
-    // Situation-Based Questions
-    spamScenario: { type: String, required: true },
-    raidScenario: { type: String, required: true },
-    controversialTopic: { type: String, required: true },
-    teamDisagreement: { type: String, required: true },
+    automodKnowledge: { type: String, required: true },
+    moderationBotsFamiliarity: { type: String, required: true },
+    modCommandsKnowledge: { type: String, required: true },
     
     status: {
       type: String,

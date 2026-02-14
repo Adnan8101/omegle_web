@@ -26,17 +26,15 @@ export default function StaffApplication() {
     whyJoin: '',
     hoursPerWeek: '',
     languages: '',
+    vcAvailability: '',
+    vcFrequency: '',
     moderationExperience: '',
     moderatorDefinition: '',
-    handlingToxicity: '',
-    conflictResolution: '',
+    leadershipExperience: '',
     discordBotExperience: '',
-    technicalSkills: '',
-    automodTools: '',
-    spamScenario: '',
-    raidScenario: '',
-    controversialTopic: '',
-    teamDisagreement: '',
+    automodKnowledge: '',
+    moderationBotsFamiliarity: '',
+    modCommandsKnowledge: '',
   });
 
   useEffect(() => {
@@ -58,7 +56,7 @@ export default function StaffApplication() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -91,17 +89,15 @@ export default function StaffApplication() {
           whyJoin: '',
           hoursPerWeek: '',
           languages: '',
+          vcAvailability: '',
+          vcFrequency: '',
           moderationExperience: '',
           moderatorDefinition: '',
-          handlingToxicity: '',
-          conflictResolution: '',
+          leadershipExperience: '',
           discordBotExperience: '',
-          technicalSkills: '',
-          automodTools: '',
-          spamScenario: '',
-          raidScenario: '',
-          controversialTopic: '',
-          teamDisagreement: '',
+          automodKnowledge: '',
+          moderationBotsFamiliarity: '',
+          modCommandsKnowledge: '',
         });
       } else {
         const errorData = await response.json();
@@ -511,6 +507,38 @@ export default function StaffApplication() {
                       className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      Are you able to connect in VC regularly?
+                    </label>
+                    <select
+                      name="vcAvailability"
+                      value={formData.vcAvailability}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
+                    >
+                      <option value="">Select an option</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                      <option value="listen">Yes, but can listen</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      If yes, how often can you connect?
+                    </label>
+                    <input
+                      type="text"
+                      name="vcFrequency"
+                      value={formData.vcFrequency}
+                      onChange={handleChange}
+                      placeholder="e.g., Daily, 3-4 times a week, etc."
+                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -551,28 +579,13 @@ export default function StaffApplication() {
 
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      How would you handle toxic behavior in the community?
+                      Do you have any experience in leadership?
                     </label>
                     <textarea
-                      name="handlingToxicity"
-                      value={formData.handlingToxicity}
+                      name="leadershipExperience"
+                      value={formData.leadershipExperience}
                       onChange={handleChange}
-                      placeholder="Explain your approach to dealing with toxic members and maintaining a positive environment..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      How would you resolve a conflict between two members?
-                    </label>
-                    <textarea
-                      name="conflictResolution"
-                      value={formData.conflictResolution}
-                      onChange={handleChange}
-                      placeholder="Describe your conflict resolution strategy and mediation approach..."
+                      placeholder="Describe your leadership experience, responsibilities, and how you've handled team situations..."
                       rows={4}
                       required
                       className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
@@ -581,20 +594,52 @@ export default function StaffApplication() {
                 </div>
               </div>
 
-              {/* Bot & Technical Questions */}
+              {/* Bot & Discord Experience */}
               <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
-                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Bot & Technical Knowledge</h2>
+                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Discord Bot Experience</h2>
                 
                 <div className="space-y-6">
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      What is your experience with Discord bots? (Rate 1-5)
+                    </label>
+                    <div className="flex flex-wrap gap-3">
+                      {[1, 2, 3, 4, 5].map((rating) => (
+                        <label 
+                          key={rating} 
+                          className={`flex-1 min-w-[60px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 cursor-pointer apple-transition ${
+                            formData.discordBotExperience === rating.toString()
+                              ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                              : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] text-[rgb(var(--color-text-secondary))] hover:border-blue-500/50'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="discordBotExperience"
+                            value={rating.toString()}
+                            checked={formData.discordBotExperience === rating.toString()}
+                            onChange={handleChange}
+                            required
+                            className="sr-only"
+                          />
+                          <span className="text-lg font-semibold">{rating}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
+                      1 = No experience | 5 = Expert
+                    </p>
+                  </div>
+
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      What is your experience with Discord bots?
+                      How much do you know about AutoMod?
                     </label>
                     <textarea
-                      name="discordBotExperience"
-                      value={formData.discordBotExperience}
+                      name="automodKnowledge"
+                      value={formData.automodKnowledge}
                       onChange={handleChange}
-                      placeholder="Describe your familiarity with Discord bots, which ones you've used, and any setup experience..."
+                      placeholder="Describe your knowledge of Discord's AutoMod feature, rules you've set up, experience with filters..."
                       rows={4}
                       required
                       className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
@@ -603,13 +648,13 @@ export default function StaffApplication() {
 
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      What technical skills do you have? (Programming, design, etc.)
+                      Which moderation bots are you familiar with?
                     </label>
                     <textarea
-                      name="technicalSkills"
-                      value={formData.technicalSkills}
+                      name="moderationBotsFamiliarity"
+                      value={formData.moderationBotsFamiliarity}
                       onChange={handleChange}
-                      placeholder="List any technical skills that could benefit the team..."
+                      placeholder="MEE6, Dyno, Carl-bot, ProBot, Wick, etc. Describe which ones you've used and for what purpose..."
                       rows={4}
                       required
                       className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
@@ -618,80 +663,13 @@ export default function StaffApplication() {
 
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      Are you familiar with automod tools? Which ones?
+                      What moderation commands are you familiar with?
                     </label>
                     <textarea
-                      name="automodTools"
-                      value={formData.automodTools}
+                      name="modCommandsKnowledge"
+                      value={formData.modCommandsKnowledge}
                       onChange={handleChange}
-                      placeholder="MEE6, Dyno, Carl-bot, or any other moderation automation tools..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Situation-Based Questions */}
-              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
-                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Situation-Based Scenarios</h2>
-                
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      A user is spamming the chat repeatedly. How do you handle this?
-                    </label>
-                    <textarea
-                      name="spamScenario"
-                      value={formData.spamScenario}
-                      onChange={handleChange}
-                      placeholder="Describe step-by-step how you would address this situation..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      The server is experiencing a raid attack. What are your immediate actions?
-                    </label>
-                    <textarea
-                      name="raidScenario"
-                      value={formData.raidScenario}
-                      onChange={handleChange}
-                      placeholder="Explain how you would protect the server during a raid situation..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      Members are having a heated debate about a controversial topic. How do you moderate?
-                    </label>
-                    <textarea
-                      name="controversialTopic"
-                      value={formData.controversialTopic}
-                      onChange={handleChange}
-                      placeholder="Describe how you'd balance free discussion while maintaining civility..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      You disagree with another staff member's moderation decision. What do you do?
-                    </label>
-                    <textarea
-                      name="teamDisagreement"
-                      value={formData.teamDisagreement}
-                      onChange={handleChange}
-                      placeholder="Explain how you would handle disagreements within the staff team..."
+                      placeholder="Ban, kick, mute, timeout, warn, slowmode, lockdown, etc. Explain your experience using these commands..."
                       rows={4}
                       required
                       className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
