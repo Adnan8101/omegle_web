@@ -90,7 +90,33 @@ export async function GET(request: NextRequest) {
     // Build placeholders for IN clause
     const placeholders = staffIds.map((_: string, i: number) => `$${i + 2}`).join(', ');
 
-    // Get moderator stats from moderation_cases
+    // Debug: Log staff IDs being queried
+    console.log(`[Mods Stats] Fetching stats for ${staffIds.length} staff members:`, staffIds.slice(0, 5));
+
+    // Get ALL moderation stats (not filtered by staff) for the overview
+    const allModStats = await queryBotDb(`
+      SELECT 
+        COUNT(*) as total_cases,
+        COUNT(CASE WHEN action = 'MUTE' THEN 1 END) as mutes,
+        COUNT(CASE WHEN action = 'BAN' THEN 1 END) as bans,
+        COUNT(CASE WHEN action = 'KICK' THEN 1 END) as kicks,
+        COUNT(CASE WHEN action = 'WARN' THEN 1 END) as warns,
+        COUNT(CASE WHEN action = 'UNBAN' THEN 1 END) as unbans,
+        COUNT(CASE WHEN action = 'UNMUTE' THEN 1 END) as unmutes
+      FROM moderation_cases
+      WHERE guild_id = $1
+    `, [GUILD_ID]);
+
+    const allManualStats = await queryBotDb(`
+      SELECT COUNT(*) as total_manuals
+      FROM manuals
+      WHERE guild_id = $1
+    `, [GUILD_ID]);
+
+    console.log('[Mods Stats] All mod stats:', allModStats[0]);
+    console.log('[Mods Stats] All manual stats:', allManualStats[0]);
+
+    // Get moderator stats from moderation_cases (for individual mods)
     const modStats = await queryBotDb(`
       SELECT 
         moderator_id,
@@ -106,6 +132,8 @@ export async function GET(request: NextRequest) {
       WHERE guild_id = $1 AND moderator_id IN (${placeholders})
       GROUP BY moderator_id
     `, [GUILD_ID, ...staffIds]);
+
+    console.log(`[Mods Stats] Found ${modStats.length} mods with cases`);
 
     // Get manual cases count
     const manualStats = await queryBotDb(`
@@ -204,6 +232,16 @@ export async function GET(request: NextRequest) {
       success: true,
       mods: modsWithStats,
       total: modsWithStats.length,
+      overview: {
+        total_cases: parseInt(allModStats[0]?.total_cases) || 0,
+        mutes: parseInt(allModStats[0]?.mutes) || 0,
+        bans: parseInt(allModStats[0]?.bans) || 0,
+        kicks: parseInt(allModStats[0]?.kicks) || 0,
+        warns: parseInt(allModStats[0]?.warns) || 0,
+        unbans: parseInt(allModStats[0]?.unbans) || 0,
+        unmutes: parseInt(allModStats[0]?.unmutes) || 0,
+        total_manuals: parseInt(allManualStats[0]?.total_manuals) || 0,
+      },
     });
   } catch (error: unknown) {
     console.error('Error fetching mod stats:', getErrorMessage(error));

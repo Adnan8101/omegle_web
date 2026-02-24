@@ -40,6 +40,7 @@ export default function ModsStatsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [mods, setMods] = useState<ModStats[]>([]);
+  const [overview, setOverview] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'cases' | 'vc' | 'messages' | 'name'>('cases');
@@ -61,6 +62,7 @@ export default function ModsStatsPage() {
       if (response.ok) {
         const data = await response.json();
         setMods(data.mods || []);
+        setOverview(data.overview || null);
       }
     } catch (error) {
       console.error('Error fetching mods:', error);
@@ -119,7 +121,8 @@ export default function ModsStatsPage() {
       return sortDir === 'desc' ? -comparison : comparison;
     });
 
-  const totalStats = mods.reduce(
+  // Use overview stats from API if available, otherwise calculate from mods
+  const totalStats = overview || mods.reduce(
     (acc, mod) => ({
       cases: acc.cases + mod.stats.total_cases,
       mutes: acc.mutes + mod.stats.mutes,
@@ -130,6 +133,16 @@ export default function ModsStatsPage() {
     }),
     { cases: 0, mutes: 0, bans: 0, kicks: 0, warns: 0, manuals: 0 }
   );
+
+  // Map overview keys to match totalStats structure
+  const displayStats = overview ? {
+    cases: overview.total_cases || 0,
+    mutes: overview.mutes || 0,
+    bans: overview.bans || 0,
+    kicks: overview.kicks || 0,
+    warns: overview.warns || 0,
+    manuals: overview.total_manuals || 0,
+  } : totalStats;
 
   if (loading) {
     return (
@@ -171,35 +184,35 @@ export default function ModsStatsPage() {
             <FiShield className="w-4 h-4 text-purple-500" />
             <span className="text-xs text-[rgb(var(--color-text-tertiary))]">Total Cases</span>
           </div>
-          <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{totalStats.cases.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{displayStats.cases.toLocaleString()}</p>
         </div>
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
           <div className="flex items-center gap-2 mb-2">
             <FiSlash className="w-4 h-4 text-orange-500" />
             <span className="text-xs text-[rgb(var(--color-text-tertiary))]">Mutes</span>
           </div>
-          <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{totalStats.mutes.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{displayStats.mutes.toLocaleString()}</p>
         </div>
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
           <div className="flex items-center gap-2 mb-2">
             <FiUserX className="w-4 h-4 text-red-500" />
             <span className="text-xs text-[rgb(var(--color-text-tertiary))]">Bans</span>
           </div>
-          <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{totalStats.bans.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{displayStats.bans.toLocaleString()}</p>
         </div>
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
           <div className="flex items-center gap-2 mb-2">
             <FiAlertTriangle className="w-4 h-4 text-yellow-500" />
             <span className="text-xs text-[rgb(var(--color-text-tertiary))]">Warns</span>
           </div>
-          <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{totalStats.warns.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{displayStats.warns.toLocaleString()}</p>
         </div>
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
           <div className="flex items-center gap-2 mb-2">
             <FiActivity className="w-4 h-4 text-green-500" />
             <span className="text-xs text-[rgb(var(--color-text-tertiary))]">Manuals</span>
           </div>
-          <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{totalStats.manuals.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{displayStats.manuals.toLocaleString()}</p>
         </div>
       </div>
 
@@ -208,13 +221,13 @@ export default function ModsStatsPage() {
         <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-6">Action Distribution</h2>
         <div className="space-y-4">
           {[
-            { label: 'Mutes', count: totalStats.mutes, color: 'bg-orange-500', icon: FiSlash },
-            { label: 'Bans', count: totalStats.bans, color: 'bg-red-500', icon: FiUserX },
-            { label: 'Kicks', count: totalStats.kicks, color: 'bg-yellow-500', icon: FiUserX },
-            { label: 'Warns', count: totalStats.warns, color: 'bg-yellow-400', icon: FiAlertTriangle },
-            { label: 'Manuals', count: totalStats.manuals, color: 'bg-green-500', icon: FiActivity },
+            { label: 'Mutes', count: displayStats.mutes, color: 'bg-orange-500', icon: FiSlash },
+            { label: 'Bans', count: displayStats.bans, color: 'bg-red-500', icon: FiUserX },
+            { label: 'Kicks', count: displayStats.kicks, color: 'bg-yellow-500', icon: FiUserX },
+            { label: 'Warns', count: displayStats.warns, color: 'bg-yellow-400', icon: FiAlertTriangle },
+            { label: 'Manuals', count: displayStats.manuals, color: 'bg-green-500', icon: FiActivity },
           ].map(({ label, count, color, icon: Icon }) => {
-            const percentage = totalStats.cases > 0 ? (count / totalStats.cases) * 100 : 0;
+            const percentage = displayStats.cases > 0 ? (count / displayStats.cases) * 100 : 0;
             return (
               <div key={label}>
                 <div className="flex items-center justify-between mb-2">
