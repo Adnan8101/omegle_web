@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import { GUILD_ID, getErrorMessage } from './constants';
+import { cachedUserToDisplay, getUserDisplay as getUserDisplayFromCache, type CachedUser, type UserDisplay } from './userUtils';
 
 // Connection pool for bot database (read-only queries)
 let pool: Pool | null = null;
@@ -319,6 +320,35 @@ export async function getAllCachedUsers() {
     ORDER BY display_name ASC
   `;
   return await queryBotDb(query);
+}
+
+// ============================================
+// USER DISPLAY HELPERS
+// ============================================
+
+/**
+ * Get user display info (with full avatar URL) from cache
+ */
+export async function getUserDisplay(userId: string, size: number = 128): Promise<UserDisplay> {
+  const cachedUser = await getCachedUser(userId);
+  return getUserDisplayFromCache(cachedUser as CachedUser | null, userId, size);
+}
+
+/**
+ * Get multiple users display info in one query
+ */
+export async function getUsersDisplay(userIds: string[], size: number = 128): Promise<Map<string, UserDisplay>> {
+  const cachedUsers = await getCachedUsers(userIds);
+  const userMap = new Map<string, CachedUser>();
+  cachedUsers.forEach((user: any) => userMap.set(user.user_id, user as CachedUser));
+  
+  const result = new Map<string, UserDisplay>();
+  userIds.forEach(userId => {
+    const cached = userMap.get(userId);
+    result.set(userId, getUserDisplayFromCache(cached || null, userId, size));
+  });
+  
+  return result;
 }
 
 // ============================================

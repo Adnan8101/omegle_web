@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getUserDisplay } from '@/lib/botDb';
 import { getDiscordUser, getAvatarUrl, getDisplayName, getUserTag } from '@/lib/discord';
-import { getAvatarFallback, getErrorMessage } from '@/lib/constants';
+import { getErrorMessage } from '@/lib/constants';
 
 export async function GET(
   request: NextRequest,
@@ -19,17 +20,19 @@ export async function GET(
     }
 
     const { userId } = params;
+    
+    // Try cached user first (faster, includes proper avatar URL)
+    const cachedUser = await getUserDisplay(userId, 256);
+    if (cachedUser && cachedUser.inGuild) {
+      return NextResponse.json(cachedUser);
+    }
+
+    // Fallback to Discord API for non-cached or non-guild members
     const member = await getDiscordUser(userId);
 
     if (!member) {
-      return NextResponse.json({
-        id: userId,
-        username: 'Unknown User',
-        displayName: 'Unknown User',
-        avatar: getAvatarFallback(userId),
-        tag: `User#${userId.slice(-4)}`,
-        inGuild: false,
-      });
+      // Return cached data if available, even if not in guild
+      return NextResponse.json(cachedUser);
     }
 
     const inGuild = member._fromGuild !== false;

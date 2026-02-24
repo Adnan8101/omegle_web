@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { queryBotDb } from '@/lib/botDb';
-import { GUILD_ID, getErrorMessage, getAvatarFallback } from '@/lib/constants';
+import { queryBotDb, getUsersDisplay } from '@/lib/botDb';
+import { GUILD_ID, getErrorMessage } from '@/lib/constants';
 
 export async function GET(
   request: NextRequest,
@@ -167,28 +167,10 @@ export async function GET(
     (chatMutuals || []).forEach((m: any) => allUserIds.add(m.target_user_id));
     (sharedChannels || []).forEach((m: any) => allUserIds.add(m.other_user_id));
 
-    let resolvedUsers: Record<string, any> = {};
-    if (allUserIds.size > 0) {
-      try {
-        const userIdArray = [...allUserIds];
-        const placeholders = userIdArray.map((_, i) => `$${i + 1}`).join(', ');
-        const cachedUsers = await queryBotDb(`
-          SELECT user_id, username, display_name, avatar_url, in_guild, nickname
-          FROM discord_user_cache
-          WHERE user_id IN (${placeholders})
-        `, userIdArray);
-
-        for (const u of cachedUsers) {
-          resolvedUsers[u.user_id] = {
-            id: u.user_id,
-            username: u.username,
-            displayName: u.display_name,
-            avatar: u.avatar_url || `https://cdn.discordapp.com/embed/avatars/${parseInt(u.user_id.slice(-4)) % 5}.png`,
-            inGuild: u.in_guild,
-          };
-        }
-      } catch { }
-    }
+    // Use getUsersDisplay for proper avatar URLs
+    const resolvedUsers = allUserIds.size > 0 
+      ? await getUsersDisplay([...allUserIds], 128)
+      : {};
 
     return NextResponse.json({
       vcMutuals: vcMutuals || [],

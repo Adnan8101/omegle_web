@@ -561,11 +561,11 @@ export default function ApplicationsPage() {
                 <div className="flex items-start gap-3">
                   {selectedApp.userProfile?.avatar_url ? (
                     <img 
-                      src={`https://cdn.discordapp.com/avatars/${selectedApp.discordUserId}/${selectedApp.userProfile.avatar_url}.${selectedApp.userProfile.avatar_url.startsWith('a_') ? 'gif' : 'png'}?size=128`}
+                      src={selectedApp.userProfile.avatar_url}
                       alt={selectedApp.userProfile.username || selectedApp.discordUsername}
                       className="w-16 h-16 rounded-full border-2 border-blue-500 shadow-lg"
                       onError={(e) => {
-                        // Use Discord's new default avatar calculation: (user_id >> 22) % 6
+                        // Fallback to default avatar
                         const defaultIndex = Number(BigInt(selectedApp.discordUserId) >> 22n) % 6;
                         e.currentTarget.src = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
                       }}

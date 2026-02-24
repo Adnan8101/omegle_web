@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getCachedUsers } from '@/lib/botDb';
-import { getAvatarFallback, getErrorMessage } from '@/lib/constants';
+import { getUsersDisplay } from '@/lib/botDb';
+import { getErrorMessage } from '@/lib/constants';
 
 /**
  * Batch resolve users from the bot's discord_user_cache table.
@@ -25,35 +25,22 @@ export async function POST(request: NextRequest) {
 
     const limitedIds = userIds.slice(0, 500);
 
-    const cachedUsers = await getCachedUsers(limitedIds);
+    // Use getUsersDisplay which returns proper avatar URLs
+    const usersMap = await getUsersDisplay(limitedIds, 128);
 
-    const results: Record<string, { id: string; username: string; displayName: string; avatar: string; inGuild: boolean; nickname: string | null }> = {};
+    const results: Record<string, { id: string; username: string; displayName: string; avatar: string; inGuild: boolean; tag: string }> = {};
 
-    // Add cached users
-    for (const user of cachedUsers) {
-      results[user.user_id] = {
-        id: user.user_id,
+    // Convert Map to object
+    usersMap.forEach((user, userId) => {
+      results[userId] = {
+        id: user.id,
         username: user.username,
-        displayName: user.display_name,
-        avatar: user.avatar_url || getAvatarFallback(user.user_id),
-        inGuild: user.in_guild,
-        nickname: user.nickname,
+        displayName: user.displayName,
+        avatar: user.avatar, // Full URL
+        inGuild: user.inGuild,
+        tag: user.tag,
       };
-    }
-
-    // For any IDs not found in cache, return placeholder
-    for (const id of limitedIds) {
-      if (!results[id]) {
-        results[id] = {
-          id,
-          username: 'Unknown User',
-          displayName: 'Unknown User',
-          avatar: getAvatarFallback(id),
-          inGuild: false,
-          nickname: null,
-        };
-      }
-    }
+    });
 
     return NextResponse.json({ users: results });
   } catch (error: unknown) {

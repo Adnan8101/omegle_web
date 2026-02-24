@@ -2,6 +2,7 @@ import { getErrorMessage, GUILD_ID } from '@/lib/constants';
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import StaffApplication from '@/models/StaffApplication';
+import { getUserDisplay } from '@/lib/botDb';
 import { queryBotDb } from '@/lib/botDb';
 
 export async function POST(request: NextRequest) {
@@ -18,19 +19,16 @@ export async function POST(request: NextRequest) {
     
     if (userId) {
       try {
-        // Fetch Discord user profile from cache
-        const userCacheResult = await queryBotDb(`
-          SELECT 
-            username,
-            display_name,
-            avatar_url,
-            in_guild,
-            nickname
-          FROM discord_user_cache
-          WHERE user_id = $1
-        `, [userId]);
+        // Fetch user display data (with proper avatar URL construction)
+        const userDisplay = await getUserDisplay(userId, 128);
         
-        userProfile = userCacheResult[0] || null;
+        userProfile = {
+          username: userDisplay.username,
+          display_name: userDisplay.displayName,
+          avatar_url: userDisplay.avatar, // Full avatar URL
+          in_guild: userDisplay.inGuild,
+          tag: userDisplay.tag,
+        };
         
         // Fetch user VC and chat stats
         const statsResult = await queryBotDb(`
