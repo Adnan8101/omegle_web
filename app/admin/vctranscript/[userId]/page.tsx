@@ -14,6 +14,16 @@ import {
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import DateRangeFilter from '@/components/DateRangeFilter';
 
+// Build avatar URL from hash
+function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
+  if (avatarHash) {
+    const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
+    return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
+  }
+  const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+  return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+}
+
 interface VCStats {
   total_sessions: number;
   total_duration: number;
@@ -382,7 +392,7 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
     const user = mutualsUsers.get(userId);
     return {
       name: user?.displayName || 'Unknown User',
-      avatar: user?.avatar || `https://cdn.discordapp.com/embed/avatars/${parseInt(userId.slice(-4)) % 5}.png`,
+      avatar: user?.avatar || buildAvatarUrl(userId, null, 128),
       username: user?.username || 'unknown',
       inGuild: user?.inGuild ?? false,
     };
@@ -444,7 +454,7 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
           <div className="flex items-center gap-4 mb-4">
             <div className="relative w-20 h-20 rounded-full overflow-hidden ring-4 ring-blue-500/30 flex-shrink-0">
               <Image
-                src={discordUser?.avatar || `https://cdn.discordapp.com/embed/avatars/${parseInt(params.userId.slice(-4)) % 5}.png`}
+                src={discordUser?.avatar || buildAvatarUrl(params.userId, null, 256)}
                 alt={discordUser?.displayName || 'User'}
                 fill
                 className="object-cover"

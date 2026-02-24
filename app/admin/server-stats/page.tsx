@@ -11,6 +11,16 @@ import {
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DateRangeFilter from '@/components/DateRangeFilter';
 
+// Build avatar URL from hash
+function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
+  if (avatarHash) {
+    const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
+    return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
+  }
+  const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+  return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+}
+
 interface UserRanking {
     user_id: string;
     vc_duration: number;
@@ -120,7 +130,7 @@ export default function ServerStatsPage() {
 
     const getUserDisplay = (user: UserRanking | Contributor) => ({
         name: user.nickname || user.display_name || user.username || 'Unknown User',
-        avatar: user.avatar_url || `https://cdn.discordapp.com/embed/avatars/${parseInt(user.user_id.slice(-4)) % 5}.png`,
+        avatar: buildAvatarUrl(user.user_id, user.avatar_url || null, 128),
         username: user.username || 'unknown',
         inGuild: user.in_guild ?? false,
     });

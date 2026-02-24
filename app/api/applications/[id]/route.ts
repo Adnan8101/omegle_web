@@ -2,7 +2,7 @@ import { getErrorMessage, GUILD_ID } from '@/lib/constants';
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import StaffApplication from '@/models/StaffApplication';
-import { queryBotDb } from '@/lib/botDb';
+import { queryBotDb, getUserDisplay } from '@/lib/botDb';
 
 // Fetch user from Discord API
 async function fetchDiscordUser(userId: string) {
@@ -39,41 +39,22 @@ export async function GET(
     const userId = application.discordUserId;
     
     // Fetch fresh user data from bot database
-    let userProfile = application.userProfile;
+    let userProfile: any = application.userProfile;
     let userStats = application.userStats;
     let modLogs = application.modLogs;
     
     if (userId) {
       try {
-        // Fetch Discord user profile from cache
-        const userCacheResult = await queryBotDb(`
-          SELECT 
-            username,
-            display_name,
-            avatar_url,
-            in_guild,
-            nickname
-          FROM discord_user_cache
-          WHERE user_id = $1
-        `, [userId]);
+        // Fetch Discord user profile with proper avatar URL construction
+        const userDisplay = await getUserDisplay(userId, 128);
         
-        if (userCacheResult[0]) {
-          userProfile = userCacheResult[0];
-        }
-        
-        // If no avatar in cache, fetch directly from Discord API
-        if (!userProfile?.avatar_url) {
-          const discordUser = await fetchDiscordUser(userId);
-          if (discordUser) {
-            userProfile = {
-              ...userProfile,
-              username: discordUser.username,
-              display_name: discordUser.global_name || discordUser.username,
-              avatar_url: discordUser.avatar,
-              in_guild: userProfile?.in_guild ?? true,
-            };
-          }
-        }
+        userProfile = {
+          username: userDisplay.username,
+          display_name: userDisplay.displayName,
+          avatar_url: userDisplay.avatar, // Full avatar URL
+          in_guild: userDisplay.inGuild,
+          tag: userDisplay.tag,
+        };
         
         // Fetch user VC and chat stats
         const statsResult = await queryBotDb(`

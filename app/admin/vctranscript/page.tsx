@@ -7,6 +7,21 @@ import Image from 'next/image';
 import { FiUsers, FiClock, FiActivity, FiSearch, FiArrowUp, FiChevronRight } from 'react-icons/fi';
 import DateRangeFilter from '@/components/DateRangeFilter';
 
+// Build avatar URL from hash (same logic as server-side userUtils.ts)
+function buildAvatarUrl(userId: string, avatarHash: string | null, discriminator: string = '0', size: number = 128): string {
+  if (avatarHash) {
+    const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
+    return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
+  }
+  // Default avatar
+  if (discriminator === '0' || !discriminator) {
+    const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+    return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+  }
+  const defaultIndex = parseInt(discriminator) % 5;
+  return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+}
+
 interface User {
   user_id: string;
   session_count: number;
@@ -72,7 +87,7 @@ export default function VCTranscriptPage() {
               id: user.user_id,
               username: user.username || 'Unknown',
               displayName: user.nickname || user.display_name || user.username || 'Unknown User',
-              avatar: user.avatar_url || `https://cdn.discordapp.com/embed/avatars/${parseInt(user.user_id.slice(-4)) % 5}.png`,
+              avatar: buildAvatarUrl(user.user_id, user.avatar_url || null, '0', 128),
               inGuild: user.in_guild ?? false,
             });
           }
@@ -125,7 +140,7 @@ export default function VCTranscriptPage() {
       id: userId,
       username: 'Unknown',
       displayName: 'Unknown User',
-      avatar: `https://cdn.discordapp.com/embed/avatars/${parseInt(userId.slice(-4)) % 5}.png`,
+      avatar: buildAvatarUrl(userId, null, '0', 128),
       inGuild: false,
     };
   };

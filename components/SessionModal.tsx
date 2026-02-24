@@ -4,6 +4,16 @@ import { useEffect, useState } from 'react';
 import { X, Users, Clock, MessageSquare, Mic, MicOff, Video, VideoOff, Monitor, TrendingUp, Calendar, Hash, ArrowRight, LogIn, LogOut } from 'lucide-react';
 import Image from 'next/image';
 
+// Build avatar URL from hash
+function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
+  if (avatarHash) {
+    const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
+    return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
+  }
+  const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+  return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+}
+
 interface SessionModalProps {
   sessionId: string;
   onClose: () => void;
@@ -207,7 +217,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
     const user = users.get(userId);
     return {
       name: user?.displayName || 'Unknown User',
-      avatar: user?.avatar || `https://cdn.discordapp.com/embed/avatars/${parseInt(userId.slice(-4)) % 5}.png`,
+      avatar: user?.avatar || buildAvatarUrl(userId, null, 128),
       username: user?.username || 'unknown',
       inGuild: user?.inGuild ?? false,
     };
