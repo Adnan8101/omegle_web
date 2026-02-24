@@ -563,13 +563,17 @@ export default function ApplicationsPage() {
                       alt={selectedApp.userProfile.username || selectedApp.discordUsername}
                       className="w-16 h-16 rounded-full border-2 border-blue-500 shadow-lg"
                       onError={(e) => {
-                        e.currentTarget.src = `https://cdn.discordapp.com/embed/avatars/${parseInt(selectedApp.discordUserId) % 5}.png`;
+                        // Use Discord's new default avatar calculation: (user_id >> 22) % 6
+                        const defaultIndex = Number(BigInt(selectedApp.discordUserId) >> 22n) % 6;
+                        e.currentTarget.src = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
                       }}
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white text-2xl font-bold border-2 border-blue-600 shadow-lg">
-                      {(selectedApp.userProfile?.username || selectedApp.discordUsername).charAt(0).toUpperCase()}
-                    </div>
+                    <img 
+                      src={`https://cdn.discordapp.com/embed/avatars/${Number(BigInt(selectedApp.discordUserId) >> 22n) % 6}.png`}
+                      alt={selectedApp.userProfile?.username || selectedApp.discordUsername}
+                      className="w-16 h-16 rounded-full border-2 border-blue-500 shadow-lg"
+                    />
                   )}
                   <button
                     onClick={() => setShowModal(false)}
