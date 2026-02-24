@@ -45,7 +45,7 @@ export default function StaffApplication() {
       setFormData(prev => ({
         ...prev,
         discordUsername: session.user.name || '',
-        discordUserId: (session as any).discordId || '',
+        discordUserId: session.user.id || '',
       }));
     }
   }, [session]);
@@ -122,7 +122,30 @@ export default function StaffApplication() {
       } else {
         const errorData = await response.json();
         console.error('Submission error:', errorData);
-        alert('Failed to submit application. Please check all fields and try again.');
+        console.log('Form data being sent:', formData);
+        
+        let errorMessage = 'Failed to submit application.\n\n';
+        
+        if (errorData.error) {
+          errorMessage += `Error: ${errorData.error}\n\n`;
+        }
+        
+        // Show missing required fields
+        const missingFields = [];
+        if (!formData.discordUsername) missingFields.push('Discord Username');
+        if (!formData.discordUserId) missingFields.push('Discord User ID');
+        if (!formData.country) missingFields.push('Country');
+        if (!formData.timezone) missingFields.push('Timezone');
+        if (!formData.age) missingFields.push('Age');
+        
+        if (missingFields.length > 0) {
+          errorMessage += `Missing fields: ${missingFields.join(', ')}\n`;
+        }
+        
+        errorMessage += `\nDiscord Username: ${formData.discordUsername || 'MISSING'}\n`;
+        errorMessage += `Discord User ID: ${formData.discordUserId || 'MISSING'}`;
+        
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Error submitting application:', error);
@@ -410,7 +433,7 @@ export default function StaffApplication() {
                           {session.user?.name}
                         </p>
                         <p className="text-sm text-[rgb(var(--color-text-tertiary))] font-mono">
-                          ID: {(session as any).discordId}
+                          ID: {session.user?.id || 'Loading...'}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
