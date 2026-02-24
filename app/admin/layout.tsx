@@ -35,7 +35,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     const handleLogout = async () => {
         try { localStorage.clear(); sessionStorage.clear(); } catch (e) { }
-        await signOut({ callbackUrl: '/admin' });
+        // Use redirect: true to ensure proper signout flow
+        await signOut({ callbackUrl: '/admin', redirect: true });
     };
 
     // Single smooth loading state

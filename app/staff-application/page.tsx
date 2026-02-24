@@ -186,10 +186,10 @@ export default function StaffApplication() {
 
       {/* Navigation with Logo */}
       <nav className="sticky top-0 z-50 glass-blue border-b border-blue-500/20 dark:border-white/10 shadow-apple-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex justify-between items-center">
-            <Link href="/" className="flex items-center gap-3 apple-hover">
-              <div className="relative w-10 h-10">
+            <Link href="/" className="flex items-center gap-2 sm:gap-3 apple-hover">
+              <div className="relative w-8 h-8 sm:w-10 sm:h-10">
                 <Image
                   src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
                   alt="Omegle Logo"
@@ -197,17 +197,17 @@ export default function StaffApplication() {
                   className="object-contain"
                 />
               </div>
-              <span className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">Omeglee Community</span>
+              <span className="text-lg sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[180px] sm:max-w-none">Omeglee Community</span>
             </Link>
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-2xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] apple-hover border border-[rgb(var(--color-border))] hover:shadow-blue-glow"
+              className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] apple-hover border border-[rgb(var(--color-border))] hover:shadow-blue-glow flex-shrink-0"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
-                <FiSun className="w-5 h-5 text-white" />
+                <FiSun className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               ) : (
-                <FiMoon className="w-5 h-5 text-blue-600" />
+                <FiMoon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               )}
             </button>
           </div>
@@ -215,30 +215,32 @@ export default function StaffApplication() {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-16">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-16">
         {/* Success Modal */}
         {showSuccessModal && (
           <div className="fixed inset-0 z-50 bg-black/60 overflow-y-auto animate-fade-in" onClick={(e) => { if (e.target === e.currentTarget) { setShowSuccessModal(false); setShowForm(false); setAgreedToTOS(false); } }}>
-            <div className="min-h-screen flex items-center justify-center p-4">
-              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-blue-glow max-w-md w-full my-4 animate-scale-in" onClick={(e) => e.stopPropagation()}>
-              <div className="text-center space-y-6">
+            <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-4">
+              <div className="glass-blue rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-blue-glow max-w-md w-full sm:my-4 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+              {/* Drag handle for mobile */}
+              <div className="w-12 h-1.5 bg-gray-400/30 rounded-full mx-auto mb-4 sm:hidden"></div>
+              <div className="text-center space-y-4 sm:space-y-6">
                 <div className="flex justify-center">
-                  <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
-                    <FiCheckCircle className="w-10 h-10 text-green-500" />
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <FiCheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
                   </div>
                 </div>
-                <div className="space-y-3">
-                  <h2 className="text-3xl font-bold text-[rgb(var(--color-text-primary))]">
+                <div className="space-y-2 sm:space-y-3">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))]">
                     Application Submitted!
                   </h2>
                   <div className="space-y-2 text-[rgb(var(--color-text-secondary))]">
-                    <p className="text-lg">
+                    <p className="text-base sm:text-lg">
                       Thank you for applying to join our staff team.
                     </p>
-                    <p className="font-medium">
+                    <p className="font-medium text-sm sm:text-base">
                       If you are shortlisted, you will be contacted within 2 weeks.
                     </p>
-                    <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                    <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))]">
                       Note: We do not send rejection notifications.
                     </p>
                   </div>
@@ -249,7 +251,7 @@ export default function StaffApplication() {
                     setShowForm(false);
                     setAgreedToTOS(false);
                   }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-6 py-3 rounded-2xl apple-transition hover:shadow-blue-glow"
+                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-6 py-3 sm:py-3 rounded-2xl apple-transition hover:shadow-blue-glow"
                 >
                   Close
                 </button>
@@ -261,9 +263,9 @@ export default function StaffApplication() {
 
         {!isApplicationsOpen ? (
           // Closed State - Apple Style
-          <div className="text-center space-y-8 animate-fade-in">
+          <div className="text-center space-y-6 sm:space-y-8 animate-fade-in">
             <div className="flex justify-center">
-              <div className="relative w-64 h-64 md:w-80 md:h-80 animate-float">
+              <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 animate-float">
                 <Image
                   src="/Resume folder-bro.svg"
                   alt="Applications Closed"
@@ -272,19 +274,19 @@ export default function StaffApplication() {
                 />
               </div>
             </div>
-            <div className="space-y-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))]">
-                <FiLock className="w-8 h-8 text-[rgb(var(--color-text-secondary))]" />
+            <div className="space-y-3 sm:space-y-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))]">
+                <FiLock className="w-6 h-6 sm:w-8 sm:h-8 text-[rgb(var(--color-text-secondary))]" />
               </div>
-              <h1 className="text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
                 Applications Closed
               </h1>
-              <p className="text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light leading-relaxed">
+              <p className="text-base sm:text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light leading-relaxed px-4">
                 {closedMessage}
               </p>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-8 py-4 rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow mt-4"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-6 py-3 sm:px-8 sm:py-4 rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow mt-4"
               >
                 Return Home
               </Link>
@@ -292,18 +294,18 @@ export default function StaffApplication() {
           </div>
         ) : !showForm ? (
           // Terms of Service Section
-          <div className="animate-fade-in space-y-8">
-            <div className="text-center space-y-4">
-              <h1 className="text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+          <div className="animate-fade-in space-y-6 sm:space-y-8">
+            <div className="text-center space-y-3 sm:space-y-4">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
                 Staff Application
               </h1>
-              <p className="text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light">
+              <p className="text-base sm:text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light px-4">
                 Please read and agree to our terms before proceeding
               </p>
             </div>
 
-            <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
-              <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Terms of Service</h2>
+            <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Terms of Service</h2>
               
               <div className="space-y-4 text-[rgb(var(--color-text-secondary))] max-h-96 overflow-y-auto pr-2">
                 <div className="space-y-2">
@@ -349,15 +351,15 @@ export default function StaffApplication() {
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-[rgb(var(--color-border))] space-y-4">
-                <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="pt-4 sm:pt-6 border-t border-[rgb(var(--color-border))] space-y-3 sm:space-y-4">
+                <label className="flex items-start sm:items-center gap-3 cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={agreedToTOS}
                     onChange={(e) => setAgreedToTOS(e.target.checked)}
-                    className="w-5 h-5 rounded border-2 border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] checked:bg-blue-600 dark:checked:bg-white checked:border-blue-600 dark:checked:border-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-white apple-transition cursor-pointer"
+                    className="w-5 h-5 mt-0.5 sm:mt-0 rounded border-2 border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] checked:bg-blue-600 dark:checked:bg-white checked:border-blue-600 dark:checked:border-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-white apple-transition cursor-pointer flex-shrink-0"
                   />
-                  <span className="text-[rgb(var(--color-text-secondary))] group-hover:text-[rgb(var(--color-text-primary))] apple-transition">
+                  <span className="text-sm sm:text-base text-[rgb(var(--color-text-secondary))] group-hover:text-[rgb(var(--color-text-primary))] apple-transition">
                     I have read and agree to the Terms of Service
                   </span>
                 </label>
@@ -365,7 +367,7 @@ export default function StaffApplication() {
                 <button
                   onClick={handleContinueToForm}
                   disabled={!agreedToTOS}
-                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black disabled:opacity-50 disabled:cursor-not-allowed font-semibold px-8 py-4 rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow text-lg"
+                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black disabled:opacity-50 disabled:cursor-not-allowed font-semibold px-6 py-3 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow text-base sm:text-lg"
                 >
                   Continue to Application
                 </button>
@@ -376,9 +378,9 @@ export default function StaffApplication() {
           // Application Form - Apple Style
           <>
             {/* Header */}
-            <div className="text-center space-y-6 mb-16 animate-fade-in">
+            <div className="text-center space-y-4 sm:space-y-6 mb-8 sm:mb-16 animate-fade-in">
               <div className="flex justify-center">
-                <div className="relative w-48 h-48 md:w-64 md:h-64 animate-float">
+                <div className="relative w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 animate-float">
                   <Image
                     src="/Forms-cuate.svg"
                     alt="Staff Application"
@@ -387,61 +389,61 @@ export default function StaffApplication() {
                   />
                 </div>
               </div>
-              <div className="space-y-3">
-                <h1 className="text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+              <div className="space-y-2 sm:space-y-3">
+                <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
                   Staff Application
                 </h1>
-                <p className="text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light leading-relaxed">
+                <p className="text-base sm:text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light leading-relaxed px-4">
                   Join our team and help build an amazing community experience.
                 </p>
               </div>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-8 animate-slide-up">
+            <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-8 animate-slide-up">
               {/* Discord Information */}
-              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
-                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Discord Information</h2>
+              <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
+                <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Discord Information</h2>
                 
                 {!session ? (
-                  <div className="text-center py-8 space-y-4">
-                    <p className="text-[rgb(var(--color-text-secondary))] mb-6">
+                  <div className="text-center py-6 sm:py-8 space-y-3 sm:space-y-4">
+                    <p className="text-sm sm:text-base text-[rgb(var(--color-text-secondary))] mb-4 sm:mb-6 px-2">
                       Please login with Discord to continue with your application
                     </p>
                     <button
                       type="button"
                       onClick={() => signIn('discord')}
-                      className="inline-flex items-center gap-3 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold px-8 py-4 rounded-2xl apple-transition shadow-apple-md hover:shadow-lg"
+                      className="inline-flex items-center gap-2 sm:gap-3 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold px-6 py-3 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl apple-transition shadow-apple-md hover:shadow-lg text-sm sm:text-base"
                     >
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
                       </svg>
                       Login with Discord
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {/* User Profile Display */}
-                    <div className="flex items-center gap-4 p-4 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl sm:rounded-apple">
                       {session.user?.image && (
                         <img 
                           src={session.user.image} 
                           alt={session.user.name || 'User'} 
-                          className="w-16 h-16 rounded-full border-2 border-blue-500"
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-blue-500"
                         />
                       )}
-                      <div className="flex-1">
-                        <p className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-base sm:text-lg font-semibold text-[rgb(var(--color-text-primary))] truncate">
                           {session.user?.name}
                         </p>
-                        <p className="text-sm text-[rgb(var(--color-text-tertiary))] font-mono">
+                        <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-mono truncate">
                           ID: {session.user?.id || 'Loading...'}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 text-green-500">
-                          <FiCheckCircle className="w-5 h-5" />
-                          <span className="text-sm font-medium">Verified</span>
+                      <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-green-500">
+                          <FiCheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <span className="text-xs sm:text-sm font-medium">Verified</span>
                         </div>
                         <button
                           type="button"
@@ -450,7 +452,7 @@ export default function StaffApplication() {
                               signOut({ callbackUrl: '/staff-application' });
                             }
                           }}
-                          className="px-3 py-1.5 text-sm bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-apple apple-transition"
+                          className="px-3 py-1.5 text-xs sm:text-sm bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg sm:rounded-apple apple-transition"
                         >
                           Logout
                         </button>
@@ -465,10 +467,10 @@ export default function StaffApplication() {
               </div>
 
               {/* Personal Information */}
-              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
-                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Personal Information</h2>
+              <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
+                <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Personal Information</h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
                       Country
@@ -518,10 +520,10 @@ export default function StaffApplication() {
               </div>
 
               {/* General Questions */}
-              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
-                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">General Questions</h2>
+              <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
+                <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">General Questions</h2>
                 
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
                       Tell us about yourself
@@ -617,10 +619,10 @@ export default function StaffApplication() {
               </div>
 
               {/* Moderation Questions */}
-              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
-                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Moderation Experience</h2>
+              <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
+                <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Moderation Experience</h2>
                 
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
                       Do you have any previous moderation experience?
@@ -669,10 +671,10 @@ export default function StaffApplication() {
               </div>
 
               {/* Bot & Discord Experience */}
-              <div className="glass-blue rounded-3xl p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-6">
-                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Discord Bot Experience</h2>
+              <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
+                <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Discord Bot Experience</h2>
                 
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div className="space-y-3">
                     <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
                       What is your experience with Discord bots? (Rate 1-5)
@@ -756,22 +758,22 @@ export default function StaffApplication() {
               <button
                 type="submit"
                 disabled={isSubmitting || !session}
-                className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black disabled:opacity-50 font-semibold px-8 py-5 rounded-2xl apple-transition shadow-apple-lg hover:shadow-blue-glow text-lg disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black disabled:opacity-50 font-semibold px-6 py-4 sm:px-8 sm:py-5 rounded-xl sm:rounded-2xl apple-transition shadow-apple-lg hover:shadow-blue-glow text-base sm:text-lg disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white dark:border-black border-t-transparent"></div>
-                    Submitting...
+                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white dark:border-black border-t-transparent"></div>
+                    <span>Submitting...</span>
                   </>
                 ) : !session ? (
                   <>
-                    <FiLock className="w-5 h-5" />
-                    Login with Discord to Submit
+                    <FiLock className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>Login with Discord to Submit</span>
                   </>
                 ) : (
                   <>
-                    <FiSend className="w-5 h-5" />
-                    Submit Application
+                    <FiSend className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>Submit Application</span>
                   </>
                 )}
               </button>
@@ -781,9 +783,9 @@ export default function StaffApplication() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[rgb(var(--color-border))] mt-24">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="text-center text-sm text-[rgb(var(--color-text-tertiary))] font-light space-y-2">
+      <footer className="border-t border-[rgb(var(--color-border))] mt-12 sm:mt-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="text-center text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-light space-y-2">
             <p>© 2026 Omeglee. All rights reserved.</p>
             <a href="https://discord.gg/omegle" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-[rgb(var(--color-text-secondary))] apple-transition">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">

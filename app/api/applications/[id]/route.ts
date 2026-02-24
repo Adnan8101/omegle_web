@@ -46,7 +46,38 @@ export async function GET(
     if (userId) {
       try {
         // Fetch Discord user profile with proper avatar URL construction
-        const userDisplay = await getUserDisplay(userId, 128);
+        let userDisplay = await getUserDisplay(userId, 128);
+        
+        // If user not in cache, try to fetch from Discord API directly
+        if (userDisplay.username === 'Unknown User') {
+          const botToken = process.env.DISCORD_BOT_TOKEN;
+          if (botToken) {
+            try {
+              const discordRes = await fetch(`https://discord.com/api/v10/users/${userId}`, {
+                headers: { Authorization: `Bot ${botToken}` },
+                cache: 'no-store',
+              });
+              if (discordRes.ok) {
+                const discordUser = await discordRes.json();
+                let avatarUrl = `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`;
+                if (discordUser.avatar) {
+                  const ext = discordUser.avatar.startsWith('a_') ? 'gif' : 'png';
+                  avatarUrl = `https://cdn.discordapp.com/avatars/${userId}/${discordUser.avatar}.${ext}?size=128`;
+                }
+                userDisplay = {
+                  id: userId,
+                  username: discordUser.username,
+                  displayName: discordUser.global_name || discordUser.username,
+                  avatar: avatarUrl,
+                  tag: discordUser.discriminator === '0' ? `@${discordUser.username}` : `${discordUser.username}#${discordUser.discriminator}`,
+                  inGuild: true,
+                };
+              }
+            } catch (discordErr) {
+              console.error('Error fetching user from Discord API:', discordErr);
+            }
+          }
+        }
         
         userProfile = {
           username: userDisplay.username,
@@ -89,12 +120,52 @@ export async function GET(
           LIMIT 50
         `, [userId, GUILD_ID]);
         
+        // Collect moderator IDs that need fetching from Discord API
+        const missingModIds = [...new Set(
+          (modLogsResult || [])
+            .filter((log: any) => !log.moderator_username && log.moderator_id)
+            .map((log: any) => log.moderator_id)
+        )].slice(0, 20) as string[];
+
+        // Fetch missing moderators from Discord API
+        const fetchedMods: Record<string, { username: string; displayName: string; avatar: string }> = {};
+        const botToken = process.env.DISCORD_BOT_TOKEN;
+        if (botToken && missingModIds.length > 0) {
+          for (const modId of missingModIds) {
+            try {
+              const res = await fetch(`https://discord.com/api/v10/users/${modId}`, {
+                headers: { Authorization: `Bot ${botToken}` },
+                cache: 'no-store',
+              });
+              if (res.ok) {
+                const user = await res.json();
+                let avatar = `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(modId) >> 22n) % 6}.png`;
+                if (user.avatar) {
+                  const ext = user.avatar.startsWith('a_') ? 'gif' : 'png';
+                  avatar = `https://cdn.discordapp.com/avatars/${modId}/${user.avatar}.${ext}?size=64`;
+                }
+                fetchedMods[modId] = {
+                  username: user.username,
+                  displayName: user.global_name || user.username,
+                  avatar,
+                };
+              }
+            } catch {
+              // Ignore errors for individual users
+            }
+          }
+        }
+        
         // Build full avatar URLs for moderators
         modLogs = (modLogsResult || []).map((log: any) => {
+          const fetched = fetchedMods[log.moderator_id];
+          
           let moderator_avatar_url = null;
           if (log.moderator_avatar_hash) {
             const extension = log.moderator_avatar_hash.startsWith('a_') ? 'gif' : 'png';
             moderator_avatar_url = `https://cdn.discordapp.com/avatars/${log.moderator_id}/${log.moderator_avatar_hash}.${extension}?size=64`;
+          } else if (fetched) {
+            moderator_avatar_url = fetched.avatar;
           } else if (log.moderator_id) {
             const defaultIndex = Number(BigInt(log.moderator_id) >> 22n) % 6;
             moderator_avatar_url = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
@@ -102,7 +173,8 @@ export async function GET(
           return {
             ...log,
             moderator_avatar_url,
-            moderator_display_name: log.moderator_nickname || log.moderator_display_name || log.moderator_username || 'Unknown Moderator',
+            moderator_display_name: log.moderator_nickname || log.moderator_display_name || log.moderator_username || fetched?.displayName || 'Unknown Moderator',
+            moderator_username: log.moderator_username || fetched?.username || null,
           };
         });
       } catch (err) {
