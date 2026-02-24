@@ -99,6 +99,8 @@ export default function StaffApplication() {
 
       if (response.ok) {
         setShowSuccessModal(true);
+        // Scroll to top smoothly when modal appears
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         setFormData({
           discordUsername: '',
           discordUserId: '',

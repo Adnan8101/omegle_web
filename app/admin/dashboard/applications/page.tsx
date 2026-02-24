@@ -229,6 +229,14 @@ export default function ApplicationsPage() {
     setModalTab('details');
     setShowModal(true);
     
+    // Scroll modal content to top
+    setTimeout(() => {
+      const modalContent = document.querySelector('.modal-content-scroll');
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+      }
+    }, 100);
+    
     // Fetch fresh application data including user stats and modlogs
     try {
       const response = await fetch(`/api/applications/${app._id}`);
@@ -518,16 +526,9 @@ export default function ApplicationsPage() {
               <div className="w-16 h-1.5 bg-gray-500/30 rounded-full mx-auto mb-2 sm:hidden"></div>
 
               {/* Modal Header */}
-              <div className="glass-effect border-b border-[rgb(var(--color-border))] p-5 sm:p-8 flex items-start sm:items-center justify-between flex-shrink-0 backdrop-blur-xl">
+              <div className="glass-effect border-b border-[rgb(var(--color-border))] p-5 sm:p-8 flex items-start justify-between flex-shrink-0 backdrop-blur-xl">
                 <div className="flex-1 pr-4">
                   <div className="flex items-center gap-4 mb-2">
-                    {selectedApp.userProfile?.avatar_url && (
-                      <img 
-                        src={`https://cdn.discordapp.com/avatars/${selectedApp.discordUserId}/${selectedApp.userProfile.avatar_url}.png?size=128`}
-                        alt={selectedApp.userProfile.username || selectedApp.discordUsername}
-                        className="w-16 h-16 rounded-full border-2 border-[rgb(var(--color-border))]"
-                      />
-                    )}
                     <div>
                       <h2 className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
                         {selectedApp.userProfile?.display_name || selectedApp.userProfile?.username || selectedApp.discordUsername}
@@ -550,14 +551,29 @@ export default function ApplicationsPage() {
                     })}
                   </p>
                 </div>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="p-3 hover:bg-[rgb(var(--color-bg-tertiary))] rounded-apple-lg apple-transition"
-                >
-                  <svg
-                    className="w-6 h-6 text-[rgb(var(--color-text-secondary))]"
-                    fill="none"
-                    stroke="currentColor"
+                <div className="flex items-start gap-3">
+                  {selectedApp.userProfile?.avatar_url ? (
+                    <img 
+                      src={`https://cdn.discordapp.com/avatars/${selectedApp.discordUserId}/${selectedApp.userProfile.avatar_url}.${selectedApp.userProfile.avatar_url.startsWith('a_') ? 'gif' : 'png'}?size=128`}
+                      alt={selectedApp.userProfile.username || selectedApp.discordUsername}
+                      className="w-16 h-16 rounded-full border-2 border-blue-500 shadow-lg"
+                      onError={(e) => {
+                        e.currentTarget.src = `https://cdn.discordapp.com/embed/avatars/${parseInt(selectedApp.discordUserId) % 5}.png`;
+                      }}
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white text-2xl font-bold border-2 border-blue-600 shadow-lg">
+                      {(selectedApp.userProfile?.username || selectedApp.discordUsername).charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="p-3 hover:bg-[rgb(var(--color-bg-tertiary))] rounded-apple-lg apple-transition"
+                  >
+                    <svg
+                      className="w-6 h-6 text-[rgb(var(--color-text-secondary))]"
+                      fill="none"
+                      stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
                     <path
@@ -598,7 +614,7 @@ export default function ApplicationsPage() {
                   )}
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
+              <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 modal-content-scroll">
                 {modalTab === 'details' ? (
                   <>
                 {/* Status Management */}
@@ -878,22 +894,29 @@ export default function ApplicationsPage() {
                         <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
                           Moderation History
                           <span className="ml-3 px-3 py-1 text-sm bg-red-500 text-white rounded-full">
-                            {selectedApp.modLogs.length} {selectedApp.modLogs.length === 1 ? 'action' : 'actions'}
+                            {selectedApp.modLogs.length} {selectedApp.modLogs.length === 1 ? 'case' : 'cases'}
                           </span>
                         </h3>
                         <div className="space-y-4">
-                          {selectedApp.modLogs.map((log, index) => (
+                          {selectedApp.modLogs.map((log: any, index: number) => (
                             <div 
                               key={index}
                               className="bg-[rgb(var(--color-bg-tertiary))] p-5 rounded-apple-lg border-l-4 border-red-500"
                             >
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                                <div className="flex items-center gap-3">
-                                  <span className="px-3 py-1 bg-red-500/20 text-red-500 dark:text-red-400 rounded-apple font-semibold text-sm uppercase">
-                                    {log.action_type || 'Unknown'}
-                                  </span>
+                              <div className="flex flex-col gap-3">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex items-center gap-3 flex-wrap">
+                                    {log.case_number && (
+                                      <span className="px-2.5 py-1 bg-[rgb(var(--color-bg-secondary))] text-[rgb(var(--color-text-secondary))] rounded-apple font-mono text-xs">
+                                        #{log.case_number}
+                                      </span>
+                                    )}
+                                    <span className="px-3 py-1 bg-red-500/20 text-red-500 dark:text-red-400 rounded-apple font-semibold text-sm uppercase">
+                                      {log.action || log.action_type || 'Unknown'}
+                                    </span>
+                                  </div>
                                   {log.created_at && (
-                                    <span className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                                    <span className="text-xs text-[rgb(var(--color-text-tertiary))]">
                                       {new Date(log.created_at).toLocaleDateString('en-US', {
                                         month: 'short',
                                         day: 'numeric',
@@ -904,17 +927,29 @@ export default function ApplicationsPage() {
                                     </span>
                                   )}
                                 </div>
+                                
                                 {log.moderator_id && (
-                                  <span className="text-sm text-[rgb(var(--color-text-secondary))] font-mono">
-                                    Mod: {log.moderator_id}
-                                  </span>
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <span className="text-[rgb(var(--color-text-tertiary))]">Moderator:</span>
+                                    <span className="text-[rgb(var(--color-text-secondary))] font-mono bg-[rgb(var(--color-bg-secondary))] px-2 py-0.5 rounded">
+                                      {log.moderator_id}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {log.reason && (
+                                  <div>
+                                    <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Reason: </span>
+                                    <span className="text-[rgb(var(--color-text-secondary))]">{log.reason}</span>
+                                  </div>
+                                )}
+                                
+                                {log.duration_seconds && (
+                                  <div className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                                    Duration: {Math.floor(log.duration_seconds / 86400)}d {Math.floor((log.duration_seconds % 86400) / 3600)}h
+                                  </div>
                                 )}
                               </div>
-                              {log.reason && (
-                                <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed">
-                                  <span className="font-semibold text-[rgb(var(--color-text-primary))]">Reason:</span> {log.reason}
-                                </p>
-                              )}
                             </div>
                           ))}
                         </div>
