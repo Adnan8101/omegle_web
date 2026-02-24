@@ -97,12 +97,12 @@ export async function GET(request: NextRequest) {
     const allModStats = await queryBotDb(`
       SELECT 
         COUNT(*) as total_cases,
-        COUNT(CASE WHEN action = 'MUTE' THEN 1 END) as mutes,
-        COUNT(CASE WHEN action = 'BAN' THEN 1 END) as bans,
-        COUNT(CASE WHEN action = 'KICK' THEN 1 END) as kicks,
-        COUNT(CASE WHEN action = 'WARN' THEN 1 END) as warns,
-        COUNT(CASE WHEN action = 'UNBAN' THEN 1 END) as unbans,
-        COUNT(CASE WHEN action = 'UNMUTE' THEN 1 END) as unmutes
+        COUNT(CASE WHEN action = 'mute' THEN 1 END) as mutes,
+        COUNT(CASE WHEN action = 'ban' THEN 1 END) as bans,
+        COUNT(CASE WHEN action = 'kick' THEN 1 END) as kicks,
+        COUNT(CASE WHEN action = 'warn' THEN 1 END) as warns,
+        COUNT(CASE WHEN action = 'unban' THEN 1 END) as unbans,
+        COUNT(CASE WHEN action = 'unmute' THEN 1 END) as unmutes
       FROM moderation_cases
       WHERE guild_id = $1
     `, [GUILD_ID]);
@@ -121,12 +121,12 @@ export async function GET(request: NextRequest) {
       SELECT 
         moderator_id,
         COUNT(*) as total_cases,
-        COUNT(CASE WHEN action = 'MUTE' THEN 1 END) as mutes,
-        COUNT(CASE WHEN action = 'BAN' THEN 1 END) as bans,
-        COUNT(CASE WHEN action = 'KICK' THEN 1 END) as kicks,
-        COUNT(CASE WHEN action = 'WARN' THEN 1 END) as warns,
-        COUNT(CASE WHEN action = 'UNBAN' THEN 1 END) as unbans,
-        COUNT(CASE WHEN action = 'UNMUTE' THEN 1 END) as unmutes,
+        COUNT(CASE WHEN action = 'mute' THEN 1 END) as mutes,
+        COUNT(CASE WHEN action = 'ban' THEN 1 END) as bans,
+        COUNT(CASE WHEN action = 'kick' THEN 1 END) as kicks,
+        COUNT(CASE WHEN action = 'warn' THEN 1 END) as warns,
+        COUNT(CASE WHEN action = 'unban' THEN 1 END) as unbans,
+        COUNT(CASE WHEN action = 'unmute' THEN 1 END) as unmutes,
         MAX(created_at) as last_action
       FROM moderation_cases
       WHERE guild_id = $1 AND moderator_id IN (${placeholders})
