@@ -32,6 +32,27 @@ export interface IStaffApplication {
   createdAt: Date;
   updatedAt: Date;
   notes?: string;
+  
+  // Fetched user data
+  userProfile?: {
+    username?: string;
+    display_name?: string;
+    avatar_url?: string;
+    in_guild?: boolean;
+    nickname?: string;
+  } | null;
+  userStats?: {
+    vc_duration?: number;
+    vc_sessions?: number;
+    message_count?: number;
+  } | null;
+  modLogs?: Array<{
+    action_type?: string;
+    reason?: string;
+    moderator_id?: string;
+    created_at?: string;
+  }>;
+  dataFetchedAt?: Date;
 }
 
 const StaffApplicationSchema = new Schema<IStaffApplication>(
@@ -68,6 +89,12 @@ const StaffApplicationSchema = new Schema<IStaffApplication>(
       default: 'pending',
     },
     notes: { type: String, default: '' },
+    
+    // Fetched user data
+    userProfile: { type: Schema.Types.Mixed, default: null },
+    userStats: { type: Schema.Types.Mixed, default: null },
+    modLogs: { type: [Schema.Types.Mixed], default: [] },
+    dataFetchedAt: { type: Date, default: null },
   },
   {
     timestamps: true,

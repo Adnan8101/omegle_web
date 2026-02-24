@@ -37,6 +37,27 @@ interface Application {
   createdAt: string;
   updatedAt: string;
   notes?: string;
+  
+  // Fetched user data
+  userProfile?: {
+    username?: string;
+    display_name?: string;
+    avatar_url?: string;
+    in_guild?: boolean;
+    nickname?: string;
+  } | null;
+  userStats?: {
+    vc_duration?: number;
+    vc_sessions?: number;
+    message_count?: number;
+  } | null;
+  modLogs?: Array<{
+    action_type?: string;
+    reason?: string;
+    moderator_id?: string;
+    created_at?: string;
+  }>;
+  dataFetchedAt?: string;
 }
 
 export default function ApplicationsPage() {
@@ -51,6 +72,7 @@ export default function ApplicationsPage() {
   const [showModal, setShowModal] = useState(false);
   const [notes, setNotes] = useState('');
   const [isApplicationsOpen, setIsApplicationsOpen] = useState(true);
+  const [modalTab, setModalTab] = useState<'details' | 'userData'>('details');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -169,9 +191,11 @@ export default function ApplicationsPage() {
       const result = await response.json();
       if (result.success) {
         alert('Notes updated successfully!');
-        if (selectedApp?._id === id) {
-          setSelectedApp(result.data);
-        }
+        // Update selected app with new notes
+        setSelectedApp(result.data);
+        setNotes(result.data.notes || '');
+        // Refresh applications list
+        await fetchApplications();
       }
     } catch (error) {
       console.error('Error updating notes:', error);
@@ -199,10 +223,23 @@ export default function ApplicationsPage() {
     }
   };
 
-  const openModal = (app: Application) => {
+  const openModal = async (app: Application) => {
     setSelectedApp(app);
     setNotes(app.notes || '');
+    setModalTab('details');
     setShowModal(true);
+    
+    // Fetch fresh application data including user stats and modlogs
+    try {
+      const response = await fetch(`/api/applications/${app._id}`);
+      const result = await response.json();
+      if (result.success) {
+        setSelectedApp(result.data);
+        setNotes(result.data.notes || '');
+      }
+    } catch (error) {
+      console.error('Error fetching application details:', error);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -483,9 +520,25 @@ export default function ApplicationsPage() {
               {/* Modal Header */}
               <div className="glass-effect border-b border-[rgb(var(--color-border))] p-5 sm:p-8 flex items-start sm:items-center justify-between flex-shrink-0 backdrop-blur-xl">
                 <div className="flex-1 pr-4">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight mb-1 sm:mb-2">
-                    Application Details
-                  </h2>
+                  <div className="flex items-center gap-4 mb-2">
+                    {selectedApp.userProfile?.avatar_url && (
+                      <img 
+                        src={`https://cdn.discordapp.com/avatars/${selectedApp.discordUserId}/${selectedApp.userProfile.avatar_url}.png?size=128`}
+                        alt={selectedApp.userProfile.username || selectedApp.discordUsername}
+                        className="w-16 h-16 rounded-full border-2 border-[rgb(var(--color-border))]"
+                      />
+                    )}
+                    <div>
+                      <h2 className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+                        {selectedApp.userProfile?.display_name || selectedApp.userProfile?.username || selectedApp.discordUsername}
+                      </h2>
+                      {selectedApp.userProfile?.in_guild !== undefined && (
+                        <p className="text-sm text-[rgb(var(--color-text-tertiary))] mt-1">
+                          {selectedApp.userProfile.in_guild ? '✓ Member of server' : '✗ Not in server'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                   <p className="text-[rgb(var(--color-text-secondary))] text-sm font-light">
                     Submitted on{' '}
                     {new Date(selectedApp.createdAt).toLocaleDateString('en-US', {
@@ -517,8 +570,37 @@ export default function ApplicationsPage() {
                 </button>
               </div>
 
-              {/* Modal Content */}
+              {/* Tab Navigation */}
+              <div className="flex border-b border-[rgb(var(--color-border))] px-6 sm:px-8 gap-2">
+                <button
+                  onClick={() => setModalTab('details')}
+                  className={`px-6 py-3 font-semibold transition-all relative ${
+                    modalTab === 'details'
+                      ? 'text-[rgb(var(--color-accent))] border-b-2 border-[rgb(var(--color-accent))]'
+                      : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
+                  }`}
+                >
+                  Application Details
+                </button>
+                <button
+                  onClick={() => setModalTab('userData')}
+                  className={`px-6 py-3 font-semibold transition-all relative ${
+                    modalTab === 'userData'
+                      ? 'text-[rgb(var(--color-accent))] border-b-2 border-[rgb(var(--color-accent))]'
+                      : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
+                  }`}
+                >
+                  User Data & Modlogs
+                  {selectedApp.modLogs && selectedApp.modLogs.length > 0 && (
+                    <span className="ml-2 px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">
+                      {selectedApp.modLogs.length}
+                    </span>
+                  )}
+                </button>
+              </div>
               <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
+                {modalTab === 'details' ? (
+                  <>
                 {/* Status Management */}
                 <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                   <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
@@ -713,6 +795,15 @@ export default function ApplicationsPage() {
                   <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
                     Admin Notes
                   </h3>
+                  
+                  {/* Display existing notes if they exist */}
+                  {selectedApp.notes && (
+                    <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-apple">
+                      <p className="text-sm text-blue-500 font-semibold mb-2">Saved Notes:</p>
+                      <p className="text-[rgb(var(--color-text-primary))] whitespace-pre-wrap">{selectedApp.notes}</p>
+                    </div>
+                  )}
+                  
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
@@ -744,6 +835,119 @@ export default function ApplicationsPage() {
                     Close
                   </button>
                 </div>
+                </>
+                ) : (
+                  <>
+                {/* User Data Tab */}
+                {selectedApp.userProfile || selectedApp.userStats || selectedApp.modLogs ? (
+                  <>
+                    {/* User Stats */}
+                    {selectedApp.userStats && (
+                      <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                        <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
+                          User Activity Stats
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="bg-[rgb(var(--color-bg-tertiary))] p-5 rounded-apple-lg">
+                            <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Total VC Time</p>
+                            <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">
+                              {selectedApp.userStats.vc_duration 
+                                ? `${Math.floor(selectedApp.userStats.vc_duration / 3600)}h ${Math.floor((selectedApp.userStats.vc_duration % 3600) / 60)}m`
+                                : 'N/A'}
+                            </p>
+                          </div>
+                          <div className="bg-[rgb(var(--color-bg-tertiary))] p-5 rounded-apple-lg">
+                            <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">VC Sessions</p>
+                            <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">
+                              {selectedApp.userStats.vc_sessions?.toLocaleString() || 'N/A'}
+                            </p>
+                          </div>
+                          <div className="bg-[rgb(var(--color-bg-tertiary))] p-5 rounded-apple-lg">
+                            <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Messages Sent</p>
+                            <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">
+                              {selectedApp.userStats.message_count?.toLocaleString() || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Moderation Logs */}
+                    {selectedApp.modLogs && selectedApp.modLogs.length > 0 ? (
+                      <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                        <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
+                          Moderation History
+                          <span className="ml-3 px-3 py-1 text-sm bg-red-500 text-white rounded-full">
+                            {selectedApp.modLogs.length} {selectedApp.modLogs.length === 1 ? 'action' : 'actions'}
+                          </span>
+                        </h3>
+                        <div className="space-y-4">
+                          {selectedApp.modLogs.map((log, index) => (
+                            <div 
+                              key={index}
+                              className="bg-[rgb(var(--color-bg-tertiary))] p-5 rounded-apple-lg border-l-4 border-red-500"
+                            >
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                                <div className="flex items-center gap-3">
+                                  <span className="px-3 py-1 bg-red-500/20 text-red-500 dark:text-red-400 rounded-apple font-semibold text-sm uppercase">
+                                    {log.action_type || 'Unknown'}
+                                  </span>
+                                  {log.created_at && (
+                                    <span className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                                      {new Date(log.created_at).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })}
+                                    </span>
+                                  )}
+                                </div>
+                                {log.moderator_id && (
+                                  <span className="text-sm text-[rgb(var(--color-text-secondary))] font-mono">
+                                    Mod: {log.moderator_id}
+                                  </span>
+                                )}
+                              </div>
+                              {log.reason && (
+                                <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed">
+                                  <span className="font-semibold text-[rgb(var(--color-text-primary))]">Reason:</span> {log.reason}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-green-500/10 border border-green-500/30 rounded-apple-lg p-6 text-center">
+                        <svg className="w-16 h-16 mx-auto mb-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 className="text-xl font-semibold text-green-500 mb-2">Clean Record</h3>
+                        <p className="text-[rgb(var(--color-text-secondary))]">This user has no moderation history</p>
+                      </div>
+                    )}
+
+                    {selectedApp.dataFetchedAt && (
+                      <div className="text-center text-sm text-[rgb(var(--color-text-tertiary))]">
+                        Data fetched on {new Date(selectedApp.dataFetchedAt).toLocaleString()}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple-lg p-12 text-center">
+                    <svg className="w-20 h-20 mx-auto mb-4 text-[rgb(var(--color-text-tertiary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                    <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">No User Data Available</h3>
+                    <p className="text-[rgb(var(--color-text-secondary))]">
+                      User data was not fetched when this application was submitted
+                    </p>
+                  </div>
+                )}
+                </>
+                )}
               </div>
             </div>
           </div>

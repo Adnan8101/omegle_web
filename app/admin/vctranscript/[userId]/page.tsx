@@ -594,6 +594,131 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
             {/* ===== OVERVIEW TAB ===== */}
             {activeTab === 'overview' && (
               <>
+                {/* Voice Activity Stats with Pie Chart */}
+                {data?.voiceUserStats && (
+                  <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))] mb-8">
+                    <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-6">Voice Activity Breakdown</h2>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                      {/* Pie Chart */}
+                      <div className="flex flex-col items-center justify-center">
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={(() => {
+                                const stats = data.voiceUserStats;
+                                const totalTime = stats.total_time_in_vc || 0;
+                                return [
+                                  { name: 'Speaking', value: stats.total_time_speaking || 0, color: '#10b981' },
+                                  { name: 'Muted', value: stats.total_time_muted || 0, color: '#6b7280' },
+                                  { name: 'Deafened', value: stats.total_time_deafened || 0, color: '#ef4444' },
+                                  { name: 'Active Listening', value: stats.total_time_listening || 0, color: '#3b82f6' },
+                                ].filter(item => item.value > 0);
+                              })()}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={100}
+                              paddingAngle={5}
+                              dataKey="value"
+                              label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(1)}%`}
+                            >
+                              {[
+                                { name: 'Speaking', value: data.voiceUserStats.total_time_speaking || 0, color: '#10b981' },
+                                { name: 'Muted', value: data.voiceUserStats.total_time_muted || 0, color: '#6b7280' },
+                                { name: 'Deafened', value: data.voiceUserStats.total_time_deafened || 0, color: '#ef4444' },
+                                { name: 'Active Listening', value: data.voiceUserStats.total_time_listening || 0, color: '#3b82f6' },
+                              ].filter(item => item.value > 0).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'rgb(var(--color-bg-tertiary))',
+                                border: '1px solid rgb(var(--color-border))',
+                                borderRadius: '8px'
+                              }}
+                              formatter={(value: number | undefined) => {
+                                if (!value) return '0s';
+                                const hours = Math.floor(value / 3600);
+                                const minutes = Math.floor((value % 3600) / 60);
+                                const seconds = value % 60;
+                                if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+                                if (minutes > 0) return `${minutes}m ${seconds}s`;
+                                return `${seconds}s`;
+                              }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Stats Cards */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {(() => {
+                          const stats = data.voiceUserStats;
+                          const totalTime = stats.total_time_in_vc || 0;
+                          const speakingTime = stats.total_time_speaking || 0;
+                          const mutedTime = stats.total_time_muted || 0;
+                          const deafenedTime = stats.total_time_deafened || 0;
+                          const listeningTime = stats.total_time_listening || 0;
+                          
+                          const speakingPercent = totalTime > 0 ? ((speakingTime / totalTime) * 100).toFixed(1) : '0.0';
+                          const mutedPercent = totalTime > 0 ? ((mutedTime / totalTime) * 100).toFixed(1) : '0.0';
+                          const deafPercent = totalTime > 0 ? ((deafenedTime / totalTime) * 100).toFixed(1) : '0.0';
+                          const listeningPercent = totalTime > 0 ? ((listeningTime / totalTime) * 100).toFixed(1) : '0.0';
+
+                          const formatActivityDuration = (seconds: number) => {
+                            if (!seconds) return '0m';
+                            const hours = Math.floor(seconds / 3600);
+                            const minutes = Math.floor((seconds % 3600) / 60);
+                            const secs = seconds % 60;
+                            if (hours > 0) return `${hours}h ${minutes}m`;
+                            if (minutes > 0) return `${minutes}m`;
+                            return `${secs}s`;
+                          };
+
+                          return (
+                            <>
+                              <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/30 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <FiMic className="w-5 h-5 text-green-400" />
+                                  <span className="text-xs font-semibold text-green-400 uppercase tracking-wide">Speaking</span>
+                                </div>
+                                <p className="text-2xl font-bold text-green-400 mb-1">{formatActivityDuration(speakingTime)}</p>
+                                <p className="text-xs text-[rgb(var(--color-text-secondary))]">{speakingPercent}%</p>
+                              </div>
+                              <div className="bg-gradient-to-br from-gray-500/10 to-gray-600/5 border border-gray-500/30 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <FiActivity className="w-5 h-5 text-gray-400" />
+                                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Muted</span>
+                                </div>
+                                <p className="text-2xl font-bold text-gray-400 mb-1">{formatActivityDuration(mutedTime)}</p>
+                                <p className="text-xs text-[rgb(var(--color-text-secondary))]">{mutedPercent}%</p>
+                              </div>
+                              <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/30 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <FiUsers className="w-5 h-5 text-red-400" />
+                                  <span className="text-xs font-semibold text-red-400 uppercase tracking-wide">Deafened</span>
+                                </div>
+                                <p className="text-2xl font-bold text-red-400 mb-1">{formatActivityDuration(deafenedTime)}</p>
+                                <p className="text-xs text-[rgb(var(--color-text-secondary))]">{deafPercent}%</p>
+                              </div>
+                              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/30 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <FiTrendingUp className="w-5 h-5 text-blue-400" />
+                                  <span className="text-xs font-semibold text-blue-400 uppercase tracking-wide">Listening</span>
+                                </div>
+                                <p className="text-2xl font-bold text-blue-400 mb-1">{formatActivityDuration(listeningTime)}</p>
+                                <p className="text-xs text-[rgb(var(--color-text-secondary))]">{listeningPercent}%</p>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                   <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                     <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
@@ -627,75 +752,6 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
                     </ResponsiveContainer>
                   </div>
                 </div>
-
-                {/* Voice Activity Stats in Overview */}
-                {data?.voiceUserStats && (
-                  <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))] mb-8">
-                    <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-6">Voice Activity Breakdown</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      {(() => {
-                        const stats = data.voiceUserStats;
-                        const totalTime = stats.total_time_in_vc || 0;
-                        const speakingTime = stats.total_time_speaking || 0;
-                        const mutedTime = stats.total_time_muted || 0;
-                        const deafenedTime = stats.total_time_deafened || 0;
-                        const listeningTime = stats.total_time_listening || 0;
-                        
-                        const speakingPercent = totalTime > 0 ? ((speakingTime / totalTime) * 100).toFixed(1) : '0.0';
-                        const mutedPercent = totalTime > 0 ? ((mutedTime / totalTime) * 100).toFixed(1) : '0.0';
-                        const deafPercent = totalTime > 0 ? ((deafenedTime / totalTime) * 100).toFixed(1) : '0.0';
-                        const listeningPercent = totalTime > 0 ? ((listeningTime / totalTime) * 100).toFixed(1) : '0.0';
-
-                        const formatActivityDuration = (seconds: number) => {
-                          if (!seconds) return '0m';
-                          const hours = Math.floor(seconds / 3600);
-                          const minutes = Math.floor((seconds % 3600) / 60);
-                          const secs = seconds % 60;
-                          if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
-                          if (minutes > 0) return `${minutes}m ${secs}s`;
-                          return `${secs}s`;
-                        };
-
-                        return (
-                          <>
-                            <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/30 rounded-xl p-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <FiMic className="w-5 h-5 text-green-400" />
-                                <span className="text-xs font-semibold text-green-400 uppercase tracking-wide">Speaking Time</span>
-                              </div>
-                              <p className="text-2xl font-bold text-green-400 mb-1">{formatActivityDuration(speakingTime)}</p>
-                              <p className="text-xs text-[rgb(var(--color-text-secondary))]">({speakingPercent}%)</p>
-                            </div>
-                            <div className="bg-gradient-to-br from-gray-500/10 to-gray-600/5 border border-gray-500/30 rounded-xl p-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <FiActivity className="w-5 h-5 text-gray-400" />
-                                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Muted Time</span>
-                              </div>
-                              <p className="text-2xl font-bold text-gray-400 mb-1">{formatActivityDuration(mutedTime)}</p>
-                              <p className="text-xs text-[rgb(var(--color-text-secondary))]">({mutedPercent}%)</p>
-                            </div>
-                            <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/30 rounded-xl p-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <FiUsers className="w-5 h-5 text-red-400" />
-                                <span className="text-xs font-semibold text-red-400 uppercase tracking-wide">Deafened Time</span>
-                              </div>
-                              <p className="text-2xl font-bold text-red-400 mb-1">{formatActivityDuration(deafenedTime)}</p>
-                              <p className="text-xs text-[rgb(var(--color-text-secondary))]">({deafPercent}%)</p>
-                            </div>
-                            <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/30 rounded-xl p-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <FiTrendingUp className="w-5 h-5 text-blue-400" />
-                                <span className="text-xs font-semibold text-blue-400 uppercase tracking-wide">Active Listening</span>
-                              </div>
-                              <p className="text-2xl font-bold text-blue-400 mb-1">{formatActivityDuration(listeningTime)}</p>
-                              <p className="text-xs text-[rgb(var(--color-text-secondary))]">({listeningPercent}%)</p>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                )}
 
                 <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))] mb-8">
                   <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-6">Activity Metrics</h2>

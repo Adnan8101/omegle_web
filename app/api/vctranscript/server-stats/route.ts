@@ -76,7 +76,24 @@ export async function GET(request: NextRequest) {
     console.log('[server-stats] vcSubqueryDateClause:', vcSubqueryDateClause);
     console.log('[server-stats] chatSubqueryDateClause:', chatSubqueryDateClause);
 
-    // 1. User Rankings — top 500 by VC + text combined
+    // 1. Get total unique member count
+    const totalMembersResult = await queryBotDb(`
+      SELECT COUNT(DISTINCT COALESCE(vc.user_id, cl.user_id))::int as total_members
+      FROM (
+        SELECT DISTINCT user_id
+        FROM voice_logs
+        WHERE guild_id = $1 AND left_at IS NOT NULL${vcSubqueryDateClause}
+      ) vc
+      FULL OUTER JOIN (
+        SELECT DISTINCT user_id
+        FROM chat_logs
+        WHERE guild_id = $1${chatSubqueryDateClause}
+      ) cl ON vc.user_id = cl.user_id
+    `, combinedParams).catch((err) => { console.error('totalMembers error:', err); return [{ total_members: 0 }]; });
+    
+    const totalMembers = totalMembersResult[0]?.total_members || 0;
+
+    // 2. User Rankings — top 500 by VC + text combined
     const userRankings = await queryBotDb(`
       SELECT 
         COALESCE(vc.user_id, cl.user_id) as user_id,
@@ -219,6 +236,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
+      totalMembers,
       userRankings: userRankings || [],
       topVoiceChannels: topVoiceChannels || [],
       vcContributorsByChannel,
@@ -229,6 +247,7 @@ export async function GET(request: NextRequest) {
     const message = getErrorMessage(error);
     console.error('Error fetching server stats:', message);
     return NextResponse.json({
+      totalMembers: 0,
       userRankings: [],
       topVoiceChannels: [],
       vcContributorsByChannel: {},

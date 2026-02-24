@@ -52,7 +52,7 @@ export async function GET(
     const endDate = searchParams.get('endDate');
     const dateFilter = { startDate, endDate };
 
-    const [vcStats, vcSessions, chatStats, interactions] = await Promise.all([
+    const [vcStats, vcSessions, chatStats, interactions, voiceUserStats] = await Promise.all([
       getUserVCStats(userId, GUILD_ID, dateFilter).catch((e: unknown) => {
         console.error('Error fetching VC stats:', getErrorMessage(e));
         return emptyVCStats;
@@ -69,6 +69,10 @@ export async function GET(
         console.error('Error fetching interactions:', getErrorMessage(e));
         return [];
       }),
+      getUserVoiceUserStats(userId, GUILD_ID).catch((e: unknown) => {
+        console.error('Error fetching voice user stats:', getErrorMessage(e));
+        return null;
+      }),
     ]);
 
     return NextResponse.json({
@@ -77,6 +81,7 @@ export async function GET(
       vcSessions: vcSessions || [],
       chatStats: chatStats || emptyChatStats,
       interactions: interactions || [],
+      voiceUserStats: voiceUserStats || null,
     });
   } catch (error: unknown) {
     console.error('Error fetching VC transcript:', getErrorMessage(error));
@@ -86,6 +91,7 @@ export async function GET(
       vcSessions: [],
       chatStats: emptyChatStats,
       interactions: [],
+      voiceUserStats: null,
       _error: getErrorMessage(error),
     });
   }

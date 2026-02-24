@@ -62,6 +62,7 @@ export default function ServerStatsPage() {
     const [expandedChannels, setExpandedChannels] = useState<Set<string>>(new Set());
     const [dateRange, setDateRange] = useState<{ startDate: string | null; endDate: string | null }>({ startDate: null, endDate: null });
 
+    const [totalMembers, setTotalMembers] = useState(0);
     const [userRankings, setUserRankings] = useState<UserRanking[]>([]);
     const [topVoiceChannels, setTopVoiceChannels] = useState<ChannelStats[]>([]);
     const [vcContributors, setVcContributors] = useState<Record<string, Contributor[]>>({});
@@ -89,6 +90,7 @@ export default function ServerStatsPage() {
             if (r.endDate) params.set('endDate', r.endDate);
             const res = await fetch(`/api/vctranscript/server-stats?${params}`);
             const data = await res.json();
+            setTotalMembers(data.totalMembers || 0);
             setUserRankings(data.userRankings || []);
             setTopVoiceChannels(data.topVoiceChannels || []);
             setVcContributors(data.vcContributorsByChannel || {});
@@ -169,7 +171,7 @@ export default function ServerStatsPage() {
 
     const totalVcTime = userRankings.reduce((sum, u) => sum + u.vc_duration, 0);
     const totalMessages = userRankings.reduce((sum, u) => sum + u.message_count, 0);
-    const totalUsers = userRankings.length;
+    const totalUsers = totalMembers || userRankings.length; // Use totalMembers from API
     const totalSessions = userRankings.reduce((sum, u) => sum + (u.vc_sessions || 0), 0);
     const totalCharacters = userRankings.reduce((sum, u) => sum + (u.total_characters || 0), 0);
     const avgVcTime = totalUsers > 0 ? totalVcTime / totalUsers : 0;

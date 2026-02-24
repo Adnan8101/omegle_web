@@ -194,3 +194,52 @@ button {
   outline: 2px solid rgb(var(--color-accent));
   outline-offset: 2px;
 }
+/* Recharts tooltip styling - Fix black text visibility */
+.recharts-tooltip-wrapper {
+  z-index: 1000 !important;
+}
+
+.recharts-default-tooltip {
+  background-color: rgb(var(--color-bg-tertiary)) !important;
+  border: 1px solid rgb(var(--color-border)) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.recharts-tooltip-label {
+  color: rgb(var(--color-text-primary)) !important;
+  font-weight: 600 !important;
+  margin-bottom: 4px !important;
+}
+
+.recharts-tooltip-item {
+  color: rgb(var(--color-text-secondary)) !important;
+}
+
+.recharts-tooltip-item-name,
+.recharts-tooltip-item-separator,
+.recharts-tooltip-item-value {
+  color: rgb(var(--color-text-primary)) !important;
+}
+
+/* Recharts legend text */
+.recharts-legend-item-text {
+  color: rgb(var(--color-text-primary)) !important;
+}
+
+/* Recharts axis text */
+.recharts-cartesian-axis-tick-value {
+  fill: rgb(var(--color-text-secondary)) !important;
+}
+
+/* Recharts label text */
+.recharts-label {
+  fill: rgb(var(--color-text-primary)) !important;
+}
+
+/* Pie chart label text */
+.recharts-pie-label-text {
+  fill: rgb(var(--color-text-primary)) !important;
+  font-weight: 600 !important;
+}
