@@ -14,9 +14,16 @@ import {
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import DateRangeFilter from '@/components/DateRangeFilter';
 
-// Build avatar URL from hash
+// Build avatar URL from hash (handles both hash and legacy full URLs)
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
+    // Check if it's already a full URL (legacy data)
+    if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
+      if (avatarHash.includes('?size=')) {
+        return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
+      }
+      return avatarHash;
+    }
     const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
     return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
   }

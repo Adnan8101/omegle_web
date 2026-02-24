@@ -20,6 +20,13 @@ interface UserDisplay {
 
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
+    // Check if it's already a full URL (legacy data)
+    if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
+      if (avatarHash.includes('?size=')) {
+        return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
+      }
+      return avatarHash;
+    }
     const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
     return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
   }
