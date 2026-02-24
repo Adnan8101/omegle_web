@@ -57,6 +57,8 @@ interface Application {
     action_type?: string; // fallback for old data
     reason?: string;
     moderator_id?: string;
+    moderator_username?: string;
+    moderator_display_name?: string;
     created_at?: string;
     duration_seconds?: number;
     active?: boolean;
@@ -941,9 +943,15 @@ export default function ApplicationsPage() {
                                 {log.moderator_id && (
                                   <div className="flex items-center gap-2 text-sm">
                                     <span className="text-[rgb(var(--color-text-tertiary))]">Moderator:</span>
-                                    <span className="text-[rgb(var(--color-text-secondary))] font-mono bg-[rgb(var(--color-bg-secondary))] px-2 py-0.5 rounded">
+                                    <span className="text-[rgb(var(--color-text-secondary))] font-medium">
+                                      {log.moderator_display_name || log.moderator_username || 'Unknown'}
+                                    </span>
+                                    <span className="text-[rgb(var(--color-text-tertiary))] font-mono text-xs bg-[rgb(var(--color-bg-secondary))] px-2 py-0.5 rounded">
                                       {log.moderator_id}
                                     </span>
+                                    {log.active === false && (
+                                      <span className="px-2 py-0.5 bg-gray-500/20 text-gray-400 rounded text-xs">Revoked</span>
+                                    )}
                                   </div>
                                 )}
                                 

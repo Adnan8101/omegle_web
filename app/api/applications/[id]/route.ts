@@ -4,6 +4,23 @@ import dbConnect from '@/lib/mongodb';
 import StaffApplication from '@/models/StaffApplication';
 import { queryBotDb } from '@/lib/botDb';
 
+// Fetch user from Discord API
+async function fetchDiscordUser(userId: string) {
+  try {
+    const response = await fetch(`https://discord.com/api/v10/users/${userId}`, {
+      headers: {
+        Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+      },
+    });
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (err) {
+    console.error('Error fetching Discord user:', err);
+  }
+  return null;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -44,6 +61,20 @@ export async function GET(
           userProfile = userCacheResult[0];
         }
         
+        // If no avatar in cache, fetch directly from Discord API
+        if (!userProfile?.avatar_url) {
+          const discordUser = await fetchDiscordUser(userId);
+          if (discordUser) {
+            userProfile = {
+              ...userProfile,
+              username: discordUser.username,
+              display_name: discordUser.global_name || discordUser.username,
+              avatar_url: discordUser.avatar,
+              in_guild: userProfile?.in_guild ?? true,
+            };
+          }
+        }
+        
         // Fetch user VC and chat stats
         const statsResult = await queryBotDb(`
           SELECT 
@@ -56,19 +87,22 @@ export async function GET(
           userStats = statsResult[0];
         }
         
-        // Fetch moderation logs (modlogs, warnings, etc.) from moderation_cases table
+        // Fetch moderation logs with moderator names
         const modLogsResult = await queryBotDb(`
           SELECT 
-            case_number,
-            action,
-            reason,
-            moderator_id,
-            created_at,
-            duration_seconds,
-            active
-          FROM moderation_cases
-          WHERE target_id = $1 AND guild_id = $2
-          ORDER BY created_at DESC
+            mc.case_number,
+            mc.action,
+            mc.reason,
+            mc.moderator_id,
+            mc.created_at,
+            mc.duration_seconds,
+            mc.active,
+            duc.username as moderator_username,
+            duc.display_name as moderator_display_name
+          FROM moderation_cases mc
+          LEFT JOIN discord_user_cache duc ON mc.moderator_id = duc.user_id
+          WHERE mc.target_id = $1 AND mc.guild_id = $2
+          ORDER BY mc.created_at DESC
           LIMIT 50
         `, [userId, GUILD_ID]);
         
