@@ -203,6 +203,42 @@ export default function ModsStatsPage() {
         </div>
       </div>
 
+      {/* Action Distribution Chart */}
+      <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-6 border border-[rgb(var(--color-border))] mb-8">
+        <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-6">Action Distribution</h2>
+        <div className="space-y-4">
+          {[
+            { label: 'Mutes', count: totalStats.mutes, color: 'bg-orange-500', icon: FiSlash },
+            { label: 'Bans', count: totalStats.bans, color: 'bg-red-500', icon: FiUserX },
+            { label: 'Kicks', count: totalStats.kicks, color: 'bg-yellow-500', icon: FiUserX },
+            { label: 'Warns', count: totalStats.warns, color: 'bg-yellow-400', icon: FiAlertTriangle },
+            { label: 'Manuals', count: totalStats.manuals, color: 'bg-green-500', icon: FiActivity },
+          ].map(({ label, count, color, icon: Icon }) => {
+            const percentage = totalStats.cases > 0 ? (count / totalStats.cases) * 100 : 0;
+            return (
+              <div key={label}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
+                    <span className="text-sm font-medium text-[rgb(var(--color-text-primary))]">{label}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-[rgb(var(--color-text-secondary))]">{count.toLocaleString()}</span>
+                    <span className="text-xs text-[rgb(var(--color-text-tertiary))] w-12 text-right">{percentage.toFixed(1)}%</span>
+                  </div>
+                </div>
+                <div className="h-2 bg-[rgb(var(--color-bg-tertiary))] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${color} rounded-full transition-all duration-500`}
+                    style={{ width: `${percentage}%` }}
+                  ></div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Search and Sort */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
         <div className="relative flex-1">

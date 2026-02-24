@@ -6,12 +6,13 @@ import { getErrorMessage, GUILD_ID } from '@/lib/constants';
 
 // Role IDs for staff and moderators
 const STAFF_ROLE_IDS = [
-  '1470334506337828874', // Staff role
-  '1474416428772888739', // Mod role
+  '1470334572557369384', // Staff/Mod role 1
+  '1470334506337828874', // Staff/Mod role 2
 ];
 
 const MOD_ROLE_IDS = [
-  '1474416428772888739', // Mod role (has access to this page)
+  '1470334572557369384', // Mod role 1
+  '1470334506337828874', // Mod role 2
 ];
 
 /**
@@ -57,52 +58,24 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Fetch fresh user data from Discord API for all staff
-    const botToken = process.env.DISCORD_BOT_TOKEN;
-    if (!botToken) {
-      return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
-    }
-
+    // Fetch user data from cache (fast and reliable)
+    const usersDisplayMap = await getUsersDisplay(staffIds, 128);
+    
     const userDataMap = new Map<string, any>();
     
-    // Fetch user data and guild member data
+    // Convert to the format expected by the rest of the code
     for (const userId of staffIds) {
-      try {
-        // Fetch user data
-        const userRes = await fetch(`https://discord.com/api/v10/users/${userId}`, {
-          headers: { Authorization: `Bot ${botToken}` },
-          cache: 'no-store',
+      const userDisplay = usersDisplayMap.get(userId);
+      if (userDisplay) {
+        userDataMap.set(userId, {
+          username: userDisplay.username,
+          displayName: userDisplay.displayName,
+          avatarUrl: userDisplay.avatar,
+          inGuild: userDisplay.inGuild,
+          nickname: null, // Cache doesn't store this separately
+          joinedAt: null,
         });
-        
-        // Fetch guild member data
-        const memberRes = await fetch(
-          `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${userId}`,
-          {
-            headers: { Authorization: `Bot ${botToken}` },
-            cache: 'no-store',
-          }
-        );
-
-        if (userRes.ok) {
-          const user = await userRes.json();
-          const member = memberRes.ok ? await memberRes.json() : null;
-          
-          const avatarUrl = user.avatar
-            ? `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.${user.avatar.startsWith('a_') ? 'gif' : 'png'}?size=128`
-            : `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`;
-          
-          userDataMap.set(userId, {
-            username: user.username,
-            displayName: member?.nick || user.global_name || user.username,
-            avatarUrl,
-            inGuild: !!member,
-            nickname: member?.nick || null,
-            joinedAt: member?.joined_at || null,
-          });
-        }
-      } catch (error) {
-        console.error(`Error fetching user ${userId}:`, error);
-        // Set default data for failed fetches
+      } else {
         userDataMap.set(userId, {
           username: 'Unknown User',
           displayName: 'Unknown User',
