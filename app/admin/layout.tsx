@@ -106,6 +106,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresFullAccess: true,
         },
         {
+            name: 'Mod Stats',
+            href: '/admin/mods-stats',
+            icon: <FiUsers className="w-5 h-5" />,
+            requiresFullAccess: true, // Admin only
+        },
+        {
             name: 'VC Stats',
             href: '/admin/vctranscript',
             icon: <FiMic className="w-5 h-5" />,
@@ -137,6 +143,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         }
         if (href === '/admin/dashboard/applications') {
             return pathname.startsWith('/admin/dashboard/applications');
+        }
+        if (href === '/admin/mods-stats') {
+            return pathname.startsWith('/admin/mods-stats');
         }
         if (href === '/admin/vctranscript/chatlogs') {
             return pathname.startsWith('/admin/vctranscript/chatlogs');

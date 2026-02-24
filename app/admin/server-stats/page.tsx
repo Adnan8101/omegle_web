@@ -100,12 +100,78 @@ export default function ServerStatsPage() {
             if (r.endDate) params.set('endDate', r.endDate);
             const res = await fetch(`/api/vctranscript/server-stats?${params}`);
             const data = await res.json();
+
+            // Collect all unique user IDs that are missing data
+            const allUsers = [
+                ...(data.userRankings || []),
+                ...Object.values(data.vcContributorsByChannel || {}).flat(),
+                ...Object.values(data.msgContributorsByChannel || {}).flat(),
+            ] as (UserRanking | Contributor)[];
+
+            const missingUserIds = [...new Set(
+                allUsers
+                    .filter((u: UserRanking | Contributor) => !u.username || !u.avatar_url)
+                    .map((u: UserRanking | Contributor) => u.user_id)
+            )].slice(0, 100);
+
+            // Fetch missing users from Discord API
+            let userMap: Record<string, { displayName: string; avatar: string; username: string }> = {};
+            if (missingUserIds.length > 0) {
+                try {
+                    const userRes = await fetch('/api/discord/batch-fetch-users', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userIds: missingUserIds }),
+                    });
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        userMap = userData.users || {};
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch missing users:', e);
+                }
+            }
+
+            // Merge fetched user data into rankings
+            const enrichedRankings = (data.userRankings || []).map((user: UserRanking) => {
+                if (userMap[user.user_id]) {
+                    const fetched = userMap[user.user_id];
+                    return {
+                        ...user,
+                        username: user.username || fetched.username,
+                        display_name: user.display_name || fetched.displayName,
+                        avatar_url: user.avatar_url || fetched.avatar,
+                    };
+                }
+                return user;
+            });
+
+            // Merge fetched user data into contributors
+            const enrichContributors = (contribs: Record<string, Contributor[]>) => {
+                const result: Record<string, Contributor[]> = {};
+                for (const [channelId, list] of Object.entries(contribs)) {
+                    result[channelId] = (list || []).map((user: Contributor) => {
+                        if (userMap[user.user_id]) {
+                            const fetched = userMap[user.user_id];
+                            return {
+                                ...user,
+                                username: user.username || fetched.username,
+                                display_name: user.display_name || fetched.displayName,
+                                avatar_url: user.avatar_url || fetched.avatar,
+                            };
+                        }
+                        return user;
+                    });
+                }
+                return result;
+            };
+
             setTotalMembers(data.totalMembers || 0);
-            setUserRankings(data.userRankings || []);
+            setUserRankings(enrichedRankings);
             setTopVoiceChannels(data.topVoiceChannels || []);
-            setVcContributors(data.vcContributorsByChannel || {});
+            setVcContributors(enrichContributors(data.vcContributorsByChannel || {}));
             setTopMessageChannels(data.topMessageChannels || []);
-            setMsgContributors(data.msgContributorsByChannel || {});
+            setMsgContributors(enrichContributors(data.msgContributorsByChannel || {}));
         } catch (error) {
             console.error('Error fetching server stats:', error);
         } finally {

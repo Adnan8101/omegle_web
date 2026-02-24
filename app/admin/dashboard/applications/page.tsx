@@ -59,6 +59,7 @@ interface Application {
     moderator_id?: string;
     moderator_username?: string;
     moderator_display_name?: string;
+    moderator_avatar_url?: string;
     created_at?: string;
     duration_seconds?: number;
     active?: boolean;
@@ -910,66 +911,108 @@ export default function ApplicationsPage() {
                           </span>
                         </h3>
                         <div className="space-y-4">
-                          {selectedApp.modLogs.map((log: any, index: number) => (
-                            <div 
-                              key={index}
-                              className="bg-[rgb(var(--color-bg-tertiary))] p-5 rounded-apple-lg border-l-4 border-red-500"
-                            >
-                              <div className="flex flex-col gap-3">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex items-center gap-3 flex-wrap">
-                                    {log.case_number && (
-                                      <span className="px-2.5 py-1 bg-[rgb(var(--color-bg-secondary))] text-[rgb(var(--color-text-secondary))] rounded-apple font-mono text-xs">
-                                        #{log.case_number}
+                          {selectedApp.modLogs.map((log: any, index: number) => {
+                            const action = (log.action || log.action_type || 'Unknown').toUpperCase();
+                            const isMute = action === 'MUTE';
+                            const borderColor = action === 'BAN' ? 'border-red-500' : 
+                                               action === 'MUTE' ? 'border-orange-500' : 
+                                               action === 'WARN' ? 'border-yellow-500' : 
+                                               action === 'KICK' ? 'border-amber-500' : 'border-gray-500';
+                            const actionBgColor = action === 'BAN' ? 'bg-red-500/20 text-red-500' : 
+                                                  action === 'MUTE' ? 'bg-orange-500/20 text-orange-500' : 
+                                                  action === 'WARN' ? 'bg-yellow-500/20 text-yellow-500' : 
+                                                  action === 'KICK' ? 'bg-amber-500/20 text-amber-500' :
+                                                  action === 'UNBAN' ? 'bg-green-500/20 text-green-500' :
+                                                  action === 'UNMUTE' ? 'bg-blue-500/20 text-blue-500' : 'bg-gray-500/20 text-gray-400';
+                            
+                            // Format duration properly - show "Muted" if duration is 0 or very short for mutes
+                            const formatDuration = (seconds: number | undefined | null) => {
+                              if (!seconds || seconds <= 0) return null;
+                              const days = Math.floor(seconds / 86400);
+                              const hours = Math.floor((seconds % 86400) / 3600);
+                              const minutes = Math.floor((seconds % 3600) / 60);
+                              if (days > 0) return `${days}d ${hours}h`;
+                              if (hours > 0) return `${hours}h ${minutes}m`;
+                              if (minutes > 0) return `${minutes}m`;
+                              return null;
+                            };
+                            
+                            const durationDisplay = formatDuration(log.duration_seconds);
+
+                            return (
+                              <div 
+                                key={index}
+                                className={`bg-[rgb(var(--color-bg-tertiary))] p-5 rounded-apple-lg border-l-4 ${borderColor}`}
+                              >
+                                <div className="flex flex-col gap-3">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                      {log.case_number && (
+                                        <span className="px-2.5 py-1 bg-[rgb(var(--color-bg-secondary))] text-[rgb(var(--color-text-secondary))] rounded-apple font-mono text-xs">
+                                          #{log.case_number}
+                                        </span>
+                                      )}
+                                      <span className={`px-3 py-1 rounded-apple font-semibold text-sm uppercase ${actionBgColor}`}>
+                                        {action}
+                                      </span>
+                                      {log.active === false && (
+                                        <span className="px-2 py-0.5 bg-gray-500/20 text-gray-400 rounded text-xs">Revoked</span>
+                                      )}
+                                    </div>
+                                    {log.created_at && (
+                                      <span className="text-xs text-[rgb(var(--color-text-tertiary))]">
+                                        {new Date(log.created_at).toLocaleDateString('en-US', {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          year: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })}
                                       </span>
                                     )}
-                                    <span className="px-3 py-1 bg-red-500/20 text-red-500 dark:text-red-400 rounded-apple font-semibold text-sm uppercase">
-                                      {log.action || log.action_type || 'Unknown'}
-                                    </span>
                                   </div>
-                                  {log.created_at && (
-                                    <span className="text-xs text-[rgb(var(--color-text-tertiary))]">
-                                      {new Date(log.created_at).toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      })}
-                                    </span>
+                                  
+                                  {log.moderator_id && (
+                                    <div className="flex items-center gap-3 text-sm">
+                                      {log.moderator_avatar_url && (
+                                        <img 
+                                          src={log.moderator_avatar_url}
+                                          alt={log.moderator_display_name || 'Moderator'}
+                                          className="w-8 h-8 rounded-full border border-[rgb(var(--color-border))]"
+                                          onError={(e) => {
+                                            const defaultIndex = Number(BigInt(log.moderator_id) >> 22n) % 6;
+                                            e.currentTarget.src = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+                                          }}
+                                        />
+                                      )}
+                                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                        <span className="text-[rgb(var(--color-text-tertiary))]">Moderator:</span>
+                                        <span className="text-[rgb(var(--color-text-secondary))] font-medium">
+                                          {log.moderator_display_name || log.moderator_username || 'Unknown'}
+                                        </span>
+                                        <span className="text-[rgb(var(--color-text-tertiary))] font-mono text-xs bg-[rgb(var(--color-bg-secondary))] px-2 py-0.5 rounded">
+                                          {log.moderator_id}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {log.reason && (
+                                    <div>
+                                      <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Reason: </span>
+                                      <span className="text-[rgb(var(--color-text-secondary))]">{log.reason}</span>
+                                    </div>
+                                  )}
+                                  
+                                  {isMute && durationDisplay && (
+                                    <div className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                                      Duration: {durationDisplay}
+                                    </div>
                                   )}
                                 </div>
-                                
-                                {log.moderator_id && (
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <span className="text-[rgb(var(--color-text-tertiary))]">Moderator:</span>
-                                    <span className="text-[rgb(var(--color-text-secondary))] font-medium">
-                                      {log.moderator_display_name || log.moderator_username || 'Unknown'}
-                                    </span>
-                                    <span className="text-[rgb(var(--color-text-tertiary))] font-mono text-xs bg-[rgb(var(--color-bg-secondary))] px-2 py-0.5 rounded">
-                                      {log.moderator_id}
-                                    </span>
-                                    {log.active === false && (
-                                      <span className="px-2 py-0.5 bg-gray-500/20 text-gray-400 rounded text-xs">Revoked</span>
-                                    )}
-                                  </div>
-                                )}
-                                
-                                {log.reason && (
-                                  <div>
-                                    <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Reason: </span>
-                                    <span className="text-[rgb(var(--color-text-secondary))]">{log.reason}</span>
-                                  </div>
-                                )}
-                                
-                                {log.duration_seconds && (
-                                  <div className="text-sm text-[rgb(var(--color-text-tertiary))]">
-                                    Duration: {Math.floor(log.duration_seconds / 86400)}d {Math.floor((log.duration_seconds % 86400) / 3600)}h
-                                  </div>
-                                )}
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ) : (

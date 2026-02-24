@@ -76,46 +76,23 @@ export default function VCTranscriptPage() {
         const userList: User[] = data.users || [];
         setUsers(userList);
 
-        // Check if the API returned profile data from the cache
-        const hasProfileData = userList.some(u => u.display_name || u.avatar_url);
-
-        if (hasProfileData) {
-          // Build Discord user map from cached profile data (no extra API calls!)
-          const discordMap = new Map<string, DiscordUser>();
-          for (const user of userList) {
-            discordMap.set(user.user_id, {
-              id: user.user_id,
-              username: user.username || 'Unknown',
-              displayName: user.nickname || user.display_name || user.username || 'Unknown User',
-              avatar: buildAvatarUrl(user.user_id, user.avatar_url || null, '0', 128),
-              inGuild: user.in_guild ?? false,
-            });
-          }
-          setDiscordUsers(discordMap);
-        } else {
-          // Fallback: batch resolve from Discord API
-          const userIds = userList.map((u: User) => u.user_id);
-          if (userIds.length > 0) {
-            try {
-              const batchRes = await fetch('/api/discord/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userIds }),
-              });
-              const batchData = await batchRes.json();
-              if (batchData.users) {
-                setDiscordUsers(new Map(Object.entries(batchData.users)));
-              }
-            } catch {
-              // Individual fallback
-              const discordPromises = userList.map(async (user: User) => {
-                const res = await fetch(`/api/discord/user/${user.user_id}`);
-                const discordData = await res.json();
-                return [user.user_id, discordData] as [string, DiscordUser];
-              });
-              const discordData = await Promise.all(discordPromises);
-              setDiscordUsers(new Map(discordData));
+        // Get all user IDs
+        const userIds = userList.map((u: User) => u.user_id);
+        
+        if (userIds.length > 0) {
+          // Use batch-fetch-users which fetches from cache first, then Discord API for missing
+          const batchRes = await fetch('/api/discord/batch-fetch-users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userIds }),
+          });
+          const batchData = await batchRes.json();
+          if (batchData.users) {
+            const discordMap = new Map<string, DiscordUser>();
+            for (const [uid, info] of Object.entries(batchData.users)) {
+              discordMap.set(uid, info as DiscordUser);
             }
+            setDiscordUsers(discordMap);
           }
         }
       } else {

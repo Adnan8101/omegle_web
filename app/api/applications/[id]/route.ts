@@ -68,7 +68,7 @@ export async function GET(
           userStats = statsResult[0];
         }
         
-        // Fetch moderation logs with moderator names
+        // Fetch moderation logs with moderator names and avatars
         const modLogsResult = await queryBotDb(`
           SELECT 
             mc.case_number,
@@ -79,7 +79,9 @@ export async function GET(
             mc.duration_seconds,
             mc.active,
             duc.username as moderator_username,
-            duc.display_name as moderator_display_name
+            duc.display_name as moderator_display_name,
+            duc.avatar_url as moderator_avatar_hash,
+            duc.nickname as moderator_nickname
           FROM moderation_cases mc
           LEFT JOIN discord_user_cache duc ON mc.moderator_id = duc.user_id
           WHERE mc.target_id = $1 AND mc.guild_id = $2
@@ -87,7 +89,22 @@ export async function GET(
           LIMIT 50
         `, [userId, GUILD_ID]);
         
-        modLogs = modLogsResult || [];
+        // Build full avatar URLs for moderators
+        modLogs = (modLogsResult || []).map((log: any) => {
+          let moderator_avatar_url = null;
+          if (log.moderator_avatar_hash) {
+            const extension = log.moderator_avatar_hash.startsWith('a_') ? 'gif' : 'png';
+            moderator_avatar_url = `https://cdn.discordapp.com/avatars/${log.moderator_id}/${log.moderator_avatar_hash}.${extension}?size=64`;
+          } else if (log.moderator_id) {
+            const defaultIndex = Number(BigInt(log.moderator_id) >> 22n) % 6;
+            moderator_avatar_url = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+          }
+          return {
+            ...log,
+            moderator_avatar_url,
+            moderator_display_name: log.moderator_nickname || log.moderator_display_name || log.moderator_username || 'Unknown Moderator',
+          };
+        });
       } catch (err) {
         console.error('Error fetching user data:', err);
         // Keep existing data if fetch fails

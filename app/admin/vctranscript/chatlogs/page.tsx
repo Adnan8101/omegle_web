@@ -72,9 +72,9 @@ export default function ChatLogsPage() {
       const uniqueUserIds = Array.from(new Set((messagesData.messages || []).map((m: ChatMessage) => m.user_id))) as string[];
       const uniqueChannelIds = Array.from(new Set((messagesData.messages || []).map((m: ChatMessage) => m.channel_id))) as string[];
 
-      // Batch resolve users via cached-users endpoint (eliminates N+1 problem)
+      // Use batch-fetch-users which fetches from cache first, then Discord API for missing
       if (uniqueUserIds.length > 0) {
-        const userRes = await fetch('/api/discord/cached-users', {
+        const userRes = await fetch('/api/discord/batch-fetch-users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userIds: uniqueUserIds }),
