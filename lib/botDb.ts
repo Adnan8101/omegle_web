@@ -2,25 +2,32 @@ import { Pool } from 'pg';
 import { GUILD_ID, getErrorMessage } from './constants';
 
 // Connection pool for bot database (read-only queries)
-const pool = new Pool({
-  connectionString: process.env.BOT_DATABASE_URL,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-  statement_timeout: 10000,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+let pool: Pool | null = null;
 
-// Handle pool errors gracefully
-pool.on('error', (err) => {
-  console.error('Bot DB pool error:', err.message);
-});
+function getPool() {
+  if (!pool) {
+    pool = new Pool({
+      connectionString: process.env.BOT_DATABASE_URL,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+      statement_timeout: 10000,
+      // Always use SSL for remote connections
+      ssl: { rejectUnauthorized: false },
+    });
+    
+    // Handle pool errors gracefully
+    pool.on('error', (err) => {
+      console.error('Bot DB pool error:', err.message);
+    });
+  }
+  return pool;
+}
 
 export async function queryBotDb(query: string, params?: unknown[]) {
   let client;
   try {
+    const pool = getPool();
     client = await pool.connect();
     const result = await client.query(query, params);
     return result.rows;

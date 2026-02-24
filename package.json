@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sync-users": "tsx scripts/syncAllUsers.ts",
+    "fix-avatars": "tsx scripts/fixUserAvatars.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -31,9 +33,11 @@
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
     "autoprefixer": "^10.4.17",
+    "dotenv": "^17.3.1",
     "postcss": "^8.4.33",
     "prisma": "^7.4.1",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.3"
   }
 }
