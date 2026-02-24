@@ -72,9 +72,9 @@ export default function ChatLogsPage() {
       const uniqueUserIds = Array.from(new Set((messagesData.messages || []).map((m: ChatMessage) => m.user_id))) as string[];
       const uniqueChannelIds = Array.from(new Set((messagesData.messages || []).map((m: ChatMessage) => m.channel_id))) as string[];
 
-      // Use batch-fetch-users which fetches from cache first, then Discord API for missing
+      // Use new centralized user-data API - no caching, fetch on demand
       if (uniqueUserIds.length > 0) {
-        const userRes = await fetch('/api/discord/batch-fetch-users', {
+        const userRes = await fetch('/api/discord/user-data', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userIds: uniqueUserIds }),
@@ -82,7 +82,15 @@ export default function ChatLogsPage() {
         const userData = await userRes.json();
         const userMap = new Map<string, DiscordUserInfo>();
         for (const [uid, info] of Object.entries(userData.users || {})) {
-          userMap.set(uid, info as DiscordUserInfo);
+          const user = info as any;
+          userMap.set(uid, {
+            id: user.id,
+            username: user.username,
+            displayName: user.displayName,
+            avatar: user.avatar,
+            inGuild: user.inGuild,
+            nickname: user.nickname,
+          });
         }
         setUsers(userMap);
       }

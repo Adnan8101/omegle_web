@@ -2,7 +2,6 @@ import { getErrorMessage, GUILD_ID } from '@/lib/constants';
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import StaffApplication from '@/models/StaffApplication';
-import { getUserDisplay } from '@/lib/botDb';
 import { queryBotDb } from '@/lib/botDb';
 
 export async function POST(request: NextRequest) {
@@ -19,16 +18,45 @@ export async function POST(request: NextRequest) {
     
     if (userId) {
       try {
-        // Fetch user display data (with proper avatar URL construction)
-        const userDisplay = await getUserDisplay(userId, 128);
-        
-        userProfile = {
-          username: userDisplay.username,
-          display_name: userDisplay.displayName,
-          avatar_url: userDisplay.avatar, // Full avatar URL
-          in_guild: userDisplay.inGuild,
-          tag: userDisplay.tag,
-        };
+        // Fetch user data from Discord API using centralized endpoint
+        const botToken = process.env.DISCORD_BOT_TOKEN;
+        if (botToken) {
+          try {
+            const userRes = await fetch(`https://discord.com/api/v10/users/${userId}`, {
+              headers: { Authorization: `Bot ${botToken}` },
+              cache: 'no-store',
+            });
+            
+            const memberRes = await fetch(
+              `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${userId}`,
+              {
+                headers: { Authorization: `Bot ${botToken}` },
+                cache: 'no-store',
+              }
+            );
+
+            if (userRes.ok) {
+              const user = await userRes.json();
+              const member = memberRes.ok ? await memberRes.json() : null;
+              
+              let avatarUrl = `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`;
+              if (user.avatar) {
+                const ext = user.avatar.startsWith('a_') ? 'gif' : 'png';
+                avatarUrl = `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.${ext}?size=128`;
+              }
+              
+              userProfile = {
+                username: user.username,
+                display_name: member?.nick || user.global_name || user.username,
+                avatar_url: avatarUrl,
+                in_guild: !!member,
+                tag: user.discriminator === '0' ? `@${user.username}` : `${user.username}#${user.discriminator}`,
+              };
+            }
+          } catch (fetchErr) {
+            console.error('Error fetching user from Discord:', fetchErr);
+          }
+        }
         
         // Fetch user VC and chat stats
         const statsResult = await queryBotDb(`

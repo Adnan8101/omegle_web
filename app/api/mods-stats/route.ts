@@ -29,18 +29,10 @@ export async function GET(request: NextRequest) {
     const staffUsers = await queryBotDb(`
       SELECT 
         user_id,
-        username,
-        display_name,
-        avatar_url,
-        global_name,
-        discriminator,
-        in_guild,
-        roles,
-        nickname,
-        joined_at
+        roles
       FROM discord_user_cache
       WHERE in_guild = true AND roles IS NOT NULL
-      ORDER BY display_name ASC
+      ORDER BY user_id ASC
     `);
 
     // Filter users who have staff or mod roles
@@ -63,6 +55,63 @@ export async function GET(request: NextRequest) {
         mods: [],
         message: 'No staff members found'
       });
+    }
+
+    // Fetch fresh user data from Discord API for all staff
+    const botToken = process.env.DISCORD_BOT_TOKEN;
+    if (!botToken) {
+      return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
+    }
+
+    const userDataMap = new Map<string, any>();
+    
+    // Fetch user data and guild member data
+    for (const userId of staffIds) {
+      try {
+        // Fetch user data
+        const userRes = await fetch(`https://discord.com/api/v10/users/${userId}`, {
+          headers: { Authorization: `Bot ${botToken}` },
+          cache: 'no-store',
+        });
+        
+        // Fetch guild member data
+        const memberRes = await fetch(
+          `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${userId}`,
+          {
+            headers: { Authorization: `Bot ${botToken}` },
+            cache: 'no-store',
+          }
+        );
+
+        if (userRes.ok) {
+          const user = await userRes.json();
+          const member = memberRes.ok ? await memberRes.json() : null;
+          
+          const avatarUrl = user.avatar
+            ? `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.${user.avatar.startsWith('a_') ? 'gif' : 'png'}?size=128`
+            : `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`;
+          
+          userDataMap.set(userId, {
+            username: user.username,
+            displayName: member?.nick || user.global_name || user.username,
+            avatarUrl,
+            inGuild: !!member,
+            nickname: member?.nick || null,
+            joinedAt: member?.joined_at || null,
+          });
+        }
+      } catch (error) {
+        console.error(`Error fetching user ${userId}:`, error);
+        // Set default data for failed fetches
+        userDataMap.set(userId, {
+          username: 'Unknown User',
+          displayName: 'Unknown User',
+          avatarUrl: `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`,
+          inGuild: false,
+          nickname: null,
+          joinedAt: null,
+        });
+      }
     }
 
     // Build placeholders for IN clause
@@ -137,23 +186,23 @@ export async function GET(request: NextRequest) {
 
       const isMod = userRoles.some(r => MOD_ROLE_IDS.includes(r));
 
-      // Build avatar URL
-      let avatarUrl = null;
-      if (user.avatar_url) {
-        const extension = user.avatar_url.startsWith('a_') ? 'gif' : 'png';
-        avatarUrl = `https://cdn.discordapp.com/avatars/${user.user_id}/${user.avatar_url}.${extension}?size=128`;
-      } else {
-        const defaultIndex = Number(BigInt(user.user_id) >> 22n) % 6;
-        avatarUrl = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
-      }
+      // Get user data from our fetched map
+      const userData = userDataMap.get(user.user_id) || {
+        username: 'Unknown User',
+        displayName: 'Unknown User',
+        avatarUrl: `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(user.user_id) >> 22n) % 6}.png`,
+        inGuild: false,
+        nickname: null,
+        joinedAt: null,
+      };
 
       return {
         user_id: user.user_id,
-        username: user.username,
-        display_name: user.nickname || user.display_name || user.global_name || user.username,
-        avatar_url: avatarUrl,
-        in_guild: user.in_guild,
-        joined_at: user.joined_at,
+        username: userData.username,
+        display_name: userData.displayName,
+        avatar_url: userData.avatarUrl,
+        in_guild: userData.inGuild,
+        joined_at: userData.joinedAt,
         is_mod: isMod,
         roles: userRoles,
         stats: {
@@ -177,39 +226,6 @@ export async function GET(request: NextRequest) {
 
     // Sort by total cases (most active mods first)
     modsWithStats.sort((a: any, b: any) => b.stats.total_cases - a.stats.total_cases);
-
-    // Fetch missing users from Discord API
-    const missingUserIds = modsWithStats
-      .filter((m: any) => !m.avatar_url || m.avatar_url.includes('/embed/avatars/'))
-      .map((m: any) => m.user_id);
-
-    if (missingUserIds.length > 0) {
-      const botToken = process.env.DISCORD_BOT_TOKEN;
-      if (botToken) {
-        for (const userId of missingUserIds.slice(0, 20)) {
-          try {
-            const res = await fetch(`https://discord.com/api/v10/users/${userId}`, {
-              headers: { Authorization: `Bot ${botToken}` },
-              cache: 'no-store',
-            });
-            if (res.ok) {
-              const discordUser = await res.json();
-              const mod = modsWithStats.find((m: any) => m.user_id === userId);
-              if (mod) {
-                if (discordUser.avatar) {
-                  const ext = discordUser.avatar.startsWith('a_') ? 'gif' : 'png';
-                  mod.avatar_url = `https://cdn.discordapp.com/avatars/${userId}/${discordUser.avatar}.${ext}?size=128`;
-                }
-                mod.username = discordUser.username || mod.username;
-                mod.display_name = mod.display_name || discordUser.global_name || discordUser.username;
-              }
-            }
-          } catch {
-            // Ignore errors, keep default avatar
-          }
-        }
-      }
-    }
 
     return NextResponse.json({
       success: true,

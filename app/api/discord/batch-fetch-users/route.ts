@@ -1,3 +1,8 @@
+/**
+ * @deprecated This endpoint is deprecated. Use /api/discord/user-data instead.
+ * This endpoint fetches from cache first which can return stale data.
+ * The new /api/discord/user-data endpoint fetches fresh data directly from Discord API.
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';

@@ -2,24 +2,10 @@ import { getErrorMessage, GUILD_ID } from '@/lib/constants';
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import StaffApplication from '@/models/StaffApplication';
-import { queryBotDb, getUserDisplay } from '@/lib/botDb';
+import { queryBotDb } from '@/lib/botDb';
 
-// Fetch user from Discord API
-async function fetchDiscordUser(userId: string) {
-  try {
-    const response = await fetch(`https://discord.com/api/v10/users/${userId}`, {
-      headers: {
-        Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
-      },
-    });
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (err) {
-    console.error('Error fetching Discord user:', err);
-  }
-  return null;
-}
+// No longer needed - fetching directly from Discord API
+
 
 export async function GET(
   request: NextRequest,
@@ -45,47 +31,45 @@ export async function GET(
     
     if (userId) {
       try {
-        // Fetch Discord user profile with proper avatar URL construction
-        let userDisplay = await getUserDisplay(userId, 128);
-        
-        // If user not in cache, try to fetch from Discord API directly
-        if (userDisplay.username === 'Unknown User') {
-          const botToken = process.env.DISCORD_BOT_TOKEN;
-          if (botToken) {
-            try {
-              const discordRes = await fetch(`https://discord.com/api/v10/users/${userId}`, {
+        // Fetch Discord user profile directly from Discord API - no cache
+        const botToken = process.env.DISCORD_BOT_TOKEN;
+        if (botToken) {
+          try {
+            const discordRes = await fetch(`https://discord.com/api/v10/users/${userId}`, {
+              headers: { Authorization: `Bot ${botToken}` },
+              cache: 'no-store',
+            });
+            
+            const memberRes = await fetch(
+              `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${userId}`,
+              {
                 headers: { Authorization: `Bot ${botToken}` },
                 cache: 'no-store',
-              });
-              if (discordRes.ok) {
-                const discordUser = await discordRes.json();
-                let avatarUrl = `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`;
-                if (discordUser.avatar) {
-                  const ext = discordUser.avatar.startsWith('a_') ? 'gif' : 'png';
-                  avatarUrl = `https://cdn.discordapp.com/avatars/${userId}/${discordUser.avatar}.${ext}?size=128`;
-                }
-                userDisplay = {
-                  id: userId,
-                  username: discordUser.username,
-                  displayName: discordUser.global_name || discordUser.username,
-                  avatar: avatarUrl,
-                  tag: discordUser.discriminator === '0' ? `@${discordUser.username}` : `${discordUser.username}#${discordUser.discriminator}`,
-                  inGuild: true,
-                };
               }
-            } catch (discordErr) {
-              console.error('Error fetching user from Discord API:', discordErr);
+            );
+
+            if (discordRes.ok) {
+              const discordUser = await discordRes.json();
+              const member = memberRes.ok ? await memberRes.json() : null;
+              
+              let avatarUrl = `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`;
+              if (discordUser.avatar) {
+                const ext = discordUser.avatar.startsWith('a_') ? 'gif' : 'png';
+                avatarUrl = `https://cdn.discordapp.com/avatars/${userId}/${discordUser.avatar}.${ext}?size=128`;
+              }
+              
+              userProfile = {
+                username: discordUser.username,
+                display_name: member?.nick || discordUser.global_name || discordUser.username,
+                avatar_url: avatarUrl,
+                in_guild: !!member,
+                tag: discordUser.discriminator === '0' ? `@${discordUser.username}` : `${discordUser.username}#${discordUser.discriminator}`,
+              };
             }
+          } catch (discordErr) {
+            console.error('Error fetching user from Discord API:', discordErr);
           }
         }
-        
-        userProfile = {
-          username: userDisplay.username,
-          display_name: userDisplay.displayName,
-          avatar_url: userDisplay.avatar, // Full avatar URL
-          in_guild: userDisplay.inGuild,
-          tag: userDisplay.tag,
-        };
         
         // Fetch user VC and chat stats
         const statsResult = await queryBotDb(`
@@ -108,30 +92,24 @@ export async function GET(
             mc.moderator_id,
             mc.created_at,
             mc.duration_seconds,
-            mc.active,
-            duc.username as moderator_username,
-            duc.display_name as moderator_display_name,
-            duc.avatar_url as moderator_avatar_hash,
-            duc.nickname as moderator_nickname
+            mc.active
           FROM moderation_cases mc
-          LEFT JOIN discord_user_cache duc ON mc.moderator_id = duc.user_id
           WHERE mc.target_id = $1 AND mc.guild_id = $2
           ORDER BY mc.created_at DESC
           LIMIT 50
         `, [userId, GUILD_ID]);
         
         // Collect moderator IDs that need fetching from Discord API
-        const missingModIds = [...new Set(
+        const modIds = [...new Set(
           (modLogsResult || [])
-            .filter((log: any) => !log.moderator_username && log.moderator_id)
+            .filter((log: any) => log.moderator_id)
             .map((log: any) => log.moderator_id)
         )].slice(0, 20) as string[];
 
-        // Fetch missing moderators from Discord API
+        // Fetch moderators from Discord API
         const fetchedMods: Record<string, { username: string; displayName: string; avatar: string }> = {};
-        const botToken = process.env.DISCORD_BOT_TOKEN;
-        if (botToken && missingModIds.length > 0) {
-          for (const modId of missingModIds) {
+        if (botToken && modIds.length > 0) {
+          for (const modId of modIds) {
             try {
               const res = await fetch(`https://discord.com/api/v10/users/${modId}`, {
                 headers: { Authorization: `Bot ${botToken}` },
@@ -156,25 +134,23 @@ export async function GET(
           }
         }
         
-        // Build full avatar URLs for moderators
+        // Build modlogs with fetched moderator data
         modLogs = (modLogsResult || []).map((log: any) => {
           const fetched = fetchedMods[log.moderator_id];
           
           let moderator_avatar_url = null;
-          if (log.moderator_avatar_hash) {
-            const extension = log.moderator_avatar_hash.startsWith('a_') ? 'gif' : 'png';
-            moderator_avatar_url = `https://cdn.discordapp.com/avatars/${log.moderator_id}/${log.moderator_avatar_hash}.${extension}?size=64`;
-          } else if (fetched) {
+          if (fetched) {
             moderator_avatar_url = fetched.avatar;
           } else if (log.moderator_id) {
             const defaultIndex = Number(BigInt(log.moderator_id) >> 22n) % 6;
             moderator_avatar_url = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
           }
+          
           return {
             ...log,
             moderator_avatar_url,
-            moderator_display_name: log.moderator_nickname || log.moderator_display_name || log.moderator_username || fetched?.displayName || 'Unknown Moderator',
-            moderator_username: log.moderator_username || fetched?.username || null,
+            moderator_display_name: fetched?.displayName || 'Unknown Moderator',
+            moderator_username: fetched?.username || null,
           };
         });
       } catch (err) {

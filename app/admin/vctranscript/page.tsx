@@ -80,8 +80,8 @@ export default function VCTranscriptPage() {
         const userIds = userList.map((u: User) => u.user_id);
         
         if (userIds.length > 0) {
-          // Use batch-fetch-users which fetches from cache first, then Discord API for missing
-          const batchRes = await fetch('/api/discord/batch-fetch-users', {
+          // Use new centralized user-data API - no caching, fetch on demand
+          const batchRes = await fetch('/api/discord/user-data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userIds }),
@@ -90,7 +90,14 @@ export default function VCTranscriptPage() {
           if (batchData.users) {
             const discordMap = new Map<string, DiscordUser>();
             for (const [uid, info] of Object.entries(batchData.users)) {
-              discordMap.set(uid, info as DiscordUser);
+              const userData = info as any;
+              discordMap.set(uid, {
+                id: userData.id,
+                username: userData.username,
+                displayName: userData.displayName,
+                avatar: userData.avatar,
+                inGuild: userData.inGuild,
+              });
             }
             setDiscordUsers(discordMap);
           }
@@ -172,7 +179,7 @@ export default function VCTranscriptPage() {
             VC Transcript Dashboard
           </h1>
           <p className="text-[rgb(var(--color-text-secondary))] mb-4">
-            View voice channel activity for all users • Profiles cached from bot
+            View voice channel activity for all users • Live data from Discord
           </p>
           <DateRangeFilter onChange={(r) => { setDateRange(r); fetchUsers(r); }} initialRange={dateRange} />
         </div>
