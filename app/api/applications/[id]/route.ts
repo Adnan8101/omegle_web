@@ -84,7 +84,7 @@ export async function GET(
     appData.userProfile = userProfile;
     appData.userStats = userStats;
     appData.modLogs = modLogs;
-    appData.dataFetchedAt = new Date().toISOString();
+    appData.dataFetchedAt = new Date();
 
     return NextResponse.json({ success: true, data: appData });
   } catch (error: unknown) {
