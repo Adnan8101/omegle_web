@@ -88,21 +88,6 @@ export default function ApplicationsPage() {
     }
   }, [status, session, router]);
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  useEffect(() => {
-    const status = searchParams.get('status');
-    if (status) {
-      setActiveTab(status);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    fetchApplications();
-  }, [activeTab, searchTerm]);
-
   const fetchSettings = async () => {
     try {
       const response = await fetch('/api/settings');
@@ -112,6 +97,29 @@ export default function ApplicationsPage() {
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
+    }
+  };
+
+  const fetchApplications = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (activeTab !== 'all') {
+        params.append('status', activeTab);
+      }
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+
+      const response = await fetch(`/api/applications?${params}`);
+      const result = await response.json();
+      if (result.success) {
+        setApplications(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,28 +146,21 @@ export default function ApplicationsPage() {
     }
   };
 
-  const fetchApplications = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (activeTab !== 'all') {
-        params.append('status', activeTab);
-      }
-      if (searchTerm) {
-        params.append('search', searchTerm);
-      }
+  useEffect(() => {
+    fetchSettings();
+  }, []);
 
-      const response = await fetch(`/api/applications?${params}`);
-      const result = await response.json();
-      if (result.success) {
-        setApplications(result.data);
-      }
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    const status = searchParams.get('status');
+    if (status) {
+      setActiveTab(status);
     }
-  };
+  }, [searchParams]);
+
+  useEffect(() => {
+    fetchApplications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, searchTerm]);
 
   const updateApplicationStatus = async (
     id: string,
@@ -578,16 +579,17 @@ export default function ApplicationsPage() {
                       className="w-6 h-6 text-[rgb(var(--color-text-secondary))]"
                       fill="none"
                       stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
               {/* Tab Navigation */}
@@ -985,13 +987,13 @@ export default function ApplicationsPage() {
                     </p>
                   </div>
                 )}
-                </>
-                )}
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
+  )}
+</div>
   );
 }
