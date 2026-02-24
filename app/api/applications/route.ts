@@ -42,17 +42,17 @@ export async function POST(request: NextRequest) {
         
         userStats = statsResult[0] || null;
         
-        // Fetch moderation logs (modlogs, manual actions, warnings)
+        // Fetch moderation logs (modlogs, manual actions, warnings) from moderation_cases table
         const modLogsResult = await queryBotDb(`
           SELECT 
             case_number,
-            action_type as action,
+            action,
             reason,
             moderator_id,
             created_at,
-            expires_at,
-            duration_seconds
-          FROM moderation_case
+            duration_seconds,
+            active
+          FROM moderation_cases
           WHERE target_id = $1 AND guild_id = $2
           ORDER BY created_at DESC
           LIMIT 50

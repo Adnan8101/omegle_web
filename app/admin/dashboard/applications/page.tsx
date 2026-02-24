@@ -52,10 +52,14 @@ interface Application {
     message_count?: number;
   } | null;
   modLogs?: Array<{
-    action_type?: string;
+    case_number?: number;
+    action?: string;
+    action_type?: string; // fallback for old data
     reason?: string;
     moderator_id?: string;
     created_at?: string;
+    duration_seconds?: number;
+    active?: boolean;
   }>;
   dataFetchedAt?: string;
 }
@@ -73,6 +77,7 @@ export default function ApplicationsPage() {
   const [notes, setNotes] = useState('');
   const [isApplicationsOpen, setIsApplicationsOpen] = useState(true);
   const [modalTab, setModalTab] = useState<'details' | 'userData'>('details');
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -82,7 +87,6 @@ export default function ApplicationsPage() {
       router.push('/admin');
     }
   }, [status, session, router]);
-  const [settingsLoading, setSettingsLoading] = useState(false);
 
   useEffect(() => {
     fetchSettings();
