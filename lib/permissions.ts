@@ -17,7 +17,9 @@ const VIEW_ONLY_ROLE_IDS = [
 
 // Casino admin role IDs (can manage shop items)
 // Note: These are fetched from database, but we also allow these hardcoded roles
-const CASINO_ADMIN_ROLE_IDS: string[] = [];
+const CASINO_ADMIN_ROLE_IDS: string[] = [
+  "1470329047262167040"  // Casino Admin Role
+];
 
 // Discord permission bits
 const PERMISSIONS = {

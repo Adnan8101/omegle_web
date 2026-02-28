@@ -282,21 +282,29 @@ export default function EditShopItem({ params }: { params: Promise<{ id: string 
                     <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                       Thumbnail URL
                     </label>
-                    <div className="flex gap-3">
-                      <input
-                        type="url"
-                        name="thumbnail"
-                        value={formData.thumbnail}
-                        onChange={handleChange}
-                        className="flex-1 px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                        placeholder="https://example.com/image.png"
-                      />
-                      {formData.thumbnail && (
-                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-[rgb(var(--color-bg-tertiary))]">
-                          <img src={formData.thumbnail} alt="Preview" className="w-full h-full object-cover" />
+                    <input
+                      type="url"
+                      name="thumbnail"
+                      value={formData.thumbnail}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
+                      placeholder="https://example.com/image.png"
+                    />
+                    {formData.thumbnail && (
+                      <div className="mt-3 p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))]">
+                        <p className="text-xs text-[rgb(var(--color-text-tertiary))] mb-2">Image Preview</p>
+                        <div className="w-32 h-32 rounded-xl overflow-hidden bg-black/20">
+                          <img 
+                            src={formData.thumbnail} 
+                            alt="Thumbnail Preview" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>';
+                            }}
+                          />
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

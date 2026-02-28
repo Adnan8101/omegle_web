@@ -190,3 +190,80 @@ export function getUserTag(user: DiscordUser): string {
   }
   return `${user.username}#${user.discriminator}`;
 }
+
+/**
+ * Send a DM to a user via the bot
+ * @param userId The Discord user ID
+ * @param content Text content to send
+ * @param embed Optional embed to send
+ * @returns true if sent successfully, false otherwise
+ */
+export async function sendDM(
+  userId: string,
+  options: {
+    content?: string;
+    embed?: {
+      title?: string;
+      description?: string;
+      color?: number;
+      fields?: { name: string; value: string; inline?: boolean }[];
+      thumbnail?: { url: string };
+      footer?: { text: string };
+      timestamp?: string;
+    };
+  }
+): Promise<{ success: boolean; error?: string }> {
+  if (!BOT_TOKEN) {
+    console.warn('DISCORD_BOT_TOKEN not configured');
+    return { success: false, error: 'Bot token not configured' };
+  }
+
+  try {
+    // Step 1: Create DM channel
+    const channelResponse = await fetch(`https://discord.com/api/v10/users/@me/channels`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${BOT_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ recipient_id: userId }),
+    });
+
+    if (!channelResponse.ok) {
+      const errorData = await channelResponse.json().catch(() => ({}));
+      console.error('Failed to create DM channel:', errorData);
+      return { success: false, error: 'Could not open DM channel - user may have DMs disabled' };
+    }
+
+    const channel = await channelResponse.json();
+
+    // Step 2: Send message in the DM channel
+    const messagePayload: any = {};
+    if (options.content) {
+      messagePayload.content = options.content;
+    }
+    if (options.embed) {
+      messagePayload.embeds = [options.embed];
+    }
+
+    const messageResponse = await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${BOT_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(messagePayload),
+    });
+
+    if (!messageResponse.ok) {
+      const errorData = await messageResponse.json().catch(() => ({}));
+      console.error('Failed to send DM:', errorData);
+      return { success: false, error: 'Failed to send DM message' };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error(`Error sending DM to ${userId}:`, error.message);
+    return { success: false, error: error.message };
+  }
+}
