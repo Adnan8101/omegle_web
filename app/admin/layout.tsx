@@ -7,8 +7,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
     FiHome, FiFileText, FiLogOut, FiGlobe, FiMenu, FiX,
-    FiUsers, FiMessageSquare, FiBarChart2, FiMic, FiDollarSign
+    FiUsers, FiMessageSquare, FiBarChart2, FiMic, FiDollarSign,
+    FiSun, FiMoon
 } from 'react-icons/fi';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface AdminLayoutProps {
     children: React.ReactNode;
@@ -20,6 +22,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const { theme, toggleTheme } = useTheme();
 
     useEffect(() => {
         setMounted(true);
@@ -289,9 +292,22 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 {/* User Info & Bottom Actions */}
                 <div className="p-4 md:p-6 border-t border-[rgb(var(--color-border))] space-y-2">
                     {session?.user?.name && (
-                        <div className="px-4 py-3 mb-2">
-                            <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Signed in as</p>
-                            <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{session.user.name}</p>
+                        <div className="px-4 py-3 mb-2 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Signed in as</p>
+                                <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{session.user.name}</p>
+                            </div>
+                            <button
+                                onClick={toggleTheme}
+                                className="p-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-bg-primary))] apple-transition"
+                                aria-label="Toggle theme"
+                            >
+                                {theme === 'dark' ? (
+                                    <FiSun className="w-5 h-5 text-yellow-500" />
+                                ) : (
+                                    <FiMoon className="w-5 h-5 text-blue-500" />
+                                )}
+                            </button>
                         </div>
                     )}
                     <Link
