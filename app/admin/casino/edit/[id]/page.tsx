@@ -427,7 +427,7 @@ export default function EditItemPage() {
             <button
               type="submit"
               disabled={saving || !formData.name || !formData.price}
-              className="flex-1 px-6 py-3 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent))]/80 text-white rounded-xl apple-transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl apple-transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {saving ? (
                 <>

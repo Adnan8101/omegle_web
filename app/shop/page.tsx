@@ -54,6 +54,7 @@ export default function ShopPage() {
   const [error, setError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [showPurchases, setShowPurchases] = useState(false);
+  const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null);
 
   useEffect(() => {
     fetchShop();
@@ -93,6 +94,15 @@ export default function ShopPage() {
       return;
     }
 
+    // Show confirmation modal
+    setConfirmItem(item);
+  };
+
+  const confirmPurchase = async () => {
+    if (!confirmItem) return;
+    
+    const item = confirmItem;
+    setConfirmItem(null);
     setPurchasing(item.id);
     setError(null);
     setPurchaseResult(null);
@@ -217,6 +227,74 @@ export default function ShopPage() {
         </div>
       </header>
 
+      {/* Confirmation Modal */}
+      {confirmItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 max-w-md w-full border border-[rgb(var(--color-border))] shadow-xl">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                <FiShoppingCart className="w-8 h-8 text-yellow-500" />
+              </div>
+              <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-2">Confirm Purchase</h3>
+              <p className="text-[rgb(var(--color-text-secondary))] mb-4">
+                You are about to buy:
+              </p>
+
+              {/* Item Preview */}
+              <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl mb-4 flex items-center gap-4">
+                {confirmItem.thumbnail ? (
+                  <img
+                    src={confirmItem.thumbnail}
+                    alt={confirmItem.name}
+                    className="w-16 h-16 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-lg bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
+                    <FiPackage className="w-8 h-8 text-[rgb(var(--color-text-tertiary))]" />
+                  </div>
+                )}
+                <div className="text-left flex-1">
+                  <p className="font-semibold text-[rgb(var(--color-text-primary))]">{confirmItem.name}</p>
+                  <p className="text-lg font-bold text-yellow-500">{currencyEmoji}{formatNumber(confirmItem.price)}</p>
+                </div>
+              </div>
+
+              {/* Balance Summary */}
+              <div className="space-y-2 mb-6 text-left">
+                <div className="flex justify-between items-center p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-lg">
+                  <span className="text-[rgb(var(--color-text-secondary))]">Your Balance</span>
+                  <span className="font-semibold text-[rgb(var(--color-text-primary))]">{currencyEmoji}{formatNumber(userBalance)}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-red-500/10 rounded-lg">
+                  <span className="text-red-400">Amount</span>
+                  <span className="font-semibold text-red-400">-{currencyEmoji}{formatNumber(confirmItem.price)}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-green-500/10 rounded-lg border border-green-500/30">
+                  <span className="text-green-400 font-medium">Balance After</span>
+                  <span className="font-bold text-green-400">{currencyEmoji}{formatNumber(userBalance - confirmItem.price)}</span>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmItem(null)}
+                  className="flex-1 px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] rounded-xl transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmPurchase}
+                  className="flex-1 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors font-semibold"
+                >
+                  Confirm Purchase
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Purchase Result Modal */}
       {purchaseResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -269,27 +347,15 @@ export default function ShopPage() {
                 </div>
               )}
 
-              {/* Bot DM Instructions */}
-              <div className="p-4 bg-[#5865F2]/10 border border-[#5865F2]/30 rounded-xl mb-4">
-                <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-2">
-                  To redeem your purchase in Discord:
-                </p>
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <img
-                    src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
-                    alt="Omeglee Bot"
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <span className="font-semibold text-[#5865F2]">Omeglee Bot</span>
-                </div>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
-                  Use <code className="bg-[rgb(var(--color-bg-tertiary))] px-1.5 py-0.5 rounded">/redeem {purchaseResult.redeemCode}</code> in the server
-                </p>
+              {/* Redeem Instructions */}
+              <div className="p-4 bg-[#5865F2]/10 border border-[#5865F2]/30 rounded-xl mb-4 text-left">
+                <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] mb-2">📩 How to Redeem:</p>
+                <ol className="text-sm text-[rgb(var(--color-text-secondary))] space-y-1 list-decimal list-inside">
+                  <li>DM <span className="text-[#5865F2] font-semibold">Omeglee Bot</span> to open a ticket</li>
+                  <li>Select <span className="font-semibold">Casino</span> category</li>
+                  <li>Send your code: <code className="bg-[rgb(var(--color-bg-tertiary))] px-1.5 py-0.5 rounded text-yellow-500 font-mono">{purchaseResult.redeemCode}</code></li>
+                </ol>
               </div>
-
-              <p className="text-xs text-[rgb(var(--color-text-tertiary))] mb-4">
-                Save this code! Use it in Discord to redeem your purchase.
-              </p>
 
               <button
                 onClick={() => setPurchaseResult(null)}
