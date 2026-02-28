@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client/edge';
+import { PrismaClient } from '@prisma/client';
 
 declare global {
-  var prisma: PrismaClient | undefined;
+  var prismaBotClient: PrismaClient | undefined;
 }
 
-export const prismaBot = global.prisma || new PrismaClient({
+export const prismaBot = global.prismaBotClient || new PrismaClient({
   datasources: {
     db: {
       url: process.env.BOT_DATABASE_URL,
@@ -12,4 +12,4 @@ export const prismaBot = global.prisma || new PrismaClient({
   },
 });
 
-if (process.env.NODE_ENV !== 'production') global.prisma = prismaBot;
+if (process.env.NODE_ENV !== 'production') global.prismaBotClient = prismaBot;

@@ -1,0 +1,402 @@
+// This is a copy of the bot's schema for generating Prisma client in the web app
+// Original: my_pvt/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("BOT_DATABASE_URL")
+}
+
+// ===== ECONOMY MODELS =====
+
+model EconomyConfig {
+  guild_id              String   @id
+  
+  // Message settings
+  messages_per_point    Int      @default(25)
+  min_message_length    Int      @default(5)
+  message_cooldown      Int      @default(5)
+  daily_message_cap     Int      @default(100)
+  
+  // Voice settings
+  minutes_per_point     Int      @default(1)
+  daily_voice_cap       Int      @default(100)
+  require_two_members   Boolean  @default(true)
+  ignore_afk_channel    Boolean  @default(true)
+  ignore_self_muted     Boolean  @default(false)
+  
+  // Currency
+  currency_name         String   @default("points")
+  currency_emoji        String   @default("🪙")
+  
+  // Leaderboard settings
+  leaderboard_sync      Boolean  @default(true)
+  
+  // Logs
+  logs_channel_id       String?
+
+  // Channel restrictions
+  economy_channel_id    String?
+  
+  enabled               Boolean  @default(false)
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+}
+
+model EconomyUser {
+  id                      String    @id @default(cuid())
+  guild_id                String
+  user_id                 String
+  total_points            Int       @default(0)
+  leaderboard_points      Int       @default(0)
+  bank_balance            Int       @default(0)
+  daily_streak            Int       @default(0)
+  last_daily             DateTime?
+  last_work              DateTime?
+  last_crime             DateTime?
+  jailed_until           DateTime?
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+
+  @@unique([guild_id, user_id])
+  @@index([guild_id])
+}
+
+model EconomyPointLog {
+  id         String   @id @default(cuid())
+  guild_id   String
+  user_id    String
+  amount     Int
+  reason     String
+  source     String   @default("system")
+  created_at DateTime @default(now())
+
+  @@index([guild_id, user_id])
+  @@index([created_at])
+}
+
+model ShopItem {
+  id               String    @id @default(cuid())
+  guild_id         String
+  name             String
+  price            Int       @default(0)
+  description      String?
+  thumbnail        String?
+  stock            Int?
+  income_amount    Int?
+  time_hours       Int?
+  role_required_id String?
+  role_given_id    String?
+  role_removed_id  String?
+  required_balance Int?
+  reply_message    String?
+  expires_in_days  Int?
+  expires_at       DateTime?
+  created_by       String
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  purchases ShopPurchase[]
+  
+  @@unique([guild_id, name])
+  @@index([guild_id])
+}
+
+model ShopPurchase {
+  id           String    @id @default(cuid())
+  guild_id     String
+  user_id      String
+  item_id      String
+  item_name    String
+  price_paid   Int
+  redeem_code  String    @unique
+  status       String    @default("pending")
+  redeemed_at  DateTime?
+  redeemed_by  String?
+  proof_link   String?
+  created_at   DateTime  @default(now())
+
+  item ShopItem @relation(fields: [item_id], references: [id], onDelete: Cascade)
+
+  @@index([guild_id, user_id])
+  @@index([redeem_code])
+}
+
+model CasinoAdminRole {
+  id         String   @id @default(cuid())
+  guild_id   String
+  role_id    String
+  created_by String
+  created_at DateTime @default(now())
+
+  @@unique([guild_id, role_id])
+  @@index([guild_id])
+}
+
+// ===== MODERATION MODELS =====
+
+model ModCase {
+  id          String    @id @default(cuid())
+  guild_id    String
+  case_num    Int
+  action      String
+  target_id   String
+  mod_id      String
+  reason      String?
+  duration    String?
+  expires_at  DateTime?
+  created_at  DateTime  @default(now())
+
+  @@unique([guild_id, case_num])
+  @@index([guild_id, target_id])
+}
+
+model GuildMuteRole {
+  guild_id   String @id
+  role_id    String
+  created_at DateTime @default(now())
+}
+
+model ActiveMute {
+  id         String   @id @default(cuid())
+  guild_id   String
+  user_id    String
+  role_id    String
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@unique([guild_id, user_id])
+  @@index([expires_at])
+}
+
+model ActiveBan {
+  id         String   @id @default(cuid())
+  guild_id   String
+  user_id    String
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@unique([guild_id, user_id])
+  @@index([expires_at])
+}
+
+// ===== AFK SYSTEM =====
+
+model AfkStatus {
+  id         String   @id @default(cuid())
+  guild_id   String
+  user_id    String
+  reason     String   @default("AFK")
+  start_time DateTime @default(now())
+
+  @@unique([guild_id, user_id])
+}
+
+// ===== GIVEAWAY SYSTEM =====
+
+model Giveaway {
+  id              String    @id @default(cuid())
+  guild_id        String
+  channel_id      String
+  message_id      String    @unique
+  host_id         String
+  prize           String
+  winner_count    Int       @default(1)
+  ends_at         DateTime
+  ended           Boolean   @default(false)
+  winners         String[]
+  required_roles  String[]
+  blacklist_roles String[]
+  created_at      DateTime  @default(now())
+  participants    GiveawayParticipant[]
+
+  @@index([guild_id])
+  @@index([ends_at])
+}
+
+model GiveawayParticipant {
+  id          String   @id @default(cuid())
+  giveaway_id String
+  user_id     String
+  entries     Int      @default(1)
+  joined_at   DateTime @default(now())
+
+  giveaway Giveaway @relation(fields: [giveaway_id], references: [id], onDelete: Cascade)
+
+  @@unique([giveaway_id, user_id])
+}
+
+// ===== STICKY MESSAGES =====
+
+model StickyMessage {
+  id            String   @id @default(cuid())
+  guild_id      String
+  channel_id    String   @unique
+  content       String
+  embed_json    String?
+  last_msg_id   String?
+  created_by    String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@index([guild_id])
+}
+
+// ===== MAIL SYSTEM =====
+
+model MailThread {
+  id           String    @id @default(cuid())
+  guild_id     String
+  user_id      String
+  channel_id   String    @unique
+  status       String    @default("open")
+  topic        String?
+  created_at   DateTime  @default(now())
+  closed_at    DateTime?
+  closed_by    String?
+
+  @@index([guild_id, user_id])
+  @@index([guild_id, status])
+}
+
+model MailConfig {
+  guild_id      String  @id
+  category_id   String?
+  log_channel   String?
+  ping_roles    String[]
+  welcome_msg   String?
+  close_msg     String?
+  staff_roles   String[]
+}
+
+// ===== AUTO MODERATION =====
+
+model AutomodConfig {
+  guild_id         String   @id
+  enabled          Boolean  @default(false)
+  spam_enabled     Boolean  @default(false)
+  spam_threshold   Int      @default(5)
+  spam_interval    Int      @default(5000)
+  link_enabled     Boolean  @default(false)
+  link_whitelist   String[]
+  word_enabled     Boolean  @default(false)
+  word_list        String[]
+  caps_enabled     Boolean  @default(false)
+  caps_percentage  Int      @default(70)
+  caps_min_length  Int      @default(10)
+  emoji_enabled    Boolean  @default(false)
+  emoji_limit      Int      @default(10)
+  mention_enabled  Boolean  @default(false)
+  mention_limit    Int      @default(5)
+  invite_enabled   Boolean  @default(false)
+  exempt_roles     String[]
+  exempt_channels  String[]
+  log_channel      String?
+  actions          Json?
+}
+
+// ===== GREETING SYSTEM =====
+
+model GreetConfig {
+  guild_id        String  @id
+  welcome_channel String?
+  welcome_message String?
+  welcome_embed   Json?
+  leave_channel   String?
+  leave_message   String?
+  leave_embed     Json?
+  dm_enabled      Boolean @default(false)
+  dm_message      String?
+}
+
+// ===== APPEAL SYSTEM =====
+
+model AppealConfig {
+  guild_id          String   @id
+  enabled           Boolean  @default(false)
+  review_channel_id String?
+  cooldown_days     Int      @default(7)
+  appeal_types      String[]  @default(["ban", "mute", "warn"])
+}
+
+model Appeal {
+  id           String   @id @default(cuid())
+  guild_id     String
+  user_id      String
+  appeal_type  String
+  case_id      String?
+  reason       String
+  status       String   @default("pending")
+  reviewed_by  String?
+  review_note  String?
+  message_id   String?
+  created_at   DateTime @default(now())
+  reviewed_at  DateTime?
+
+  @@index([guild_id, user_id])
+  @@index([guild_id, status])
+}
+
+// ===== LOGGING =====
+
+model LogConfig {
+  guild_id        String  @id
+  mod_log         String?
+  message_log     String?
+  member_log      String?
+  voice_log       String?
+  server_log      String?
+  ignored_channels String[]
+}
+
+// ===== MEDIA CHANNELS =====
+
+model MediaChannel {
+  id         String   @id @default(cuid())
+  guild_id   String
+  channel_id String   @unique
+  created_by String
+  created_at DateTime @default(now())
+
+  @@index([guild_id])
+}
+
+// ===== VOICE CHANNEL ROLES =====
+
+model VoiceChannelRole {
+  id         String   @id @default(cuid())
+  guild_id   String
+  channel_id String
+  role_id    String
+  created_by String
+  created_at DateTime @default(now())
+
+  @@unique([channel_id, role_id])
+  @@index([guild_id])
+}
+
+// ===== REMINDERS =====
+
+model Reminder {
+  id          String   @id @default(cuid())
+  guild_id    String?
+  channel_id  String
+  user_id     String
+  message     String
+  remind_at   DateTime
+  created_at  DateTime @default(now())
+  dm          Boolean  @default(false)
+
+  @@index([remind_at])
+  @@index([user_id])
+}
+
+// ===== PREFIX SETTINGS =====
+
+model GuildPrefix {
+  guild_id String @id
+  prefix   String @default("!")
+}
