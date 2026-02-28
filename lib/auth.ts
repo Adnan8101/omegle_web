@@ -22,6 +22,7 @@ export const authOptions: NextAuthOptions = {
         token.permissions = {
           hasFullAccess: false,
           hasViewOnlyAccess: false,
+          hasCasinoAccess: false,
           hasAnyAccess: false,
           isOwner: false,
           isAdmin: false,
@@ -45,6 +46,7 @@ export const authOptions: NextAuthOptions = {
             token.permissions = {
               hasFullAccess: false,
               hasViewOnlyAccess: false,
+              hasCasinoAccess: false,
               hasAnyAccess: false,
               isOwner: false,
               isAdmin: false,
@@ -66,6 +68,7 @@ export const authOptions: NextAuthOptions = {
       session.user.permissions = token.permissions || {
         hasFullAccess: false,
         hasViewOnlyAccess: false,
+        hasCasinoAccess: false,
         hasAnyAccess: false,
         isOwner: false,
         isAdmin: false,

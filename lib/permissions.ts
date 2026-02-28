@@ -4,6 +4,7 @@
  * Hierarchy:
  * 1. Server Owner / Admin / Manage Server → Full Access
  * 2. Specific Role IDs → View-Only Access (VC Stats + Chat Stats)
+ * 3. Casino Role IDs → Casino Economy Dashboard Access
  */
 
 const GUILD_ID = "910043773130661918";
@@ -14,6 +15,10 @@ const VIEW_ONLY_ROLE_IDS = [
   "1474416428772888739"
 ];
 
+// Casino admin role IDs (can manage shop items)
+// Note: These are fetched from database, but we also allow these hardcoded roles
+const CASINO_ADMIN_ROLE_IDS: string[] = [];
+
 // Discord permission bits
 const PERMISSIONS = {
   ADMINISTRATOR: 0x0000000000000008n,
@@ -23,7 +28,8 @@ const PERMISSIONS = {
 export interface UserPermissions {
   hasFullAccess: boolean;      // Full admin access
   hasViewOnlyAccess: boolean;  // Can only view VC stats and chat stats
-  hasAnyAccess: boolean;        // Either full or view-only
+  hasCasinoAccess: boolean;    // Can manage casino/shop items
+  hasAnyAccess: boolean;        // Either full or view-only or casino
   isOwner: boolean;
   isAdmin: boolean;
   hasManageServer: boolean;
@@ -34,11 +40,13 @@ export interface UserPermissions {
  * Check user permissions based on Discord member data
  */
 export async function checkUserPermissions(
-  accessToken: string
+  accessToken: string,
+  casinoRoleIds: string[] = []
 ): Promise<UserPermissions> {
   const defaultPerms: UserPermissions = {
     hasFullAccess: false,
     hasViewOnlyAccess: false,
+    hasCasinoAccess: false,
     hasAnyAccess: false,
     isOwner: false,
     isAdmin: false,
@@ -78,10 +86,18 @@ export async function checkUserPermissions(
       VIEW_ONLY_ROLE_IDS.includes(roleId)
     );
 
+    // Check for casino admin roles
+    const allCasinoRoles = [...CASINO_ADMIN_ROLE_IDS, ...casinoRoleIds];
+    const hasCasinoRole = roles.some((roleId) =>
+      allCasinoRoles.includes(roleId)
+    );
+    const hasCasinoAccess = hasFullAccess || hasCasinoRole;
+
     return {
       hasFullAccess,
       hasViewOnlyAccess: hasViewOnlyRole,
-      hasAnyAccess: hasFullAccess || hasViewOnlyRole,
+      hasCasinoAccess,
+      hasAnyAccess: hasFullAccess || hasViewOnlyRole || hasCasinoAccess,
       isOwner: false, // Can't reliably detect from member endpoint
       isAdmin,
       hasManageServer,
@@ -126,4 +142,11 @@ export function canAccessServerStats(perms: UserPermissions): boolean {
  */
 export function canAccessApplications(perms: UserPermissions): boolean {
   return perms.hasFullAccess; // Only full access
+}
+
+/**
+ * Check if user can access casino economy dashboard
+ */
+export function canAccessCasinoDashboard(perms: UserPermissions): boolean {
+  return perms.hasCasinoAccess; // Full access or casino role
 }

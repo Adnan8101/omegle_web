@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
     FiHome, FiFileText, FiLogOut, FiGlobe, FiMenu, FiX,
-    FiUsers, FiMessageSquare, FiBarChart2, FiMic
+    FiUsers, FiMessageSquare, FiBarChart2, FiMic, FiDollarSign
 } from 'react-icons/fi';
 
 interface AdminLayoutProps {
@@ -99,41 +99,58 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             href: '/admin/dashboard',
             icon: <FiHome className="w-5 h-5" />,
             requiresFullAccess: true,
+            requiresCasinoAccess: false,
         },
         {
             name: 'Staff Applications',
             href: '/admin/dashboard/applications',
             icon: <FiFileText className="w-5 h-5" />,
             requiresFullAccess: true,
+            requiresCasinoAccess: false,
+        },
+        {
+            name: 'Casino Economy',
+            href: '/admin/casino',
+            icon: <FiDollarSign className="w-5 h-5" />,
+            requiresFullAccess: false,
+            requiresCasinoAccess: true, // Casino role or full access
         },
         {
             name: 'Mod Stats',
             href: '/admin/mods-stats',
             icon: <FiUsers className="w-5 h-5" />,
             requiresFullAccess: true, // Admin only
+            requiresCasinoAccess: false,
         },
         {
             name: 'VC Stats',
             href: '/admin/vctranscript',
             icon: <FiMic className="w-5 h-5" />,
             requiresFullAccess: false, // View-only can access
+            requiresCasinoAccess: false,
         },
         {
             name: 'Chat Stats',
             href: '/admin/vctranscript/chatlogs',
             icon: <FiMessageSquare className="w-5 h-5" />,
             requiresFullAccess: false, // View-only can access
+            requiresCasinoAccess: false,
         },
         {
             name: 'Server Stats',
             href: '/admin/server-stats',
             icon: <FiBarChart2 className="w-5 h-5" />,
             requiresFullAccess: false, // View-only can access
+            requiresCasinoAccess: false,
         },
     ].filter(item => {
         // Filter based on permissions
+        const perms = session?.user?.permissions;
         if (item.requiresFullAccess) {
-            return session?.user?.permissions?.hasFullAccess;
+            return perms?.hasFullAccess;
+        }
+        if (item.requiresCasinoAccess) {
+            return perms?.hasFullAccess || perms?.hasCasinoAccess;
         }
         return true; // Show all non-full-access items to everyone with any access
     });
@@ -144,6 +161,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         }
         if (href === '/admin/dashboard/applications') {
             return pathname.startsWith('/admin/dashboard/applications');
+        }
+        if (href === '/admin/casino') {
+            return pathname.startsWith('/admin/casino');
         }
         if (href === '/admin/mods-stats') {
             return pathname.startsWith('/admin/mods-stats');
