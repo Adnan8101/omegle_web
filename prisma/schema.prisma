@@ -44,42 +44,71 @@ model EconomyConfig {
   enabled               Boolean  @default(false)
   created_at            DateTime @default(now())
   updated_at            DateTime @updatedAt
+
+  @@map("economy_config")
 }
 
 model EconomyUser {
-  id                      String    @id @default(cuid())
-  guild_id                String
-  user_id                 String
-  total_points            Int       @default(0)
-  leaderboard_points      Int       @default(0)
-  bank_balance            Int       @default(0)
-  daily_streak            Int       @default(0)
-  last_daily             DateTime?
-  last_work              DateTime?
-  last_crime             DateTime?
-  jailed_until           DateTime?
-  created_at              DateTime  @default(now())
-  updated_at              DateTime  @updatedAt
+  id                    String   @id @default(uuid())
+  guild_id              String
+  user_id               String
+  
+  // Message tracking
+  total_messages        Int      @default(0)
+  valid_messages        Int      @default(0)
+  redeemable_messages   Int      @default(0)
+  claimed_messages      Int      @default(0)
+  messages_today        Int      @default(0)
+  last_message_at       DateTime?
+  last_message_date     String?
+  
+  // Voice tracking
+  total_vc_minutes      Int      @default(0)
+  redeemable_vc_minutes Int      @default(0)
+  claimed_vc_minutes    Int      @default(0)
+  vc_minutes_today      Int      @default(0)
+  last_vc_date          String?
+  
+  // Points
+  total_points          Int      @default(0)
+  weekly_points         Int      @default(0)
+  monthly_points        Int      @default(0)
+  
+  // Leaderboard
+  leaderboard_points    Int      @default(0)
+  
+  // Tracking
+  week_start            String?
+  month_start           String?
+  
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
 
   @@unique([guild_id, user_id])
-  @@index([guild_id])
+  @@index([guild_id, total_points])
+  @@index([guild_id, weekly_points])
+  @@index([guild_id, monthly_points])
+  @@index([guild_id, leaderboard_points])
+  @@map("economy_users")
 }
 
 model EconomyPointLog {
-  id         String   @id @default(cuid())
-  guild_id   String
-  user_id    String
-  amount     Int
-  reason     String
-  source     String   @default("system")
-  created_at DateTime @default(now())
+  id          String   @id @default(uuid())
+  guild_id    String
+  user_id     String
+  amount      Int
+  reason      String
+  source      String
+  admin_id    String?
+  created_at  DateTime @default(now())
 
   @@index([guild_id, user_id])
-  @@index([created_at])
+  @@index([guild_id, created_at])
+  @@map("economy_point_logs")
 }
 
 model ShopItem {
-  id               String    @id @default(cuid())
+  id               String    @id @default(uuid())
   guild_id         String
   name             String
   price            Int       @default(0)
@@ -99,14 +128,13 @@ model ShopItem {
   created_at       DateTime  @default(now())
   updated_at       DateTime  @updatedAt
 
-  purchases ShopPurchase[]
-  
   @@unique([guild_id, name])
   @@index([guild_id])
+  @@map("shop_items")
 }
 
 model ShopPurchase {
-  id           String    @id @default(cuid())
+  id           String    @id @default(uuid())
   guild_id     String
   user_id      String
   item_id      String
@@ -119,21 +147,18 @@ model ShopPurchase {
   proof_link   String?
   created_at   DateTime  @default(now())
 
-  item ShopItem @relation(fields: [item_id], references: [id], onDelete: Cascade)
-
   @@index([guild_id, user_id])
   @@index([redeem_code])
+  @@map("shop_purchases")
 }
 
 model CasinoAdminRole {
-  id         String   @id @default(cuid())
   guild_id   String
   role_id    String
-  created_by String
-  created_at DateTime @default(now())
 
-  @@unique([guild_id, role_id])
+  @@id([guild_id, role_id])
   @@index([guild_id])
+  @@map("casino_admin_roles")
 }
 
 // ===== MODERATION MODELS =====
