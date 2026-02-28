@@ -31,6 +31,12 @@ async function hasCasinoAccess(session: any): Promise<boolean> {
 // GET - Get casino statistics
 export async function GET(request: NextRequest) {
   try {
+    // Check if database URL is configured
+    if (!process.env.BOT_DATABASE_URL) {
+      console.error('BOT_DATABASE_URL is not configured');
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.permissions?.hasAnyAccess) {
@@ -129,8 +135,11 @@ export async function GET(request: NextRequest) {
       }))
     });
     
-  } catch (error) {
-    console.error('Error fetching casino stats:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error fetching casino stats:', error?.message || error);
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined 
+    }, { status: 500 });
   }
 }

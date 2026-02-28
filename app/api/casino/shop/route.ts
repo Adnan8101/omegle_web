@@ -31,6 +31,12 @@ async function hasCasinoAccess(session: any): Promise<boolean> {
 // GET - List all shop items
 export async function GET(request: NextRequest) {
   try {
+    // Check if database URL is configured
+    if (!process.env.BOT_DATABASE_URL) {
+      console.error('BOT_DATABASE_URL is not configured');
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.permissions?.hasAnyAccess) {
