@@ -37,6 +37,7 @@ interface PurchaseResult {
   redeemCode: string;
   replyMessage: string | null;
   createdAt: string;
+  dmSent?: boolean;
 }
 
 export default function ShopPage() {
@@ -109,7 +110,10 @@ export default function ShopPage() {
         throw new Error(data.error || 'Purchase failed');
       }
 
-      setPurchaseResult(data.purchase);
+      setPurchaseResult({
+        ...data.purchase,
+        dmSent: data.dmSent
+      });
       setUserBalance(data.newBalance);
       
       // Refresh shop to update stock
@@ -248,9 +252,40 @@ export default function ShopPage() {
 
               {purchaseResult.replyMessage && (
                 <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-4 p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
-                  {purchaseResult.replyMessage}
+                  {purchaseResult.replyMessage.replace(/<@\d+>/g, '')}
                 </p>
               )}
+
+              {/* DM Status */}
+              {purchaseResult.dmSent ? (
+                <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl mb-4 flex items-center gap-2">
+                  <FiCheck className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-green-500">Receipt sent to your Discord DMs!</span>
+                </div>
+              ) : (
+                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl mb-4 flex items-center gap-2">
+                  <FiAlertCircle className="w-4 h-4 text-yellow-500" />
+                  <span className="text-sm text-yellow-500">Could not DM you. Make sure your DMs are open!</span>
+                </div>
+              )}
+
+              {/* Bot DM Instructions */}
+              <div className="p-4 bg-[#5865F2]/10 border border-[#5865F2]/30 rounded-xl mb-4">
+                <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-2">
+                  To redeem your purchase in Discord:
+                </p>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <img
+                    src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
+                    alt="Omeglee Bot"
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <span className="font-semibold text-[#5865F2]">Omeglee Bot</span>
+                </div>
+                <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
+                  Use <code className="bg-[rgb(var(--color-bg-tertiary))] px-1.5 py-0.5 rounded">/redeem {purchaseResult.redeemCode}</code> in the server
+                </p>
+              </div>
 
               <p className="text-xs text-[rgb(var(--color-text-tertiary))] mb-4">
                 Save this code! Use it in Discord to redeem your purchase.

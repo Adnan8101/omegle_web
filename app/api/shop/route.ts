@@ -216,24 +216,31 @@ export async function POST(request: NextRequest) {
     const currencyEmoji = config?.currency_emoji || '🪙';
     const formatNumber = (n: number) => n.toLocaleString();
 
-    // Send DM notification to user
+    // Send DM notification to user with purchase receipt
+    let dmSent = false;
     try {
-      await sendDM(userId, {
+      const dmResult = await sendDM(userId, {
         embed: {
-          title: 'Purchase Receipt',
-          description: `You purchased **${item.name}** from **Omeglee Community**`,
-          color: 0xF1C40F, // Yellow/gold color
+          title: '🎉 Purchase Successful!',
+          description: `Thank you for your purchase from **Omeglee Community Shop**!`,
+          color: 0x57F287, // Green color
+          thumbnail: item.thumbnail ? { url: item.thumbnail } : undefined,
           fields: [
-            { name: 'Price Paid', value: `${currencyEmoji}${formatNumber(item.price)}`, inline: true },
-            { name: 'Receipt Code', value: `\`${code}\``, inline: true }
+            { name: '📦 Item', value: item.name, inline: true },
+            { name: '💰 Price Paid', value: `${currencyEmoji}${formatNumber(item.price)}`, inline: true },
+            { name: '🎟️ Your Redeem Code', value: `\`\`\`${code}\`\`\``, inline: false },
+            { name: '📝 How to Redeem', value: `Go to **Omeglee server** and use:\n\`/redeem code:${code}\``, inline: false }
           ],
-          footer: { text: 'Use this code to redeem your purchase' },
+          footer: { text: '⚠️ Keep this code safe! • Omeglee Shop' },
           timestamp: new Date().toISOString()
         }
       });
+      dmSent = dmResult.success;
+      if (!dmResult.success) {
+        console.error('DM failed:', dmResult.error);
+      }
     } catch (dmError) {
       console.error('Failed to send DM notification:', dmError);
-      // Don't fail the purchase if DM fails
     }
 
     return NextResponse.json({
@@ -246,7 +253,8 @@ export async function POST(request: NextRequest) {
         replyMessage: item.reply_message,
         createdAt: purchase.created_at.toISOString()
       },
-      newBalance: economyUser.total_points - item.price
+      newBalance: economyUser.total_points - item.price,
+      dmSent
     });
 
   } catch (error) {

@@ -1,57 +1,54 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { FiArrowLeft, FiSave, FiImage, FiX, FiLoader } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiPackage, FiImage, FiAlertCircle, FiCheck } from 'react-icons/fi';
 
-interface ShopItem {
-  id: string;
+interface FormData {
   name: string;
-  price: number;
-  description: string | null;
-  thumbnail: string | null;
-  stock: number | null;
-  time_hours: number | null;
-  income_amount: number | null;
-  role_required_id: string | null;
-  role_given_id: string | null;
-  role_removed_id: string | null;
-  required_balance: number | null;
-  reply_message: string | null;
-  expires_in_days: number | null;
-  expires_at: string | null;
+  price: string;
+  description: string;
+  thumbnail: string;
+  stock: string;
+  income_amount: string;
+  time_hours: string;
+  role_required_id: string;
+  role_given_id: string;
+  role_removed_id: string;
+  required_balance: string;
+  reply_message: string;
+  expires_in_days: string;
 }
 
-export default function EditShopItem({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function EditItemPage() {
+  const params = useParams();
+  const itemId = params.id as string;
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [item, setItem] = useState<ShopItem | null>(null);
-  const [currencyEmoji, setCurrencyEmoji] = useState('🪙');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     price: '',
     description: '',
     thumbnail: '',
     stock: '',
-    time_hours: '',
     income_amount: '',
+    time_hours: '',
     role_required_id: '',
     role_given_id: '',
     role_removed_id: '',
     required_balance: '',
     reply_message: '',
-    expires_in_days: ''
+    expires_in_days: '',
   });
+
+  const [currencyEmoji, setCurrencyEmoji] = useState('🪙');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -60,48 +57,38 @@ export default function EditShopItem({ params }: { params: Promise<{ id: string 
   }, [status, router]);
 
   useEffect(() => {
-    if (status === 'authenticated' && id) {
+    if (status === 'authenticated' && itemId) {
       fetchItem();
     }
-  }, [status, id]);
+  }, [status, itemId]);
 
   const fetchItem = async () => {
-    setLoading(true);
-    setError(null);
-
     try {
-      const res = await fetch(`/api/casino/shop/${id}`);
+      const res = await fetch(`/api/casino/shop/${itemId}`);
+      const data = await res.json();
 
       if (!res.ok) {
-        if (res.status === 404) {
-          throw new Error('Item not found');
-        }
-        throw new Error('Failed to fetch item');
+        throw new Error(data.error || 'Failed to fetch item');
       }
 
-      const data = await res.json();
-      setItem(data.item);
-      setCurrencyEmoji(data.currencyEmoji || '🪙');
-
-      // Populate form
+      const item = data.item;
       setFormData({
-        name: data.item.name || '',
-        price: data.item.price?.toString() || '0',
-        description: data.item.description || '',
-        thumbnail: data.item.thumbnail || '',
-        stock: data.item.stock !== null ? data.item.stock.toString() : '',
-        time_hours: data.item.time_hours?.toString() || '',
-        income_amount: data.item.income_amount?.toString() || '',
-        role_required_id: data.item.role_required_id || '',
-        role_given_id: data.item.role_given_id || '',
-        role_removed_id: data.item.role_removed_id || '',
-        required_balance: data.item.required_balance?.toString() || '',
-        reply_message: data.item.reply_message || '',
-        expires_in_days: data.item.expires_in_days?.toString() || ''
+        name: item.name || '',
+        price: item.price?.toString() || '',
+        description: item.description || '',
+        thumbnail: item.thumbnail || '',
+        stock: item.stock?.toString() || '',
+        income_amount: item.income_amount?.toString() || '',
+        time_hours: item.time_hours?.toString() || '',
+        role_required_id: item.role_required_id || '',
+        role_given_id: item.role_given_id || '',
+        role_removed_id: item.role_removed_id || '',
+        required_balance: item.required_balance?.toString() || '',
+        reply_message: item.reply_message || '',
+        expires_in_days: item.expires_in_days?.toString() || '',
       });
-
+      setCurrencyEmoji(data.currencyEmoji || '🪙');
     } catch (err: any) {
-      console.error('Error fetching item:', err);
       setError(err.message || 'Failed to load item');
     } finally {
       setLoading(false);
@@ -109,80 +96,48 @@ export default function EditShopItem({ params }: { params: Promise<{ id: string 
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    setSuccess(false);
 
     try {
-      const res = await fetch(`/api/casino/shop/${id}`, {
+      const res = await fetch(`/api/casino/shop/${itemId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          price: formData.price,
-          description: formData.description || null,
-          thumbnail: formData.thumbnail || null,
-          stock: formData.stock !== '' ? formData.stock : null,
-          time_hours: formData.time_hours || null,
-          income_amount: formData.income_amount || null,
-          role_required_id: formData.role_required_id || null,
-          role_given_id: formData.role_given_id || null,
-          role_removed_id: formData.role_removed_id || null,
-          required_balance: formData.required_balance || null,
-          reply_message: formData.reply_message || null,
-          expires_in_days: formData.expires_in_days || null
-        })
+        body: JSON.stringify(formData)
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || 'Failed to update item');
       }
 
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      setTimeout(() => router.push('/admin/casino'), 1500);
 
     } catch (err: any) {
-      console.error('Error updating item:', err);
       setError(err.message || 'Failed to update item');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 rounded-full border-2 border-yellow-500/20"></div>
-            <div className="absolute inset-0 rounded-full border-2 border-yellow-500 border-t-transparent animate-spin"></div>
-          </div>
-          <p className="text-sm text-[rgb(var(--color-text-tertiary))] animate-pulse">Loading item...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !item) {
-    return (
-      <div className="p-6">
-        <div className="max-w-2xl mx-auto">
-          <div className="p-8 bg-red-500/10 border border-red-500/30 rounded-2xl text-center">
-            <p className="text-red-500 text-lg mb-4">{error}</p>
-            <Link
-              href="/admin/casino"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[rgb(var(--color-bg-tertiary))] rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors"
-            >
-              <FiArrowLeft className="w-4 h-4" />
-              Back to Shop
-            </Link>
+      <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
+        <div className="max-w-4xl mx-auto">
+          <div className="h-10 w-48 bg-[rgb(var(--color-bg-tertiary))] rounded-xl animate-pulse mb-8"></div>
+          <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))]">
+            <div className="space-y-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-14 bg-[rgb(var(--color-bg-tertiary))] rounded-xl animate-pulse"></div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -190,333 +145,298 @@ export default function EditShopItem({ params }: { params: Promise<{ id: string 
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 mb-6 sm:mb-8">
           <Link
             href="/admin/casino"
-            className="p-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+            className="p-2.5 glass-blue rounded-xl border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] apple-transition"
           >
             <FiArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">Edit Shop Item</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
+              Edit Item
+            </h1>
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-              Modify the item properties and save changes
+              {formData.name || 'Loading...'}
             </p>
           </div>
         </div>
 
-        {/* Alerts */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-between">
-            <span className="text-red-500">{error}</span>
-            <button onClick={() => setError(null)} className="text-red-500 hover:text-red-400">
-              <FiX className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
+        {/* Success Message */}
         {success && (
-          <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-500">
-            ✓ Item updated successfully!
+          <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-2xl flex items-center gap-3">
+            <FiCheck className="w-5 h-5 text-green-500" />
+            <span className="text-green-500 font-medium">Item updated successfully! Redirecting...</span>
           </div>
         )}
 
-        {/* Form */}
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
+            <FiAlertCircle className="w-5 h-5 text-red-500" />
+            <span className="text-red-500">{error}</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Basic Info */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="glass-blue p-6 rounded-2xl border border-[rgb(var(--color-border))]">
-                <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">Basic Information</h2>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Item Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                      placeholder="e.g., Big Stack"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Price ({currencyEmoji}) *
-                    </label>
-                    <input
-                      type="number"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleChange}
-                      required
-                      min="0"
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                      placeholder="730000"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Description
-                    </label>
-                    <textarea
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      rows={3}
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none resize-none"
-                      placeholder="Bigger payouts. Faster cycle."
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Thumbnail URL
-                    </label>
-                    <input
-                      type="url"
-                      name="thumbnail"
-                      value={formData.thumbnail}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                      placeholder="https://example.com/image.png"
-                    />
-                    {formData.thumbnail && (
-                      <div className="mt-3 p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))]">
-                        <p className="text-xs text-[rgb(var(--color-text-tertiary))] mb-2">Image Preview</p>
-                        <div className="w-32 h-32 rounded-xl overflow-hidden bg-black/20">
-                          <img 
-                            src={formData.thumbnail} 
-                            alt="Thumbnail Preview" 
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>';
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+          {/* Basic Info */}
+          <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
+            <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
+              <FiPackage className="w-5 h-5 text-[rgb(var(--color-accent))]" />
+              Basic Information
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Item Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  placeholder="Enter item name"
+                />
               </div>
-
-              <div className="glass-blue p-6 rounded-2xl border border-[rgb(var(--color-border))]">
-                <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">Income Settings</h2>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Income Amount ({currencyEmoji})
-                    </label>
-                    <input
-                      type="number"
-                      name="income_amount"
-                      value={formData.income_amount}
-                      onChange={handleChange}
-                      min="0"
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                      placeholder="10000"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Every X Hours
-                    </label>
-                    <input
-                      type="number"
-                      name="time_hours"
-                      value={formData.time_hours}
-                      onChange={handleChange}
-                      min="1"
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                      placeholder="21"
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
-                  Leave both empty if this item doesn&apos;t generate income
-                </p>
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Price ({currencyEmoji}) *
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  required
+                  min="1"
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  placeholder="1000"
+                />
               </div>
-
-              <div className="glass-blue p-6 rounded-2xl border border-[rgb(var(--color-border))]">
-                <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">Role Configuration</h2>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Role Required (ID)
-                    </label>
-                    <input
-                      type="text"
-                      name="role_required_id"
-                      value={formData.role_required_id}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                      placeholder="123456789012345678"
-                    />
-                    <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">Users must have this role to purchase</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Role Given on Redeem (ID)
-                    </label>
-                    <input
-                      type="text"
-                      name="role_given_id"
-                      value={formData.role_given_id}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                      placeholder="123456789012345678"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Role Removed on Redeem (ID)
-                    </label>
-                    <input
-                      type="text"
-                      name="role_removed_id"
-                      value={formData.role_removed_id}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                      placeholder="123456789012345678"
-                    />
-                  </div>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Stock (empty = unlimited)
+                </label>
+                <input
+                  type="number"
+                  name="stock"
+                  value={formData.stock}
+                  onChange={handleChange}
+                  min="0"
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  placeholder="Unlimited"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition resize-none"
+                  placeholder="Describe the item..."
+                />
               </div>
             </div>
+          </div>
 
-            {/* Right Column - Additional Settings */}
-            <div className="space-y-6">
-              <div className="glass-blue p-6 rounded-2xl border border-[rgb(var(--color-border))]">
-                <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">Availability</h2>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Stock
-                    </label>
-                    <input
-                      type="number"
-                      name="stock"
-                      value={formData.stock}
-                      onChange={handleChange}
-                      min="0"
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                      placeholder="Leave empty for unlimited"
-                    />
-                    <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">Leave empty for unlimited stock</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Expires in (Days)
-                    </label>
-                    <input
-                      type="number"
-                      name="expires_in_days"
-                      value={formData.expires_in_days}
-                      onChange={handleChange}
-                      min="1"
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                      placeholder="7"
-                    />
-                    <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">Days until item is no longer available</p>
-                  </div>
-                </div>
+          {/* Thumbnail */}
+          <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
+            <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
+              <FiImage className="w-5 h-5 text-[rgb(var(--color-accent))]" />
+              Thumbnail
+            </h2>
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              <div className="flex-1 w-full">
+                <input
+                  type="url"
+                  name="thumbnail"
+                  value={formData.thumbnail}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  placeholder="https://example.com/image.png"
+                />
               </div>
-
-              <div className="glass-blue p-6 rounded-2xl border border-[rgb(var(--color-border))]">
-                <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">Requirements</h2>
-
-                <div>
-                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    Minimum Balance ({currencyEmoji})
-                  </label>
-                  <input
-                    type="number"
-                    name="required_balance"
-                    value={formData.required_balance}
-                    onChange={handleChange}
-                    min="0"
-                    className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none"
-                    placeholder="500000"
+              {formData.thumbnail && (
+                <div className="w-20 h-20 rounded-xl overflow-hidden bg-[rgb(var(--color-bg-tertiary))] flex-shrink-0">
+                  <img
+                    src={formData.thumbnail}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
                   />
-                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">User must have at least this balance</p>
-                </div>
-              </div>
-
-              <div className="glass-blue p-6 rounded-2xl border border-[rgb(var(--color-border))]">
-                <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">Reply Message</h2>
-
-                <div>
-                  <textarea
-                    name="reply_message"
-                    value={formData.reply_message}
-                    onChange={handleChange}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none resize-none"
-                    placeholder="Thank you for purchasing! Your code is..."
-                  />
-                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">Sent to user after purchase</p>
-                </div>
-              </div>
-
-              {/* Preview Card */}
-              {item && (
-                <div className="glass-blue p-6 rounded-2xl border border-yellow-500/30 bg-yellow-500/5">
-                  <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">Preview</h2>
-                  <div className="flex items-center gap-3">
-                    {formData.thumbnail ? (
-                      <img src={formData.thumbnail} alt="Preview" className="w-12 h-12 rounded-lg object-cover" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-                        <FiImage className="w-6 h-6 text-yellow-500" />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-medium text-[rgb(var(--color-text-primary))]">{formData.name || 'Item Name'}</p>
-                      <p className="text-sm text-yellow-500">{currencyEmoji} {parseInt(formData.price || '0').toLocaleString()}</p>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-4 pt-6 border-t border-[rgb(var(--color-border))]">
+          {/* Income Settings */}
+          <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
+            <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
+              💰 Income Settings
+            </h2>
+            <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-4">
+              Optional: Make this item generate passive income
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Income Amount ({currencyEmoji})
+                </label>
+                <input
+                  type="number"
+                  name="income_amount"
+                  value={formData.income_amount}
+                  onChange={handleChange}
+                  min="0"
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  placeholder="100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Every X Hours
+                </label>
+                <input
+                  type="number"
+                  name="time_hours"
+                  value={formData.time_hours}
+                  onChange={handleChange}
+                  min="1"
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  placeholder="24"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Role Settings */}
+          <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
+            <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
+              🎭 Role Settings
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Required Role ID
+                </label>
+                <input
+                  type="text"
+                  name="role_required_id"
+                  value={formData.role_required_id}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  placeholder="Role ID to require"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Role Given on Redeem
+                </label>
+                <input
+                  type="text"
+                  name="role_given_id"
+                  value={formData.role_given_id}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  placeholder="Role ID to give"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Role Removed on Redeem
+                </label>
+                <input
+                  type="text"
+                  name="role_removed_id"
+                  value={formData.role_removed_id}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  placeholder="Role ID to remove"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Advanced */}
+          <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
+            <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
+              ⚙️ Advanced Settings
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Required Balance ({currencyEmoji})
+                </label>
+                <input
+                  type="number"
+                  name="required_balance"
+                  value={formData.required_balance}
+                  onChange={handleChange}
+                  min="0"
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  placeholder="Minimum balance required"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Expires In (days)
+                </label>
+                <input
+                  type="number"
+                  name="expires_in_days"
+                  value={formData.expires_in_days}
+                  onChange={handleChange}
+                  min="1"
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  placeholder="Days until expiry"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Reply Message
+                </label>
+                <textarea
+                  name="reply_message"
+                  value={formData.reply_message}
+                  onChange={handleChange}
+                  rows={2}
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition resize-none"
+                  placeholder="Message shown after purchase..."
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div className="flex flex-col sm:flex-row gap-4">
             <Link
               href="/admin/casino"
-              className="px-6 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+              className="flex-1 px-6 py-3 text-center glass-blue rounded-xl border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] apple-transition font-medium"
             >
               Cancel
             </Link>
             <button
               type="submit"
-              disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-xl transition-colors disabled:opacity-50"
+              disabled={saving || !formData.name || !formData.price}
+              className="flex-1 px-6 py-3 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent))]/80 text-white rounded-xl apple-transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {saving ? (
                 <>
-                  <FiLoader className="w-5 h-5 animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   Saving...
                 </>
               ) : (
                 <>
-                  <FiSave className="w-5 h-5" />
+                  <FiSave className="w-4 h-4" />
                   Save Changes
                 </>
               )}

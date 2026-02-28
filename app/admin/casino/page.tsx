@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   FiDollarSign, FiPackage, FiShoppingCart, FiUsers, FiClock,
-  FiPlus, FiEdit2, FiTrash2, FiSearch, FiRefreshCw, FiTrendingUp
+  FiPlus, FiEdit2, FiTrash2, FiSearch, FiRefreshCw, FiTrendingUp,
+  FiChevronRight, FiAlertCircle
 } from 'react-icons/fi';
 
 interface ShopItem {
@@ -16,15 +17,6 @@ interface ShopItem {
   description: string | null;
   thumbnail: string | null;
   stock: number | null;
-  time_hours: number | null;
-  income_amount: number | null;
-  role_required_id: string | null;
-  role_given_id: string | null;
-  role_removed_id: string | null;
-  required_balance: number | null;
-  reply_message: string | null;
-  expires_in_days: number | null;
-  expires_at: string | null;
   created_at: string;
 }
 
@@ -51,7 +43,6 @@ export default function CasinoDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [topItems, setTopItems] = useState<TopItem[]>([]);
   const [currencyEmoji, setCurrencyEmoji] = useState('🪙');
-  const [currencyName, setCurrencyName] = useState('points');
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -79,19 +70,18 @@ export default function CasinoDashboard() {
         fetch('/api/casino/stats')
       ]);
       
-      if (!itemsRes.ok || !statsRes.ok) {
-        throw new Error('Failed to fetch data');
-      }
-      
       const itemsData = await itemsRes.json();
       const statsData = await statsRes.json();
       
-      setItems(itemsData.items || []);
-      setCurrencyEmoji(itemsData.currencyEmoji || '🪙');
-      setCurrencyName(itemsData.currencyName || 'points');
+      if (itemsRes.ok) {
+        setItems(itemsData.items || []);
+        setCurrencyEmoji(itemsData.currencyEmoji || '🪙');
+      }
       
-      setStats(statsData.stats || null);
-      setTopItems(statsData.topItems || []);
+      if (statsRes.ok) {
+        setStats(statsData.stats || null);
+        setTopItems(statsData.topItems || []);
+      }
       
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -101,185 +91,198 @@ export default function CasinoDashboard() {
     }
   };
 
-  const handleDelete = async (itemId: string) => {
+  const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/casino/shop/${itemId}`, {
-        method: 'DELETE'
-      });
-      
-      if (!res.ok) {
-        throw new Error('Failed to delete item');
+      const res = await fetch(`/api/casino/shop/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setItems(items.filter(item => item.id !== id));
+        setDeleteConfirm(null);
       }
-      
-      setItems(items.filter(item => item.id !== itemId));
-      setDeleteConfirm(null);
     } catch (err) {
       console.error('Error deleting item:', err);
-      setError('Failed to delete item');
     }
   };
 
   const filteredItems = items.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const formatNumber = (n: number) => n.toLocaleString();
 
-  if (loading) {
+  const statCards = [
+    {
+      title: 'Total Items',
+      value: stats?.totalItems || 0,
+      icon: <FiPackage className="w-6 h-6 sm:w-8 sm:h-8" />,
+      color: 'from-blue-500 to-blue-600',
+      bgColor: 'bg-blue-500/20',
+    },
+    {
+      title: 'Total Purchases',
+      value: stats?.totalPurchases || 0,
+      icon: <FiShoppingCart className="w-6 h-6 sm:w-8 sm:h-8" />,
+      color: 'from-green-500 to-green-600',
+      bgColor: 'bg-green-500/20',
+    },
+    {
+      title: 'Pending Redemptions',
+      value: stats?.pendingRedemptions || 0,
+      icon: <FiClock className="w-6 h-6 sm:w-8 sm:h-8" />,
+      color: 'from-yellow-500 to-yellow-600',
+      bgColor: 'bg-yellow-500/20',
+    },
+    {
+      title: 'Total Revenue',
+      value: `${currencyEmoji}${formatNumber(stats?.totalRevenue || 0)}`,
+      icon: <FiDollarSign className="w-6 h-6 sm:w-8 sm:h-8" />,
+      color: 'from-purple-500 to-purple-600',
+      bgColor: 'bg-purple-500/20',
+    },
+  ];
+
+  if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 rounded-full border-2 border-yellow-500/20"></div>
-            <div className="absolute inset-0 rounded-full border-2 border-yellow-500 border-t-transparent animate-spin"></div>
-          </div>
-          <p className="text-sm text-[rgb(var(--color-text-tertiary))] animate-pulse">Loading casino dashboard...</p>
+      <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
+        <div className="mb-6 sm:mb-8">
+          <div className="h-10 w-64 bg-[rgb(var(--color-bg-tertiary))] rounded-xl animate-pulse mb-2"></div>
+          <div className="h-5 w-48 bg-[rgb(var(--color-bg-tertiary))] rounded-lg animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] animate-pulse">
+              <div className="h-20 bg-[rgb(var(--color-bg-tertiary))] rounded-xl"></div>
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-3">
-            <span className="text-4xl">🎰</span>
-            Casino Economy Dashboard
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[rgb(var(--color-text-primary))] mb-2 tracking-tight">
+            Casino Economy
           </h1>
-          <p className="text-[rgb(var(--color-text-secondary))] mt-1">
-            Manage shop items, view statistics, and monitor the economy
+          <p className="text-sm sm:text-base text-[rgb(var(--color-text-secondary))] font-light">
+            Manage shop items and track purchases
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex gap-3">
           <button
             onClick={fetchData}
-            className="p-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-            title="Refresh"
+            className="flex items-center gap-2 px-4 py-2.5 glass-blue rounded-xl border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] apple-transition touch-manipulation"
           >
-            <FiRefreshCw className="w-5 h-5" />
+            <FiRefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
           <Link
-            href="/admin/casino/purchases"
-            className="flex items-center gap-2 px-4 py-2 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] rounded-xl transition-colors"
-          >
-            <FiShoppingCart className="w-5 h-5" />
-            Purchases
-          </Link>
-          <Link
             href="/admin/casino/add"
-            className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-xl transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-hover))] text-white rounded-xl font-medium apple-transition touch-manipulation"
           >
-            <FiPlus className="w-5 h-5" />
-            Add Item
+            <FiPlus className="w-4 h-4" />
+            <span>Add Item</span>
           </Link>
         </div>
       </div>
 
       {/* Error Banner */}
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500">
-          {error}
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
+          <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+          <span className="text-red-500">{error}</span>
         </div>
       )}
 
       {/* Stats Grid */}
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="glass-blue p-4 rounded-2xl border border-[rgb(var(--color-border))]">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-500/20 rounded-xl">
-                <FiPackage className="w-5 h-5 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Shop Items</p>
-                <p className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{stats.totalItems}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="glass-blue p-4 rounded-2xl border border-[rgb(var(--color-border))]">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/20 rounded-xl">
-                <FiShoppingCart className="w-5 h-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Total Sales</p>
-                <p className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{stats.totalPurchases}</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+        {statCards.map((card, index) => (
+          <div
+            key={index}
+            className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] hover:shadow-[var(--shadow-blue)] apple-transition shadow-[var(--shadow-md)]"
+          >
+            <div className="flex items-start justify-between mb-3 sm:mb-4">
+              <div className={`p-2 sm:p-3 ${card.bgColor} rounded-xl`}>
+                <div className={`bg-gradient-to-br ${card.color} bg-clip-text text-transparent flex justify-center items-center`}>
+                  {card.icon}
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="glass-blue p-4 rounded-2xl border border-[rgb(var(--color-border))]">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-500/20 rounded-xl">
-                <FiClock className="w-5 h-5 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Pending</p>
-                <p className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{stats.pendingRedemptions}</p>
-              </div>
+            <div className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] mb-1">
+              {typeof card.value === 'number' ? formatNumber(card.value) : card.value}
+            </div>
+            <div className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))]">
+              {card.title}
             </div>
           </div>
-          
-          <div className="glass-blue p-4 rounded-2xl border border-[rgb(var(--color-border))]">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/20 rounded-xl">
-                <FiDollarSign className="w-5 h-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Revenue</p>
-                <p className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{currencyEmoji}{formatNumber(stats.totalRevenue)}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="glass-blue p-4 rounded-2xl border border-[rgb(var(--color-border))]">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 rounded-xl">
-                <FiUsers className="w-5 h-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Users</p>
-                <p className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{formatNumber(stats.totalUsers)}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="glass-blue p-4 rounded-2xl border border-[rgb(var(--color-border))]">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-cyan-500/20 rounded-xl">
-                <FiTrendingUp className="w-5 h-5 text-cyan-500" />
-              </div>
-              <div>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Circulation</p>
-                <p className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{currencyEmoji}{formatNumber(stats.totalPoints)}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {/* Top Items */}
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 sm:mb-8">
+        <Link
+          href="/admin/casino/purchases"
+          className="glass-blue rounded-2xl p-4 sm:p-5 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] apple-transition flex items-center justify-between group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-500/20 rounded-xl">
+              <FiShoppingCart className="w-5 h-5 text-green-500" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">View Purchases</h3>
+              <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                {stats?.pendingRedemptions || 0} pending redemptions
+              </p>
+            </div>
+          </div>
+          <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-[rgb(var(--color-accent))] group-hover:translate-x-1 apple-transition" />
+        </Link>
+
+        <Link
+          href="/shop"
+          target="_blank"
+          className="glass-blue rounded-2xl p-4 sm:p-5 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] apple-transition flex items-center justify-between group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-500/20 rounded-xl">
+              <FiTrendingUp className="w-5 h-5 text-blue-500" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">Public Shop</h3>
+              <p className="text-sm text-[rgb(var(--color-text-tertiary))]">View as users see it</p>
+            </div>
+          </div>
+          <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-[rgb(var(--color-accent))] group-hover:translate-x-1 apple-transition" />
+        </Link>
+      </div>
+
+      {/* Top Selling Items */}
       {topItems.length > 0 && (
-        <div className="glass-blue p-6 rounded-2xl border border-[rgb(var(--color-border))]">
-          <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
-            <FiTrendingUp className="text-yellow-500" />
+        <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
             Top Selling Items
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="space-y-3">
             {topItems.map((item, index) => (
-              <div key={item.name} className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-lg font-bold ${index === 0 ? 'text-yellow-500' : index === 1 ? 'text-gray-400' : index === 2 ? 'text-orange-600' : 'text-[rgb(var(--color-text-tertiary))]'}`}>
+              <div
+                key={item.name}
+                className="flex items-center justify-between p-3 sm:p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-8 h-8 flex items-center justify-center bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))] rounded-lg font-bold text-sm">
                     #{index + 1}
                   </span>
-                  <span className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{item.name}</span>
+                  <span className="font-medium text-[rgb(var(--color-text-primary))]">{item.name}</span>
                 </div>
-                <div className="text-xs text-[rgb(var(--color-text-secondary))]">
-                  {item.purchaseCount} sales • {currencyEmoji}{formatNumber(item.totalRevenue)}
+                <div className="text-right">
+                  <div className="font-semibold text-[rgb(var(--color-text-primary))]">
+                    {item.purchaseCount} sales
+                  </div>
+                  <div className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                    {currencyEmoji}{formatNumber(item.totalRevenue)}
+                  </div>
                 </div>
               </div>
             ))}
@@ -288,11 +291,10 @@ export default function CasinoDashboard() {
       )}
 
       {/* Shop Items */}
-      <div className="glass-blue rounded-2xl border border-[rgb(var(--color-border))] overflow-hidden">
-        <div className="p-4 border-b border-[rgb(var(--color-border))] flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
-            <FiPackage className="text-yellow-500" />
-            Shop Items ({filteredItems.length})
+      <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))]">
+            Shop Items ({items.length})
           </h2>
           <div className="relative">
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
@@ -301,141 +303,131 @@ export default function CasinoDashboard() {
               placeholder="Search items..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-yellow-500/50 focus:outline-none w-full md:w-64 text-sm"
+              className="w-full sm:w-64 pl-10 pr-4 py-2.5 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
             />
           </div>
         </div>
 
         {filteredItems.length === 0 ? (
-          <div className="p-12 text-center">
+          <div className="text-center py-12">
             <FiPackage className="w-12 h-12 mx-auto text-[rgb(var(--color-text-tertiary))] mb-4" />
-            <p className="text-[rgb(var(--color-text-secondary))]">
-              {searchQuery ? 'No items match your search' : 'No shop items yet'}
+            <h3 className="text-lg font-medium text-[rgb(var(--color-text-primary))] mb-2">
+              {searchQuery ? 'No items found' : 'No shop items yet'}
+            </h3>
+            <p className="text-[rgb(var(--color-text-tertiary))] mb-4">
+              {searchQuery ? 'Try a different search' : 'Create your first shop item to get started'}
             </p>
             {!searchQuery && (
               <Link
                 href="/admin/casino/add"
-                className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-xl transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-hover))] text-white rounded-xl font-medium apple-transition"
               >
                 <FiPlus className="w-4 h-4" />
-                Create First Item
+                Add First Item
               </Link>
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-[rgb(var(--color-bg-tertiary))]">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Item</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Price</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Stock</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Income</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Expires</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[rgb(var(--color-border))]">
-                {filteredItems.map((item) => {
-                  const isExpired = item.expires_at && new Date(item.expires_at) < new Date();
-                  const daysLeft = item.expires_at 
-                    ? Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-                    : null;
-                  
-                  return (
-                    <tr key={item.id} className={`hover:bg-[rgb(var(--color-hover))] transition-colors ${isExpired ? 'opacity-50' : ''}`}>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          {item.thumbnail ? (
-                            <img src={item.thumbnail} alt={item.name} className="w-10 h-10 rounded-lg object-cover" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-                              <FiPackage className="w-5 h-5 text-yellow-500" />
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-[rgb(var(--color-text-primary))]">{item.name}</p>
-                            {item.description && (
-                              <p className="text-xs text-[rgb(var(--color-text-tertiary))] truncate max-w-[200px]">{item.description}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="text-[rgb(var(--color-text-primary))] font-medium">
-                          {currencyEmoji} {formatNumber(item.price)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        {item.stock !== null ? (
-                          <span className={`font-medium ${item.stock === 0 ? 'text-red-500' : 'text-[rgb(var(--color-text-primary))]'}`}>
-                            {item.stock}
-                          </span>
-                        ) : (
-                          <span className="text-green-500">∞</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        {item.income_amount && item.time_hours ? (
-                          <span className="text-sm text-[rgb(var(--color-text-secondary))]">
-                            {currencyEmoji}{formatNumber(item.income_amount)} / {item.time_hours}h
-                          </span>
-                        ) : (
-                          <span className="text-[rgb(var(--color-text-tertiary))]">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        {daysLeft !== null ? (
-                          <span className={`text-sm ${isExpired ? 'text-red-500' : daysLeft <= 3 ? 'text-orange-500' : 'text-[rgb(var(--color-text-secondary))]'}`}>
-                            {isExpired ? 'Expired' : `${daysLeft}d left`}
-                          </span>
-                        ) : (
-                          <span className="text-[rgb(var(--color-text-tertiary))]">Never</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link
-                            href={`/admin/casino/edit/${item.id}`}
-                            className="p-2 rounded-lg hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors text-blue-500"
-                            title="Edit"
-                          >
-                            <FiEdit2 className="w-4 h-4" />
-                          </Link>
-                          {deleteConfirm === item.id ? (
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => handleDelete(item.id)}
-                                className="px-2 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                              >
-                                Confirm
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirm(null)}
-                                className="px-2 py-1 text-xs bg-[rgb(var(--color-bg-tertiary))] rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setDeleteConfirm(item.id)}
-                              className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-red-500"
-                              title="Delete"
-                            >
-                              <FiTrash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredItems.map((item) => (
+              <div
+                key={item.id}
+                className="bg-[rgb(var(--color-bg-tertiary))] rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/50 apple-transition group"
+              >
+                {/* Thumbnail */}
+                <div className="aspect-video bg-[rgb(var(--color-bg-secondary))] relative overflow-hidden">
+                  {item.thumbnail ? (
+                    <img
+                      src={item.thumbnail}
+                      alt={item.name}
+                      className="w-full h-full object-cover group-hover:scale-105 apple-transition"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <FiPackage className="w-12 h-12 text-[rgb(var(--color-text-tertiary))]" />
+                    </div>
+                  )}
+                  {item.stock !== null && (
+                    <div className={`absolute top-3 right-3 px-2 py-1 rounded-lg text-xs font-medium ${
+                      item.stock === 0 
+                        ? 'bg-red-500/90 text-white' 
+                        : item.stock <= 5 
+                        ? 'bg-yellow-500/90 text-black' 
+                        : 'bg-[rgb(var(--color-bg-secondary))]/90 text-[rgb(var(--color-text-primary))]'
+                    }`}>
+                      {item.stock === 0 ? 'Sold Out' : `${item.stock} left`}
+                    </div>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="p-4">
+                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-1 truncate">
+                    {item.name}
+                  </h3>
+                  {item.description && (
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 line-clamp-2">
+                      {item.description}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
+                      {currencyEmoji}{formatNumber(item.price)}
+                    </span>
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/admin/casino/edit/${item.id}`}
+                        className="p-2 rounded-lg bg-[rgb(var(--color-bg-secondary))] hover:bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-accent))] apple-transition"
+                      >
+                        <FiEdit2 className="w-4 h-4" />
+                      </Link>
+                      <button
+                        onClick={() => setDeleteConfirm(item.id)}
+                        className="p-2 rounded-lg bg-[rgb(var(--color-bg-secondary))] hover:bg-red-500/10 text-[rgb(var(--color-text-secondary))] hover:text-red-500 apple-transition"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="glass-blue rounded-3xl p-6 max-w-sm w-full border border-[rgb(var(--color-border))] shadow-[var(--shadow-xl)]">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-full flex items-center justify-center">
+                <FiTrash2 className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-2">
+                Delete Item?
+              </h3>
+              <p className="text-[rgb(var(--color-text-secondary))] mb-6">
+                This action cannot be undone. The item will be permanently removed.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  className="flex-1 px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] rounded-xl font-medium apple-transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(deleteConfirm)}
+                  className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium apple-transition"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
