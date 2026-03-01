@@ -112,6 +112,10 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    console.log('Casino stats - Response:', {
+      totalItems, totalPurchases, pendingRedemptions, totalRevenue, totalUsers, totalPoints, topItemsCount: topItems.length
+    });
+
     return NextResponse.json({
       stats: {
         totalItems,
