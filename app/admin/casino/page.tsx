@@ -99,14 +99,22 @@ export default function CasinoDashboard() {
       const itemsData = await itemsRes.json();
       const statsData = await statsRes.json();
       
+      console.log('Items response:', itemsRes.status, itemsData);
+      console.log('Stats response:', statsRes.status, statsData);
+      
       if (itemsRes.ok) {
         setItems(itemsData.items || []);
         setCurrencyEmoji(itemsData.currencyEmoji || '🪙');
+      } else {
+        console.error('Items error:', itemsData);
+        setError(itemsData.error || 'Failed to load items');
       }
       
       if (statsRes.ok) {
         setStats(statsData.stats || null);
         setTopItems(statsData.topItems || []);
+      } else {
+        console.error('Stats error:', statsData);
       }
       
     } catch (err) {
