@@ -479,15 +479,16 @@ export default function ShopPage() {
               return (
                 <div
                   key={item.id}
-                  className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))] overflow-hidden hover:border-yellow-500/30 transition-colors"
+                  className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))] overflow-hidden hover:border-yellow-500/30 transition-all hover:shadow-lg hover:shadow-yellow-500/10"
                 >
                   {/* Thumbnail */}
-                  <div className="aspect-square bg-[rgb(var(--color-bg-tertiary))] relative">
+                  <div className="aspect-[4/3] bg-[rgb(var(--color-bg-tertiary))] relative overflow-hidden">
                     {item.thumbnail ? (
                       <img
                         src={item.thumbnail}
                         alt={item.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

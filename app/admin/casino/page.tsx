@@ -365,19 +365,20 @@ export default function CasinoDashboard() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-[rgb(var(--color-bg-tertiary))] rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/50 apple-transition group"
+                className="bg-[rgb(var(--color-bg-tertiary))] rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/50 apple-transition group hover:shadow-lg"
               >
                 {/* Thumbnail */}
-                <div className="aspect-video bg-[rgb(var(--color-bg-secondary))] relative overflow-hidden">
+                <div className="aspect-[4/3] bg-[rgb(var(--color-bg-secondary))] relative overflow-hidden">
                   {item.thumbnail ? (
                     <img
                       src={item.thumbnail}
                       alt={item.name}
-                      className="w-full h-full object-cover group-hover:scale-105 apple-transition"
+                      className="w-full h-full object-cover object-center group-hover:scale-105 apple-transition duration-300"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
