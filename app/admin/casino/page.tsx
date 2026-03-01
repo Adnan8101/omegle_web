@@ -207,7 +207,7 @@ export default function CasinoDashboard() {
           </button>
           <Link
             href="/admin/casino/add"
-            className="flex items-center gap-2 px-4 py-2.5 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-hover))] text-white rounded-xl font-medium apple-transition touch-manipulation"
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium apple-transition touch-manipulation shadow-lg shadow-blue-500/20"
           >
             <FiPlus className="w-4 h-4" />
             <span>Add Item</span>
