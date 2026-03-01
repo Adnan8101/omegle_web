@@ -56,6 +56,28 @@ export default function ShopPage() {
   const [showPurchases, setShowPurchases] = useState(false);
   const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null);
 
+  // Convert Discord emoji format to CDN URL
+  const getEmojiDisplay = (emoji: string, size: string = 'w-6 h-6') => {
+    // Check if it's a Discord custom emoji like <a:name:id> or <:name:id>
+    const emojiMatch = emoji.match(/<a?:([\w_]+):(\d+)>/);
+    if (emojiMatch) {
+      const [, name, id] = emojiMatch;
+      const isAnimated = emoji.startsWith('<a:');
+      const extension = isAnimated ? 'gif' : 'png';
+      return (
+        <img
+          src={`https://cdn.discordapp.com/emojis/${id}.${extension}?size=48&quality=lossless`}
+          alt={name}
+          className={`inline-block ${size}`}
+          style={{ verticalAlign: 'middle' }}
+        />
+      );
+    }
+    // Return regular emoji
+    return <span className="text-xl">{emoji}</span>;
+  };
+
+
   useEffect(() => {
     fetchShop();
   }, [session]);
@@ -90,7 +112,7 @@ export default function ShopPage() {
     }
 
     if (userBalance < item.price) {
-      setError(`Insufficient balance. You need ${currencyEmoji}${item.price.toLocaleString()} but only have ${currencyEmoji}${userBalance.toLocaleString()}.`);
+      setError(`Insufficient balance. You need ${item.price.toLocaleString()} ${currencyName} but only have ${userBalance.toLocaleString()} ${currencyName}.`);
       return;
     }
 
@@ -183,8 +205,9 @@ export default function ShopPage() {
               <>
                 {/* Balance */}
                 <div className="flex items-center gap-2 px-4 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-                  <span className="text-lg">{currencyEmoji}</span>
+                  {getEmojiDisplay(currencyEmoji)}
                   <span className="font-bold text-yellow-500">{formatNumber(userBalance)}</span>
+                  <span className="text-xs text-yellow-500/70">{currencyName}</span>
                 </div>
 
                 {/* My Purchases */}
@@ -255,7 +278,10 @@ export default function ShopPage() {
                 )}
                 <div className="text-left flex-1">
                   <p className="font-semibold text-[rgb(var(--color-text-primary))]">{confirmItem.name}</p>
-                  <p className="text-lg font-bold text-yellow-500">{currencyEmoji}{formatNumber(confirmItem.price)}</p>
+                  <div className="flex items-center gap-1">
+                    {getEmojiDisplay(confirmItem.thumbnail ? currencyEmoji : currencyEmoji, 'w-5 h-5')}
+                    <p className="text-lg font-bold text-yellow-500">{formatNumber(confirmItem.price)}</p>
+                  </div>
                 </div>
               </div>
 
@@ -263,15 +289,25 @@ export default function ShopPage() {
               <div className="space-y-2 mb-6 text-left">
                 <div className="flex justify-between items-center p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-lg">
                   <span className="text-[rgb(var(--color-text-secondary))]">Your Balance</span>
-                  <span className="font-semibold text-[rgb(var(--color-text-primary))]">{currencyEmoji}{formatNumber(userBalance)}</span>
+                  <div className="flex items-center gap-1.5">
+                    {getEmojiDisplay(currencyEmoji, 'w-4 h-4')}
+                    <span className="font-semibold text-[rgb(var(--color-text-primary))]">{formatNumber(userBalance)}</span>
+                  </div>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-red-500/10 rounded-lg">
                   <span className="text-red-400">Amount</span>
-                  <span className="font-semibold text-red-400">-{currencyEmoji}{formatNumber(confirmItem.price)}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-red-400">-</span>
+                    {getEmojiDisplay(currencyEmoji, 'w-4 h-4')}
+                    <span className="font-semibold text-red-400">{formatNumber(confirmItem.price)}</span>
+                  </div>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-green-500/10 rounded-lg border border-green-500/30">
                   <span className="text-green-400 font-medium">Balance After</span>
-                  <span className="font-bold text-green-400">{currencyEmoji}{formatNumber(userBalance - confirmItem.price)}</span>
+                  <div className="flex items-center gap-1.5">
+                    {getEmojiDisplay(currencyEmoji, 'w-4 h-4')}
+                    <span className="font-bold text-green-400">{formatNumber(userBalance - confirmItem.price)}</span>
+                  </div>
                 </div>
               </div>
 
@@ -304,8 +340,10 @@ export default function ShopPage() {
                 <FiCheck className="w-8 h-8 text-green-500" />
               </div>
               <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-2">Purchase Successful!</h3>
-              <p className="text-[rgb(var(--color-text-secondary))] mb-4">
-                You purchased <strong>{purchaseResult.itemName}</strong> for {currencyEmoji}{formatNumber(purchaseResult.pricePaid)}
+              <p className="text-[rgb(var(--color-text-secondary))] mb-4 flex items-center justify-center gap-1.5 flex-wrap">
+                You purchased <strong>{purchaseResult.itemName}</strong> for 
+                {getEmojiDisplay(currencyEmoji, 'w-5 h-5')}
+                <strong>{formatNumber(purchaseResult.pricePaid)}</strong>
               </p>
 
               {/* Redeem Code */}
@@ -486,16 +524,17 @@ export default function ShopPage() {
 
                     {/* Income Info */}
                     {item.income_amount && item.time_hours && (
-                      <div className="text-xs text-green-500 mb-3 flex items-center gap-1">
+                      <div className="text-xs text-green-500 mb-3 flex items-center gap-1.5">
                         <FiDollarSign className="w-3 h-3" />
-                        +{currencyEmoji}{formatNumber(item.income_amount)} every {item.time_hours}h
+                        +{getEmojiDisplay(currencyEmoji, 'w-3.5 h-3.5')}
+                        {formatNumber(item.income_amount)} every {item.time_hours}h
                       </div>
                     )}
 
                     {/* Price & Buy */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <span className="text-lg">{currencyEmoji}</span>
+                      <div className="flex items-center gap-1.5">
+                        {getEmojiDisplay(currencyEmoji)}
                         <span className="text-xl font-bold text-[rgb(var(--color-text-primary))]">
                           {formatNumber(item.price)}
                         </span>
@@ -528,9 +567,10 @@ export default function ShopPage() {
 
                     {/* Min Balance Warning */}
                     {session && item.required_balance && userBalance < item.required_balance && (
-                      <p className="text-xs text-orange-500 mt-2">
-                        Requires {currencyEmoji}{formatNumber(item.required_balance)} minimum balance
-                      </p>
+                      <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
+                        <FiAlertCircle className="w-3 h-3" />
+                        Requires {getEmojiDisplay(currencyEmoji, 'w-3.5 h-3.5')}{formatNumber(item.required_balance)} minimum balance
+                      </div>
                     )}
                   </div>
                 </div>

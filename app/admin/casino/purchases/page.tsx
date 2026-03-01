@@ -35,6 +35,31 @@ export default function PurchasesPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'redeemed'>('all');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
+  // Function to convert Discord emoji to CDN URL
+  const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
+    const match = emoji.match(/<a?:(\w+):(\d+)>/);
+    if (match) {
+      const [, name, id] = match;
+      const isAnimated = emoji.startsWith('<a:');
+      const extension = isAnimated ? 'gif' : 'png';
+      const sizeMap: { [key: string]: number } = {
+        'w-4 h-4': 32,
+        'w-5 h-5': 40,
+        'w-6 h-6': 48,
+      };
+      const imgSize = sizeMap[size] || 48;
+      return (
+        <img
+          src={`https://cdn.discordapp.com/emojis/${id}.${extension}?size=${imgSize}&quality=lossless`}
+          alt={name}
+          className={`inline-block ${size}`}
+          style={{ verticalAlign: 'middle' }}
+        />
+      );
+    }
+    return <span className="inline-block">{emoji}</span>;
+  };
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin');
@@ -244,8 +269,9 @@ export default function PurchasesPage() {
                       {purchase.item_name}
                     </h3>
                     <div className="flex items-center gap-4 text-sm">
-                      <span className="text-[rgb(var(--color-text-secondary))]">
-                        {currencyEmoji}{formatNumber(purchase.price_paid)}
+                      <span className="text-[rgb(var(--color-text-secondary))] flex items-center gap-1">
+                        {getEmojiDisplay(currencyEmoji, 'w-4 h-4')}
+                        {formatNumber(purchase.price_paid)}
                       </span>
                       <span className="flex items-center gap-1 text-[rgb(var(--color-text-tertiary))]">
                         <FiUser className="w-3 h-3" />

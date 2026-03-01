@@ -47,6 +47,31 @@ export default function AddItemPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Function to convert Discord emoji to CDN URL
+  const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
+    const match = emoji.match(/<a?:(\w+):(\d+)>/);
+    if (match) {
+      const [, name, id] = match;
+      const isAnimated = emoji.startsWith('<a:');
+      const extension = isAnimated ? 'gif' : 'png';
+      const sizeMap: { [key: string]: number } = {
+        'w-4 h-4': 32,
+        'w-5 h-5': 40,
+        'w-6 h-6': 48,
+      };
+      const imgSize = sizeMap[size] || 48;
+      return (
+        <img
+          src={`https://cdn.discordapp.com/emojis/${id}.${extension}?size=${imgSize}&quality=lossless`}
+          alt={name}
+          className={`inline-block ${size}`}
+          style={{ verticalAlign: 'middle' }}
+        />
+      );
+    }
+    return <span className="inline-block">{emoji}</span>;
+  };
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin');
@@ -172,8 +197,8 @@ export default function AddItemPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Price ({currencyEmoji}) *
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2 flex items-center gap-1">
+                  Price ({getEmojiDisplay(currencyEmoji, 'w-4 h-4')}) *
                 </label>
                 <input
                   type="number"
@@ -262,8 +287,8 @@ export default function AddItemPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Income Amount ({currencyEmoji})
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2 flex items-center gap-1">
+                  Income Amount ({getEmojiDisplay(currencyEmoji, 'w-4 h-4')})
                 </label>
                 <input
                   type="number"
@@ -347,8 +372,8 @@ export default function AddItemPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Required Balance ({currencyEmoji})
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2 flex items-center gap-1">
+                  Required Balance ({getEmojiDisplay(currencyEmoji, 'w-4 h-4')})
                 </label>
                 <input
                   type="number"

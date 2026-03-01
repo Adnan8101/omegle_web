@@ -48,6 +48,32 @@ export default function CasinoDashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Function to convert Discord emoji to CDN URL
+  const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
+    const match = emoji.match(/<a?:(\w+):(\d+)>/);
+    if (match) {
+      const [, name, id] = match;
+      const isAnimated = emoji.startsWith('<a:');
+      const extension = isAnimated ? 'gif' : 'png';
+      const sizeMap: { [key: string]: number } = {
+        'w-4 h-4': 32,
+        'w-5 h-5': 40,
+        'w-6 h-6': 48,
+        'w-8 h-8': 64,
+      };
+      const imgSize = sizeMap[size] || 48;
+      return (
+        <img
+          src={`https://cdn.discordapp.com/emojis/${id}.${extension}?size=${imgSize}&quality=lossless`}
+          alt={name}
+          className={`inline-block ${size}`}
+          style={{ verticalAlign: 'middle' }}
+        />
+      );
+    }
+    return <span className="inline-block">{emoji}</span>;
+  };
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin');
@@ -133,10 +159,11 @@ export default function CasinoDashboard() {
     },
     {
       title: 'Total Revenue',
-      value: `${currencyEmoji}${formatNumber(stats?.totalRevenue || 0)}`,
+      value: formatNumber(stats?.totalRevenue || 0),
       icon: <FiDollarSign className="w-6 h-6 sm:w-8 sm:h-8" />,
       color: 'from-purple-500 to-purple-600',
       bgColor: 'bg-purple-500/20',
+      showCurrency: true,
     },
   ];
 
@@ -210,7 +237,8 @@ export default function CasinoDashboard() {
                 </div>
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] mb-1">
+            <div className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] mb-1 flex items-center gap-2">
+              {card.showCurrency && getEmojiDisplay(currencyEmoji, 'w-6 h-6')}
               {typeof card.value === 'number' ? formatNumber(card.value) : card.value}
             </div>
             <div className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))]">
@@ -280,8 +308,9 @@ export default function CasinoDashboard() {
                   <div className="font-semibold text-[rgb(var(--color-text-primary))]">
                     {item.purchaseCount} sales
                   </div>
-                  <div className="text-sm text-[rgb(var(--color-text-tertiary))]">
-                    {currencyEmoji}{formatNumber(item.totalRevenue)}
+                  <div className="text-sm text-[rgb(var(--color-text-tertiary))] flex items-center justify-end gap-1">
+                    {getEmojiDisplay(currencyEmoji, 'w-4 h-4')}
+                    {formatNumber(item.totalRevenue)}
                   </div>
                 </div>
               </div>
@@ -371,8 +400,9 @@ export default function CasinoDashboard() {
                     </p>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
-                      {currencyEmoji}{formatNumber(item.price)}
+                    <span className="text-lg font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-1">
+                      {getEmojiDisplay(currencyEmoji, 'w-5 h-5')}
+                      {formatNumber(item.price)}
                     </span>
                     <div className="flex gap-2">
                       <Link
