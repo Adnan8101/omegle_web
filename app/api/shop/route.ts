@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       })),
       config: {
         currencyEmoji: config?.currency_emoji || '🪙',
-        currencyName: config?.currency_name || 'points'
+        currencyName: config?.currency_name || 'Ozy'
       },
       user: userId ? {
         id: userId,
@@ -138,21 +138,27 @@ export async function POST(request: NextRequest) {
       where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
     });
 
+    // Get config for currency name
+    const config = await prismaBot.economyConfig.findUnique({
+      where: { guild_id: GUILD_ID }
+    });
+    const currencyName = config?.currency_name || 'Ozy';
+
     if (!economyUser) {
-      return NextResponse.json({ error: 'You don\'t have an economy account. Earn some points first!' }, { status: 400 });
+      return NextResponse.json({ error: `You don't have an economy account. Earn some ${currencyName} first!` }, { status: 400 });
     }
 
     // Check balance
     if (economyUser.total_points < item.price) {
       return NextResponse.json({ 
-        error: `Insufficient balance. You need ${item.price.toLocaleString()} points but only have ${economyUser.total_points.toLocaleString()}.` 
+        error: `Insufficient balance. You need ${item.price.toLocaleString()} ${currencyName} but only have ${economyUser.total_points.toLocaleString()}.` 
       }, { status: 400 });
     }
 
     // Check minimum balance requirement
     if (item.required_balance && economyUser.total_points < item.required_balance) {
       return NextResponse.json({ 
-        error: `You need a minimum balance of ${item.required_balance.toLocaleString()} points to purchase this item.` 
+        error: `You need a minimum balance of ${item.required_balance.toLocaleString()} ${currencyName} to purchase this item.` 
       }, { status: 400 });
     }
 
@@ -166,10 +172,7 @@ export async function POST(request: NextRequest) {
       attempts++;
     }
 
-    // Get economy config for leaderboard sync setting
-    const config = await prismaBot.economyConfig.findUnique({
-      where: { guild_id: GUILD_ID }
-    });
+    // Use config for leaderboard sync setting
     const leaderboardSync = config?.leaderboard_sync ?? true;
 
     // Deduct points from user

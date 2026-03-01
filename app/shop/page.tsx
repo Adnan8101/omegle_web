@@ -45,7 +45,7 @@ export default function ShopPage() {
 
   const [items, setItems] = useState<ShopItem[]>([]);
   const [currencyEmoji, setCurrencyEmoji] = useState('🪙');
-  const [currencyName, setCurrencyName] = useState('points');
+  const [currencyName, setCurrencyName] = useState('Ozy');
   const [userBalance, setUserBalance] = useState(0);
   const [pendingPurchases, setPendingPurchases] = useState<PendingPurchase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +69,7 @@ export default function ShopPage() {
       if (res.ok) {
         setItems(data.items || []);
         setCurrencyEmoji(data.config?.currencyEmoji || '🪙');
-        setCurrencyName(data.config?.currencyName || 'points');
+        setCurrencyName(data.config?.currencyName || 'Ozy');
 
         if (data.user) {
           setUserBalance(data.user.balance || 0);

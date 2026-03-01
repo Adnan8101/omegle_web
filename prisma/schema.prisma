@@ -29,7 +29,7 @@ model EconomyConfig {
   ignore_self_muted     Boolean  @default(false)
   
   // Currency
-  currency_name         String   @default("points")
+  currency_name         String   @default("Ozy")
   currency_emoji        String   @default("🪙")
   
   // Leaderboard settings
