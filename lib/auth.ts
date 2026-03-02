@@ -4,7 +4,7 @@ import { checkUserPermissions, UserPermissions } from "./permissions";
 import { prismaBot } from "./prismaBot";
 
 // Cache permission checks to avoid hitting Discord API on every request
-const ACCESS_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const ACCESS_CHECK_INTERVAL = 60 * 1000; // 1 minute (reduced for faster updates)
 const GUILD_ID = "910043773130661918";
 
 export const authOptions: NextAuthOptions = {
@@ -72,12 +72,24 @@ export const authOptions: NextAuthOptions = {
       if (!token.accessCheckedAt || nowMs - token.accessCheckedAt > ACCESS_CHECK_INTERVAL) {
         try {
           // Fetch casino roles from database
-          const casinoRoles = await prismaBot.casinoAdminRole.findMany({
-            where: { guild_id: GUILD_ID }
-          });
-          const casinoRoleIds = casinoRoles.map((r: any) => r.role_id);
+          let casinoRoleIds: string[] = [];
+          try {
+            const casinoRoles = await prismaBot.casinoAdminRole.findMany({
+              where: { guild_id: GUILD_ID }
+            });
+            casinoRoleIds = casinoRoles.map((r: any) => r.role_id);
+            console.log('[Auth] Fetched casino roles from DB:', casinoRoleIds);
+          } catch (dbError) {
+            console.error('[Auth] Failed to fetch casino roles from DB:', dbError);
+          }
           
           const permissions = await checkUserPermissions(token.accessToken, casinoRoleIds);
+          console.log('[Auth] Permission check result:', {
+            hasCasinoAccess: permissions.hasCasinoAccess,
+            hasFullAccess: permissions.hasFullAccess,
+            roles: permissions.roles,
+            casinoRoleIds
+          });
           token.permissions = permissions;
           token.hasAccess = permissions.hasAnyAccess;
         } catch (error) {

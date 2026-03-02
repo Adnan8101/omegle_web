@@ -130,7 +130,7 @@ export default function EconomyManagementPage() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Permission check
+  // Permission check - use real-time API check for casino access
   useEffect(() => {
     if (status === 'loading') return;
 
@@ -141,22 +141,35 @@ export default function EconomyManagementPage() {
     }
     
     if (status === 'authenticated') {
-      const perms = session?.user?.permissions;
-      const canAccess = perms?.hasFullAccess || perms?.hasCasinoAccess;
-      
-      if (!canAccess) {
-        setHasPermission(false);
-        if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
-          setIsRedirecting(true);
-          router.push('/admin/vctranscript');
-        } else {
-          setIsRedirecting(true);
-          router.push('/admin');
+      // Use real-time API check instead of cached session permissions
+      const checkAccess = async () => {
+        try {
+          const res = await fetch('/api/casino/access');
+          const data = await res.json();
+          console.log('[Casino] Access check result:', data);
+          
+          if (data.hasAccess) {
+            setHasPermission(true);
+          } else {
+            setHasPermission(false);
+            const perms = session?.user?.permissions;
+            if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
+              setIsRedirecting(true);
+              router.push('/admin/vctranscript');
+            } else {
+              setIsRedirecting(true);
+              router.push('/admin');
+            }
+          }
+        } catch (err) {
+          console.error('[Casino] Access check failed:', err);
+          // Fallback to session permissions
+          const perms = session?.user?.permissions;
+          const canAccess = perms?.hasFullAccess || perms?.hasCasinoAccess;
+          setHasPermission(canAccess ?? false);
         }
-        return;
-      }
-      
-      setHasPermission(true);
+      };
+      checkAccess();
     }
   }, [status, session, router]);
 
