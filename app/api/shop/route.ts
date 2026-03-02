@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
 
-    // Get all active shop items
+    // Get all active shop items (including out of stock items)
     const now = new Date();
     const items = await prismaBot.shopItem.findMany({
       where: {
@@ -29,9 +29,6 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { price: 'asc' }
     });
-
-    // Filter out items with no stock
-    const availableItems = items.filter((item: any) => item.stock === null || item.stock > 0);
 
     // Get economy config
     const config = await prismaBot.economyConfig.findUnique({
@@ -61,7 +58,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      items: availableItems.map((item: any) => ({
+      items: items.map((item: any) => ({
         id: item.id,
         name: item.name,
         price: item.price,
@@ -72,7 +69,8 @@ export async function GET(request: NextRequest) {
         time_hours: item.time_hours,
         role_required_id: item.role_required_id,
         required_balance: item.required_balance,
-        expires_at: item.expires_at?.toISOString() || null
+        expires_at: item.expires_at?.toISOString() || null,
+        out_of_stock: item.stock !== null && item.stock <= 0
       })),
       config: {
         currencyEmoji: config?.currency_emoji || '🪙',

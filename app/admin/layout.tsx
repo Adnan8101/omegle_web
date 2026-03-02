@@ -33,8 +33,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             router.replace('/admin');
         } else if (status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess) {
             router.replace('/admin');
+        } else if (status === 'authenticated' && session?.user?.permissions?.hasAnyAccess) {
+            // If user only has casino access, redirect from non-casino pages to casino
+            const perms = session?.user?.permissions;
+            const hasCasinoOnly = perms?.hasCasinoAccess && !perms?.hasFullAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess;
+            
+            if (hasCasinoOnly && pathname && !pathname.startsWith('/admin/casino') && pathname !== '/admin' && pathname !== '/admin/signin') {
+                router.replace('/admin/casino');
+            }
         }
-    }, [status, session, router]);
+    }, [status, session, router, pathname]);
 
     const handleLogout = async () => {
         try { localStorage.clear(); sessionStorage.clear(); } catch (e) { }

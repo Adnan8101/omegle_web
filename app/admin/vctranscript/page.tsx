@@ -65,63 +65,8 @@ export default function VCTranscriptPage() {
   const [sortField, setSortField] = useState<SortField>('duration');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [dateRange, setDateRange] = useState<{ startDate: string | null; endDate: string | null }>({ startDate: null, endDate: null });
-
-  // Check authentication
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.replace('/admin');
-      return;
-    }
-    
-    if (status === 'authenticated') {
-      const perms = session?.user?.permissions;
-      // VC Transcript accessible to: Full Access, Moderator, Trail Mod
-      if (!perms?.hasFullAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
-        router.replace('/admin');
-        return;
-      }
-      fetchUsers();
-    }
-  }, [status, session, router]);
-
-  // Show loading state
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-[rgb(var(--color-text-secondary))]">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show redirect message if redirecting
-  if (status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess) {
-    return (
-      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
-        <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
-          <div className="text-center space-y-6">
-            <div className="text-red-500 text-5xl">❌</div>
-            <div>
-              <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">
-                Access Denied
-              </h2>
-              <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                You do not have permission to access this section.
-              </p>
-            </div>
-            <button
-              onClick={() => router.replace('/admin')}
-              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              Go Back
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const fetchUsers = useCallback(async (range?: { startDate: string | null; endDate: string | null }) => {
     setLoading(true);
@@ -172,6 +117,87 @@ export default function VCTranscriptPage() {
       setLoading(false);
     }
   }, [dateRange]);
+
+  // Check authentication and permissions
+  useEffect(() => {
+    if (status === 'loading') return;
+    
+    if (status === 'unauthenticated') {
+      setIsRedirecting(true);
+      router.replace('/admin');
+      return;
+    }
+    
+    if (status === 'authenticated') {
+      const perms = session?.user?.permissions;
+      // VC Transcript accessible to: Full Access, Moderator, Trail Mod/View Only
+      const canAccess = perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasViewOnlyAccess;
+      
+      if (!canAccess) {
+        setHasPermission(false);
+        // Redirect to appropriate page based on permissions
+        if (perms?.hasCasinoAccess) {
+          setIsRedirecting(true);
+          router.replace('/admin/casino');
+        } else {
+          setIsRedirecting(true);
+          router.replace('/admin');
+        }
+        return;
+      }
+      
+      setHasPermission(true);
+      fetchUsers();
+    }
+  }, [status, session, router, fetchUsers]);
+
+  // Show loading state while checking auth/permissions
+  if (status === 'loading' || hasPermission === null || isRedirecting) {
+    return (
+      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-[rgb(var(--color-text-secondary))]">
+            {isRedirecting ? 'Redirecting...' : 'Loading...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if no permission
+  if (hasPermission === false) {
+    return (
+      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
+        <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
+          <div className="text-center space-y-6">
+            <div className="text-red-500 text-5xl">❌</div>
+            <div>
+              <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">
+                Access Denied
+              </h2>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+                You do not have permission to access VC Stats.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const perms = session?.user?.permissions;
+                if (perms?.hasCasinoAccess) {
+                  router.replace('/admin/casino');
+                } else {
+                  router.replace('/admin');
+                }
+              }}
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);

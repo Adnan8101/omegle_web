@@ -48,6 +48,9 @@ export default function CasinoDashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
   // Function to convert Discord emoji to CDN URL
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
@@ -75,7 +78,10 @@ export default function CasinoDashboard() {
   };
 
   useEffect(() => {
+    if (status === 'loading') return;
+
     if (status === 'unauthenticated') {
+      setIsRedirecting(true);
       router.push('/admin');
       return;
     }
@@ -83,10 +89,22 @@ export default function CasinoDashboard() {
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
       // Casino accessible to: Full Access or Casino Role only
-      if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
-        router.push('/admin');
+      const canAccess = perms?.hasFullAccess || perms?.hasCasinoAccess;
+      
+      if (!canAccess) {
+        setHasPermission(false);
+        // Redirect to appropriate page based on permissions
+        if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
+          setIsRedirecting(true);
+          router.push('/admin/vctranscript');
+        } else {
+          setIsRedirecting(true);
+          router.push('/admin');
+        }
         return;
       }
+      
+      setHasPermission(true);
     }
   }, [status, session, router]);
 
@@ -185,7 +203,54 @@ export default function CasinoDashboard() {
     },
   ];
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || hasPermission === null || isRedirecting) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-[rgb(var(--color-text-secondary))]">
+            {isRedirecting ? 'Redirecting...' : 'Loading...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if no permission
+  if (hasPermission === false) {
+    return (
+      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
+        <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
+          <div className="text-center space-y-6">
+            <div className="text-red-500 text-5xl">❌</div>
+            <div>
+              <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">
+                Access Denied
+              </h2>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+                You do not have permission to access Casino Economy.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const perms = session?.user?.permissions;
+                if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
+                  router.replace('/admin/vctranscript');
+                } else {
+                  router.replace('/admin');
+                }
+              }}
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
         <div className="mb-6 sm:mb-8">

@@ -22,6 +22,7 @@ interface ShopItem {
   role_required_id: string | null;
   required_balance: number | null;
   expires_at: string | null;
+  out_of_stock?: boolean;
 }
 
 interface PendingPurchase {
@@ -66,6 +67,13 @@ export default function ShopPage() {
       return;
     }
   }, [status, router]);
+
+  // Fetch shop data when session is available
+  useEffect(() => {
+    if (session) {
+      fetchShop();
+    }
+  }, [session]);
 
   // Show login page if not authenticated
   if (status === 'unauthenticated') {
@@ -131,11 +139,6 @@ export default function ShopPage() {
     // Return regular emoji
     return <span className="text-xl">{emoji}</span>;
   };
-
-
-  useEffect(() => {
-    fetchShop();
-  }, [session]);
 
   const fetchShop = async () => {
     setLoading(true);
@@ -528,6 +531,7 @@ export default function ShopPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((item) => {
               const canAfford = session ? userBalance >= item.price : false;
+              const isOutOfStock = item.out_of_stock || (item.stock !== null && item.stock <= 0);
               const daysLeft = item.expires_at
                 ? Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
                 : null;
@@ -535,7 +539,11 @@ export default function ShopPage() {
               return (
                 <div
                   key={item.id}
-                  className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))] overflow-hidden hover:border-yellow-500/30 transition-all hover:shadow-lg hover:shadow-yellow-500/10"
+                  className={`bg-[rgb(var(--color-bg-secondary))] rounded-2xl border overflow-hidden transition-all hover:shadow-lg ${
+                    isOutOfStock 
+                      ? 'border-red-500/30 opacity-75 hover:border-red-500/50 hover:shadow-red-500/10' 
+                      : 'border-[rgb(var(--color-border))] hover:border-yellow-500/30 hover:shadow-yellow-500/10'
+                  }`}
                 >
                   {/* Thumbnail */}
                   <div className="aspect-[4/3] bg-[rgb(var(--color-bg-tertiary))] relative overflow-hidden">
@@ -543,7 +551,7 @@ export default function ShopPage() {
                       <img
                         src={item.thumbnail}
                         alt={item.name}
-                        className="w-full h-full object-cover object-center"
+                        className={`w-full h-full object-cover object-center ${isOutOfStock ? 'grayscale' : ''}`}
                         loading="lazy"
                       />
                     ) : (
@@ -552,14 +560,22 @@ export default function ShopPage() {
                       </div>
                     )}
 
+                    {/* Out of Stock Overlay */}
+                    {isOutOfStock && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <div className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-lg transform -rotate-12 shadow-lg">
+                          OUT OF STOCK
+                        </div>
+                      </div>
+                    )}
+
                     {/* Stock Badge */}
-                    {item.stock !== null && (
+                    {!isOutOfStock && item.stock !== null && (
                       <div className={`absolute top-3 right-3 px-2 py-1 rounded-lg text-xs font-semibold ${
-                        item.stock === 0 ? 'bg-red-500/90 text-white' : 
                         item.stock <= 5 ? 'bg-orange-500/90 text-white' : 
                         'bg-[rgb(var(--color-bg-secondary))]/90 text-[rgb(var(--color-text-primary))]'
                       }`}>
-                        {item.stock === 0 ? 'Sold Out' : `${item.stock} left`}
+                        {item.stock} left
                       </div>
                     )}
 
@@ -599,21 +615,23 @@ export default function ShopPage() {
 
                       <button
                         onClick={() => handlePurchase(item)}
-                        disabled={purchasing === item.id || (session && !canAfford) || item.stock === 0}
+                        disabled={purchasing === item.id || (session && !canAfford) || isOutOfStock}
                         className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors ${
-                          !session
+                          isOutOfStock
+                            ? 'bg-red-500/20 text-red-400 cursor-not-allowed'
+                            : !session
                             ? 'bg-[#5865F2] hover:bg-[#4752C4] text-white'
-                            : canAfford && item.stock !== 0
+                            : canAfford
                             ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
                             : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-tertiary))] cursor-not-allowed'
                         }`}
                       >
                         {purchasing === item.id ? (
                           <FiRefreshCw className="w-4 h-4 animate-spin" />
+                        ) : isOutOfStock ? (
+                          'Sold Out'
                         ) : !session ? (
                           'Login'
-                        ) : item.stock === 0 ? (
-                          'Sold Out'
                         ) : canAfford ? (
                           'Buy'
                         ) : (

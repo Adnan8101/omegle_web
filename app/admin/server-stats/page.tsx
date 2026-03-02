@@ -78,6 +78,8 @@ export default function ServerStatsPage() {
     const [rankSort, setRankSort] = useState<RankSort>('combined');
     const [expandedChannels, setExpandedChannels] = useState<Set<string>>(new Set());
     const [dateRange, setDateRange] = useState<{ startDate: string | null; endDate: string | null }>({ startDate: null, endDate: null });
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     const [totalMembers, setTotalMembers] = useState(0);
     const [userRankings, setUserRankings] = useState<UserRanking[]>([]);
@@ -89,18 +91,44 @@ export default function ServerStatsPage() {
     const [expandedMsgContributors, setExpandedMsgContributors] = useState<Set<string>>(new Set());
 
     useEffect(() => {
+        if (status === 'loading') return;
+        
         if (status === 'unauthenticated') {
-            router.replace('/admin');
-        } else if (status === 'authenticated') {
-          const perms = session?.user?.permissions;
-          // Server stats accessible to: Full Access or Moderator (NOT Trail Mod/Staff)
-          if (!perms?.hasFullAccess && !perms?.hasModeratorAccess) {
+            setIsRedirecting(true);
             router.replace('/admin');
             return;
+        }
+        
+        if (status === 'authenticated') {
+          const perms = session?.user?.permissions;
+          // Server stats accessible to: Full Access or Moderator (NOT Trail Mod/Staff)
+          const canAccess = perms?.hasFullAccess || perms?.hasModeratorAccess;
+          
+          if (!canAccess) {
+            setHasPermission(false);
+            // Redirect to appropriate page based on permissions
+            if (perms?.hasCasinoAccess && !perms?.hasViewOnlyAccess) {
+              setIsRedirecting(true);
+              router.replace('/admin/casino');
+            } else if (perms?.hasViewOnlyAccess) {
+              setIsRedirecting(true);
+              router.replace('/admin/vctranscript');
+            } else {
+              setIsRedirecting(true);
+              router.replace('/admin');
+            }
+            return;
           }
-          fetchServerStats();
+          
+          setHasPermission(true);
         }
     }, [status, session, router]);
+    
+    useEffect(() => {
+        if (status === 'authenticated' && hasPermission) {
+          fetchServerStats();
+        }
+    }, [status, hasPermission]);
 
     const fetchServerStats = useCallback(async (range?: { startDate: string | null; endDate: string | null }) => {
         setLoading(true);
@@ -237,7 +265,57 @@ export default function ServerStatsPage() {
         return <span className="text-sm font-bold text-[rgb(var(--color-text-tertiary))]">#{idx + 1}</span>;
     };
 
-    if (status === 'loading' || loading) {
+    // Show loading state while checking auth/permissions
+    if (status === 'loading' || hasPermission === null || isRedirecting) {
+        return (
+            <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p className="text-[rgb(var(--color-text-secondary))]">
+                        {isRedirecting ? 'Redirecting...' : 'Loading...'}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show access denied if no permission
+    if (hasPermission === false) {
+        return (
+            <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
+                <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
+                    <div className="text-center space-y-6">
+                        <div className="text-red-500 text-5xl">❌</div>
+                        <div>
+                            <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">
+                                Access Denied
+                            </h2>
+                            <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+                                You do not have permission to access Server Stats.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                const perms = session?.user?.permissions;
+                                if (perms?.hasCasinoAccess && !perms?.hasViewOnlyAccess) {
+                                    router.replace('/admin/casino');
+                                } else if (perms?.hasViewOnlyAccess) {
+                                    router.replace('/admin/vctranscript');
+                                } else {
+                                    router.replace('/admin');
+                                }
+                            }}
+                            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        >
+                            Go Back
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (loading) {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
                 <div className="max-w-7xl mx-auto">

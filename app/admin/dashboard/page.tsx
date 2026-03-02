@@ -31,8 +31,15 @@ export default function AdminDashboard() {
     if (status === 'unauthenticated') {
       router.replace('/admin');
     } else if (status === 'authenticated' && !session?.user?.permissions?.hasFullAccess) {
-      // Dashboard requires full access
-      router.replace('/admin/vctranscript');
+      // Dashboard requires full access - redirect to appropriate page
+      const perms = session?.user?.permissions;
+      if (perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
+        router.replace('/admin/casino');
+      } else if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
+        router.replace('/admin/vctranscript');
+      } else {
+        router.replace('/admin');
+      }
     } else if (status === 'authenticated' && session?.user?.permissions?.hasFullAccess) {
       fetchStats();
     }

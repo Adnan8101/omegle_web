@@ -15,7 +15,16 @@ export default function AdminLogin() {
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.permissions?.hasAnyAccess) {
       setIsRedirecting(true);
-      router.push('/admin/dashboard');
+      const perms = session?.user?.permissions;
+      // Redirect casino-only users to casino page, others to dashboard
+      if (perms?.hasCasinoAccess && !perms?.hasFullAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
+        router.push('/admin/casino');
+      } else if (perms?.hasFullAccess) {
+        router.push('/admin/dashboard');
+      } else {
+        // Moderators and view-only users go to VC transcript
+        router.push('/admin/vctranscript');
+      }
     }
   }, [status, session, router]);
 
