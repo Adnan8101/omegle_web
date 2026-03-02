@@ -119,13 +119,38 @@ export default function ModDetailPage() {
     startDate: null, 
     endDate: null 
   });
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
+    if (status === 'loading') return;
+    
     if (status === 'unauthenticated') {
+      setIsRedirecting(true);
       router.replace('/admin');
-    } else if (status === 'authenticated' && !session?.user?.permissions?.hasFullAccess) {
+      return;
+    }
+    
+    if (status === 'authenticated') {
+      const perms = session?.user?.permissions;
       // Mods stats requires full access (admin/manage server)
-      router.replace('/admin');
+      if (!perms?.hasFullAccess) {
+        setHasPermission(false);
+        // Redirect to appropriate page based on permissions
+        if (perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
+          setIsRedirecting(true);
+          router.replace('/admin/casino');
+        } else if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
+          setIsRedirecting(true);
+          router.replace('/admin/vctranscript');
+        } else {
+          setIsRedirecting(true);
+          router.replace('/admin');
+        }
+        return;
+      }
+      
+      setHasPermission(true);
     }
   }, [status, session, router]);
 
@@ -150,10 +175,10 @@ export default function ModDetailPage() {
   }, [modId, dateRange]);
 
   useEffect(() => {
-    if (status === 'authenticated' && modId) {
+    if (status === 'authenticated' && modId && hasPermission) {
       fetchModDetails();
     }
-  }, [status, modId, fetchModDetails]);
+  }, [status, modId, hasPermission, fetchModDetails]);
 
   const handleDateRangeChange = useCallback((range: { startDate: string | null; endDate: string | null }) => {
     setDateRange(range);
@@ -198,6 +223,56 @@ export default function ModDetailPage() {
         return 'bg-gray-500/20 text-gray-500 border-gray-500/30';
     }
   };
+
+  // Show loading state while checking auth/permissions
+  if (status === 'loading' || hasPermission === null || isRedirecting) {
+    return (
+      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-[rgb(var(--color-text-secondary))]">
+            {isRedirecting ? 'Redirecting...' : 'Loading...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if no permission
+  if (hasPermission === false) {
+    return (
+      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
+        <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
+          <div className="text-center space-y-6">
+            <div className="text-red-500 text-5xl">❌</div>
+            <div>
+              <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">
+                Access Denied
+              </h2>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+                You do not have permission to access Mod Stats.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const perms = session?.user?.permissions;
+                if (perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
+                  router.replace('/admin/casino');
+                } else if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
+                  router.replace('/admin/vctranscript');
+                } else {
+                  router.replace('/admin');
+                }
+              }}
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !modDetails) {
     return (

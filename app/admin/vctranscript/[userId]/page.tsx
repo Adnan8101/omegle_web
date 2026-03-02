@@ -144,6 +144,8 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
   const [channelData, setChannelData] = useState<any[]>([]);
   const [channelNames, setChannelNames] = useState<Map<string, string>>(new Map());
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Mutuals state
   const [mutualsData, setMutualsData] = useState<MutualsData | null>(null);
@@ -177,11 +179,33 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
   }, [isRefreshing, mutualsData]);
 
   useEffect(() => {
+    if (status === 'loading') return;
+    
     if (status === 'unauthenticated') {
+      setIsRedirecting(true);
       router.replace('/admin');
-    } else if (status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess) {
-      router.replace('/admin');
-    } else if (status === 'authenticated' && session?.user?.permissions?.hasAnyAccess) {
+      return;
+    }
+    
+    if (status === 'authenticated') {
+      const perms = session?.user?.permissions;
+      // User transcript accessible to: Full Access, Moderator, or Trail Mod/View Only
+      const canAccess = perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasViewOnlyAccess;
+      
+      if (!canAccess) {
+        setHasPermission(false);
+        // Redirect to appropriate page based on permissions
+        if (perms?.hasCasinoAccess) {
+          setIsRedirecting(true);
+          router.replace('/admin/casino');
+        } else {
+          setIsRedirecting(true);
+          router.replace('/admin');
+        }
+        return;
+      }
+      
+      setHasPermission(true);
       fetchData();
     }
   }, [status, session, router]);
@@ -414,7 +438,55 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
 
   const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#f97316'];
 
-  if (status === 'loading' || loading) {
+  // Show loading state while checking auth/permissions
+  if (status === 'loading' || hasPermission === null || isRedirecting) {
+    return (
+      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-[rgb(var(--color-text-secondary))]">
+            {isRedirecting ? 'Redirecting...' : 'Loading...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if no permission
+  if (hasPermission === false) {
+    return (
+      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
+        <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
+          <div className="text-center space-y-6">
+            <div className="text-red-500 text-5xl">❌</div>
+            <div>
+              <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">
+                Access Denied
+              </h2>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+                You do not have permission to access User Transcripts.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const perms = session?.user?.permissions;
+                if (perms?.hasCasinoAccess) {
+                  router.replace('/admin/casino');
+                } else {
+                  router.replace('/admin');
+                }
+              }}
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
