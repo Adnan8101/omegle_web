@@ -102,6 +102,8 @@ export default function EconomyManagementPage() {
   const [categoryRewards, setCategoryRewards] = useState<CategoryReward[]>([]);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [newCategoryReward, setNewCategoryReward] = useState<Partial<CategoryReward> | null>(null);
+  const [textChannels, setTextChannels] = useState<Channel[]>([]);
+  const [voiceChannels, setVoiceChannels] = useState<Channel[]>([]);
 
   // Blacklist state
   const [blacklistSearch, setBlacklistSearch] = useState('');
@@ -176,6 +178,8 @@ export default function EconomyManagementPage() {
         console.log('Setting categories:', data.categories?.length || 0);
         setCategories(data.categories || []);
         setCategoryRewards(data.categoryRewards || []);
+        setTextChannels(data.textChannels || []);
+        setVoiceChannels(data.voiceChannels || []);
       } else {
         console.error('Categories API error:', data);
       }
@@ -799,6 +803,67 @@ export default function EconomyManagementPage() {
 
                     {newCategoryReward.categoryId && (
                       <>
+                        {/* Channels in this Category (Read-only) */}
+                        <div className="mb-6 p-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]">
+                          <div className="flex items-center gap-2 mb-4">
+                            <FiLayers className="w-5 h-5 text-green-500" />
+                            <h4 className="font-semibold text-[rgb(var(--color-text-primary))]">
+                              Channels in &quot;{newCategoryReward.categoryName}&quot;
+                            </h4>
+                            <span className="text-xs text-[rgb(var(--color-text-tertiary))] ml-2">(Read-only - synced from Discord)</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Voice Channels */}
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <FiMic className="w-4 h-4 text-purple-500" />
+                                <span className="text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                                  Voice Channels ({voiceChannels.filter(ch => ch.parentId === newCategoryReward.categoryId).length})
+                                </span>
+                              </div>
+                              <div className="max-h-32 overflow-y-auto space-y-1 bg-[rgb(var(--color-bg-secondary))] rounded-lg p-2">
+                                {voiceChannels.filter(ch => ch.parentId === newCategoryReward.categoryId).length === 0 ? (
+                                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] italic">No voice channels</p>
+                                ) : (
+                                  voiceChannels
+                                    .filter(ch => ch.parentId === newCategoryReward.categoryId)
+                                    .map(ch => (
+                                      <div key={ch.id} className="flex items-center gap-2 px-2 py-1 rounded text-sm text-[rgb(var(--color-text-secondary))]">
+                                        <span className="text-purple-400">🔊</span>
+                                        <span>{ch.name}</span>
+                                      </div>
+                                    ))
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Text Channels */}
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <FiMessageSquare className="w-4 h-4 text-blue-500" />
+                                <span className="text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                                  Text Channels ({textChannels.filter(ch => ch.parentId === newCategoryReward.categoryId).length})
+                                </span>
+                              </div>
+                              <div className="max-h-32 overflow-y-auto space-y-1 bg-[rgb(var(--color-bg-secondary))] rounded-lg p-2">
+                                {textChannels.filter(ch => ch.parentId === newCategoryReward.categoryId).length === 0 ? (
+                                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] italic">No text channels</p>
+                                ) : (
+                                  textChannels
+                                    .filter(ch => ch.parentId === newCategoryReward.categoryId)
+                                    .map(ch => (
+                                      <div key={ch.id} className="flex items-center gap-2 px-2 py-1 rounded text-sm text-[rgb(var(--color-text-secondary))]">
+                                        <span className="text-blue-400">#</span>
+                                        <span>{ch.name}</span>
+                                      </div>
+                                    ))
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Voice Chat Rewards */}
                         <div className="mb-6 p-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]">
                           <div className="flex items-center gap-2 mb-4">
@@ -1002,6 +1067,19 @@ export default function EconomyManagementPage() {
                           <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))]">
                             <FiMessageSquare className="w-4 h-4 text-blue-500" />
                             <span>Msgs: <strong className="text-[rgb(var(--color-text-primary))]">{reward.messagesPerPoint}</strong> {config?.currency_name || 'Ozy'}/msg</span>
+                          </div>
+                        </div>
+                        
+                        {/* Channels in this category */}
+                        <div className="mt-3 pt-3 border-t border-[rgb(var(--color-border))]">
+                          <div className="flex flex-wrap gap-2">
+                            <span className="text-xs text-[rgb(var(--color-text-tertiary))]">
+                              🔊 {voiceChannels.filter(ch => ch.parentId === reward.categoryId).length} VCs
+                            </span>
+                            <span className="text-xs text-[rgb(var(--color-text-tertiary))]">•</span>
+                            <span className="text-xs text-[rgb(var(--color-text-tertiary))]">
+                              # {textChannels.filter(ch => ch.parentId === reward.categoryId).length} text channels
+                            </span>
                           </div>
                         </div>
                       </div>

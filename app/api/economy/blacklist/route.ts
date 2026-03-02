@@ -4,10 +4,11 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 
 const GUILD_ID = "910043773130661918";
-const BOT_TOKEN = process.env.BOT_TOKEN;
 
 // GET - Fetch blacklisted items
 export async function GET(request: NextRequest) {
+  console.log('=== BLACKLIST API START ===');
+  
   try {
     const session = await getServerSession(authOptions);
     
@@ -20,13 +21,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
+    const botToken = process.env.DISCORD_BOT_TOKEN;
+    if (!botToken) {
+      console.error('DISCORD_BOT_TOKEN not set');
+      return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
+    }
+
+    console.log('Fetching Discord channels and roles...');
+
     // Fetch channels from Discord
     const channelsResponse = await fetch(
       `https://discord.com/api/v10/guilds/${GUILD_ID}/channels`,
       {
         headers: {
-          Authorization: `Bot ${BOT_TOKEN}`,
+          Authorization: `Bot ${botToken}`,
+          'Content-Type': 'application/json',
         },
+        cache: 'no-store',
       }
     );
 
@@ -35,15 +46,21 @@ export async function GET(request: NextRequest) {
       `https://discord.com/api/v10/guilds/${GUILD_ID}/roles`,
       {
         headers: {
-          Authorization: `Bot ${BOT_TOKEN}`,
+          Authorization: `Bot ${botToken}`,
+          'Content-Type': 'application/json',
         },
+        cache: 'no-store',
       }
     );
 
-    const [channels, roles] = await Promise.all([
-      channelsResponse.ok ? channelsResponse.json() : [],
-      rolesResponse.ok ? rolesResponse.json() : []
-    ]);
+    console.log('Channels response:', channelsResponse.status);
+    console.log('Roles response:', rolesResponse.status);
+
+    const channels = channelsResponse.ok ? await channelsResponse.json() : [];
+    const roles = rolesResponse.ok ? await rolesResponse.json() : [];
+
+    console.log('Channels fetched:', channels.length);
+    console.log('Roles fetched:', roles.length);
 
     // Get blacklisted items from database
     const [blacklistedChannels, blacklistedCategories, blacklistedRoles] = await Promise.all([
