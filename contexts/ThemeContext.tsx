@@ -36,13 +36,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  if (!mounted) {
-    return null;
-  }
-
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
+      {mounted ? children : <div className="min-h-screen bg-[rgb(var(--color-bg-primary))]" />}
     </ThemeContext.Provider>
   );
 }
