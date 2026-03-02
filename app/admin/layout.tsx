@@ -110,6 +110,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             href: '/admin/dashboard',
             icon: <FiHome className="w-5 h-5" />,
             requiresFullAccess: true,
+            requiresModeratorAccess: false,
             requiresCasinoAccess: false,
         },
         {
@@ -117,6 +118,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             href: '/admin/dashboard/applications',
             icon: <FiFileText className="w-5 h-5" />,
             requiresFullAccess: true,
+            requiresModeratorAccess: false,
             requiresCasinoAccess: false,
         },
         {
@@ -124,6 +126,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             href: '/admin/casino',
             icon: <FiDollarSign className="w-5 h-5" />,
             requiresFullAccess: false,
+            requiresModeratorAccess: false,
             requiresCasinoAccess: true, // Casino role or full access
         },
         {
@@ -131,39 +134,61 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             href: '/admin/mods-stats',
             icon: <FiUsers className="w-5 h-5" />,
             requiresFullAccess: true, // Admin only
+            requiresModeratorAccess: false,
             requiresCasinoAccess: false,
         },
         {
             name: 'VC Stats',
             href: '/admin/vctranscript',
             icon: <FiMic className="w-5 h-5" />,
-            requiresFullAccess: false, // View-only can access
+            requiresFullAccess: false,
+            requiresModeratorAccess: false, // Trail Mod can access
             requiresCasinoAccess: false,
         },
         {
             name: 'Chat Stats',
             href: '/admin/vctranscript/chatlogs',
             icon: <FiMessageSquare className="w-5 h-5" />,
-            requiresFullAccess: false, // View-only can access
+            requiresFullAccess: false,
+            requiresModeratorAccess: false, // Trail Mod can access
             requiresCasinoAccess: false,
         },
         {
             name: 'Server Stats',
             href: '/admin/server-stats',
             icon: <FiBarChart2 className="w-5 h-5" />,
-            requiresFullAccess: false, // View-only can access
+            requiresFullAccess: false,
+            requiresModeratorAccess: true, // Moderator+ only (NOT Trail Mod)
             requiresCasinoAccess: false,
         },
     ].filter(item => {
         // Filter based on permissions
         const perms = session?.user?.permissions;
+        
+        // Full access sees everything
+        if (perms?.hasFullAccess) {
+            return true;
+        }
+        
+        // Casino-only users should ONLY see casino section
+        const hasCasinoOnly = perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess;
+        if (hasCasinoOnly) {
+            return item.requiresCasinoAccess;
+        }
+        
+        // Check specific requirements
         if (item.requiresFullAccess) {
-            return perms?.hasFullAccess;
+            return false; // Already handled above
         }
         if (item.requiresCasinoAccess) {
-            return perms?.hasFullAccess || perms?.hasCasinoAccess;
+            return perms?.hasCasinoAccess;
         }
-        return true; // Show all non-full-access items to everyone with any access
+        if (item.requiresModeratorAccess) {
+            return perms?.hasModeratorAccess;
+        }
+        
+        // View-only and moderators can see non-restricted items
+        return perms?.hasModeratorAccess || perms?.hasViewOnlyAccess;
     });
 
     const isActive = (href: string) => {
