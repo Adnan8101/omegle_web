@@ -69,6 +69,10 @@ export async function GET(request: NextRequest) {
       prismaBot.economyBlacklistRole.findMany({ where: { guild_id: GUILD_ID } })
     ]);
 
+    console.log('Blacklisted channels:', blacklistedChannels.length);
+    console.log('Blacklisted categories:', blacklistedCategories.length);
+    console.log('Blacklisted roles:', blacklistedRoles.length);
+
     // Map to include names
     const categories = channels
       .filter((ch: any) => ch.type === 4)
@@ -105,6 +109,43 @@ export async function GET(request: NextRequest) {
       }))
       .sort((a: any, b: any) => b.position - a.position);
 
+    console.log('Available categories:', categories.length);
+    console.log('Available text channels:', textChannels.length);
+    console.log('Available voice channels:', voiceChannels.length);
+    console.log('Available roles:', formattedRoles.length);
+
+    // Map blacklisted items with names
+    const mappedBlacklistedCategories = blacklistedCategories.map(c => {
+      const cat = categories.find((cat: any) => cat.id === c.category_id);
+      console.log(`Category ${c.category_id} -> ${cat?.name || 'NOT FOUND'}`);
+      return {
+        id: c.category_id,
+        name: cat?.name || 'Unknown'
+      };
+    });
+
+    const mappedBlacklistedChannels = blacklistedChannels.map(c => {
+      const ch = [...textChannels, ...voiceChannels].find(ch => ch.id === c.channel_id);
+      console.log(`Channel ${c.channel_id} -> ${ch?.name || 'NOT FOUND'}`);
+      return {
+        id: c.channel_id,
+        type: c.channel_type,
+        name: ch?.name || 'Unknown'
+      };
+    });
+
+    const mappedBlacklistedRoles = blacklistedRoles.map(r => {
+      const role = formattedRoles.find((role: any) => role.id === r.role_id);
+      console.log(`Role ${r.role_id} -> ${role?.name || 'NOT FOUND'}`);
+      return {
+        id: r.role_id,
+        name: role?.name || 'Unknown',
+        color: role?.color || 0
+      };
+    });
+
+    console.log('=== BLACKLIST API END ===');
+
     return NextResponse.json({
       available: {
         categories,
@@ -113,20 +154,9 @@ export async function GET(request: NextRequest) {
         roles: formattedRoles
       },
       blacklisted: {
-        channels: blacklistedChannels.map(c => ({
-          id: c.channel_id,
-          type: c.channel_type,
-          name: [...textChannels, ...voiceChannels].find(ch => ch.id === c.channel_id)?.name || 'Unknown'
-        })),
-        categories: blacklistedCategories.map(c => ({
-          id: c.category_id,
-          name: categories.find((cat: any) => cat.id === c.category_id)?.name || 'Unknown'
-        })),
-        roles: blacklistedRoles.map(r => ({
-          id: r.role_id,
-          name: formattedRoles.find((role: any) => role.id === r.role_id)?.name || 'Unknown',
-          color: formattedRoles.find((role: any) => role.id === r.role_id)?.color || 0
-        }))
+        channels: mappedBlacklistedChannels,
+        categories: mappedBlacklistedCategories,
+        roles: mappedBlacklistedRoles
       }
     });
   } catch (error) {
