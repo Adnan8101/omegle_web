@@ -35,12 +35,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get all active and enabled shop items (including out of stock items)
+    // Get all shop items (both enabled and disabled, including out of stock items)
     const now = new Date();
     const items = await prismaBot.shopItem.findMany({
       where: {
         guild_id: GUILD_ID,
-        enabled: true,  // Only show enabled items
         OR: [
           { expires_at: null },
           { expires_at: { gt: now } }
@@ -84,7 +83,8 @@ export async function GET(request: NextRequest) {
         role_required_id: item.role_required_id,
         required_balance: item.required_balance,
         expires_at: item.expires_at?.toISOString() || null,
-        out_of_stock: item.stock !== null && item.stock <= 0
+        out_of_stock: item.stock !== null && item.stock <= 0,
+        enabled: item.enabled
       })),
       config: {
         currencyEmoji: config?.currency_emoji || '🪙',
