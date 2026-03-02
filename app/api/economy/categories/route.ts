@@ -20,23 +20,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
+    console.log('Fetching Discord channels...');
+
     // Fetch channels from Discord
-    const response = await fetch(
-      `https://discord.com/api/v10/guilds/${GUILD_ID}/channels`,
-      {
-        headers: {
-          Authorization: `Bot ${BOT_TOKEN}`,
-        },
+    let channels = [];
+    try {
+      const response = await fetch(
+        `https://discord.com/api/v10/guilds/${GUILD_ID}/channels`,
+        {
+          headers: {
+            Authorization: `Bot ${BOT_TOKEN}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Discord API error:', response.status, errorText);
+        throw new Error(`Discord API returned ${response.status}: ${errorText}`);
       }
-    );
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch channels from Discord');
+      channels = await response.json();
+      console.log('Total channels fetched:', channels.length);
+    } catch (discordError: any) {
+      console.error('Failed to fetch from Discord:', discordError.message);
+      return NextResponse.json({ 
+        error: 'Failed to fetch Discord channels',
+        details: discordError.message 
+      }, { status: 500 });
     }
-
-    const channels = await response.json();
-
-    console.log('Total channels fetched:', channels.length);
 
     // Filter categories (type 4 = category)
     const categories = channels
@@ -71,17 +83,37 @@ export async function GET(request: NextRequest) {
         type: 'voice'
       }));
 
-    // Get existing category rewards
-    const categoryRewards = await prismaBot.economyCategoryReward.findMany({
-      where: { guild_id: GUILD_ID }
-    });
+    console.log('Fetching database records...');
 
-    // Get blacklisted items
-    const [blacklistedChannels, blacklistedCategories, blacklistedRoles] = await Promise.all([
-      prismaBot.economyBlacklistChannel.findMany({ where: { guild_id: GUILD_ID } }),
-      prismaBot.economyBlacklistCategory.findMany({ where: { guild_id: GUILD_ID } }),
-      prismaBot.economyBlacklistRole.findMany({ where: { guild_id: GUILD_ID } })
-    ]);
+    // Get existing category rewards
+    let categoryRewards = [];
+    let blacklistedChannels = [];
+    let blacklistedCategories = [];
+    let blacklistedRoles = [];
+    
+    try {
+      categoryRewards = await prismaBot.economyCategoryReward.findMany({
+        where: { guild_id: GUILD_ID }
+      });
+      console.log('Category rewards found:', categoryRewards.length);
+
+      // Get blacklisted items
+      [blacklistedChannels, blacklistedCategories, blacklistedRoles] = await Promise.all([
+        prismaBot.economyBlacklistChannel.findMany({ where: { guild_id: GUILD_ID } }),
+        prismaBot.economyBlacklistCategory.findMany({ where: { guild_id: GUILD_ID } }),
+        prismaBot.economyBlacklistRole.findMany({ where: { guild_id: GUILD_ID } })
+      ]);
+      console.log('Blacklist items found:', blacklistedChannels.length + blacklistedCategories.length + blacklistedRoles.length);
+    } catch (dbError: any) {
+      console.error('Database error:', dbError.message);
+      console.error('Database error stack:', dbError.stack);
+      return NextResponse.json({ 
+        error: 'Database error',
+        details: dbError.message 
+      }, { status: 500 });
+    }
+
+    console.log('Preparing response...');
 
     return NextResponse.json({
       categories,
