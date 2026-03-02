@@ -19,8 +19,7 @@ interface EconomyConfig {
   daily_message_cap: number;
   minutes_per_point: number;
   daily_voice_cap: number;
-  require_two_members: boolean;
-  ignore_afk_channel: boolean;
+  require_two_members: number;
   ignore_self_muted: boolean;
   currency_name: string;
   currency_emoji: string;
@@ -28,7 +27,6 @@ interface EconomyConfig {
   enabled: boolean;
   advanced_mode: boolean;
   shop_enabled: boolean;
-  afk_channel_id?: string | null;
 }
 
 interface CategoryReward {
@@ -113,9 +111,6 @@ export default function EconomyManagementPage() {
   // Shop state
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopEnabled, setShopEnabled] = useState(true);
-
-  // AFK channel state
-  const [afkChannels, setAfkChannels] = useState<Channel[]>([]);
   
   // Blacklist modal state
   const [blacklistModal, setBlacklistModal] = useState<{ type: 'channels' | 'categories' | 'roles' } | null>(null);
@@ -161,10 +156,6 @@ export default function EconomyManagementPage() {
       if (res.ok) {
         setConfig(data.config);
         setCategoryRewards(data.categoryRewards || []);
-        // Load AFK channels
-        if (data.afkChannels) {
-          setAfkChannels(data.afkChannels);
-        }
       }
     } catch (err) {
       console.error('Error fetching config:', err);
@@ -541,25 +532,23 @@ export default function EconomyManagementPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Currency per Minutes
+                  {config.currency_name} Amount
                 </label>
                 <div className="flex items-center gap-3">
-                  <span className="text-lg font-bold text-[rgb(var(--color-text-primary))]">1</span>
-                  <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} per</span>
                   <input
                     type="number"
                     min="1"
                     value={config.minutes_per_point}
                     onChange={(e) => setConfig({ ...config, minutes_per_point: parseInt(e.target.value) || 1 })}
-                    className="w-20 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                    className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
                   />
-                  <span className="text-[rgb(var(--color-text-tertiary))]">minutes</span>
+                  <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} per minute</span>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Daily Voice Cap
+                  Daily Limit (per user)
                 </label>
                 <input
                   type="number"
@@ -571,52 +560,19 @@ export default function EconomyManagementPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-xl bg-[rgb(var(--color-bg-tertiary))]">
-                <span className="text-[rgb(var(--color-text-secondary))]">Require 2+ members in VC</span>
-                <button
-                  onClick={() => setConfig({ ...config, require_two_members: !config.require_two_members })}
-                  className={`p-2 rounded-lg transition-all ${
-                    config.require_two_members ? 'bg-green-500/20 text-green-500' : 'bg-[rgb(var(--color-bg-primary))] text-[rgb(var(--color-text-tertiary))]'
-                  }`}
-                >
-                  {config.require_two_members ? <FiToggleRight className="w-5 h-5" /> : <FiToggleLeft className="w-5 h-5" />}
-                </button>
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Minimum Members in VC
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={config.require_two_members}
+                  onChange={(e) => setConfig({ ...config, require_two_members: parseInt(e.target.value) || 2 })}
+                  className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                  placeholder="2"
+                />
               </div>
-
-              <div className="flex items-center justify-between p-4 rounded-xl bg-[rgb(var(--color-bg-tertiary))]">
-                <span className="text-[rgb(var(--color-text-secondary))]">Ignore AFK channel</span>
-                <button
-                  onClick={() => setConfig({ ...config, ignore_afk_channel: !config.ignore_afk_channel })}
-                  className={`p-2 rounded-lg transition-all ${
-                    config.ignore_afk_channel ? 'bg-green-500/20 text-green-500' : 'bg-[rgb(var(--color-bg-primary))] text-[rgb(var(--color-text-tertiary))]'
-                  }`}
-                >
-                  {config.ignore_afk_channel ? <FiToggleRight className="w-5 h-5" /> : <FiToggleLeft className="w-5 h-5" />}
-                </button>
-              </div>
-
-              {config.ignore_afk_channel && (
-                <div>
-                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    Select AFK Channel
-                  </label>
-                  <select
-                    value={config.afk_channel_id || ''}
-                    onChange={(e) => setConfig({ ...config, afk_channel_id: e.target.value || null })}
-                    className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                  >
-                    <option value="">No AFK Channel Selected</option>
-                    {afkChannels.map(ch => (
-                      <option key={ch.id} value={ch.id}>
-                        {ch.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
-                    Members in this channel won&apos;t earn currency
-                  </p>
-                </div>
-              )}
             </div>
           </div>
 
@@ -635,19 +591,17 @@ export default function EconomyManagementPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Currency per Messages
+                  {config.currency_name} Amount
                 </label>
                 <div className="flex items-center gap-3">
-                  <span className="text-lg font-bold text-[rgb(var(--color-text-primary))]">1</span>
-                  <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} per</span>
                   <input
                     type="number"
                     min="1"
                     value={config.messages_per_point}
                     onChange={(e) => setConfig({ ...config, messages_per_point: parseInt(e.target.value) || 25 })}
-                    className="w-20 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                    className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
                   />
-                  <span className="text-[rgb(var(--color-text-tertiary))]">messages</span>
+                  <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} per message</span>
                 </div>
               </div>
 
@@ -681,7 +635,7 @@ export default function EconomyManagementPage() {
 
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Daily Message Cap
+                  Daily Limit (per user)
                 </label>
                 <input
                   type="number"

@@ -32,34 +32,6 @@ export async function GET(request: NextRequest) {
         })
       : [];
 
-    // Fetch voice channels from Discord for AFK channel selector
-    let afkChannels = [];
-    try {
-      const channelsResponse = await fetch(
-        `https://discord.com/api/v10/guilds/${GUILD_ID}/channels`,
-        {
-          headers: {
-            Authorization: `Bot ${process.env.BOT_TOKEN}`,
-          },
-        }
-      );
-      
-      if (channelsResponse.ok) {
-        const channels = await channelsResponse.json();
-        afkChannels = channels
-          .filter((ch: any) => ch.type === 2) // Voice channels only
-          .map((ch: any) => ({
-            id: ch.id,
-            name: ch.name,
-            parentId: ch.parent_id,
-            type: 'voice'
-          }))
-          .sort((a: any, b: any) => a.name.localeCompare(b.name));
-      }
-    } catch (err) {
-      console.error('Error fetching AFK channels:', err);
-    }
-
     return NextResponse.json({
       config: config || {
         guild_id: GUILD_ID,
@@ -69,19 +41,16 @@ export async function GET(request: NextRequest) {
         daily_message_cap: 100,
         minutes_per_point: 1,
         daily_voice_cap: 100,
-        require_two_members: true,
-        ignore_afk_channel: true,
+        require_two_members: 2,
         ignore_self_muted: false,
         currency_name: 'Ozy',
         currency_emoji: '🪙',
         leaderboard_sync: true,
         enabled: false,
         advanced_mode: false,
-        shop_enabled: true,
-        afk_channel_id: null
+        shop_enabled: true
       },
-      categoryRewards,
-      afkChannels
+      categoryRewards
     });
   } catch (error) {
     console.error('Error fetching economy config:', error);
