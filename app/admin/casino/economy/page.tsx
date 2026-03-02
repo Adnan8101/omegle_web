@@ -35,8 +35,13 @@ interface CategoryReward {
   categoryName: string;
   vcEnabled: boolean;
   vcMinutesPerPoint: number;
+  vcDailyLimit?: number;
+  vcMinMembers?: number;
   messageEnabled: boolean;
   messagesPerPoint: number;
+  msgDailyLimit?: number;
+  msgMinLength?: number;
+  msgCooldown?: number;
 }
 
 interface Category {
@@ -166,9 +171,13 @@ export default function EconomyManagementPage() {
     try {
       const res = await fetch('/api/economy/categories');
       const data = await res.json();
+      console.log('Categories API Response:', data);
       if (res.ok) {
+        console.log('Setting categories:', data.categories?.length || 0);
         setCategories(data.categories || []);
         setCategoryRewards(data.categoryRewards || []);
+      } else {
+        console.error('Categories API error:', data);
       }
     } catch (err) {
       console.error('Error fetching categories:', err);
@@ -739,17 +748,22 @@ export default function EconomyManagementPage() {
 
                 {/* New Category Form */}
                 {newCategoryReward && (
-                  <div className="mb-6 p-4 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-green-500/30">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">New Category Reward</h3>
+                  <div className="mb-6 p-6 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-green-500/30">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">New Category Reward</h3>
                       <button
                         onClick={() => setNewCategoryReward(null)}
-                        className="p-1 rounded-lg hover:bg-[rgb(var(--color-bg-primary))]"
+                        className="p-2 rounded-lg hover:bg-[rgb(var(--color-bg-primary))] text-[rgb(var(--color-text-tertiary))] hover:text-[rgb(var(--color-text-primary))]"
                       >
-                        <FiX className="w-4 h-4" />
+                        <FiX className="w-5 h-5" />
                       </button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    {/* Category Selector */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                        Select Category
+                      </label>
                       <select
                         value={newCategoryReward.categoryId || ''}
                         onChange={(e) => {
@@ -757,12 +771,21 @@ export default function EconomyManagementPage() {
                           setNewCategoryReward({
                             ...newCategoryReward,
                             categoryId: e.target.value,
-                            categoryName: cat?.name
+                            categoryName: cat?.name,
+                            vcEnabled: true,
+                            messageEnabled: true,
+                            vcMinutesPerPoint: config?.minutes_per_point || 1,
+                            vcDailyLimit: config?.daily_voice_cap || 100,
+                            vcMinMembers: config?.require_two_members || 2,
+                            messagesPerPoint: config?.messages_per_point || 25,
+                            msgDailyLimit: config?.daily_message_cap || 100,
+                            msgMinLength: config?.min_message_length || 5,
+                            msgCooldown: config?.message_cooldown || 5
                           });
                         }}
-                        className="px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                        className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
                       >
-                        <option value="">Select Category</option>
+                        <option value="">-- Select a Category --</option>
                         {categories
                           .filter(cat => !categoryRewards.find(cr => cr.categoryId === cat.id))
                           .map(cat => (
@@ -770,96 +793,214 @@ export default function EconomyManagementPage() {
                           ))
                         }
                       </select>
-                      <div className="flex gap-4">
-                        <div className="flex-1">
-                          <label className="text-xs text-[rgb(var(--color-text-tertiary))]">VC min/point</label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={newCategoryReward.vcMinutesPerPoint || 1}
-                            onChange={(e) => setNewCategoryReward({
-                              ...newCategoryReward,
-                              vcMinutesPerPoint: parseInt(e.target.value) || 1
-                            })}
-                            className="w-full px-3 py-2 rounded-lg bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <label className="text-xs text-[rgb(var(--color-text-tertiary))]">Msgs/point</label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={newCategoryReward.messagesPerPoint || 25}
-                            onChange={(e) => setNewCategoryReward({
-                              ...newCategoryReward,
-                              messagesPerPoint: parseInt(e.target.value) || 25
-                            })}
-                            className="w-full px-3 py-2 rounded-lg bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                          />
-                        </div>
-                      </div>
                     </div>
-                    <div className="flex justify-end mt-4">
-                      <button
-                        onClick={() => {
-                          if (newCategoryReward.categoryId) {
-                            saveCategoryReward({
-                              ...newCategoryReward,
-                              vcEnabled: true,
-                              messageEnabled: true
-                            });
-                          }
-                        }}
-                        disabled={!newCategoryReward.categoryId}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all disabled:opacity-50"
-                      >
-                        <FiCheck className="w-4 h-4" />
-                        Save
-                      </button>
-                    </div>
+
+                    {newCategoryReward.categoryId && (
+                      <>
+                        {/* Voice Chat Rewards */}
+                        <div className="mb-6 p-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]">
+                          <div className="flex items-center gap-2 mb-4">
+                            <FiMic className="w-5 h-5 text-purple-500" />
+                            <h4 className="font-semibold text-[rgb(var(--color-text-primary))]">Voice Chat Rewards</h4>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                {config?.currency_name || 'Ozy'} Amount
+                              </label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={newCategoryReward.vcMinutesPerPoint || 1}
+                                  onChange={(e) => setNewCategoryReward({
+                                    ...newCategoryReward,
+                                    vcMinutesPerPoint: parseInt(e.target.value) || 1
+                                  })}
+                                  className="w-20 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                                />
+                                <span className="text-sm text-[rgb(var(--color-text-tertiary))]">per minute</span>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                Daily Limit (per user)
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={newCategoryReward.vcDailyLimit || 100}
+                                onChange={(e) => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  vcDailyLimit: parseInt(e.target.value) || 100
+                                })}
+                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                Min Members in VC
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={newCategoryReward.vcMinMembers || 2}
+                                onChange={(e) => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  vcMinMembers: parseInt(e.target.value) || 2
+                                })}
+                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Message Rewards */}
+                        <div className="p-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]">
+                          <div className="flex items-center gap-2 mb-4">
+                            <FiMessageSquare className="w-5 h-5 text-blue-500" />
+                            <h4 className="font-semibold text-[rgb(var(--color-text-primary))]">Message Rewards</h4>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                {config?.currency_name || 'Ozy'} Amount
+                              </label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={newCategoryReward.messagesPerPoint || 25}
+                                  onChange={(e) => setNewCategoryReward({
+                                    ...newCategoryReward,
+                                    messagesPerPoint: parseInt(e.target.value) || 25
+                                  })}
+                                  className="w-20 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                                />
+                                <span className="text-sm text-[rgb(var(--color-text-tertiary))]">per msg</span>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                Min Length
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={newCategoryReward.msgMinLength || 5}
+                                onChange={(e) => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  msgMinLength: parseInt(e.target.value) || 5
+                                })}
+                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                Cooldown (sec)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={newCategoryReward.msgCooldown || 5}
+                                onChange={(e) => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  msgCooldown: parseInt(e.target.value) || 5
+                                })}
+                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                Daily Limit
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={newCategoryReward.msgDailyLimit || 100}
+                                onChange={(e) => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  msgDailyLimit: parseInt(e.target.value) || 100
+                                })}
+                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end mt-6 gap-3">
+                          <button
+                            onClick={() => setNewCategoryReward(null)}
+                            className="px-4 py-2 bg-[rgb(var(--color-bg-primary))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] rounded-xl transition-all"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (newCategoryReward.categoryId) {
+                                saveCategoryReward(newCategoryReward);
+                              }
+                            }}
+                            className="flex items-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all font-semibold"
+                          >
+                            <FiCheck className="w-4 h-4" />
+                            Save Category Reward
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 
                 {/* Existing Category Rewards */}
                 <div className="space-y-3">
                   {categoryRewards.length === 0 ? (
-                    <p className="text-center text-[rgb(var(--color-text-tertiary))] py-8">
-                      No category rewards configured. Add one above.
-                    </p>
+                    <div className="text-center py-12">
+                      <FiLayers className="w-12 h-12 mx-auto mb-3 text-[rgb(var(--color-text-tertiary))]" />
+                      <p className="text-[rgb(var(--color-text-tertiary))]">
+                        No category rewards configured. Add one above.
+                      </p>
+                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mt-1">
+                        Category rewards override default settings for users in specific categories
+                      </p>
+                    </div>
                   ) : (
                     categoryRewards.map(reward => (
                       <div
                         key={reward.id}
-                        className="p-4 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] flex items-center justify-between"
+                        className="p-5 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] hover:border-purple-500/30 transition-all"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="p-2 bg-purple-500/20 rounded-lg">
-                            <FiLayers className="w-5 h-5 text-purple-500" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">
-                              {reward.categoryName || `Category ${reward.categoryId}`}
-                            </h3>
-                            <div className="flex gap-4 text-sm text-[rgb(var(--color-text-tertiary))]">
-                              <span>VC: 1/{reward.vcMinutesPerPoint}m</span>
-                              <span>•</span>
-                              <span>Msgs: 1/{reward.messagesPerPoint}</span>
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-purple-500/20 rounded-lg">
+                              <FiLayers className="w-5 h-5 text-purple-500" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-[rgb(var(--color-text-primary))] text-lg">
+                                {reward.categoryName || `Category ${reward.categoryId}`}
+                              </h3>
+                              <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-0.5">Overrides default settings for this category</p>
                             </div>
                           </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => deleteCategoryReward(reward.categoryId)}
+                              className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition-all"
+                              title="Delete"
+                            >
+                              <FiTrash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setEditingCategory(reward.categoryId)}
-                            className="p-2 rounded-lg hover:bg-[rgb(var(--color-bg-primary))] text-blue-500"
-                          >
-                            <FiEdit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => deleteCategoryReward(reward.categoryId)}
-                            className="p-2 rounded-lg hover:bg-[rgb(var(--color-bg-primary))] text-red-500"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                          </button>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))]">
+                            <FiMic className="w-4 h-4 text-purple-500" />
+                            <span>VC: <strong className="text-[rgb(var(--color-text-primary))]">{reward.vcMinutesPerPoint}</strong> {config?.currency_name || 'Ozy'}/min</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))]">
+                            <FiMessageSquare className="w-4 h-4 text-blue-500" />
+                            <span>Msgs: <strong className="text-[rgb(var(--color-text-primary))]">{reward.messagesPerPoint}</strong> {config?.currency_name || 'Ozy'}/msg</span>
+                          </div>
                         </div>
                       </div>
                     ))

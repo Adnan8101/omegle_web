@@ -36,6 +36,8 @@ export async function GET(request: NextRequest) {
 
     const channels = await response.json();
 
+    console.log('Total channels fetched:', channels.length);
+
     // Filter categories (type 4 = category)
     const categories = channels
       .filter((ch: any) => ch.type === 4)
@@ -45,6 +47,8 @@ export async function GET(request: NextRequest) {
         position: ch.position
       }))
       .sort((a: any, b: any) => a.position - b.position);
+
+    console.log('Categories found:', categories.length, categories.map((c: any) => c.name));
 
     // Get all channels organized by category
     const textChannels = channels
