@@ -7,49 +7,69 @@ const GUILD_ID = "910043773130661918";
 
 // GET - Fetch all categories from Discord
 export async function GET(request: NextRequest) {
+  console.log('=== CATEGORIES API START ===');
+  console.log('Timestamp:', new Date().toISOString());
+  
   try {
+    // Step 1: Check session
+    console.log('Step 1: Getting session...');
     const session = await getServerSession(authOptions);
+    console.log('Session user ID:', session?.user?.id || 'NO SESSION');
     
     if (!session?.user?.id) {
+      console.log('ERROR: No session - returning 401');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Step 2: Check permissions
+    console.log('Step 2: Checking permissions...');
     const perms = session.user.permissions;
+    console.log('Permissions:', JSON.stringify(perms));
+    
     if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
+      console.log('ERROR: No casino access - returning 403');
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    // Check if BOT_TOKEN exists
+    // Step 3: Check BOT_TOKEN
+    console.log('Step 3: Checking DISCORD_BOT_TOKEN...');
     const botToken = process.env.DISCORD_BOT_TOKEN;
+    console.log('BOT_TOKEN exists:', !!botToken);
+    console.log('BOT_TOKEN length:', botToken?.length || 0);
+    console.log('BOT_TOKEN first 20 chars:', botToken?.substring(0, 20) || 'MISSING');
+    
     if (!botToken) {
-      console.error('DISCORD_BOT_TOKEN environment variable is not set');
+      console.log('ERROR: DISCORD_BOT_TOKEN is not set');
       return NextResponse.json({ 
         error: 'Bot configuration error',
         details: 'DISCORD_BOT_TOKEN is not configured' 
       }, { status: 500 });
     }
 
-    // Fetch channels from Discord
+    // Step 4: Fetch channels from Discord
+    console.log('Step 4: Fetching Discord channels...');
+    console.log('Guild ID:', GUILD_ID);
+    
     let channels: any[] = [];
     try {
-      console.log('Fetching Discord channels for guild:', GUILD_ID);
+      const discordUrl = `https://discord.com/api/v10/guilds/${GUILD_ID}/channels`;
+      console.log('Discord URL:', discordUrl);
       
-      const response = await fetch(
-        `https://discord.com/api/v10/guilds/${GUILD_ID}/channels`,
-        {
-          headers: {
-            Authorization: `Bot ${botToken}`,
-            'Content-Type': 'application/json',
-          },
-          cache: 'no-store', // Disable caching for fresh data
-        }
-      );
+      const response = await fetch(discordUrl, {
+        headers: {
+          Authorization: `Bot ${botToken}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      });
+
+      console.log('Discord response status:', response.status);
+      console.log('Discord response ok:', response.ok);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Discord API error:', response.status, errorText);
+        console.log('Discord API error text:', errorText);
         
-        // Return specific error messages
         if (response.status === 401) {
           return NextResponse.json({ 
             error: 'Discord authentication failed',
@@ -76,17 +96,19 @@ export async function GET(request: NextRequest) {
       }
 
       channels = await response.json();
-      console.log('Successfully fetched', channels.length, 'channels from Discord');
+      console.log('Channels fetched successfully, count:', channels.length);
       
     } catch (discordError: any) {
-      console.error('Discord fetch error:', discordError);
+      console.log('Discord fetch EXCEPTION:', discordError.message);
+      console.log('Discord fetch stack:', discordError.stack);
       return NextResponse.json({ 
         error: 'Failed to connect to Discord',
         details: discordError.message || 'Network error'
       }, { status: 500 });
     }
 
-    // Filter categories (type 4 = category)
+    // Step 5: Process channels
+    console.log('Step 5: Processing channels...');
     const categories = channels
       .filter((ch: any) => ch.type === 4)
       .map((ch: any) => ({
@@ -96,9 +118,8 @@ export async function GET(request: NextRequest) {
       }))
       .sort((a: any, b: any) => a.position - b.position);
 
-    console.log('Found', categories.length, 'categories');
+    console.log('Categories found:', categories.length);
 
-    // Get all channels organized by category
     const textChannels = channels
       .filter((ch: any) => ch.type === 0)
       .map((ch: any) => ({
@@ -119,18 +140,24 @@ export async function GET(request: NextRequest) {
         type: 'voice'
       }));
 
-    // Get existing category rewards from database
+    console.log('Text channels:', textChannels.length);
+    console.log('Voice channels:', voiceChannels.length);
+
+    // Step 6: Fetch database records
+    console.log('Step 6: Fetching database records...');
     let categoryRewards: any[] = [];
     let blacklistedChannels: any[] = [];
     let blacklistedCategories: any[] = [];
     let blacklistedRoles: any[] = [];
     
     try {
+      console.log('Querying economyCategoryReward...');
       categoryRewards = await prismaBot.economyCategoryReward.findMany({
         where: { guild_id: GUILD_ID }
       });
+      console.log('Category rewards found:', categoryRewards.length);
 
-      // Get blacklisted items
+      console.log('Querying blacklist tables...');
       const [blChannels, blCategories, blRoles] = await Promise.all([
         prismaBot.economyBlacklistChannel.findMany({ where: { guild_id: GUILD_ID } }),
         prismaBot.economyBlacklistCategory.findMany({ where: { guild_id: GUILD_ID } }),
@@ -140,13 +167,17 @@ export async function GET(request: NextRequest) {
       blacklistedChannels = blChannels;
       blacklistedCategories = blCategories;
       blacklistedRoles = blRoles;
+      console.log('Blacklist - channels:', blChannels.length, 'categories:', blCategories.length, 'roles:', blRoles.length);
       
     } catch (dbError: any) {
-      console.error('Database error:', dbError);
-      // Continue with empty arrays if database fails - at least show Discord categories
+      console.log('Database EXCEPTION:', dbError.message);
+      console.log('Database stack:', dbError.stack);
+      // Continue with empty arrays - at least show Discord categories
     }
 
-    return NextResponse.json({
+    // Step 7: Build response
+    console.log('Step 7: Building response...');
+    const responseData = {
       categories,
       textChannels,
       voiceChannels,
@@ -164,9 +195,16 @@ export async function GET(request: NextRequest) {
         categories: blacklistedCategories.map((c: any) => c.category_id),
         roles: blacklistedRoles.map((r: any) => r.role_id)
       }
-    });
+    };
+    
+    console.log('=== CATEGORIES API SUCCESS ===');
+    return NextResponse.json(responseData);
+    
   } catch (error: any) {
-    console.error('Categories API error:', error);
+    console.log('=== CATEGORIES API FATAL ERROR ===');
+    console.log('Error message:', error.message);
+    console.log('Error stack:', error.stack);
+    console.log('Error name:', error.name);
     return NextResponse.json({ 
       error: 'Internal server error',
       details: error.message 
