@@ -14,10 +14,12 @@ import {
 interface EconomyConfig {
   guild_id: string;
   messages_per_point: number;
+  msg_ozy_amount: number;
   min_message_length: number;
   message_cooldown: number;
   daily_message_cap: number;
   minutes_per_point: number;
+  vc_ozy_amount: number;
   daily_voice_cap: number;
   require_two_members: number | boolean; // Allow both for backwards compatibility
   ignore_self_muted: boolean;
@@ -35,10 +37,12 @@ interface CategoryReward {
   categoryName: string;
   vcEnabled: boolean;
   vcMinutesPerPoint: number;
+  vcOzyAmount?: number;
   vcDailyLimit?: number;
   vcMinMembers?: number;
   messageEnabled: boolean;
   messagesPerPoint: number;
+  msgOzyAmount?: number;
   msgDailyLimit?: number;
   msgMinLength?: number;
   msgCooldown?: number;
@@ -538,11 +542,27 @@ export default function EconomyManagementPage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Voice Chat Rewards</h2>
-                <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Configure VC-based currency earning</p>
+                <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Configure VC-based currency earning (accumulates across sessions)</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Time Required (minutes)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    value={config.minutes_per_point}
+                    onChange={(e) => setConfig({ ...config, minutes_per_point: parseInt(e.target.value) || 5 })}
+                    className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                  />
+                  <span className="text-[rgb(var(--color-text-tertiary))]">minutes in VC</span>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   {config.currency_name} Amount
@@ -551,12 +571,15 @@ export default function EconomyManagementPage() {
                   <input
                     type="number"
                     min="1"
-                    value={config.minutes_per_point}
-                    onChange={(e) => setConfig({ ...config, minutes_per_point: parseInt(e.target.value) || 1 })}
+                    value={config.vc_ozy_amount || 1}
+                    onChange={(e) => setConfig({ ...config, vc_ozy_amount: parseInt(e.target.value) || 1 })}
                     className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
                   />
-                  <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} per minute</span>
+                  <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} earned</span>
                 </div>
+                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                  = {config.vc_ozy_amount || 1} {config.currency_name} per {config.minutes_per_point} min
+                </p>
               </div>
 
               <div>
@@ -587,6 +610,12 @@ export default function EconomyManagementPage() {
                 />
               </div>
             </div>
+            
+            <div className="mt-4 p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
+              <p className="text-sm text-purple-300">
+                <strong>How it works:</strong> Time accumulates across sessions. If a user stays {config.minutes_per_point} min total (even across multiple joins), they earn {config.vc_ozy_amount || 1} {config.currency_name}. Progress resets daily.
+              </p>
+            </div>
           </div>
 
           {/* Message Settings */}
@@ -597,14 +626,14 @@ export default function EconomyManagementPage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Message Rewards</h2>
-                <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Configure message-based currency earning</p>
+                <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Configure message-based currency earning (accumulates towards threshold)</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  {config.currency_name} Amount
+                  Messages Required
                 </label>
                 <div className="flex items-center gap-3">
                   <input
@@ -614,8 +643,27 @@ export default function EconomyManagementPage() {
                     onChange={(e) => setConfig({ ...config, messages_per_point: parseInt(e.target.value) || 25 })}
                     className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
                   />
-                  <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} per message</span>
+                  <span className="text-[rgb(var(--color-text-tertiary))]">messages to earn</span>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  {config.currency_name} Amount
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    value={config.msg_ozy_amount || 1}
+                    onChange={(e) => setConfig({ ...config, msg_ozy_amount: parseInt(e.target.value) || 1 })}
+                    className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                  />
+                  <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} earned</span>
+                </div>
+                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                  = {config.msg_ozy_amount || 1} {config.currency_name} per {config.messages_per_point} msgs
+                </p>
               </div>
 
               <div>
@@ -659,6 +707,12 @@ export default function EconomyManagementPage() {
                   placeholder="100"
                 />
               </div>
+            </div>
+            
+            <div className="mt-4 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
+              <p className="text-sm text-blue-300">
+                <strong>How it works:</strong> Messages accumulate. After {config.messages_per_point} valid messages, user earns {config.msg_ozy_amount || 1} {config.currency_name}. Progress persists until reward is earned.
+              </p>
             </div>
           </div>
 
@@ -870,28 +924,40 @@ export default function EconomyManagementPage() {
                             <FiMic className="w-5 h-5 text-purple-500" />
                             <h4 className="font-semibold text-[rgb(var(--color-text-primary))]">Voice Chat Rewards</h4>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div>
                               <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                                {config?.currency_name || 'Ozy'} Amount
+                                Time Required (min)
                               </label>
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="number"
-                                  min="1"
-                                  value={newCategoryReward.vcMinutesPerPoint || 1}
-                                  onChange={(e) => setNewCategoryReward({
-                                    ...newCategoryReward,
-                                    vcMinutesPerPoint: parseInt(e.target.value) || 1
-                                  })}
-                                  className="w-20 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
-                                />
-                                <span className="text-sm text-[rgb(var(--color-text-tertiary))]">per minute</span>
-                              </div>
+                              <input
+                                type="number"
+                                min="1"
+                                value={newCategoryReward.vcMinutesPerPoint || 5}
+                                onChange={(e) => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  vcMinutesPerPoint: parseInt(e.target.value) || 5
+                                })}
+                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                              />
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                                Daily Limit (per user)
+                                {config?.currency_name || 'Ozy'} Earned
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={newCategoryReward.vcOzyAmount || 1}
+                                onChange={(e) => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  vcOzyAmount: parseInt(e.target.value) || 1
+                                })}
+                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                Daily Limit
                               </label>
                               <input
                                 type="number"
@@ -906,7 +972,7 @@ export default function EconomyManagementPage() {
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                                Min Members in VC
+                                Min Members
                               </label>
                               <input
                                 type="number"
@@ -920,6 +986,9 @@ export default function EconomyManagementPage() {
                               />
                             </div>
                           </div>
+                          <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
+                            Users earn {newCategoryReward.vcOzyAmount || 1} {config?.currency_name || 'Ozy'} after {newCategoryReward.vcMinutesPerPoint || 5} minutes in VC (accumulates across sessions)
+                          </p>
                         </div>
 
                         {/* Message Rewards */}
@@ -928,24 +997,36 @@ export default function EconomyManagementPage() {
                             <FiMessageSquare className="w-5 h-5 text-blue-500" />
                             <h4 className="font-semibold text-[rgb(var(--color-text-primary))]">Message Rewards</h4>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             <div>
                               <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                                {config?.currency_name || 'Ozy'} Amount
+                                Messages Required
                               </label>
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="number"
-                                  min="1"
-                                  value={newCategoryReward.messagesPerPoint || 25}
-                                  onChange={(e) => setNewCategoryReward({
-                                    ...newCategoryReward,
-                                    messagesPerPoint: parseInt(e.target.value) || 25
-                                  })}
-                                  className="w-20 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
-                                />
-                                <span className="text-sm text-[rgb(var(--color-text-tertiary))]">per msg</span>
-                              </div>
+                              <input
+                                type="number"
+                                min="1"
+                                value={newCategoryReward.messagesPerPoint || 25}
+                                onChange={(e) => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  messagesPerPoint: parseInt(e.target.value) || 25
+                                })}
+                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                {config?.currency_name || 'Ozy'} Earned
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={newCategoryReward.msgOzyAmount || 1}
+                                onChange={(e) => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  msgOzyAmount: parseInt(e.target.value) || 1
+                                })}
+                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                              />
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
@@ -993,6 +1074,9 @@ export default function EconomyManagementPage() {
                               />
                             </div>
                           </div>
+                          <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
+                            Users earn {newCategoryReward.msgOzyAmount || 1} {config?.currency_name || 'Ozy'} after {newCategoryReward.messagesPerPoint || 25} messages (accumulates)
+                          </p>
                         </div>
 
                         <div className="flex justify-end mt-6 gap-3">

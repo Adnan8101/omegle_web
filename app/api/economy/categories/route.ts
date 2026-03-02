@@ -187,8 +187,15 @@ export async function GET(request: NextRequest) {
         categoryName: cr.category_name,
         vcEnabled: cr.vc_enabled,
         vcMinutesPerPoint: cr.vc_minutes_per_point,
+        vcOzyAmount: cr.vc_ozy_amount || 1,
+        vcDailyLimit: cr.vc_daily_limit || 100,
+        vcMinMembers: cr.vc_min_members || 2,
         messageEnabled: cr.message_enabled,
-        messagesPerPoint: cr.messages_per_point
+        messagesPerPoint: cr.messages_per_point,
+        msgOzyAmount: cr.msg_ozy_amount || 1,
+        msgDailyLimit: cr.msg_daily_limit || 100,
+        msgMinLength: cr.msg_min_length || 5,
+        msgCooldown: cr.msg_cooldown || 5
       })),
       blacklist: {
         channels: blacklistedChannels.map((c: any) => ({ id: c.channel_id, type: c.channel_type })),
@@ -231,9 +238,16 @@ export async function POST(request: NextRequest) {
       categoryId, 
       categoryName,
       vcEnabled, 
-      vcMinutesPerPoint, 
+      vcMinutesPerPoint,
+      vcOzyAmount,
+      vcDailyLimit,
+      vcMinMembers,
       messageEnabled, 
-      messagesPerPoint 
+      messagesPerPoint,
+      msgOzyAmount,
+      msgDailyLimit,
+      msgMinLength,
+      msgCooldown
     } = body;
 
     if (!categoryId) {
@@ -252,16 +266,30 @@ export async function POST(request: NextRequest) {
         category_id: categoryId,
         category_name: categoryName,
         vc_enabled: vcEnabled ?? true,
-        vc_minutes_per_point: vcMinutesPerPoint ?? 1,
+        vc_minutes_per_point: vcMinutesPerPoint ?? 5,
+        vc_ozy_amount: vcOzyAmount ?? 1,
+        vc_daily_limit: vcDailyLimit ?? 100,
+        vc_min_members: vcMinMembers ?? 2,
         message_enabled: messageEnabled ?? true,
-        messages_per_point: messagesPerPoint ?? 25
+        messages_per_point: messagesPerPoint ?? 25,
+        msg_ozy_amount: msgOzyAmount ?? 1,
+        msg_daily_limit: msgDailyLimit ?? 100,
+        msg_min_length: msgMinLength ?? 5,
+        msg_cooldown: msgCooldown ?? 5
       },
       update: {
         category_name: categoryName,
         vc_enabled: vcEnabled,
         vc_minutes_per_point: vcMinutesPerPoint,
+        vc_ozy_amount: vcOzyAmount,
+        vc_daily_limit: vcDailyLimit,
+        vc_min_members: vcMinMembers,
         message_enabled: messageEnabled,
-        messages_per_point: messagesPerPoint
+        messages_per_point: messagesPerPoint,
+        msg_ozy_amount: msgOzyAmount,
+        msg_daily_limit: msgDailyLimit,
+        msg_min_length: msgMinLength,
+        msg_cooldown: msgCooldown
       }
     });
 
