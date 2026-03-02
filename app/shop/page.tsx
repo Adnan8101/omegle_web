@@ -23,6 +23,7 @@ interface ShopItem {
   required_balance: number | null;
   expires_at: string | null;
   out_of_stock?: boolean;
+  enabled: boolean;
 }
 
 interface PendingPurchase {
@@ -569,6 +570,8 @@ export default function ShopPage() {
             {items.map((item) => {
               const canAfford = session ? userBalance >= item.price : false;
               const isOutOfStock = item.out_of_stock || (item.stock !== null && item.stock <= 0);
+              const isDisabled = !item.enabled;
+              const isUnavailable = isOutOfStock || isDisabled;
               const daysLeft = item.expires_at
                 ? Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
                 : null;
@@ -577,7 +580,7 @@ export default function ShopPage() {
                 <div
                   key={item.id}
                   className={`bg-[rgb(var(--color-bg-secondary))] rounded-2xl border overflow-hidden transition-all hover:shadow-lg ${
-                    isOutOfStock 
+                    isUnavailable
                       ? 'border-red-500/30 opacity-75 hover:border-red-500/50 hover:shadow-red-500/10' 
                       : 'border-[rgb(var(--color-border))] hover:border-yellow-500/30 hover:shadow-yellow-500/10'
                   }`}
@@ -588,7 +591,7 @@ export default function ShopPage() {
                       <img
                         src={item.thumbnail}
                         alt={item.name}
-                        className={`w-full h-full object-cover object-center ${isOutOfStock ? 'grayscale' : ''}`}
+                        className={`w-full h-full object-cover object-center ${isUnavailable ? 'grayscale' : ''}`}
                         loading="lazy"
                       />
                     ) : (
@@ -602,6 +605,15 @@ export default function ShopPage() {
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <div className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-lg transform -rotate-12 shadow-lg">
                           OUT OF STOCK
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Disabled/Unavailable Overlay */}
+                    {isDisabled && !isOutOfStock && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <div className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold text-lg transform -rotate-12 shadow-lg">
+                          UNAVAILABLE
                         </div>
                       </div>
                     )}
@@ -652,9 +664,9 @@ export default function ShopPage() {
 
                       <button
                         onClick={() => handlePurchase(item)}
-                        disabled={purchasing === item.id || (session && !canAfford) || isOutOfStock}
+                        disabled={purchasing === item.id || (session && !canAfford) || isUnavailable}
                         className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors ${
-                          isOutOfStock
+                          isUnavailable
                             ? 'bg-red-500/20 text-red-400 cursor-not-allowed'
                             : !session
                             ? 'bg-[#5865F2] hover:bg-[#4752C4] text-white'
@@ -667,6 +679,8 @@ export default function ShopPage() {
                           <FiRefreshCw className="w-4 h-4 animate-spin" />
                         ) : isOutOfStock ? (
                           'Sold Out'
+                        ) : isDisabled ? (
+                          'Unavailable'
                         ) : !session ? (
                           'Login'
                         ) : canAfford ? (

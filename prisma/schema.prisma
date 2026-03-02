@@ -27,6 +27,7 @@ model EconomyConfig {
   require_two_members   Boolean  @default(true)
   ignore_afk_channel    Boolean  @default(true)
   ignore_self_muted     Boolean  @default(false)
+  afk_channel_id        String?
   
   // Currency
   currency_name         String   @default("Ozy")

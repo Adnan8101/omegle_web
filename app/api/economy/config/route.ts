@@ -32,6 +32,34 @@ export async function GET(request: NextRequest) {
         })
       : [];
 
+    // Fetch voice channels from Discord for AFK channel selector
+    let afkChannels = [];
+    try {
+      const channelsResponse = await fetch(
+        `https://discord.com/api/v10/guilds/${GUILD_ID}/channels`,
+        {
+          headers: {
+            Authorization: `Bot ${process.env.BOT_TOKEN}`,
+          },
+        }
+      );
+      
+      if (channelsResponse.ok) {
+        const channels = await channelsResponse.json();
+        afkChannels = channels
+          .filter((ch: any) => ch.type === 2) // Voice channels only
+          .map((ch: any) => ({
+            id: ch.id,
+            name: ch.name,
+            parentId: ch.parent_id,
+            type: 'voice'
+          }))
+          .sort((a: any, b: any) => a.name.localeCompare(b.name));
+      }
+    } catch (err) {
+      console.error('Error fetching AFK channels:', err);
+    }
+
     return NextResponse.json({
       config: config || {
         guild_id: GUILD_ID,
@@ -49,9 +77,11 @@ export async function GET(request: NextRequest) {
         leaderboard_sync: true,
         enabled: false,
         advanced_mode: false,
-        shop_enabled: true
+        shop_enabled: true,
+        afk_channel_id: null
       },
-      categoryRewards
+      categoryRewards,
+      afkChannels
     });
   } catch (error) {
     console.error('Error fetching economy config:', error);
@@ -90,7 +120,8 @@ export async function PATCH(request: NextRequest) {
       leaderboard_sync,
       enabled,
       advanced_mode,
-      shop_enabled
+      shop_enabled,
+      afk_channel_id
     } = body;
 
     const config = await prismaBot.economyConfig.upsert({
@@ -111,7 +142,8 @@ export async function PATCH(request: NextRequest) {
         leaderboard_sync: leaderboard_sync ?? true,
         enabled: enabled ?? false,
         advanced_mode: advanced_mode ?? false,
-        shop_enabled: shop_enabled ?? true
+        shop_enabled: shop_enabled ?? true,
+        afk_channel_id: afk_channel_id ?? null
       },
       update: {
         ...(messages_per_point !== undefined && { messages_per_point }),
@@ -128,7 +160,8 @@ export async function PATCH(request: NextRequest) {
         ...(leaderboard_sync !== undefined && { leaderboard_sync }),
         ...(enabled !== undefined && { enabled }),
         ...(advanced_mode !== undefined && { advanced_mode }),
-        ...(shop_enabled !== undefined && { shop_enabled })
+        ...(shop_enabled !== undefined && { shop_enabled }),
+        ...(afk_channel_id !== undefined && { afk_channel_id })
       }
     });
 

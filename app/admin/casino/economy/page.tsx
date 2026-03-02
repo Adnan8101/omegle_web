@@ -28,6 +28,7 @@ interface EconomyConfig {
   enabled: boolean;
   advanced_mode: boolean;
   shop_enabled: boolean;
+  afk_channel_id?: string | null;
 }
 
 interface CategoryReward {
@@ -113,16 +114,43 @@ export default function EconomyManagementPage() {
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopEnabled, setShopEnabled] = useState(true);
 
+  // AFK channel state
+  const [afkChannels, setAfkChannels] = useState<Channel[]>([]);
+  
+  // Blacklist modal state
+  const [blacklistModal, setBlacklistModal] = useState<{ type: 'channels' | 'categories' | 'roles' } | null>(null);
+
+  // Permission state
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
   // Permission check
   useEffect(() => {
     if (status === 'loading') return;
+
     if (status === 'unauthenticated') {
+      setIsRedirecting(true);
       router.push('/admin');
       return;
     }
-    const perms = session?.user?.permissions;
-    if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
-      router.push('/admin');
+    
+    if (status === 'authenticated') {
+      const perms = session?.user?.permissions;
+      const canAccess = perms?.hasFullAccess || perms?.hasCasinoAccess;
+      
+      if (!canAccess) {
+        setHasPermission(false);
+        if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
+          setIsRedirecting(true);
+          router.push('/admin/vctranscript');
+        } else {
+          setIsRedirecting(true);
+          router.push('/admin');
+        }
+        return;
+      }
+      
+      setHasPermission(true);
     }
   }, [status, session, router]);
 
@@ -133,6 +161,10 @@ export default function EconomyManagementPage() {
       if (res.ok) {
         setConfig(data.config);
         setCategoryRewards(data.categoryRewards || []);
+        // Load AFK channels
+        if (data.afkChannels) {
+          setAfkChannels(data.afkChannels);
+        }
       }
     } catch (err) {
       console.error('Error fetching config:', err);
@@ -194,10 +226,10 @@ export default function EconomyManagementPage() {
       setLoading(false);
     };
     
-    if (status === 'authenticated') {
+    if (status === 'authenticated' && hasPermission) {
       loadData();
     }
-  }, [status, fetchConfig, fetchCategories, fetchBlacklist, fetchShopItems]);
+  }, [status, hasPermission, fetchConfig, fetchCategories, fetchBlacklist, fetchShopItems]);
 
   const saveConfig = async () => {
     if (!config) return;
@@ -349,6 +381,55 @@ export default function EconomyManagementPage() {
     role.name.toLowerCase().includes(blacklistSearch.toLowerCase())
   );
 
+  // Show loading spinner during auth check
+  if (status === 'loading' || hasPermission === null || isRedirecting) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-[rgb(var(--color-text-secondary))]">
+            {isRedirecting ? 'Redirecting...' : 'Loading...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if no permission
+  if (hasPermission === false) {
+    return (
+      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
+        <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
+          <div className="text-center space-y-6">
+            <div className="text-red-500 text-5xl">❌</div>
+            <div>
+              <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">
+                Access Denied
+              </h2>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+                You don&apos;t have permission to access the Casino Economy Dashboard. You need to be a Server Admin or have the Casino Admin role.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const perms = session?.user?.permissions;
+                if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
+                  router.replace('/admin/vctranscript');
+                } else {
+                  router.replace('/admin');
+                }
+              }}
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading for data fetch
   if (loading) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -513,6 +594,29 @@ export default function EconomyManagementPage() {
                   {config.ignore_afk_channel ? <FiToggleRight className="w-5 h-5" /> : <FiToggleLeft className="w-5 h-5" />}
                 </button>
               </div>
+
+              {config.ignore_afk_channel && (
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Select AFK Channel
+                  </label>
+                  <select
+                    value={config.afk_channel_id || ''}
+                    onChange={(e) => setConfig({ ...config, afk_channel_id: e.target.value || null })}
+                    className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                  >
+                    <option value="">No AFK Channel Selected</option>
+                    {afkChannels.map(ch => (
+                      <option key={ch.id} value={ch.id}>
+                        {ch.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
+                    Members in this channel won&apos;t earn currency
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
