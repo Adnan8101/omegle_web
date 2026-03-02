@@ -20,12 +20,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if BOT_TOKEN exists
-    const botToken = process.env.BOT_TOKEN;
+    const botToken = process.env.DISCORD_BOT_TOKEN;
     if (!botToken) {
-      console.error('BOT_TOKEN environment variable is not set');
+      console.error('DISCORD_BOT_TOKEN environment variable is not set');
       return NextResponse.json({ 
         error: 'Bot configuration error',
-        details: 'BOT_TOKEN is not configured' 
+        details: 'DISCORD_BOT_TOKEN is not configured' 
       }, { status: 500 });
     }
 
