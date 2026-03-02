@@ -148,6 +148,12 @@ export async function checkUserPermissions(
     const roles: string[] = member.roles || [];
     const permissions = BigInt(member.permissions || 0);
 
+    console.log("🔍 Checking permissions for user:", {
+      roleCount: roles.length,
+      roles: roles,
+      casinoRoleIds: CASINO_ADMIN_ROLE_IDS,
+    });
+
     // Check for owner/admin/manage server permissions
     const isAdmin = (permissions & PERMISSIONS.ADMINISTRATOR) !== 0n;
     const hasManageServer = (permissions & PERMISSIONS.MANAGE_GUILD) !== 0n;
@@ -172,6 +178,15 @@ export async function checkUserPermissions(
       allCasinoRoles.includes(roleId)
     );
     const hasCasinoAccess = hasFullAccess || hasCasinoRole;
+
+    console.log("✅ Permission check results:", {
+      hasFullAccess,
+      hasModeratorRole,
+      hasViewOnlyRole,
+      hasCasinoRole,
+      hasCasinoAccess,
+      matchedCasinoRole: roles.find(r => allCasinoRoles.includes(r))
+    });
 
     return {
       hasFullAccess,
