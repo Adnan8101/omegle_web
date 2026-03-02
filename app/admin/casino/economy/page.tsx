@@ -19,7 +19,7 @@ interface EconomyConfig {
   daily_message_cap: number;
   minutes_per_point: number;
   daily_voice_cap: number;
-  require_two_members: number;
+  require_two_members: number | boolean; // Allow both for backwards compatibility
   ignore_self_muted: boolean;
   currency_name: string;
   currency_emoji: string;
@@ -576,7 +576,7 @@ export default function EconomyManagementPage() {
                 <input
                   type="number"
                   min="1"
-                  value={config.require_two_members}
+                  value={typeof config.require_two_members === 'boolean' ? (config.require_two_members ? 2 : 1) : config.require_two_members}
                   onChange={(e) => setConfig({ ...config, require_two_members: parseInt(e.target.value) || 2 })}
                   className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
                   placeholder="2"
@@ -776,7 +776,9 @@ export default function EconomyManagementPage() {
                             messageEnabled: true,
                             vcMinutesPerPoint: config?.minutes_per_point || 1,
                             vcDailyLimit: config?.daily_voice_cap || 100,
-                            vcMinMembers: config?.require_two_members || 2,
+                            vcMinMembers: typeof config?.require_two_members === 'boolean' 
+                              ? (config.require_two_members ? 2 : 1) 
+                              : (config?.require_two_members || 2),
                             messagesPerPoint: config?.messages_per_point || 25,
                             msgDailyLimit: config?.daily_message_cap || 100,
                             msgMinLength: config?.min_message_length || 5,
