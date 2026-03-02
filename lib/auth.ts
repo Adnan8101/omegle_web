@@ -1,9 +1,11 @@
 import { NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { checkUserPermissions, UserPermissions } from "./permissions";
+import { prismaBot } from "./prismaBot";
 
 // Cache permission checks to avoid hitting Discord API on every request
 const ACCESS_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const GUILD_ID = "910043773130661918";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -69,7 +71,13 @@ export const authOptions: NextAuthOptions = {
       const nowMs = Date.now();
       if (!token.accessCheckedAt || nowMs - token.accessCheckedAt > ACCESS_CHECK_INTERVAL) {
         try {
-          const permissions = await checkUserPermissions(token.accessToken);
+          // Fetch casino roles from database
+          const casinoRoles = await prismaBot.casinoAdminRole.findMany({
+            where: { guild_id: GUILD_ID }
+          });
+          const casinoRoleIds = casinoRoles.map((r: any) => r.role_id);
+          
+          const permissions = await checkUserPermissions(token.accessToken, casinoRoleIds);
           token.permissions = permissions;
           token.hasAccess = permissions.hasAnyAccess;
         } catch (error) {
