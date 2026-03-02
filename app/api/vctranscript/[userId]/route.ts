@@ -9,6 +9,7 @@ import {
   getUserVoiceUserStats,
 } from '@/lib/botDb';
 import { GUILD_ID, getErrorMessage } from '@/lib/constants';
+import { canAccessVCAndChats } from '@/lib/apiAuth';
 
 const emptyVCStats = {
   total_sessions: 0,
@@ -42,7 +43,7 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.hasAccess) {
+    if (!session || !canAccessVCAndChats(session.user?.permissions)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

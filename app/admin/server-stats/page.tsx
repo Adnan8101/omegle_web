@@ -91,10 +91,14 @@ export default function ServerStatsPage() {
     useEffect(() => {
         if (status === 'unauthenticated') {
             router.replace('/admin');
-        } else if (status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess) {
+        } else if (status === 'authenticated') {
+          const perms = session?.user?.permissions;
+          // Server stats accessible to: Full Access or Moderator (NOT Trail Mod/Staff)
+          if (!perms?.hasFullAccess && !perms?.hasModeratorAccess) {
             router.replace('/admin');
-        } else if (status === 'authenticated' && session?.user?.permissions?.hasAnyAccess) {
-            fetchServerStats();
+            return;
+          }
+          fetchServerStats();
         }
     }, [status, session, router]);
 

@@ -128,14 +128,18 @@ export default function AdminLogin() {
                   <div>
                     <p className="text-gray-400 font-semibold mb-1">Required Permissions:</p>
                     <div className="text-green-300 font-mono text-[10px] space-y-0.5">
-                      <div>• Administrator</div>
+                      <div>• Server Administrator</div>
                       <div>• Manage Server</div>
                       <div>• Server Owner</div>
                     </div>
-                    <p className="text-gray-400 font-semibold mb-1 mt-2">OR View-Only Roles:</p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-400 font-semibold mb-1">OR Allowed Roles:</p>
                     <div className="text-yellow-300 font-mono text-[10px] space-y-0.5">
-                      <div>• 1470334506337828874</div>
-                      <div>• 1474416428772888739</div>
+                      <div>• <span className="text-white">1470799621927338298</span> (Trail Mod)</div>
+                      <div>• <span className="text-white">1470334572557369384</span> (Moderator)</div>
+                      <div>• <span className="text-white">1470329047262167040</span> (Casino)</div>
                     </div>
                   </div>
                 </div>

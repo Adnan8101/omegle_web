@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { queryBotDb } from '@/lib/botDb';
 import { getErrorMessage } from '@/lib/constants';
+import { canAccessVCAndChats } from '@/lib/apiAuth';
 
 export async function GET(
   request: NextRequest,

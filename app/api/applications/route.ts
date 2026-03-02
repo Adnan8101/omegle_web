@@ -113,6 +113,15 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const { getServerSession } = await import('next-auth');
+    const { authOptions } = await import('@/lib/auth');
+    const { canAccessAdminFeatures } = await import('@/lib/apiAuth');
+    
+    const session = await getServerSession(authOptions);
+    if (!session || !canAccessAdminFeatures(session.user?.permissions)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     await dbConnect();
     
     const { searchParams } = new URL(request.url);

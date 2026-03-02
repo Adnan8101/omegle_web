@@ -2,30 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
+import { canAccessCasino } from '@/lib/apiAuth';
 
 const GUILD_ID = "910043773130661918";
-
-// Helper to check if user has casino access
-async function hasCasinoAccess(session: any): Promise<boolean> {
-  if (!session?.user?.permissions) return false;
-  
-  const perms = session.user.permissions;
-  if (perms.hasFullAccess) return true;
-  
-  try {
-    const casinoRoles = await prismaBot.casinoAdminRole.findMany({
-      where: { guild_id: GUILD_ID }
-    });
-    
-    const casinoRoleIds = casinoRoles.map((r: any) => r.role_id);
-    const userRoles = perms.roles || [];
-    
-    return userRoles.some((roleId: string) => casinoRoleIds.includes(roleId));
-  } catch (error) {
-    console.error('Error checking casino roles:', error);
-    return false;
-  }
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const hasAccess = await hasCasinoAccess(session);
+    const hasAccess = canAccessCasino(session.user?.permissions);
     if (!hasAccess) {
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }

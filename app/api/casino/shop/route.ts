@@ -2,46 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
+import { canAccessCasino } from '@/lib/apiAuth';
 
 const GUILD_ID = "910043773130661918";
-
-// Helper to check if user has casino access
-async function hasCasinoAccess(session: any): Promise<boolean> {
-  if (!session?.user?.permissions) return false;
-  
-  const perms = session.user.permissions;
-  if (perms.hasFullAccess) return true;
-  
-  try {
-    const casinoRoles = await prismaBot.casinoAdminRole.findMany({
-      where: { guild_id: GUILD_ID }
-    });
-    
-    const casinoRoleIds = casinoRoles.map((r: any) => r.role_id);
-    const userRoles = perms.roles || [];
-    
-    return userRoles.some((roleId: string) => casinoRoleIds.includes(roleId));
-  } catch (error) {
-    console.error('Error checking casino roles:', error);
-    return false;
-  }
-}
 
 // GET - Get all shop items for admin
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    console.log('Casino shop GET - Session:', session?.user?.email);
-    console.log('Casino shop GET - Permissions:', session?.user?.permissions);
-    
     if (!session?.user?.permissions?.hasAnyAccess) {
-      console.log('Casino shop GET - Unauthorized: No session or no access');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const hasAccess = await hasCasinoAccess(session);
-    console.log('Casino shop GET - Has casino access:', hasAccess);
+    const hasAccess = canAccessCasino(session.user?.permissions);
     
     if (!hasAccess) {
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
@@ -52,15 +26,11 @@ export async function GET(request: NextRequest) {
       where: { guild_id: GUILD_ID },
       orderBy: { created_at: 'desc' }
     });
-    
-    console.log('Casino shop GET - Found items:', items.length);
 
     // Get economy config
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
-    
-    console.log('Casino shop GET - Currency emoji:', config?.currency_emoji);
 
     return NextResponse.json({
       items: items.map((item: any) => ({
@@ -86,7 +56,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const hasAccess = await hasCasinoAccess(session);
+    const hasAccess = canAccessCasino(session.user?.permissions);
     if (!hasAccess) {
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }

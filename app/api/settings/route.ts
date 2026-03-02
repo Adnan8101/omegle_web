@@ -14,8 +14,6 @@ export async function GET() {
       settings = await ApplicationSettings.create({ isOpen: true });
     }
 
-    console.log('GET /api/settings - Returning:', { isOpen: settings.isOpen });
-
     return NextResponse.json({ 
       success: true, 
       data: { 
@@ -37,8 +35,6 @@ export async function PATCH(request: NextRequest) {
     await dbConnect();
     const body = await request.json();
 
-    console.log('PATCH /api/settings - Received:', body);
-
     let settings = await ApplicationSettings.findOne();
     
     if (!settings) {
@@ -50,8 +46,6 @@ export async function PATCH(request: NextRequest) {
         { new: true, runValidators: true }
       );
     }
-
-    console.log('PATCH /api/settings - Updated to:', { isOpen: settings?.isOpen });
 
     return NextResponse.json({ 
       success: true, 

@@ -90,9 +90,6 @@ export async function GET(request: NextRequest) {
     // Build placeholders for IN clause
     const placeholders = staffIds.map((_: string, i: number) => `$${i + 2}`).join(', ');
 
-    // Debug: Log staff IDs being queried
-    console.log(`[Mods Stats] Fetching stats for ${staffIds.length} staff members:`, staffIds.slice(0, 5));
-
     // Get ALL moderation stats (not filtered by staff) for the overview
     const allModStats = await queryBotDb(`
       SELECT 
@@ -113,9 +110,6 @@ export async function GET(request: NextRequest) {
       WHERE guild_id = $1
     `, [GUILD_ID]);
 
-    console.log('[Mods Stats] All mod stats:', allModStats[0]);
-    console.log('[Mods Stats] All manual stats:', allManualStats[0]);
-
     // Get moderator stats from moderation_cases (for individual mods)
     const modStats = await queryBotDb(`
       SELECT 
@@ -132,8 +126,6 @@ export async function GET(request: NextRequest) {
       WHERE guild_id = $1 AND moderator_id IN (${placeholders})
       GROUP BY moderator_id
     `, [GUILD_ID, ...staffIds]);
-
-    console.log(`[Mods Stats] Found ${modStats.length} mods with cases`);
 
     // Get manual cases count
     const manualStats = await queryBotDb(`

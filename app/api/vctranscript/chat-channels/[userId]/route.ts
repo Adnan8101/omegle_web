@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { canAccessVCAndChats } from '@/lib/apiAuth';
 import { queryBotDb } from '@/lib/botDb';
 import { GUILD_ID, getErrorMessage } from '@/lib/constants';
 
@@ -10,7 +11,7 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.hasAccess) {
+    if (!session || !canAccessVCAndChats(session.user?.permissions)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

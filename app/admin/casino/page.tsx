@@ -77,8 +77,18 @@ export default function CasinoDashboard() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin');
+      return;
     }
-  }, [status, router]);
+    
+    if (status === 'authenticated') {
+      const perms = session?.user?.permissions;
+      // Casino accessible to: Full Access or Casino Role only
+      if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
+        router.push('/admin');
+        return;
+      }
+    }
+  }, [status, session, router]);
 
   useEffect(() => {
     if (status === 'authenticated') {

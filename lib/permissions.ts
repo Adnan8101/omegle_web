@@ -9,16 +9,34 @@
 
 const GUILD_ID = "910043773130661918";
 
+// Trail Mod / Staff Role IDs (can view VC stats and chat stats only)
+const TRAIL_MOD_ROLE_IDS = [
+  "1470799621927338298"  // Trail Mod / Staff Role
+];
+
+// Moderator role IDs (can view VC + chat + server stats)
+const MODERATOR_ROLE_IDS = [
+  "1470334572557369384"  // Moderator
+];
+
 // View-only role IDs (can only view VC stats and chat stats)
+// Combining Trail Mod and general view-only roles
 const VIEW_ONLY_ROLE_IDS = [
+  "1470799621927338298",  // Trail Mod / Staff Role
   "1470334506337828874",
   "1474416428772888739"
 ];
 
-// Casino admin role IDs (can manage shop items)
-// Note: These are fetched from database, but we also allow these hardcoded roles
+// Casino admin role IDs (can manage casino/economy section)
 const CASINO_ADMIN_ROLE_IDS: string[] = [
-  "1470329047262167040"  // Casino Admin Role
+  "1470329047262167040"  // Casino Role
+];
+
+// Moderator can access more than view-only (includes server stats)
+const MODERATOR_ACCESSIBLE_SECTIONS = [
+  "vc_stats",
+  "chat_stats", 
+  "server_stats"
 ];
 
 // Discord permission bits
@@ -28,10 +46,11 @@ const PERMISSIONS = {
 };
 
 export interface UserPermissions {
-  hasFullAccess: boolean;      // Full admin access
-  hasViewOnlyAccess: boolean;  // Can only view VC stats and chat stats
-  hasCasinoAccess: boolean;    // Can manage casino/shop items
-  hasAnyAccess: boolean;        // Either full or view-only or casino
+  hasFullAccess: boolean;      // Full admin access (manage server/admin/owner)
+  hasModeratorAccess: boolean; // Moderator access (VC + chat + server stats)
+  hasViewOnlyAccess: boolean;  // Trail Mod/Staff (VC stats and chat stats only)
+  hasCasinoAccess: boolean;    // Casino/economy section only
+  hasAnyAccess: boolean;        // Any access level
   isOwner: boolean;
   isAdmin: boolean;
   hasManageServer: boolean;
@@ -47,6 +66,7 @@ export async function checkUserPermissions(
 ): Promise<UserPermissions> {
   const defaultPerms: UserPermissions = {
     hasFullAccess: false,
+    hasModeratorAccess: false,
     hasViewOnlyAccess: false,
     hasCasinoAccess: false,
     hasAnyAccess: false,
@@ -68,6 +88,7 @@ export async function checkUserPermissions(
     );
 
     if (!response.ok) {
+      console.error("Failed to fetch member data:", response.status);
       return defaultPerms;
     }
 
@@ -83,9 +104,14 @@ export async function checkUserPermissions(
     // but admins typically have all permissions anyway
     const hasFullAccess = isAdmin || hasManageServer;
 
-    // Check for view-only roles (only if not already full access)
-    const hasViewOnlyRole = !hasFullAccess && roles.some((roleId) =>
-      VIEW_ONLY_ROLE_IDS.includes(roleId)
+    // Check for moderator roles (VC + chat + server stats)
+    const hasModeratorRole = !hasFullAccess && roles.some((roleId) =>
+      MODERATOR_ROLE_IDS.includes(roleId)
+    );
+
+    // Check for view-only/trail mod roles (only if not already moderator or full access)
+    const hasViewOnlyRole = !hasFullAccess && !hasModeratorRole && roles.some((roleId) =>
+      TRAIL_MOD_ROLE_IDS.includes(roleId)
     );
 
     // Check for casino admin roles
@@ -97,9 +123,10 @@ export async function checkUserPermissions(
 
     return {
       hasFullAccess,
+      hasModeratorAccess: hasModeratorRole,
       hasViewOnlyAccess: hasViewOnlyRole,
       hasCasinoAccess,
-      hasAnyAccess: hasFullAccess || hasViewOnlyRole || hasCasinoAccess,
+      hasAnyAccess: hasFullAccess || hasModeratorRole || hasViewOnlyRole || hasCasinoAccess,
       isOwner: false, // Can't reliably detect from member endpoint
       isAdmin,
       hasManageServer,
@@ -113,6 +140,7 @@ export async function checkUserPermissions(
 
 /**
  * Check if user can access full dashboard (all features)
+ * Requires: Admin / Manage Server / Owner
  */
 export function canAccessFullDashboard(perms: UserPermissions): boolean {
   return perms.hasFullAccess;
@@ -120,35 +148,48 @@ export function canAccessFullDashboard(perms: UserPermissions): boolean {
 
 /**
  * Check if user can access VC transcript page
+ * Requires: Full Access, Moderator, or Trail Mod/Staff
  */
 export function canAccessVCTranscript(perms: UserPermissions): boolean {
-  return perms.hasAnyAccess; // Both full and view-only can access
+  return perms.hasFullAccess || perms.hasModeratorAccess || perms.hasViewOnlyAccess;
 }
 
 /**
  * Check if user can access chat logs page
+ * Requires: Full Access, Moderator, or Trail Mod/Staff
  */
 export function canAccessChatLogs(perms: UserPermissions): boolean {
-  return perms.hasAnyAccess; // Both full and view-only can access
+  return perms.hasFullAccess || perms.hasModeratorAccess || perms.hasViewOnlyAccess;
 }
 
 /**
  * Check if user can access server stats
+ * Requires: Full Access or Moderator (NOT Trail Mod/Staff)
  */
 export function canAccessServerStats(perms: UserPermissions): boolean {
-  return perms.hasAnyAccess; // Both full and view-only can access
+  return perms.hasFullAccess || perms.hasModeratorAccess;
 }
 
 /**
  * Check if user can access staff applications (admin only)
+ * Requires: Full Access only
  */
 export function canAccessApplications(perms: UserPermissions): boolean {
-  return perms.hasFullAccess; // Only full access
+  return perms.hasFullAccess;
+}
+
+/**
+ * Check if user can access moderator stats
+ * Requires: Full Access only
+ */
+export function canAccessModStats(perms: UserPermissions): boolean {
+  return perms.hasFullAccess;
 }
 
 /**
  * Check if user can access casino economy dashboard
+ * Requires: Full Access or Casino Role
  */
 export function canAccessCasinoDashboard(perms: UserPermissions): boolean {
-  return perms.hasCasinoAccess; // Full access or casino role
+  return perms.hasCasinoAccess;
 }

@@ -1,5 +1,8 @@
 import { getErrorMessage, GUILD_ID } from '@/lib/constants';
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { canAccessAdminFeatures } from '@/lib/apiAuth';
 import dbConnect from '@/lib/mongodb';
 import StaffApplication from '@/models/StaffApplication';
 import { queryBotDb, getUsersDisplay } from '@/lib/botDb';
@@ -10,6 +13,11 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !canAccessAdminFeatures(session.user?.permissions)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     await dbConnect();
     const application = await StaffApplication.findById(params.id);
 

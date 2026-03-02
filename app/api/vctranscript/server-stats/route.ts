@@ -3,11 +3,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { queryBotDb } from '@/lib/botDb';
 import { GUILD_ID, getErrorMessage } from '@/lib/constants';
+import { canAccessServerStats } from '@/lib/apiAuth';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.hasAccess) {
+    if (!session || !canAccessServerStats(session.user?.permissions)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -71,10 +72,6 @@ export async function GET(request: NextRequest) {
     
     const vcSubqueryDateClause = vcSubqueryDateParts.length ? ' AND ' + vcSubqueryDateParts.join(' AND ') : '';
     const chatSubqueryDateClause = chatSubqueryDateParts.length ? ' AND ' + chatSubqueryDateParts.join(' AND ') : '';
-
-    console.log('[server-stats] combinedParams:', combinedParams);
-    console.log('[server-stats] vcSubqueryDateClause:', vcSubqueryDateClause);
-    console.log('[server-stats] chatSubqueryDateClause:', chatSubqueryDateClause);
 
     // 1. Get total unique member count
     const totalMembersResult = await queryBotDb(`
