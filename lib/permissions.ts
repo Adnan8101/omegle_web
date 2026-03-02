@@ -77,8 +77,8 @@ export async function checkUserPermissions(
   };
 
   try {
-    // Fetch guild member data
-    const response = await fetch(
+    // First try: Use OAuth token to fetch member data
+    let response = await fetch(
       `https://discord.com/api/v10/users/@me/guilds/${GUILD_ID}/member`,
       {
         headers: {
@@ -87,29 +87,63 @@ export async function checkUserPermissions(
       }
     );
 
+    // If OAuth fails, try getting user ID first and then use bot token
+    let member: any = null;
+    let userId: string | null = null;
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Failed to fetch member data:", {
+      console.error("OAuth member fetch failed:", {
         status: response.status,
-        statusText: response.statusText,
-        error: errorText,
-        endpoint: `https://discord.com/api/v10/users/@me/guilds/${GUILD_ID}/member`
+        statusText: response.statusText
       });
       
-      // If 403/401, user might not be in guild or token invalid
-      if (response.status === 403 || response.status === 401) {
-        console.error("User may not be in guild or token is invalid");
-      }
-      
-      return defaultPerms;
-    }
+      // Try to get user ID from OAuth token
+      const userResponse = await fetch(
+        `https://discord.com/api/v10/users/@me`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
-    const member = await response.json();
-    console.log("Member data fetched successfully:", {
-      hasRoles: Array.isArray(member.roles),
-      roleCount: member.roles?.length || 0,
-      hasPermissions: !!member.permissions
-    });
+      if (userResponse.ok) {
+        const user = await userResponse.json();
+        userId = user.id;
+        console.log("Got user ID from OAuth:", userId);
+
+        // Now try with bot token
+        const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+        if (BOT_TOKEN && userId) {
+          const botResponse = await fetch(
+            `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${userId}`,
+            {
+              headers: {
+                Authorization: `Bot ${BOT_TOKEN}`,
+              },
+            }
+          );
+
+          if (botResponse.ok) {
+            member = await botResponse.json();
+            console.log("Successfully fetched member data using bot token");
+          } else {
+            console.error("Bot token fetch also failed:", botResponse.status);
+          }
+        }
+      }
+
+      if (!member) {
+        return defaultPerms;
+      }
+    } else {
+      member = await response.json();
+      console.log("Member data fetched successfully via OAuth:", {
+        hasRoles: Array.isArray(member.roles),
+        roleCount: member.roles?.length || 0,
+        hasPermissions: !!member.permissions
+      });
+    }
     
     const roles: string[] = member.roles || [];
     const permissions = BigInt(member.permissions || 0);
