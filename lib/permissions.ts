@@ -88,11 +88,29 @@ export async function checkUserPermissions(
     );
 
     if (!response.ok) {
-      console.error("Failed to fetch member data:", response.status);
+      const errorText = await response.text();
+      console.error("Failed to fetch member data:", {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        endpoint: `https://discord.com/api/v10/users/@me/guilds/${GUILD_ID}/member`
+      });
+      
+      // If 403/401, user might not be in guild or token invalid
+      if (response.status === 403 || response.status === 401) {
+        console.error("User may not be in guild or token is invalid");
+      }
+      
       return defaultPerms;
     }
 
     const member = await response.json();
+    console.log("Member data fetched successfully:", {
+      hasRoles: Array.isArray(member.roles),
+      roleCount: member.roles?.length || 0,
+      hasPermissions: !!member.permissions
+    });
+    
     const roles: string[] = member.roles || [];
     const permissions = BigInt(member.permissions || 0);
 
