@@ -17,22 +17,36 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
 
-    // Get all active shop items (including out of stock items)
+    // Get economy config first to check if shop is enabled
+    const config = await prismaBot.economyConfig.findUnique({
+      where: { guild_id: GUILD_ID }
+    });
+
+    // Check if shop is disabled
+    if (config?.shop_enabled === false) {
+      return NextResponse.json({
+        shopDisabled: true,
+        items: [],
+        config: {
+          currencyEmoji: config?.currency_emoji || '🪙',
+          currencyName: config?.currency_name || 'Ozy'
+        },
+        user: null
+      });
+    }
+
+    // Get all active and enabled shop items (including out of stock items)
     const now = new Date();
     const items = await prismaBot.shopItem.findMany({
       where: {
         guild_id: GUILD_ID,
+        enabled: true,  // Only show enabled items
         OR: [
           { expires_at: null },
           { expires_at: { gt: now } }
         ]
       },
       orderBy: { price: 'asc' }
-    });
-
-    // Get economy config
-    const config = await prismaBot.economyConfig.findUnique({
-      where: { guild_id: GUILD_ID }
     });
 
     let userBalance = 0;
@@ -112,6 +126,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Item ID is required' }, { status: 400 });
     }
 
+    // Get economy config first to check if shop is enabled
+    const config = await prismaBot.economyConfig.findUnique({
+      where: { guild_id: GUILD_ID }
+    });
+
+    if (config?.shop_enabled === false) {
+      return NextResponse.json({ error: 'The shop is currently closed' }, { status: 400 });
+    }
+
     // Get the item
     const item = await prismaBot.shopItem.findFirst({
       where: { id: itemId, guild_id: GUILD_ID }
@@ -119,6 +142,11 @@ export async function POST(request: NextRequest) {
 
     if (!item) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+    }
+
+    // Check if item is enabled
+    if (!item.enabled) {
+      return NextResponse.json({ error: 'This item is currently unavailable' }, { status: 400 });
     }
 
     // Check if item is expired
@@ -136,10 +164,7 @@ export async function POST(request: NextRequest) {
       where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
     });
 
-    // Get config for currency name
-    const config = await prismaBot.economyConfig.findUnique({
-      where: { guild_id: GUILD_ID }
-    });
+    // Use already fetched config for currency name
     const currencyName = config?.currency_name || 'Ozy';
 
     if (!economyUser) {

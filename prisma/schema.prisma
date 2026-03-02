@@ -42,6 +42,13 @@ model EconomyConfig {
   economy_channel_id    String?
   
   enabled               Boolean  @default(false)
+  
+  // Advanced mode - per-category rewards
+  advanced_mode         Boolean  @default(false)
+  
+  // Shop settings
+  shop_enabled          Boolean  @default(true)
+  
   created_at            DateTime @default(now())
   updated_at            DateTime @updatedAt
 
@@ -124,6 +131,7 @@ model ShopItem {
   reply_message    String?
   expires_in_days  Int?
   expires_at       DateTime?
+  enabled          Boolean   @default(true)
   created_by       String
   created_at       DateTime  @default(now())
   updated_at       DateTime  @updatedAt
@@ -131,6 +139,78 @@ model ShopItem {
   @@unique([guild_id, name])
   @@index([guild_id])
   @@map("shop_items")
+}
+
+// Category-based rewards for advanced mode
+model EconomyCategoryReward {
+  id                 String   @id @default(uuid())
+  guild_id           String
+  category_id        String
+  category_name      String?
+  
+  // Voice rewards for this category
+  vc_enabled         Boolean  @default(true)
+  vc_minutes_per_point Int    @default(1)
+  
+  // Message rewards for this category  
+  message_enabled    Boolean  @default(true)
+  messages_per_point Int      @default(25)
+  
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  @@unique([guild_id, category_id])
+  @@index([guild_id])
+  @@map("economy_category_rewards")
+}
+
+// Shop item toggles
+model ShopItemToggle {
+  guild_id   String
+  item_id    String
+  enabled    Boolean  @default(true)
+  updated_by String
+  updated_at DateTime @updatedAt
+
+  @@id([guild_id, item_id])
+  @@map("shop_item_toggles")
+}
+
+// Blacklist channels
+model EconomyBlacklistChannel {
+  guild_id     String
+  channel_id   String
+  channel_type String
+  added_by     String
+  created_at   DateTime @default(now())
+
+  @@id([guild_id, channel_id])
+  @@index([guild_id, channel_type])
+  @@map("economy_blacklist_channels")
+}
+
+// Blacklist roles
+model EconomyBlacklistRole {
+  guild_id   String
+  role_id    String
+  added_by   String
+  created_at DateTime @default(now())
+
+  @@id([guild_id, role_id])
+  @@index([guild_id])
+  @@map("economy_blacklist_roles")
+}
+
+// Blacklist categories
+model EconomyBlacklistCategory {
+  guild_id    String
+  category_id String
+  added_by    String
+  created_at  DateTime @default(now())
+
+  @@id([guild_id, category_id])
+  @@index([guild_id])
+  @@map("economy_blacklist_categories")
 }
 
 model ShopPurchase {
