@@ -64,10 +64,8 @@ export default function ShopPage() {
 
   // Authentication check
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.replace('/admin');
-      return;
-    }
+    // Shop is accessible to all authenticated Discord users
+    // Only redirect if there's an error fetching shop data
   }, [status, router]);
 
   // Fetch shop data when session is available
