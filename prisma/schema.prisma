@@ -55,6 +55,10 @@ model EconomyConfig {
   advanced_mode         Boolean  @default(false)
   shop_enabled          Boolean  @default(true)
   
+  // Invite system
+  invites_enabled       Boolean  @default(true)
+  coins_per_invite      Int      @default(100)  // Coins earned when someone joins via invite
+  
   created_at            DateTime @default(now())
   updated_at            DateTime @updatedAt
 
@@ -297,6 +301,52 @@ model CasinoAdminRole {
   @@index([guild_id])
   @@map("casino_admin_roles")
 }
+
+// =====================================
+// INVITE SYSTEM MODELS
+// =====================================
+
+model EconomyInvite {
+  id              String   @id @default(cuid())
+  guild_id        String
+  inviter_id      String   // Who created the invite
+  invited_user_id String   // Who was invited
+  invite_code     String   // The invite code used
+  joined_at       DateTime @default(now())
+  left_at         DateTime?
+  active          Boolean  @default(true)  // Whether the invited user is still in the server
+  coins_earned    Int      @default(0)     // Coins earned from this invite
+  
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  
+  @@index([guild_id])
+  @@index([inviter_id])
+  @@index([invited_user_id])
+  @@index([invite_code])
+  @@unique([guild_id, invited_user_id])  // One invite per user per guild
+  @@map("economy_invites")
+}
+
+model EconomyInviteStats {
+  id                String   @id @default(cuid())
+  guild_id          String
+  user_id           String   // The inviter
+  total_invites     Int      @default(0)
+  active_invites    Int      @default(0)  // Number of users still in server
+  coins_earned      Int      @default(0)  // Total coins from invites
+  
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  @@unique([guild_id, user_id])
+  @@index([guild_id])
+  @@map("economy_invite_stats")
+}
+
+// =====================================
+// END INVITE SYSTEM MODELS
+// =====================================
 
 // =====================================
 // END ECONOMY / POINTS SYSTEM MODELS

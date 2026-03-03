@@ -474,7 +474,7 @@ export default function EconomyManagementPage() {
           >
             <FiChevronLeft className="w-5 h-5" />
           </Link>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
               Coins Management
             </h1>
@@ -482,6 +482,12 @@ export default function EconomyManagementPage() {
               Configure currency earning rates and restrictions
             </p>
           </div>
+          <Link
+            href="/admin/casino/economy/invites"
+            className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors text-sm"
+          >
+            🎯 Invites
+          </Link>
         </div>
 
         {/* Success/Error messages */}
