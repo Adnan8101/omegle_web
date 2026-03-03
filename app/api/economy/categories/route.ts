@@ -232,8 +232,13 @@ export async function POST(request: NextRequest) {
       categoryName,
       vcEnabled, 
       vcMinutesPerPoint,
+      vcOzyAmount,
+      vcMinMembers,
       messageEnabled, 
       messagesPerPoint,
+      msgOzyAmount,
+      msgMinLength,
+      msgCooldown
     } = body;
 
     if (!categoryId) {
@@ -253,15 +258,25 @@ export async function POST(request: NextRequest) {
         category_name: categoryName,
         vc_enabled: vcEnabled ?? true,
         vc_minutes_per_point: vcMinutesPerPoint ?? 1,
+        vc_ozy_amount: vcOzyAmount ?? 1,
+        vc_min_members: vcMinMembers ?? 1,
         message_enabled: messageEnabled ?? true,
         messages_per_point: messagesPerPoint ?? 25,
+        msg_ozy_amount: msgOzyAmount ?? 1,
+        msg_min_length: msgMinLength ?? 5,
+        msg_cooldown: msgCooldown ?? 5
       },
       update: {
         category_name: categoryName,
         vc_enabled: vcEnabled,
         vc_minutes_per_point: vcMinutesPerPoint,
+        vc_ozy_amount: vcOzyAmount,
+        vc_min_members: vcMinMembers,
         message_enabled: messageEnabled,
         messages_per_point: messagesPerPoint,
+        msg_ozy_amount: msgOzyAmount,
+        msg_min_length: msgMinLength,
+        msg_cooldown: msgCooldown
       }
     });
 

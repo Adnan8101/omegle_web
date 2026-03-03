@@ -105,7 +105,7 @@ model EconomyCategoryReward {
   vc_enabled         Boolean  @default(true)
   vc_minutes_per_point Int    @default(5)       // Minutes per cycle
   vc_ozy_amount      Int      @default(1)       // Coins per cycle
-  vc_min_members     Int      @default(2)       // Min members in VC
+  vc_min_members     Int      @default(1)       // Min members in VC
   
   // Message rewards
   message_enabled    Boolean  @default(true)

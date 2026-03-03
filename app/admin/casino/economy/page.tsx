@@ -990,10 +990,10 @@ export default function EconomyManagementPage() {
                               <input
                                 type="number"
                                 min="1"
-                                value={newCategoryReward.vcMinMembers || 2}
+                                value={newCategoryReward.vcMinMembers || 1}
                                 onChange={(e) => setNewCategoryReward({
                                   ...newCategoryReward,
-                                  vcMinMembers: parseInt(e.target.value) || 2
+                                  vcMinMembers: parseInt(e.target.value) || 1
                                 })}
                                 className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
                               />
