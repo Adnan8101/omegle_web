@@ -15,18 +15,37 @@ interface UserStats {
   voiceChannel: {
     totalTime: number;
     sessions: Array<{
+      id: string;
       channelName: string;
       joinedAt: string;
       leftAt: string | null;
       duration: number;
+      peakMemberCount: number;
+      messagesSent: number;
+      muteCount: number;
+      unmuteCount: number;
+      deafCount: number;
+      undeafCount: number;
     }>;
+    stats: {
+      totalSessions: number;
+      uniqueChannels: number;
+      avgDuration: number;
+      longestSession: number;
+      totalMutes: number;
+      totalUnmutes: number;
+    };
   };
   chatStats: {
     totalMessages: number;
+    uniqueChannels: number;
     recentMessages: Array<{
+      id: string;
       content: string;
       channelName: string;
       timestamp: string;
+      inVoiceChat: boolean;
+      contentLength: number;
     }>;
   };
   liveTracking: {
@@ -342,7 +361,7 @@ export default function ProfilePage() {
               <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-4">
                 Voice Activity
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="flex items-center gap-4 p-4 bg-[rgb(var(--color-bg-secondary))] rounded-lg">
                   <FiClock className="w-8 h-8 text-purple-500" />
                   <div>
@@ -357,33 +376,87 @@ export default function ProfilePage() {
                   <div>
                     <div className="text-sm text-[rgb(var(--color-text-tertiary))]">Sessions</div>
                     <div className="text-2xl font-bold text-blue-500">
-                      {stats.voiceChannel.sessions.length}
+                      {stats.voiceChannel.stats.totalSessions}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-4 bg-[rgb(var(--color-bg-secondary))] rounded-lg">
+                  <FiMic className="w-8 h-8 text-green-500" />
+                  <div>
+                    <div className="text-sm text-[rgb(var(--color-text-tertiary))]">Avg Duration</div>
+                    <div className="text-2xl font-bold text-green-500">
+                      {formatDuration(stats.voiceChannel.stats.avgDuration)}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Recent Sessions */}
+              {/* Additional Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div className="p-3 bg-[rgb(var(--color-bg-secondary))] rounded-lg text-center">
+                  <div className="text-2xl font-bold text-orange-500">{stats.voiceChannel.stats.uniqueChannels}</div>
+                  <div className="text-xs text-[rgb(var(--color-text-tertiary))]">Unique Channels</div>
+                </div>
+                <div className="p-3 bg-[rgb(var(--color-bg-secondary))] rounded-lg text-center">
+                  <div className="text-2xl font-bold text-cyan-500">{formatDuration(stats.voiceChannel.stats.longestSession)}</div>
+                  <div className="text-xs text-[rgb(var(--color-text-tertiary))]">Longest Session</div>
+                </div>
+                <div className="p-3 bg-[rgb(var(--color-bg-secondary))] rounded-lg text-center">
+                  <div className="text-2xl font-bold text-red-400">{stats.voiceChannel.stats.totalMutes}</div>
+                  <div className="text-xs text-[rgb(var(--color-text-tertiary))]">Total Mutes</div>
+                </div>
+                <div className="p-3 bg-[rgb(var(--color-bg-secondary))] rounded-lg text-center">
+                  <div className="text-2xl font-bold text-green-400">{stats.voiceChannel.stats.totalUnmutes}</div>
+                  <div className="text-xs text-[rgb(var(--color-text-tertiary))]">Total Unmutes</div>
+                </div>
+              </div>
+
+              {/* Session Details */}
               <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-3">
-                Recent Sessions
+                Session History
               </h3>
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {stats.voiceChannel.sessions.map((session, index) => (
+                {stats.voiceChannel.sessions.map((session) => (
                   <div
-                    key={index}
+                    key={session.id}
                     className="p-4 bg-[rgb(var(--color-bg-secondary))] rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="font-semibold text-[rgb(var(--color-text-primary))]">
-                        {session.channelName}
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="font-semibold text-[rgb(var(--color-text-primary))] mb-1">
+                          {session.channelName}
+                        </div>
+                        <div className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                          {new Date(session.joinedAt).toLocaleString()}
+                          {session.leftAt && ` - ${new Date(session.leftAt).toLocaleTimeString()}`}
+                        </div>
                       </div>
-                      <div className="text-purple-500 font-semibold">
-                        {formatDuration(session.duration)}
+                      <div className="text-right">
+                        <div className="text-purple-500 font-semibold text-lg">
+                          {formatDuration(session.duration)}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-sm text-[rgb(var(--color-text-tertiary))]">
-                      {new Date(session.joinedAt).toLocaleString()}
-                      {session.leftAt && ` - ${new Date(session.leftAt).toLocaleString()}`}
+                    
+                    <div className="flex flex-wrap gap-3 text-xs">
+                      <div className="flex items-center gap-1 text-[rgb(var(--color-text-tertiary))]">
+                        <FiUsers className="w-3 h-3" />
+                        <span>Peak: {session.peakMemberCount} members</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[rgb(var(--color-text-tertiary))]">
+                        <FiMessageSquare className="w-3 h-3" />
+                        <span>{session.messagesSent} messages</span>
+                      </div>
+                      {session.muteCount > 0 && (
+                        <div className="flex items-center gap-1 text-red-400">
+                          <span>🔇 {session.muteCount} mutes</span>
+                        </div>
+                      )}
+                      {session.unmuteCount > 0 && (
+                        <div className="flex items-center gap-1 text-green-400">
+                          <span>🔊 {session.unmuteCount} unmutes</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -402,30 +475,56 @@ export default function ProfilePage() {
             <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-4">
               Chat Activity
             </h2>
-            <div className="mb-6">
-              <div className="text-4xl font-bold text-green-500">
-                {formatNumber(stats.chatStats.totalMessages)}
+            
+            {/* Chat Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="p-4 bg-[rgb(var(--color-bg-secondary))] rounded-lg text-center">
+                <div className="text-4xl font-bold text-green-500">
+                  {formatNumber(stats.chatStats.totalMessages)}
+                </div>
+                <div className="text-sm text-[rgb(var(--color-text-tertiary))]">Total Messages</div>
               </div>
-              <div className="text-sm text-[rgb(var(--color-text-tertiary))]">Total messages sent</div>
+              <div className="p-4 bg-[rgb(var(--color-bg-secondary))] rounded-lg text-center">
+                <div className="text-4xl font-bold text-blue-500">
+                  {stats.chatStats.uniqueChannels}
+                </div>
+                <div className="text-sm text-[rgb(var(--color-text-tertiary))]">Unique Channels</div>
+              </div>
+              <div className="p-4 bg-[rgb(var(--color-bg-secondary))] rounded-lg text-center">
+                <div className="text-4xl font-bold text-purple-500">
+                  {stats.chatStats.recentMessages.filter(m => m.inVoiceChat).length}
+                </div>
+                <div className="text-sm text-[rgb(var(--color-text-tertiary))]">Messages in VC</div>
+              </div>
             </div>
 
             <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-3">
               Recent Messages
             </h3>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {stats.chatStats.recentMessages.map((message, index) => (
+            <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              {stats.chatStats.recentMessages.map((message) => (
                 <div
-                  key={index}
+                  key={message.id}
                   className="p-4 bg-[rgb(var(--color-bg-secondary))] rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <div className="text-sm text-blue-500">#{message.channelName}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm text-blue-500">#{message.channelName}</div>
+                      {message.inVoiceChat && (
+                        <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full">
+                          In VC
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-[rgb(var(--color-text-tertiary))]">
                       {new Date(message.timestamp).toLocaleString()}
                     </div>
                   </div>
-                  <div className="text-[rgb(var(--color-text-primary))]">
+                  <div className="text-[rgb(var(--color-text-primary))] break-words">
                     {message.content}
+                  </div>
+                  <div className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
+                    {message.contentLength} characters
                   </div>
                 </div>
               ))}

@@ -70,8 +70,40 @@ export async function GET(request: NextRequest) {
 
     const totalVcTime = voiceStats?.total_time_in_vc || 0;
 
+    // Calculate VC statistics
+    const uniqueChannels = new Set(vcSessions.map(s => s.channel_id)).size;
+    const completedSessions = vcSessions.filter(s => s.duration_seconds);
+    const avgDuration = completedSessions.length > 0
+      ? Math.floor(completedSessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / completedSessions.length)
+      : 0;
+    const longestSession = Math.max(...completedSessions.map(s => s.duration_seconds || 0), 0);
+    const totalMutes = vcSessions.reduce((sum, s) => sum + (s.mute_count || 0), 0);
+    const totalUnmutes = vcSessions.reduce((sum, s) => sum + (s.unmute_count || 0), 0);
+    const totalDeafs = vcSessions.reduce((sum, s) => sum + (s.deaf_count || 0), 0);
+    const totalUndeafs = vcSessions.reduce((sum, s) => sum + (s.undeaf_count || 0), 0);
+
     // Count total messages from EconomyUser
     const totalMessages = economyData?.total_messages || 0;
+
+    // Fetch recent chat messages from chat_logs table
+    const chatMessages = await prismaBot.$queryRaw<Array<{
+      id: string;
+      content: string;
+      channel_name: string;
+      created_at: Date;
+      in_voice_chat: boolean;
+      content_length: number;
+    }>>`
+      SELECT id, content, channel_name, created_at, in_voice_chat, content_length
+      FROM chat_logs
+      WHERE guild_id = ${GUILD_ID}
+        AND user_id = ${userId}
+      ORDER BY created_at DESC
+      LIMIT 100
+    `;
+
+    // Count unique channels from chat messages
+    const uniqueChatChannels = new Set(chatMessages.map(m => m.channel_name)).size;
 
     // Check if user is currently in a VC (from VoiceTracking)
     const activeSession = await prismaBot.voiceTracking.findFirst({
@@ -148,15 +180,38 @@ export async function GET(request: NextRequest) {
       voiceChannel: {
         totalTime: totalVcTime,
         sessions: vcSessions.map((session) => ({
+          id: session.id,
           channelName: session.channel_name || 'Unknown Channel',
           joinedAt: session.joined_at.toISOString(),
           leftAt: session.left_at?.toISOString() || null,
           duration: session.duration_seconds || 0,
+          peakMemberCount: session.peak_member_count || 0,
+          messagesSent: session.messages_sent || 0,
+          muteCount: session.mute_count || 0,
+          unmuteCount: session.unmute_count || 0,
+          deafCount: session.deaf_count || 0,
+          undeafCount: session.undeaf_count || 0,
         })),
+        stats: {
+          totalSessions: vcSessions.length,
+          uniqueChannels: uniqueChannels,
+          avgDuration: avgDuration,
+          longestSession: longestSession,
+          totalMutes: totalMutes,
+          totalUnmutes: totalUnmutes,
+        },
       },
       chatStats: {
         totalMessages: totalMessages,
-        recentMessages: [], // Chat logs not stored in current schema
+        uniqueChannels: uniqueChatChannels,
+        recentMessages: chatMessages.map(msg => ({
+          id: msg.id,
+          content: msg.content || '[No content]',
+          channelName: msg.channel_name || 'Unknown Channel',
+          timestamp: msg.created_at.toISOString(),
+          inVoiceChat: msg.in_voice_chat,
+          contentLength: msg.content_length,
+        })),
       },
       liveTracking: {
         currentVc: currentVcName,

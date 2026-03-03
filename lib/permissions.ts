@@ -180,17 +180,18 @@ export async function checkUserPermissions(
       casinoRoleIds: CASINO_ADMIN_ROLE_IDS,
     });
 
-    // Check for owner/admin/manage server permissions
+// Check for owner/admin/manage server permissions FROM DISCORD
     const isAdmin = (permissions & PERMISSIONS.ADMINISTRATOR) !== 0n;
     const hasManageServer = (permissions & PERMISSIONS.MANAGE_GUILD) !== 0n;
-
+    
     // Also check if user has server owner indicator (member.owner field)
     const isOwner = member.owner === true;
 
-    // Fallback: Check for known admin role IDs (in case permissions field is not available)
-    const hasAdminRole = roles.some((roleId) => ADMIN_ROLE_IDS.includes(roleId));
+    // PRIORITY: Discord permissions take precedence
+    // Only check admin roles as fallback if permissions are not available
+    const hasAdminRole = (permissions === 0n) && roles.some((roleId) => ADMIN_ROLE_IDS.includes(roleId));
 
-    // Full access if admin, manage server, server owner, or has admin role
+    // Full access PRIMARILY from Discord permissions
     const hasFullAccess = isAdmin || hasManageServer || isOwner || hasAdminRole;
 
     // Check for moderator roles (VC + chat + server stats)
