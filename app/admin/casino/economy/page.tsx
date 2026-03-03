@@ -817,13 +817,18 @@ export default function EconomyManagementPage() {
                   </button>
                 </div>
 
-                {/* New Category Form */}
+                {/* New/Edit Category Form */}
                 {newCategoryReward && (
                   <div className="mb-6 p-6 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-green-500/30">
                     <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">New Category Reward</h3>
+                      <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
+                        {editingCategory ? 'Edit Category Reward' : 'New Category Reward'}
+                      </h3>
                       <button
-                        onClick={() => setNewCategoryReward(null)}
+                        onClick={() => {
+                          setNewCategoryReward(null);
+                          setEditingCategory(null);
+                        }}
                         className="p-2 rounded-lg hover:bg-[rgb(var(--color-bg-primary))] text-[rgb(var(--color-text-tertiary))] hover:text-[rgb(var(--color-text-primary))]"
                       >
                         <FiX className="w-5 h-5" />
@@ -837,6 +842,7 @@ export default function EconomyManagementPage() {
                       </label>
                       <select
                         value={newCategoryReward.categoryId || ''}
+                        disabled={!!editingCategory}
                         onChange={(e) => {
                           const cat = categories.find(c => c.id === e.target.value);
                           setNewCategoryReward({
@@ -1147,6 +1153,30 @@ export default function EconomyManagementPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingCategory(reward.categoryId);
+                                setNewCategoryReward({
+                                  categoryId: reward.categoryId,
+                                  categoryName: reward.categoryName,
+                                  vcEnabled: reward.vcEnabled,
+                                  messageEnabled: reward.messageEnabled,
+                                  vcMinutesPerPoint: reward.vcMinutesPerPoint,
+                                  vcOzyAmount: reward.vcOzyAmount,
+                                  vcDailyLimit: reward.vcDailyLimit,
+                                  vcMinMembers: reward.vcMinMembers,
+                                  messagesPerPoint: reward.messagesPerPoint,
+                                  msgOzyAmount: reward.msgOzyAmount,
+                                  msgDailyLimit: reward.msgDailyLimit,
+                                  msgMinLength: reward.msgMinLength,
+                                  msgCooldown: reward.msgCooldown
+                                });
+                              }}
+                              className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500 transition-all"
+                              title="Edit"
+                            >
+                              <FiEdit2 className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={() => deleteCategoryReward(reward.categoryId)}
                               className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition-all"
