@@ -187,8 +187,13 @@ export async function GET(request: NextRequest) {
         categoryName: cr.category_name,
         vcEnabled: cr.vc_enabled,
         vcMinutesPerPoint: cr.vc_minutes_per_point,
+        vcOzyAmount: cr.vc_ozy_amount,
+        vcMinMembers: cr.vc_min_members,
         messageEnabled: cr.message_enabled,
         messagesPerPoint: cr.messages_per_point,
+        msgOzyAmount: cr.msg_ozy_amount,
+        msgMinLength: cr.msg_min_length,
+        msgCooldown: cr.msg_cooldown
       })),
       blacklist: {
         channels: blacklistedChannels.map((c: any) => ({ id: c.channel_id, type: c.channel_type })),

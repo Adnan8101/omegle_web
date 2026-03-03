@@ -1126,7 +1126,11 @@ export default function EconomyManagementPage() {
                             </div>
                             <div>
                               <h3 className="font-semibold text-[rgb(var(--color-text-primary))] text-lg">
-                                {reward.categoryName || `Category ${reward.categoryId}`}
+                                {loading ? (
+                                  <span className="text-[rgb(var(--color-text-tertiary))] animate-pulse">Loading...</span>
+                                ) : (
+                                  reward.categoryName || `Category ${reward.categoryId}`
+                                )}
                               </h3>
                               <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-0.5">Overrides default settings for this category</p>
                             </div>
@@ -1166,11 +1170,11 @@ export default function EconomyManagementPage() {
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))]">
                             <FiMic className="w-4 h-4 text-purple-500" />
-                            <span>VC: <strong className="text-[rgb(var(--color-text-primary))]">{reward.vcMinutesPerPoint}</strong> {config?.currency_name || 'Ozy'}/min</span>
+                            <span>VC: <strong className="text-[rgb(var(--color-text-primary))]">{reward.vcOzyAmount || 1}</strong> {config?.currency_name || 'Ozy'} per <strong>{reward.vcMinutesPerPoint}</strong> min</span>
                           </div>
                           <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))]">
                             <FiMessageSquare className="w-4 h-4 text-blue-500" />
-                            <span>Msgs: <strong className="text-[rgb(var(--color-text-primary))]">{reward.messagesPerPoint}</strong> {config?.currency_name || 'Ozy'}/msg</span>
+                            <span>Msgs: <strong className="text-[rgb(var(--color-text-primary))]">{reward.msgOzyAmount || 1}</strong> {config?.currency_name || 'Ozy'} per <strong>{reward.messagesPerPoint}</strong> msgs</span>
                           </div>
                         </div>
                         
