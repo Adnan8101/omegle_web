@@ -5,7 +5,6 @@ import { queryBotDb } from '@/lib/botDb';
 
 const GUILD_ID = "910043773130661918";
 
-// GET - Fetch live economy status data
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,20 +13,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check permissions - require full access only
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    // Get economy config directly from DB to avoid Prisma type issues
+    const { searchParams } = new URL(request.url);
+    const searchUserId = searchParams.get('userId');
+
+    // Get economy config
     const configResult = await queryBotDb(`
       SELECT * FROM economy_config WHERE guild_id = $1
     `, [GUILD_ID]);
-    
     const config = configResult[0] || null;
 
-    // Get users currently in VC (from voice_tracking table where left_at is null)
+    const today = new Date().toISOString().split('T')[0];
+
+    // If searching for specific user
+    if (searchUserId) {
+      return await getUserHistory(searchUserId, config, today);
+    }
+
+    // Get active VC sessions with user details
     const activeVcSessions = await queryBotDb(`
       SELECT 
         vt.user_id,
@@ -40,8 +47,7 @@ export async function GET(request: NextRequest) {
         dcc.parent_name as category_name,
         duc.username,
         duc.display_name,
-        duc.avatar_url,
-        duc.nickname
+        duc.avatar_url
       FROM voice_tracking vt
       LEFT JOIN discord_channel_cache dcc ON dcc.channel_id = vt.channel_id
       LEFT JOIN discord_user_cache duc ON duc.user_id = vt.user_id
@@ -54,12 +60,7 @@ export async function GET(request: NextRequest) {
     let vcProgress: any[] = [];
     if (activeUserIds.length > 0) {
       vcProgress = await queryBotDb(`
-        SELECT 
-          user_id,
-          category_id,
-          accumulated_seconds,
-          today_earned,
-          last_date
+        SELECT user_id, category_id, accumulated_seconds, today_earned, last_date
         FROM economy_vc_progress
         WHERE guild_id = $1 AND user_id = ANY($2)
       `, [GUILD_ID, activeUserIds]);
@@ -69,221 +70,197 @@ export async function GET(request: NextRequest) {
     let categoryRewards: any[] = [];
     if (config?.advanced_mode) {
       categoryRewards = await queryBotDb(`
-        SELECT 
-          category_id,
-          category_name,
-          vc_enabled,
-          vc_minutes_per_point,
-          vc_ozy_amount,
-          vc_daily_limit,
-          vc_min_members
+        SELECT category_id, category_name, vc_enabled, vc_minutes_per_point, 
+               vc_ozy_amount, vc_daily_limit, vc_min_members
         FROM economy_category_rewards
         WHERE guild_id = $1
       `, [GUILD_ID]);
     }
 
-    // Get blacklisted channels and roles
+    // Get blacklisted channels
     const blacklistedChannels = await queryBotDb(`
-      SELECT channel_id, channel_type
-      FROM economy_blacklist_channels
+      SELECT channel_id FROM economy_blacklist_channels
       WHERE guild_id = $1 AND channel_type = 'voice'
     `, [GUILD_ID]);
+    const blacklistedChannelIds = new Set(blacklistedChannels.map((c: any) => c.channel_id));
 
-    const blacklistedRoles = await queryBotDb(`
-      SELECT role_id
-      FROM economy_blacklist_roles
-      WHERE guild_id = $1
-    `, [GUILD_ID]);
-
-    // Get recent coin awards (last 50)
-    const recentAwards = await queryBotDb(`
-      SELECT 
-        epl.user_id,
-        epl.amount,
-        epl.reason,
-        epl.source,
-        epl.created_at,
-        duc.username,
-        duc.display_name,
-        duc.avatar_url
+    // Get recent VC awards (last 30 minutes)
+    const recentVcAwards = await queryBotDb(`
+      SELECT epl.user_id, epl.amount, epl.created_at, duc.username, duc.display_name, duc.avatar_url
       FROM economy_point_logs epl
       LEFT JOIN discord_user_cache duc ON duc.user_id = epl.user_id
-      WHERE epl.guild_id = $1
+      WHERE epl.guild_id = $1 AND epl.source = 'vc' 
+        AND epl.created_at > NOW() - INTERVAL '30 minutes'
       ORDER BY epl.created_at DESC
       LIMIT 50
     `, [GUILD_ID]);
 
-    // Get today's top earners
-    const today = new Date().toISOString().split('T')[0];
-    const todayEarners = await queryBotDb(`
-      SELECT 
-        epl.user_id,
-        SUM(epl.amount) as total_earned,
-        duc.username,
-        duc.display_name,
-        duc.avatar_url
+    // Get recent message awards (last 30 minutes)
+    const recentMsgAwards = await queryBotDb(`
+      SELECT epl.user_id, epl.amount, epl.created_at, duc.username, duc.display_name, duc.avatar_url
       FROM economy_point_logs epl
       LEFT JOIN discord_user_cache duc ON duc.user_id = epl.user_id
-      WHERE epl.guild_id = $1 
-        AND epl.created_at >= $2::date 
-        AND epl.amount > 0
-      GROUP BY epl.user_id, duc.username, duc.display_name, duc.avatar_url
-      ORDER BY total_earned DESC
-      LIMIT 20
-    `, [GUILD_ID, today]);
-
-    // Get overall statistics
-    const stats = await queryBotDb(`
-      SELECT 
-        COUNT(DISTINCT user_id) as total_users,
-        SUM(total_points) as total_points_distributed,
-        AVG(total_points) as avg_points_per_user
-      FROM economy_users
-      WHERE guild_id = $1
+      WHERE epl.guild_id = $1 AND epl.source = 'message'
+        AND epl.created_at > NOW() - INTERVAL '30 minutes'
+      ORDER BY epl.created_at DESC
+      LIMIT 50
     `, [GUILD_ID]);
 
-    // Get VC progress stats (accumulated time waiting for rewards)
-    const vcProgressStats = await queryBotDb(`
-      SELECT 
-        COUNT(*) as users_with_progress,
-        SUM(accumulated_seconds) as total_accumulated_seconds,
-        SUM(today_earned) as total_earned_today
-      FROM economy_vc_progress
-      WHERE guild_id = $1 AND last_date = $2
+    // Get message progress for users actively earning
+    const activeMsgProgress = await queryBotDb(`
+      SELECT emp.user_id, emp.accumulated_msgs, emp.today_earned, emp.last_date,
+             duc.username, duc.display_name, duc.avatar_url
+      FROM economy_message_progress emp
+      LEFT JOIN discord_user_cache duc ON duc.user_id = emp.user_id
+      WHERE emp.guild_id = $1 AND emp.last_date = $2 AND emp.accumulated_msgs > 0
+      ORDER BY emp.today_earned DESC
+      LIMIT 100
     `, [GUILD_ID, today]);
 
-    // Get message progress stats
-    const msgProgressStats = await queryBotDb(`
+    // Get all users with staged VC time (accumulated but not yet rewarded)
+    const stagedVcProgress = await queryBotDb(`
+      SELECT evp.user_id, evp.category_id, evp.accumulated_seconds, evp.today_earned,
+             duc.username, duc.display_name, duc.avatar_url
+      FROM economy_vc_progress evp
+      LEFT JOIN discord_user_cache duc ON duc.user_id = evp.user_id
+      WHERE evp.guild_id = $1 AND evp.accumulated_seconds > 0
+      ORDER BY evp.accumulated_seconds DESC
+      LIMIT 100
+    `, [GUILD_ID]);
+
+    // Get today's stats
+    const todayStats = await queryBotDb(`
       SELECT 
-        COUNT(*) as users_with_progress,
-        SUM(accumulated_msgs) as total_accumulated_msgs,
-        SUM(today_earned) as total_earned_today
-      FROM economy_message_progress
-      WHERE guild_id = $1 AND last_date = $2
+        COUNT(DISTINCT CASE WHEN source = 'vc' THEN user_id END) as vc_users,
+        COUNT(DISTINCT CASE WHEN source = 'message' THEN user_id END) as msg_users,
+        SUM(CASE WHEN source = 'vc' THEN amount ELSE 0 END) as vc_earned,
+        SUM(CASE WHEN source = 'message' THEN amount ELSE 0 END) as msg_earned,
+        COUNT(*) as total_transactions
+      FROM economy_point_logs
+      WHERE guild_id = $1 AND created_at >= $2::date AND amount > 0
     `, [GUILD_ID, today]);
 
-    // Format active VC users with earning status
-    const activeVcUsers = activeVcSessions.map((session: any) => {
-      const userProgress = vcProgress.find((p: any) => 
+    // Format VC users with detailed earning info
+    const vcUsers = activeVcSessions.map((session: any) => {
+      const categoryId = session.category_id || 'global';
+      const userProg = vcProgress.find((p: any) => 
         p.user_id === session.user_id && 
-        (p.category_id === session.category_id || p.category_id === 'global')
+        (p.category_id === categoryId || p.category_id === 'global')
       );
       
-      const catReward = categoryRewards.find((c: any) => c.category_id === session.category_id);
-      const isBlacklisted = blacklistedChannels.some((c: any) => c.channel_id === session.channel_id);
+      const catReward = categoryRewards.find((c: any) => c.category_id === categoryId);
+      const isBlacklisted = blacklistedChannelIds.has(session.channel_id);
       
-      // Determine earning mode
-      let earningMode = 'normal';
-      let minutesPerPoint = config?.minutes_per_point || 1;
-      let ozyAmount = config?.vc_ozy_amount || 1;
-      let dailyLimit = config?.daily_voice_cap || 100;
-      let minMembers = config?.require_two_members || 2;
-      
-      if (config?.advanced_mode && catReward) {
-        earningMode = 'advanced';
-        minutesPerPoint = catReward.vc_minutes_per_point;
-        ozyAmount = catReward.vc_ozy_amount || 1;
-        dailyLimit = catReward.vc_daily_limit || 100;
-        minMembers = catReward.vc_min_members || 2;
-      }
+      // Get settings based on mode
+      const isAdvanced = config?.advanced_mode && catReward;
+      const minutesPerPoint = isAdvanced ? catReward.vc_minutes_per_point : (config?.minutes_per_point || 5);
+      const ozyAmount = isAdvanced ? (catReward.vc_ozy_amount || 1) : (config?.vc_ozy_amount || 1);
+      const dailyLimit = isAdvanced ? (catReward.vc_daily_limit || 100) : (config?.daily_voice_cap || 100);
+      const vcEnabled = isAdvanced ? catReward.vc_enabled : true;
 
       const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
-      const accumulatedSeconds = (userProgress?.accumulated_seconds || 0) + sessionDuration;
-      const todayEarned = userProgress?.today_earned || 0;
+      const stagedSeconds = userProg?.accumulated_seconds || 0;
+      const totalSeconds = stagedSeconds + sessionDuration;
       const thresholdSeconds = minutesPerPoint * 60;
-      const progressPercent = Math.min(100, (accumulatedSeconds % thresholdSeconds) / thresholdSeconds * 100);
+      const progressPercent = Math.round((totalSeconds % thresholdSeconds) / thresholdSeconds * 100);
+      const todayEarned = userProg?.today_earned || 0;
       
       return {
-        userId: session.user_id,
-        username: session.display_name || session.nickname || session.username || session.user_id,
-        avatarUrl: session.avatar_url,
-        channelId: session.channel_id,
-        channelName: session.channel_name || 'Unknown Channel',
-        categoryId: session.category_id,
-        categoryName: session.category_name,
+        id: session.user_id,
+        name: session.display_name || session.username || session.user_id,
+        avatar: session.avatar_url,
+        channel: session.channel_name || 'Unknown',
+        category: session.category_name,
         joinedAt: session.joined_at,
-        sessionDuration,
-        isMuted: session.was_muted,
-        isDeafened: session.was_deafened,
+        duration: sessionDuration,
+        muted: session.was_muted,
+        deafened: session.was_deafened,
+        // Earning details
+        isEarning: !isBlacklisted && vcEnabled && (config?.enabled ?? false),
         isBlacklisted,
-        isEarning: !isBlacklisted && (catReward?.vc_enabled ?? true),
-        earningMode,
-        settings: {
-          minutesPerPoint,
-          ozyAmount,
-          dailyLimit,
-          minMembers
-        },
-        progress: {
-          accumulatedSeconds,
-          thresholdSeconds,
-          progressPercent: Math.round(progressPercent),
-          todayEarned,
-          remainingDaily: Math.max(0, dailyLimit - todayEarned),
-          nextRewardIn: thresholdSeconds - (accumulatedSeconds % thresholdSeconds)
-        }
+        staged: stagedSeconds,
+        progress: progressPercent,
+        threshold: thresholdSeconds,
+        nextIn: thresholdSeconds - (totalSeconds % thresholdSeconds),
+        rate: `${minutesPerPoint}m = ${ozyAmount}`,
+        todayEarned,
+        dailyLimit,
+        mode: isAdvanced ? 'category' : 'global'
       };
     });
 
+    // Format message activity
+    const msgActivity = activeMsgProgress.map((p: any) => ({
+      id: p.user_id,
+      name: p.display_name || p.username || p.user_id,
+      avatar: p.avatar_url,
+      staged: p.accumulated_msgs,
+      threshold: config?.messages_per_point || 25,
+      progress: Math.round((p.accumulated_msgs / (config?.messages_per_point || 25)) * 100),
+      todayEarned: p.today_earned,
+      dailyLimit: config?.daily_message_cap || 100
+    }));
+
     return NextResponse.json({
-      success: true,
       timestamp: new Date().toISOString(),
-      economyEnabled: config?.enabled ?? false,
-      advancedMode: config?.advanced_mode ?? false,
-      config: {
-        currencyName: config?.currency_name || 'Ozy',
-        currencyEmoji: config?.currency_emoji || '🪙',
-        minutesPerPoint: config?.minutes_per_point || 1,
-        vcOzyAmount: config?.vc_ozy_amount || 1,
-        dailyVoiceCap: config?.daily_voice_cap || 100,
-        requireTwoMembers: config?.require_two_members || 2,
-        messagesPerPoint: config?.messages_per_point || 25,
-        msgOzyAmount: config?.msg_ozy_amount || 1,
-        dailyMessageCap: config?.daily_message_cap || 100
+      economy: {
+        enabled: config?.enabled ?? false,
+        advancedMode: config?.advanced_mode ?? false,
+        currency: config?.currency_name || 'Ozy',
+        emoji: config?.currency_emoji || '🪙'
       },
-      activeVcUsers,
-      categoryRewards: categoryRewards.map((c: any) => ({
-        categoryId: c.category_id,
-        categoryName: c.category_name,
+      vc: {
+        config: {
+          minutesPerPoint: config?.minutes_per_point || 5,
+          ozyAmount: config?.vc_ozy_amount || 1,
+          dailyLimit: config?.daily_voice_cap || 100,
+          minMembers: config?.require_two_members || 2
+        },
+        active: vcUsers,
+        recentAwards: recentVcAwards.map((a: any) => ({
+          id: a.user_id,
+          name: a.display_name || a.username || a.user_id,
+          avatar: a.avatar_url,
+          amount: a.amount,
+          time: a.created_at
+        })),
+        staged: stagedVcProgress.map((p: any) => ({
+          id: p.user_id,
+          name: p.display_name || p.username || p.user_id,
+          avatar: p.avatar_url,
+          seconds: p.accumulated_seconds,
+          category: p.category_id,
+          todayEarned: p.today_earned
+        }))
+      },
+      messages: {
+        config: {
+          perPoint: config?.messages_per_point || 25,
+          ozyAmount: config?.msg_ozy_amount || 1,
+          dailyLimit: config?.daily_message_cap || 100,
+          cooldown: config?.message_cooldown || 5
+        },
+        active: msgActivity,
+        recentAwards: recentMsgAwards.map((a: any) => ({
+          id: a.user_id,
+          name: a.display_name || a.username || a.user_id,
+          avatar: a.avatar_url,
+          amount: a.amount,
+          time: a.created_at
+        }))
+      },
+      categories: categoryRewards.map((c: any) => ({
+        id: c.category_id,
+        name: c.category_name,
         vcEnabled: c.vc_enabled,
-        vcMinutesPerPoint: c.vc_minutes_per_point,
-        vcOzyAmount: c.vc_ozy_amount,
-        vcDailyLimit: c.vc_daily_limit,
-        vcMinMembers: c.vc_min_members
-      })),
-      blacklists: {
-        channels: blacklistedChannels.map((c: any) => c.channel_id),
-        roles: blacklistedRoles.map((r: any) => r.role_id)
-      },
-      recentAwards: recentAwards.map((a: any) => ({
-        userId: a.user_id,
-        username: a.display_name || a.username || a.user_id,
-        avatarUrl: a.avatar_url,
-        amount: a.amount,
-        reason: a.reason,
-        source: a.source,
-        createdAt: a.created_at
-      })),
-      todayEarners: todayEarners.map((e: any) => ({
-        userId: e.user_id,
-        username: e.display_name || e.username || e.user_id,
-        avatarUrl: e.avatar_url,
-        totalEarned: parseInt(e.total_earned)
+        rate: `${c.vc_minutes_per_point}m = ${c.vc_ozy_amount || 1}`
       })),
       stats: {
-        totalUsers: parseInt(stats[0]?.total_users || '0'),
-        totalPointsDistributed: parseInt(stats[0]?.total_points_distributed || '0'),
-        avgPointsPerUser: parseFloat(stats[0]?.avg_points_per_user || '0').toFixed(2),
-        vcProgress: {
-          usersWithProgress: parseInt(vcProgressStats[0]?.users_with_progress || '0'),
-          totalAccumulatedSeconds: parseInt(vcProgressStats[0]?.total_accumulated_seconds || '0'),
-          totalEarnedToday: parseInt(vcProgressStats[0]?.total_earned_today || '0')
-        },
-        msgProgress: {
-          usersWithProgress: parseInt(msgProgressStats[0]?.users_with_progress || '0'),
-          totalAccumulatedMsgs: parseInt(msgProgressStats[0]?.total_accumulated_msgs || '0'),
-          totalEarnedToday: parseInt(msgProgressStats[0]?.total_earned_today || '0')
-        }
+        vcUsers: parseInt(todayStats[0]?.vc_users || '0'),
+        msgUsers: parseInt(todayStats[0]?.msg_users || '0'),
+        vcEarned: parseInt(todayStats[0]?.vc_earned || '0'),
+        msgEarned: parseInt(todayStats[0]?.msg_earned || '0'),
+        transactions: parseInt(todayStats[0]?.total_transactions || '0')
       }
     });
   } catch (error) {
@@ -293,4 +270,88 @@ export async function GET(request: NextRequest) {
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
+}
+
+// Get user history
+async function getUserHistory(userId: string, config: any, today: string) {
+  // Get user info
+  const userInfo = await queryBotDb(`
+    SELECT user_id, username, display_name, avatar_url, in_guild
+    FROM discord_user_cache WHERE user_id = $1
+  `, [userId]);
+
+  // Get user economy data
+  const economyUser = await queryBotDb(`
+    SELECT total_points, total_vc_minutes, total_messages
+    FROM economy_users WHERE guild_id = $1 AND user_id = $2
+  `, [GUILD_ID, userId]);
+
+  // Get VC progress
+  const vcProgress = await queryBotDb(`
+    SELECT category_id, accumulated_seconds, today_earned, last_date
+    FROM economy_vc_progress WHERE guild_id = $1 AND user_id = $2
+  `, [GUILD_ID, userId]);
+
+  // Get message progress
+  const msgProgress = await queryBotDb(`
+    SELECT accumulated_msgs, today_earned, last_date
+    FROM economy_message_progress WHERE guild_id = $1 AND user_id = $2
+  `, [GUILD_ID, userId]);
+
+  // Get recent earnings history
+  const recentHistory = await queryBotDb(`
+    SELECT amount, reason, source, created_at
+    FROM economy_point_logs
+    WHERE guild_id = $1 AND user_id = $2
+    ORDER BY created_at DESC
+    LIMIT 100
+  `, [GUILD_ID, userId]);
+
+  // Check if user is currently in VC
+  const activeVc = await queryBotDb(`
+    SELECT vt.channel_id, vt.joined_at, dcc.name as channel_name
+    FROM voice_tracking vt
+    LEFT JOIN discord_channel_cache dcc ON dcc.channel_id = vt.channel_id
+    WHERE vt.guild_id = $1 AND vt.user_id = $2 AND vt.left_at IS NULL
+  `, [GUILD_ID, userId]);
+
+  const user = userInfo[0];
+  const economy = economyUser[0];
+  const vc = vcProgress[0];
+  const msg = msgProgress[0];
+
+  return NextResponse.json({
+    user: {
+      id: userId,
+      name: user?.display_name || user?.username || userId,
+      avatar: user?.avatar_url,
+      inGuild: user?.in_guild ?? false
+    },
+    balance: economy?.total_points || 0,
+    totalVcMinutes: economy?.total_vc_minutes || 0,
+    totalMessages: economy?.total_messages || 0,
+    vc: {
+      inVc: activeVc.length > 0,
+      channel: activeVc[0]?.channel_name,
+      joinedAt: activeVc[0]?.joined_at,
+      staged: vc?.accumulated_seconds || 0,
+      todayEarned: vc?.today_earned || 0,
+      lastActive: vc?.last_date
+    },
+    messages: {
+      staged: msg?.accumulated_msgs || 0,
+      todayEarned: msg?.today_earned || 0,
+      lastActive: msg?.last_date
+    },
+    history: recentHistory.map((h: any) => ({
+      amount: h.amount,
+      reason: h.reason,
+      source: h.source,
+      time: h.created_at
+    })),
+    config: {
+      currency: config?.currency_name || 'Ozy',
+      emoji: config?.currency_emoji || '🪙'
+    }
+  });
 }
