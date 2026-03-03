@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check permissions
+    // Check permissions - Full Access only (Server Admin/Owner)
     const perms = session.user.permissions;
-    if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    if (!perms?.hasFullAccess) {
+      return NextResponse.json({ error: 'Insufficient permissions - Admin only' }, { status: 403 });
     }
 
     // Get config
@@ -83,10 +83,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check permissions
+    // Check permissions - Full Access only (Server Admin/Owner)
     const perms = session.user.permissions;
-    if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    if (!perms?.hasFullAccess) {
+      return NextResponse.json({ error: 'Insufficient permissions - Admin only' }, { status: 403 });
     }
 
     const body = await request.json();

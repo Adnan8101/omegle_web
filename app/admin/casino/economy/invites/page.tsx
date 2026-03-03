@@ -42,15 +42,15 @@ export default function InvitesPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Check permissions
+  // Check permissions - Full Access only (Server Admin/Owner)
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin/signin');
     }
     if (status === 'authenticated' && session?.user) {
       const perms = (session.user as any).permissions;
-      if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
-        router.push('/admin');
+      if (!perms?.hasFullAccess) {
+        router.push('/admin/casino');
       }
     }
   }, [status, session, router]);

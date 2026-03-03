@@ -37,15 +37,15 @@ export default function UserInviteDetailPage({
     coins_earned: 0,
   });
 
-  // Check permissions
+  // Check permissions - Full Access only (Server Admin/Owner)
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin/signin');
     }
     if (status === 'authenticated' && session?.user) {
       const perms = (session.user as any).permissions;
-      if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
-        router.push('/admin');
+      if (!perms?.hasFullAccess) {
+        router.push('/admin/casino');
       }
     }
   }, [status, session, router]);

@@ -351,23 +351,26 @@ export default function CasinoDashboard() {
           <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-yellow-500 group-hover:translate-x-1 apple-transition" />
         </Link>
 
-        <Link
-          href="/admin/casino/economy/invites"
-          className="glass-blue rounded-2xl p-4 sm:p-5 border border-[rgb(var(--color-border))] hover:border-purple-500/50 apple-transition flex items-center justify-between group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-500/20 rounded-xl">
-              <FiUsers className="w-5 h-5 text-purple-500" />
+        {/* Invite System - Admin Only */}
+        {session?.user?.permissions?.hasFullAccess && (
+          <Link
+            href="/admin/casino/economy/invites"
+            className="glass-blue rounded-2xl p-4 sm:p-5 border border-[rgb(var(--color-border))] hover:border-purple-500/50 apple-transition flex items-center justify-between group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-500/20 rounded-xl">
+                <FiUsers className="w-5 h-5 text-purple-500" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">Invite System</h3>
+                <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                  Manage referral rewards (Admin only)
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">Invite System</h3>
-              <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
-                Manage referral rewards
-              </p>
-            </div>
-          </div>
-          <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-purple-500 group-hover:translate-x-1 apple-transition" />
-        </Link>
+            <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-purple-500 group-hover:translate-x-1 apple-transition" />
+          </Link>
+        )}
 
         <Link
           href="/admin/casino/purchases"
