@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { FiUsers, FiCheckCircle, FiAlertCircle, FiDollarSign, FiUserPlus, FiRefreshCw, FiSave, FiTrendingUp, FiUserCheck, FiUserX } from 'react-icons/fi';
 
 interface Invite {
   id: string;
@@ -109,66 +110,106 @@ export default function InvitesPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-[rgb(var(--color-text-secondary))]">Loading invite system...</p>
+        </div>
       </div>
     );
   }
 
+  const totalCoinsDistributed = stats.reduce((sum, s) => sum + s.coins_earned, 0);
+  const activeInviteCount = invites.filter((i) => i.active).length;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+    <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Invite System Management</h1>
-          <p className="text-slate-400">Track and manage user invitations and referral rewards</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+          <div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[rgb(var(--color-text-primary))] mb-2 tracking-tight flex items-center gap-3">
+              <div className="p-2 bg-purple-500/20 rounded-xl">
+                <FiUserPlus className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500" />
+              </div>
+              Invite System
+            </h1>
+            <p className="text-sm sm:text-base text-[rgb(var(--color-text-secondary))] font-light">
+              Track and manage user invitations & referral rewards
+            </p>
+          </div>
+          <button
+            onClick={fetchInvites}
+            className="flex items-center gap-2 px-4 py-2.5 glass-blue rounded-xl border border-[rgb(var(--color-border))] hover:border-purple-500/50 apple-transition touch-manipulation"
+          >
+            <FiRefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
         </div>
 
         {/* Message Alert */}
         {message && (
           <div
-            className={`mb-6 p-4 rounded-lg ${
+            className={`mb-6 p-4 rounded-2xl flex items-center gap-3 ${
               message.type === 'success'
-                ? 'bg-green-500/20 text-green-200 border border-green-500/30'
-                : 'bg-red-500/20 text-red-200 border border-red-500/30'
+                ? 'bg-green-500/10 border border-green-500/30 text-green-500'
+                : 'bg-red-500/10 border border-red-500/30 text-red-500'
             }`}
           >
-            {message.text}
+            {message.type === 'success' ? (
+              <FiCheckCircle className="w-5 h-5 flex-shrink-0" />
+            ) : (
+              <FiAlertCircle className="w-5 h-5 flex-shrink-0" />
+            )}
+            <span>{message.text}</span>
           </div>
         )}
 
         {/* Configuration Card */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-white mb-6">Settings</h2>
+        <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-[var(--shadow-md)]">
+          <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-6 flex items-center gap-2">
+            <FiUsers className="w-5 h-5" />
+            Settings
+          </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Enable/Disable */}
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Enable Invites</label>
+              <label className="block text-[rgb(var(--color-text-secondary))] font-medium mb-3">Enable Invites</label>
               <button
                 onClick={() => setConfig({ ...config, invites_enabled: !config.invites_enabled })}
-                className={`w-full px-4 py-2 rounded-lg font-medium transition ${
+                className={`w-full px-4 py-3 rounded-xl font-medium apple-transition shadow-lg ${
                   config.invites_enabled
-                    ? 'bg-green-600 text-white hover:bg-green-700'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    ? 'bg-green-500 text-white hover:bg-green-600 shadow-green-500/20'
+                    : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-tertiary))] hover:bg-[rgb(var(--color-hover))]'
                 }`}
               >
-                {config.invites_enabled ? '✓ Enabled' : '✗ Disabled'}
+                {config.invites_enabled ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <FiCheckCircle className="w-5 h-5" />
+                    Enabled
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <FiAlertCircle className="w-5 h-5" />
+                    Disabled
+                  </span>
+                )}
               </button>
             </div>
 
             {/* Coins Per Invite */}
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Coins Per Invite</label>
+              <label className="block text-[rgb(var(--color-text-secondary))] font-medium mb-3">Coins Per Invite</label>
               <div className="flex gap-2">
                 <input
                   type="number"
                   min="0"
                   value={config.coins_per_invite}
                   onChange={(e) => setConfig({ ...config, coins_per_invite: parseInt(e.target.value) || 0 })}
-                  className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                  className="flex-1 px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:border-purple-500 focus:outline-none apple-transition"
                 />
-                <span className="px-3 py-2 bg-slate-700 rounded-lg text-slate-300">🪙</span>
+                <span className="px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl text-[rgb(var(--color-text-primary))] flex items-center justify-center min-w-[60px]">🪙</span>
               </div>
             </div>
           </div>
@@ -176,73 +217,113 @@ export default function InvitesPage() {
           <button
             onClick={handleSaveConfig}
             disabled={saving}
-            className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="mt-6 px-6 py-3 bg-purple-500 text-white rounded-xl font-medium hover:bg-purple-600 disabled:opacity-50 apple-transition shadow-lg shadow-purple-500/20 flex items-center gap-2"
           >
+            <FiSave className="w-4 h-4" />
             {saving ? 'Saving...' : 'Save Settings'}
           </button>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <p className="text-slate-400 text-sm mb-2">Total Invites</p>
-            <p className="text-3xl font-bold text-white">{invites.length}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] hover:border-purple-500/50 hover:shadow-[var(--shadow-blue)] apple-transition shadow-[var(--shadow-md)]">
+            <div className="flex items-start justify-between mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-blue-500/20 rounded-xl">
+                <FiUsers className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] mb-1">
+              {invites.length}
+            </div>
+            <div className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))]">
+              Total Invites
+            </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <p className="text-slate-400 text-sm mb-2">Active Invites</p>
-            <p className="text-3xl font-bold text-white">{invites.filter((i) => i.active).length}</p>
+          <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] hover:border-green-500/50 hover:shadow-[var(--shadow-blue)] apple-transition shadow-[var(--shadow-md)]">
+            <div className="flex items-start justify-between mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-green-500/20 rounded-xl">
+                <FiUserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] mb-1">
+              {activeInviteCount}
+            </div>
+            <div className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))]">
+              Active Invites
+            </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <p className="text-slate-400 text-sm mb-2">Total Coins Distributed</p>
-            <p className="text-3xl font-bold text-white">{stats.reduce((sum, s) => sum + s.coins_earned, 0)}</p>
+          <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] hover:border-yellow-500/50 hover:shadow-[var(--shadow-blue)] apple-transition shadow-[var(--shadow-md)]">
+            <div className="flex items-start justify-between mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-yellow-500/20 rounded-xl">
+                <FiDollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] mb-1 flex items-center gap-2">
+              {totalCoinsDistributed.toLocaleString()}
+            </div>
+            <div className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))]">
+              Total Coins Distributed
+            </div>
           </div>
         </div>
 
         {/* Top Inviters */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-white mb-6">Top Inviters</h2>
+        <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-[var(--shadow-md)]">
+          <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-6 flex items-center gap-2">
+            <FiTrendingUp className="w-5 h-5" />
+            Top Inviters
+          </h2>
           
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left px-4 py-3 text-slate-400 font-semibold">User ID</th>
-                  <th className="text-center px-4 py-3 text-slate-400 font-semibold">Total Invites</th>
-                  <th className="text-center px-4 py-3 text-slate-400 font-semibold">Active Invites</th>
-                  <th className="text-right px-4 py-3 text-slate-400 font-semibold">Coins Earned</th>
-                  <th className="text-center px-4 py-3 text-slate-400 font-semibold">Actions</th>
+                <tr className="border-b border-[rgb(var(--color-border))]">
+                  <th className="text-left px-4 py-3 text-[rgb(var(--color-text-tertiary))] font-semibold text-sm">User ID</th>
+                  <th className="text-center px-4 py-3 text-[rgb(var(--color-text-tertiary))] font-semibold text-sm">Total Invites</th>
+                  <th className="text-center px-4 py-3 text-[rgb(var(--color-text-tertiary))] font-semibold text-sm">Active Invites</th>
+                  <th className="text-right px-4 py-3 text-[rgb(var(--color-text-tertiary))] font-semibold text-sm">Coins Earned</th>
+                  <th className="text-center px-4 py-3 text-[rgb(var(--color-text-tertiary))] font-semibold text-sm">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {stats.length > 0 ? (
                   stats.map((stat, idx) => (
-                    <tr key={stat.user_id} className="border-b border-slate-700 hover:bg-slate-700/30 transition">
-                      <td className="px-4 py-3 text-white">
-                        <code className="text-sm bg-slate-900 px-2 py-1 rounded">{stat.user_id}</code>
+                    <tr key={stat.user_id} className="border-b border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-bg-tertiary))] apple-transition">
+                      <td className="px-4 py-3 text-[rgb(var(--color-text-primary))]">
+                        <code className="text-xs sm:text-sm bg-[rgb(var(--color-bg-secondary))] px-2 py-1 rounded">{stat.user_id}</code>
                       </td>
-                      <td className="px-4 py-3 text-center text-slate-300">{stat.total_invites}</td>
+                      <td className="px-4 py-3 text-center text-[rgb(var(--color-text-primary))] font-medium">{stat.total_invites}</td>
                       <td className="px-4 py-3 text-center">
-                        <span className={`${stat.active_invites > 0 ? 'text-green-400' : 'text-slate-400'}`}>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          stat.active_invites > 0 
+                            ? 'bg-green-500/20 text-green-500' 
+                            : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-tertiary))]'
+                        }`}>
                           {stat.active_invites}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right text-white font-medium">{stat.coins_earned} 🪙</td>
+                      <td className="px-4 py-3 text-right text-[rgb(var(--color-text-primary))] font-semibold">
+                        {stat.coins_earned.toLocaleString()} 🪙
+                      </td>
                       <td className="px-4 py-3 text-center">
                         <Link
                           href={`/admin/casino/economy/invites/${stat.user_id}`}
-                          className="text-blue-400 hover:text-blue-300 text-sm"
+                          className="text-purple-500 hover:text-purple-400 text-sm font-medium apple-transition"
                         >
-                          View Details
+                          View Details →
                         </Link>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-4 py-3 text-center text-slate-400">
-                      No invites yet
+                    <td colSpan={5} className="px-4 py-8 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <FiUserX className="w-8 h-8 text-[rgb(var(--color-text-tertiary))]" />
+                        <span className="text-[rgb(var(--color-text-tertiary))]">No invites yet</span>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -252,55 +333,67 @@ export default function InvitesPage() {
         </div>
 
         {/* Recent Invites */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-6">Recent Invitations</h2>
+        <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] shadow-[var(--shadow-md)]">
+          <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-6 flex items-center gap-2">
+            <FiUserPlus className="w-5 h-5" />
+            Recent Invitations
+          </h2>
           
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left px-4 py-3 text-slate-400 font-semibold">Inviter</th>
-                  <th className="text-left px-4 py-3 text-slate-400 font-semibold">Invited User</th>
-                  <th className="text-center px-4 py-3 text-slate-400 font-semibold">Code</th>
-                  <th className="text-center px-4 py-3 text-slate-400 font-semibold">Status</th>
-                  <th className="text-center px-4 py-3 text-slate-400 font-semibold">Coins</th>
-                  <th className="text-right px-4 py-3 text-slate-400 font-semibold">Joined</th>
+                <tr className="border-b border-[rgb(var(--color-border))]">
+                  <th className="text-left px-4 py-3 text-[rgb(var(--color-text-tertiary))] font-semibold text-sm">Inviter</th>
+                  <th className="text-left px-4 py-3 text-[rgb(var(--color-text-tertiary))] font-semibold text-sm">Invited User</th>
+                  <th className="text-center px-4 py-3 text-[rgb(var(--color-text-tertiary))] font-semibold text-sm">Code</th>
+                  <th className="text-center px-4 py-3 text-[rgb(var(--color-text-tertiary))] font-semibold text-sm">Status</th>
+                  <th className="text-center px-4 py-3 text-[rgb(var(--color-text-tertiary))] font-semibold text-sm">Coins</th>
+                  <th className="text-right px-4 py-3 text-[rgb(var(--color-text-tertiary))] font-semibold text-sm">Joined</th>
                 </tr>
               </thead>
               <tbody>
                 {invites.length > 0 ? (
                   invites.slice(0, 20).map((invite) => (
-                    <tr key={invite.id} className="border-b border-slate-700 hover:bg-slate-700/30 transition">
-                      <td className="px-4 py-3 text-white">
-                        <code className="text-sm bg-slate-900 px-2 py-1 rounded">{invite.inviter_id.slice(0, 8)}</code>
+                    <tr key={invite.id} className="border-b border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-bg-tertiary))] apple-transition">
+                      <td className="px-4 py-3 text-[rgb(var(--color-text-primary))]">
+                        <code className="text-xs sm:text-sm bg-[rgb(var(--color-bg-secondary))] px-2 py-1 rounded">{invite.inviter_id.slice(0, 10)}</code>
                       </td>
-                      <td className="px-4 py-3 text-white">
-                        <code className="text-sm bg-slate-900 px-2 py-1 rounded">{invite.invited_user_id.slice(0, 8)}</code>
+                      <td className="px-4 py-3 text-[rgb(var(--color-text-primary))]">
+                        <code className="text-xs sm:text-sm bg-[rgb(var(--color-bg-secondary))] px-2 py-1 rounded">{invite.invited_user_id.slice(0, 10)}</code>
                       </td>
-                      <td className="px-4 py-3 text-center text-slate-300">
-                        <code className="text-sm bg-slate-900 px-2 py-1 rounded">{invite.invite_code}</code>
+                      <td className="px-4 py-3 text-center text-[rgb(var(--color-text-secondary))]">
+                        <code className="text-xs bg-[rgb(var(--color-bg-secondary))] px-2 py-1 rounded">{invite.invite_code}</code>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${
                             invite.active
-                              ? 'bg-green-500/20 text-green-300'
-                              : 'bg-red-500/20 text-red-300'
+                              ? 'bg-green-500/20 text-green-500'
+                              : 'bg-red-500/20 text-red-500'
                           }`}
                         >
-                          {invite.active ? 'Active' : 'Inactive'}
+                          {invite.active ? (
+                            <><FiCheckCircle className="w-3 h-3" /> Active</>
+                          ) : (
+                            <><FiUserX className="w-3 h-3" /> Inactive</>
+                          )}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center text-white font-medium">{invite.coins_earned}</td>
-                      <td className="px-4 py-3 text-right text-slate-300 text-sm">
+                      <td className="px-4 py-3 text-center text-[rgb(var(--color-text-primary))] font-medium">
+                        {invite.coins_earned} 🪙
+                      </td>
+                      <td className="px-4 py-3 text-right text-[rgb(var(--color-text-secondary))] text-xs sm:text-sm">
                         {new Date(invite.joined_at).toLocaleDateString()}
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-4 py-3 text-center text-slate-400">
-                      No invitations yet
+                    <td colSpan={6} className="px-4 py-8 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <FiUserX className="w-8 h-8 text-[rgb(var(--color-text-tertiary))]" />
+                        <span className="text-[rgb(var(--color-text-tertiary))]">No invitations yet</span>
+                      </div>
                     </td>
                   </tr>
                 )}

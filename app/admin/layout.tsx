@@ -8,7 +8,7 @@ import Image from 'next/image';
 import {
     FiHome, FiFileText, FiLogOut, FiGlobe, FiMenu, FiX,
     FiUsers, FiMessageSquare, FiBarChart2, FiMic, FiDollarSign,
-    FiSun, FiMoon, FiActivity
+    FiSun, FiMoon, FiActivity, FiUserPlus
 } from 'react-icons/fi';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -138,6 +138,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresCasinoAccess: true, // Casino role or full access
         },
         {
+            name: 'Invite System',
+            href: '/admin/casino/economy/invites',
+            icon: <FiUserPlus className="w-5 h-5" />,
+            requiresFullAccess: true, // Admin only
+            requiresModeratorAccess: false,
+            requiresCasinoAccess: false,
+        },
+        {
             name: 'Mod Stats',
             href: '/admin/mods-stats',
             icon: <FiUsers className="w-5 h-5" />,
@@ -211,7 +219,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             return pathname.startsWith('/admin/dashboard/applications');
         }
         if (href === '/admin/casino') {
-            return pathname.startsWith('/admin/casino');
+            return pathname === '/admin/casino';
+        }
+        if (href === '/admin/casino/economy/invites') {
+            return pathname.startsWith('/admin/casino/economy/invites');
         }
         if (href === '/admin/mods-stats') {
             return pathname.startsWith('/admin/mods-stats');
