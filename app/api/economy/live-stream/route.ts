@@ -111,22 +111,33 @@ async function fetchLiveData() {
     LIMIT 100
   `, [GUILD_ID]);
 
-  // Staged VC progress (not in VC) - aggregate by user to avoid duplicates
+  // Get category IDs for active users (to exclude only their active category)
+  const activeCategoryMap = new Map<string, string>();
+  for (const sess of activeSessions.rows) {
+    activeCategoryMap.set(sess.user_id, sess.category_id);
+  }
+
+  // Staged VC progress - show per-category, exclude only if user is active in THAT category
   const stagedVcProgress = await queryBotDb(`
     SELECT evp.user_id,
-           SUM(evp.accumulated_seconds) as total_seconds,
+           evp.category_id,
+           evp.accumulated_seconds,
            duc.username, duc.display_name, duc.avatar_url,
-           STRING_AGG(DISTINCT COALESCE(ecr.category_name, evp.category_id), ', ' ORDER BY COALESCE(ecr.category_name, evp.category_id)) as categories
+           COALESCE(ecr.category_name, evp.category_id) as category_name
     FROM economy_vc_progress evp
     LEFT JOIN discord_user_cache duc ON duc.user_id = evp.user_id
     LEFT JOIN economy_category_rewards ecr ON ecr.guild_id = evp.guild_id AND ecr.category_id = evp.category_id
     WHERE evp.guild_id = $1 
       AND evp.accumulated_seconds > 0
-      AND evp.user_id != ALL($2)
-    GROUP BY evp.user_id, duc.username, duc.display_name, duc.avatar_url
-    ORDER BY total_seconds DESC
-    LIMIT 100
-  `, [GUILD_ID, activeUserIds.length > 0 ? activeUserIds : ['__none__']]);
+    ORDER BY evp.accumulated_seconds DESC
+    LIMIT 200
+  `, [GUILD_ID]);
+
+  // Filter out entries where user is active in that specific category
+  const filteredStaged = stagedVcProgress.rows.filter((row: any) => {
+    const activeCategory = activeCategoryMap.get(row.user_id);
+    return !activeCategory || activeCategory !== row.category_id;
+  });
 
   // Today's stats - use UTC date for consistency
   const todayStats = await queryBotDb(`
@@ -233,12 +244,13 @@ async function fetchLiveData() {
         reason: a.reason,
         time: a.created_at
       })),
-      staged: stagedVcProgress.map((p: any) => ({
+      staged: filteredStaged.map((p: any) => ({
         id: p.user_id,
         name: p.display_name || p.username || p.user_id,
         avatar: p.avatar_url,
-        seconds: p.total_seconds,
-        categories: p.categories || 'Unknown'
+        seconds: p.accumulated_seconds,
+        category: p.category_name || 'Unknown',
+        categoryId: p.category_id
       }))
     },
     messages: {

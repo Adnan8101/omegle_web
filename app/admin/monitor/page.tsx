@@ -628,18 +628,18 @@ function StagedPanel({ users, formatDuration, buildAvatarUrl }: any) {
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border))]">
         <h3 className="font-semibold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
           <FiCpu className="text-yellow-400" />
-          Credits Available (Not in VC)
+          Credits Available (Per Category)
         </h3>
       </div>
       <div className="max-h-[250px] overflow-y-auto">
         <div className="divide-y divide-[rgb(var(--color-border))]">
-          {users.slice(0, 15).map((user: any) => (
-            <div key={user.id} className="px-4 py-2 flex items-center gap-2">
+          {users.slice(0, 30).map((user: any, idx: number) => (
+            <div key={`${user.id}-${user.categoryId}-${idx}`} className="px-4 py-2 flex items-center gap-2">
               <img src={buildAvatarUrl(user.id, user.avatar, '0', 24)} alt={user.name} className="w-5 h-5 rounded-full" />
               <div className="flex-1 min-w-0">
                 <div className="text-sm truncate">{user.name}</div>
                 <div className="text-xs text-[rgb(var(--color-text-tertiary))] truncate">
-                  {user.categories}
+                  {user.category}
                 </div>
               </div>
               <span className="text-sm font-medium text-yellow-400">{formatDuration(user.seconds)}</span>
