@@ -17,12 +17,11 @@ interface EconomyConfig {
   msg_ozy_amount: number;
   min_message_length: number;
   message_cooldown: number;
-  daily_message_cap: number;
   minutes_per_point: number;
   vc_ozy_amount: number;
-  daily_voice_cap: number;
   require_two_members: number | boolean; // Allow both for backwards compatibility
   ignore_self_muted: boolean;
+  ignore_deafened: boolean;
   currency_name: string;
   currency_emoji: string;
   leaderboard_sync: boolean;
@@ -38,12 +37,10 @@ interface CategoryReward {
   vcEnabled: boolean;
   vcMinutesPerPoint: number;
   vcOzyAmount?: number;
-  vcDailyLimit?: number;
   vcMinMembers?: number;
   messageEnabled: boolean;
   messagesPerPoint: number;
   msgOzyAmount?: number;
-  msgDailyLimit?: number;
   msgMinLength?: number;
   msgCooldown?: number;
 }
@@ -597,20 +594,6 @@ export default function EconomyManagementPage() {
 
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Daily Limit (per user)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={config.daily_voice_cap}
-                  onChange={(e) => setConfig({ ...config, daily_voice_cap: parseInt(e.target.value) || 100 })}
-                  className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                  placeholder="100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Minimum Members in VC
                 </label>
                 <input
@@ -622,11 +605,51 @@ export default function EconomyManagementPage() {
                   placeholder="2"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Ignore Muted Users
+                </label>
+                <button
+                  onClick={() => setConfig({ ...config, ignore_self_muted: !config.ignore_self_muted })}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                    config.ignore_self_muted
+                      ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                      : 'bg-green-500/10 border-green-500/30 text-green-500'
+                  }`}
+                >
+                  <span className="font-medium">{config.ignore_self_muted ? 'Not Counting Muted' : 'Counting Muted'}</span>
+                  {config.ignore_self_muted ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+                </button>
+                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                  {config.ignore_self_muted ? 'Muted users will NOT earn coins' : 'Muted users will still earn coins'}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Ignore Deafened Users
+                </label>
+                <button
+                  onClick={() => setConfig({ ...config, ignore_deafened: !config.ignore_deafened })}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                    config.ignore_deafened
+                      ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                      : 'bg-green-500/10 border-green-500/30 text-green-500'
+                  }`}
+                >
+                  <span className="font-medium">{config.ignore_deafened ? 'Not Counting Deafened' : 'Counting Deafened'}</span>
+                  {config.ignore_deafened ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+                </button>
+                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                  {config.ignore_deafened ? 'Deafened users will NOT earn coins' : 'Deafened users will still earn coins'}
+                </p>
+              </div>
             </div>
             
             <div className="mt-4 p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
               <p className="text-sm text-purple-300">
-                <strong>How it works:</strong> Time accumulates across sessions. If a user stays {config.minutes_per_point} min total (even across multiple joins), they earn {config.vc_ozy_amount || 1} {config.currency_name}. Progress resets daily.
+                <strong>How it works:</strong> Time accumulates across sessions. When a user reaches {config.minutes_per_point} min total (even across multiple joins), they earn {config.vc_ozy_amount || 1} {config.currency_name} and progress continues.
               </p>
             </div>
           </div>
@@ -707,19 +730,6 @@ export default function EconomyManagementPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Daily Limit (per user)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={config.daily_message_cap}
-                  onChange={(e) => setConfig({ ...config, daily_message_cap: parseInt(e.target.value) || 100 })}
-                  className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                  placeholder="100"
-                />
-              </div>
             </div>
             
             <div className="mt-4 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
@@ -852,12 +862,10 @@ export default function EconomyManagementPage() {
                             vcEnabled: true,
                             messageEnabled: true,
                             vcMinutesPerPoint: config?.minutes_per_point || 1,
-                            vcDailyLimit: config?.daily_voice_cap || 100,
                             vcMinMembers: typeof config?.require_two_members === 'boolean' 
                               ? (config.require_two_members ? 2 : 1) 
                               : (config?.require_two_members || 2),
                             messagesPerPoint: config?.messages_per_point || 25,
-                            msgDailyLimit: config?.daily_message_cap || 100,
                             msgMinLength: config?.min_message_length || 5,
                             msgCooldown: config?.message_cooldown || 5
                           });
@@ -976,21 +984,6 @@ export default function EconomyManagementPage() {
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                                Daily Limit
-                              </label>
-                              <input
-                                type="number"
-                                min="1"
-                                value={newCategoryReward.vcDailyLimit || 100}
-                                onChange={(e) => setNewCategoryReward({
-                                  ...newCategoryReward,
-                                  vcDailyLimit: parseInt(e.target.value) || 100
-                                })}
-                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                                 Min Members
                               </label>
                               <input
@@ -1077,21 +1070,6 @@ export default function EconomyManagementPage() {
                                 className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
                               />
                             </div>
-                            <div>
-                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                                Daily Limit
-                              </label>
-                              <input
-                                type="number"
-                                min="1"
-                                value={newCategoryReward.msgDailyLimit || 100}
-                                onChange={(e) => setNewCategoryReward({
-                                  ...newCategoryReward,
-                                  msgDailyLimit: parseInt(e.target.value) || 100
-                                })}
-                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                              />
-                            </div>
                           </div>
                           <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
                             Users earn {newCategoryReward.msgOzyAmount || 1} {config?.currency_name || 'Ozy'} after {newCategoryReward.messagesPerPoint || 25} messages (accumulates)
@@ -1163,11 +1141,9 @@ export default function EconomyManagementPage() {
                                   messageEnabled: reward.messageEnabled,
                                   vcMinutesPerPoint: reward.vcMinutesPerPoint,
                                   vcOzyAmount: reward.vcOzyAmount,
-                                  vcDailyLimit: reward.vcDailyLimit,
                                   vcMinMembers: reward.vcMinMembers,
                                   messagesPerPoint: reward.messagesPerPoint,
                                   msgOzyAmount: reward.msgOzyAmount,
-                                  msgDailyLimit: reward.msgDailyLimit,
                                   msgMinLength: reward.msgMinLength,
                                   msgCooldown: reward.msgCooldown
                                 });
