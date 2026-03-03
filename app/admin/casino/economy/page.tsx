@@ -599,10 +599,13 @@ export default function EconomyManagementPage() {
                 <input
                   type="number"
                   min="1"
-                  value={typeof config.require_two_members === 'boolean' ? (config.require_two_members ? 2 : 1) : config.require_two_members}
-                  onChange={(e) => setConfig({ ...config, require_two_members: parseInt(e.target.value) || 2 })}
+                  value={typeof config.require_two_members === 'boolean' ? (config.require_two_members ? 2 : 1) : (config.require_two_members || 1)}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    setConfig({ ...config, require_two_members: !isNaN(value) && value >= 1 ? value : 1 });
+                  }}
                   className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                  placeholder="2"
+                  placeholder="1"
                 />
               </div>
 
