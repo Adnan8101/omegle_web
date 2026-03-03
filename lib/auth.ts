@@ -4,7 +4,7 @@ import { checkUserPermissions, UserPermissions } from "./permissions";
 import { prismaBot } from "./prismaBot";
 
 // Cache permission checks to avoid hitting Discord API on every request
-const ACCESS_CHECK_INTERVAL = 60 * 1000; // 1 minute (reduced for faster updates)
+const ACCESS_CHECK_INTERVAL = 10 * 1000; // 10 seconds (for immediate updates)
 const GUILD_ID = "910043773130661918";
 
 export const authOptions: NextAuthOptions = {

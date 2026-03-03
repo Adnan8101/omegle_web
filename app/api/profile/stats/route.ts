@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user?.id) {
+      console.error('[Profile API] Unauthorized - no session or user ID');
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.user.id;
+    console.log('[Profile API] Fetching stats for user:', userId);
 
     // Fetch economy data
     const economyData = await prismaBot.economyUser.findUnique({
@@ -221,11 +223,12 @@ export async function GET(request: NextRequest) {
       },
     };
 
+    console.log('[Profile API] Successfully returning stats');
     return NextResponse.json(stats);
   } catch (error) {
-    console.error("Error fetching user stats:", error);
+    console.error("[Profile API] Error fetching user stats:", error);
     return NextResponse.json(
-      { error: "Failed to fetch user stats" },
+      { error: "Failed to fetch user stats", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

@@ -80,6 +80,9 @@ export default function ProfilePage() {
       if (response.ok) {
         const data = await response.json();
         setStats(data);
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to fetch user stats:', response.status, errorData);
       }
     } catch (error) {
       console.error('Failed to fetch user stats:', error);
