@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
     `, [GUILD_ID]);
 
     // Filter out entries where user is active in that specific category
-    const filteredStaged = stagedVcProgress.rows.filter((row: any) => {
+    const filteredStaged = stagedVcProgress.filter((row: any) => {
       const activeCategory = activeCategoryMap.get(row.user_id);
       return !activeCategory || activeCategory !== row.category_id;
     });
