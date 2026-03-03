@@ -178,21 +178,35 @@ export async function checkUserPermissions(
       permissions: permissions.toString(),
       permissionsHex: '0x' + permissions.toString(16),
       casinoRoleIds: CASINO_ADMIN_ROLE_IDS,
+      adminRoleIds: ADMIN_ROLE_IDS,
     });
 
-// Check for owner/admin/manage server permissions FROM DISCORD
+    // Check for owner/admin/manage server permissions FROM DISCORD
     const isAdmin = (permissions & PERMISSIONS.ADMINISTRATOR) !== 0n;
     const hasManageServer = (permissions & PERMISSIONS.MANAGE_GUILD) !== 0n;
     
     // Also check if user has server owner indicator (member.owner field)
     const isOwner = member.owner === true;
 
-    // PRIORITY: Discord permissions take precedence
-    // Only check admin roles as fallback if permissions are not available
-    const hasAdminRole = (permissions === 0n) && roles.some((roleId) => ADMIN_ROLE_IDS.includes(roleId));
+    // Check for known admin role IDs (always check, not just as fallback)
+    const hasAdminRole = roles.some((roleId) => {
+      const isAdmin = ADMIN_ROLE_IDS.includes(roleId);
+      if (isAdmin) {
+        console.log(`✅ User has admin role: ${roleId}`);
+      }
+      return isAdmin;
+    });
 
-    // Full access PRIMARILY from Discord permissions
+    // Full access from Discord permissions OR known admin roles
     const hasFullAccess = isAdmin || hasManageServer || isOwner || hasAdminRole;
+
+    console.log("🔐 Permission results:", {
+      isAdmin,
+      hasManageServer,
+      isOwner,
+      hasAdminRole,
+      hasFullAccess,
+    });
 
     // Check for moderator roles (VC + chat + server stats)
     const hasModeratorRole = !hasFullAccess && roles.some((roleId) =>

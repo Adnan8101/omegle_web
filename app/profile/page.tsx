@@ -161,7 +161,7 @@ export default function ProfilePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            {session.user?.image && (
+            {session?.user?.image && (
               <Image
                 src={session.user.image}
                 alt="Profile"
@@ -172,7 +172,7 @@ export default function ProfilePage() {
             )}
             <div>
               <h1 className="text-3xl font-bold text-[rgb(var(--color-text-primary))]">
-                {session.user?.name || 'User'}
+                {session?.user?.name || 'User'}
               </h1>
               <p className="text-[rgb(var(--color-text-secondary))]">
                 Your Omeglee Statistics
