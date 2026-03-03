@@ -101,18 +101,20 @@ async function fetchLiveData() {
     LIMIT 100
   `, [GUILD_ID]);
 
-  // Staged VC progress (not in VC)
+  // Staged VC progress (not in VC) - aggregate by user to avoid duplicates
   const stagedVcProgress = await queryBotDb(`
-    SELECT evp.user_id, evp.category_id, evp.accumulated_seconds,
+    SELECT evp.user_id,
+           SUM(evp.accumulated_seconds) as total_seconds,
            duc.username, duc.display_name, duc.avatar_url,
-           ecr.category_name
+           STRING_AGG(DISTINCT COALESCE(ecr.category_name, evp.category_id), ', ' ORDER BY COALESCE(ecr.category_name, evp.category_id)) as categories
     FROM economy_vc_progress evp
     LEFT JOIN discord_user_cache duc ON duc.user_id = evp.user_id
     LEFT JOIN economy_category_rewards ecr ON ecr.guild_id = evp.guild_id AND ecr.category_id = evp.category_id
     WHERE evp.guild_id = $1 
       AND evp.accumulated_seconds > 0
       AND evp.user_id != ALL($2)
-    ORDER BY evp.accumulated_seconds DESC
+    GROUP BY evp.user_id, duc.username, duc.display_name, duc.avatar_url
+    ORDER BY total_seconds DESC
     LIMIT 100
   `, [GUILD_ID, activeUserIds.length > 0 ? activeUserIds : ['__none__']]);
 
@@ -207,9 +209,8 @@ async function fetchLiveData() {
         id: p.user_id,
         name: p.display_name || p.username || p.user_id,
         avatar: p.avatar_url,
-        seconds: p.accumulated_seconds,
-        category: p.category_id,
-        categoryName: p.category_name || (p.category_id === 'global' ? 'Global' : p.category_id)
+        seconds: p.total_seconds,
+        categories: p.categories || 'Unknown'
       }))
     },
     messages: {
@@ -241,6 +242,10 @@ async function fetchLiveData() {
       vcEarned: Number(todayStats[0]?.vc_earned || 0),
       msgEarned: Number(todayStats[0]?.msg_earned || 0),
       transactions: Number(todayStats[0]?.total_transactions || 0)
+    },
+    currency: {
+      name: config?.currency_name || 'Ozy',
+      emoji: config?.currency_emoji || '🪙'
     }
   };
 }

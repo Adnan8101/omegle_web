@@ -180,7 +180,7 @@ export default function LiveMonitorPage() {
   const vcActive = data?.vc?.active || [];
   const vcEarning = vcActive.filter((u: any) => u.isEarning);
   const msgActive = data?.messages?.active || [];
-  const currency = data?.economy?.emoji || '🪙';
+  const currency = data?.currency?.emoji || '🪙';
 
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 md:p-6">
@@ -615,7 +615,7 @@ function StagedPanel({ users, formatDuration, buildAvatarUrl }: any) {
               <div className="flex-1 min-w-0">
                 <div className="text-sm truncate">{user.name}</div>
                 <div className="text-xs text-[rgb(var(--color-text-tertiary))] truncate">
-                  {user.categoryName || 'Unknown Category'}
+                  {user.categories}
                 </div>
               </div>
               <span className="text-sm font-medium text-yellow-400">{formatDuration(user.seconds)}</span>
