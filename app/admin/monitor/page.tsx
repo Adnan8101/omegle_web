@@ -451,8 +451,13 @@ function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
                   <img src={buildAvatarUrl(user.id, user.avatar, '0', 64)} alt={user.name} className="w-10 h-10 rounded-full" />
                   <div className="flex-1">
                     <div className="font-medium text-[rgb(var(--color-text-primary))]">{user.name}</div>
+                    {user.category && (
+                      <div className="text-xs text-[rgb(var(--color-text-tertiary))] mt-0.5">
+                        Category: {user.category}
+                      </div>
+                    )}
                     <div className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-                      Staged messages: {user.staged}/{messagesPerPoint}
+                      Staged messages: {user.staged}/{user.threshold || messagesPerPoint}
                     </div>
                     <div className="mt-2">
                       <div className="flex justify-between text-xs mb-1">

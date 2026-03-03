@@ -65,7 +65,8 @@ async function fetchLiveData() {
   if (config?.advanced_mode) {
     categoryRewards = await queryBotDb(`
       SELECT category_id, category_name, vc_enabled, vc_minutes_per_point, 
-             vc_ozy_amount, vc_min_members
+             vc_ozy_amount, vc_min_members,
+             message_enabled, messages_per_point, msg_ozy_amount
       FROM economy_category_rewards
       WHERE guild_id = $1
     `, [GUILD_ID]);
@@ -102,7 +103,7 @@ async function fetchLiveData() {
 
   // Message progress
   const activeMsgProgress = await queryBotDb(`
-    SELECT emp.user_id, emp.accumulated_msgs,
+    SELECT emp.user_id, emp.category_id, emp.accumulated_msgs,
            duc.username, duc.display_name, duc.avatar_url
     FROM economy_message_progress emp
     LEFT JOIN discord_user_cache duc ON duc.user_id = emp.user_id
@@ -216,14 +217,25 @@ async function fetchLiveData() {
   });
 
   // Format message activity
-  const msgActivity = activeMsgProgress.map((p: any) => ({
-    id: p.user_id,
-    name: p.display_name || p.username || p.user_id,
-    avatar: p.avatar_url,
-    staged: p.accumulated_msgs,
-    threshold: config?.messages_per_point || 25,
-    progress: Math.round((p.accumulated_msgs / (config?.messages_per_point || 25)) * 100)
-  }));
+  const msgActivity = activeMsgProgress.map((p: any) => {
+    const catReward = categoryRewards.find((c: any) => c.category_id === p.category_id);
+    const useCategorySettings = config?.advanced_mode && p.category_id !== 'global' && !!catReward;
+    const threshold = useCategorySettings
+      ? (catReward.messages_per_point || 25)
+      : (config?.messages_per_point || 25);
+
+    return {
+      id: p.user_id,
+      name: p.display_name || p.username || p.user_id,
+      avatar: p.avatar_url,
+      categoryId: p.category_id,
+      category: useCategorySettings ? (catReward.category_name || p.category_id) : 'Default',
+      staged: p.accumulated_msgs,
+      threshold,
+      ozyAmount: useCategorySettings ? (catReward.msg_ozy_amount || 1) : (config?.msg_ozy_amount || 1),
+      progress: Math.min(100, Math.round((p.accumulated_msgs / threshold) * 100))
+    };
+  });
 
   return {
     config,
