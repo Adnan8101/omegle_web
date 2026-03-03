@@ -19,7 +19,7 @@ interface EconomyConfig {
   message_cooldown: number;
   minutes_per_point: number;
   vc_ozy_amount: number;
-  require_two_members: number | boolean; // Allow both for backwards compatibility
+  require_two_members: number;
   ignore_self_muted: boolean;
   ignore_deafened: boolean;
   currency_name: string;
@@ -599,10 +599,10 @@ export default function EconomyManagementPage() {
                 <input
                   type="number"
                   min="1"
-                  value={typeof config.require_two_members === 'boolean' ? (config.require_two_members ? 2 : 1) : (config.require_two_members || 1)}
+                  value={config.require_two_members}
                   onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    setConfig({ ...config, require_two_members: !isNaN(value) && value >= 1 ? value : 1 });
+                    const value = parseInt(e.target.value) || 1;
+                    setConfig({ ...config, require_two_members: value });
                   }}
                   className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
                   placeholder="1"
@@ -865,9 +865,7 @@ export default function EconomyManagementPage() {
                             vcEnabled: true,
                             messageEnabled: true,
                             vcMinutesPerPoint: config?.minutes_per_point || 1,
-                            vcMinMembers: typeof config?.require_two_members === 'boolean' 
-                              ? (config.require_two_members ? 2 : 1) 
-                              : (config?.require_two_members || 2),
+                            vcMinMembers: config?.require_two_members || 1,
                             messagesPerPoint: config?.messages_per_point || 25,
                             msgMinLength: config?.min_message_length || 5,
                             msgCooldown: config?.message_cooldown || 5

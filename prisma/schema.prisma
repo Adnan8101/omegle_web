@@ -33,7 +33,7 @@ model EconomyConfig {
   // Voice settings (global/simple mode)
   minutes_per_point     Int      @default(5)     // Minutes per cycle
   vc_ozy_amount         Int      @default(1)     // Coins per cycle
-  require_two_members   Int      @default(2)     // Min members in VC
+  require_two_members   Int      @default(1)     // Min members in VC
   ignore_afk_channel    Boolean  @default(true)
   ignore_self_muted     Boolean  @default(false)
   ignore_deafened       Boolean  @default(false)
