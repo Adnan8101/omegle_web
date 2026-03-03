@@ -65,7 +65,7 @@ async function fetchLiveData() {
   if (config?.advanced_mode) {
     categoryRewards = await queryBotDb(`
       SELECT category_id, category_name, vc_enabled, vc_minutes_per_point, 
-             vc_ozy_amount, vc_min_members,
+             vc_ozy_amount, vc_min_members, vc_count_bots,
              message_enabled, messages_per_point, msg_ozy_amount
       FROM economy_category_rewards
       WHERE guild_id = $1
@@ -167,13 +167,16 @@ async function fetchLiveData() {
     const ozyAmount = isAdvanced ? (catReward.vc_ozy_amount || 1) : (config?.vc_ozy_amount || 1);
     const vcEnabled = isAdvanced ? catReward.vc_enabled : true;
     const minMembers = isAdvanced ? (catReward.vc_min_members || 1) : (config?.require_two_members || 1);
+    const countBots = isAdvanced ? (catReward.vc_count_bots ?? false) : (config?.count_bots ?? false);
 
     const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
     const thresholdSeconds = minutesPerPoint * 60;
     
     // Check member count
     const currentMemberCount = memberCountMap.get(session.channel_id) || 1;
-    const hasEnoughMembers = currentMemberCount >= minMembers;
+    // voice_tracking table only has non-bot users, so when countBots is enabled
+    // we avoid false negatives in the dashboard member-count gate.
+    const hasEnoughMembers = countBots ? true : currentMemberCount >= minMembers;
     
     // Calculate real-time cycle progress
     // Bot syncs every 10s, so estimate elapsed time since last sync
@@ -205,7 +208,7 @@ async function fetchLiveData() {
       isBlacklisted,
       memberCount: currentMemberCount,
       minMembers: minMembers,
-      trackingDisabled: !hasEnoughMembers,
+      trackingDisabled: !hasEnoughMembers && !countBots,
       totalProgress: liveProgress, // Real-time cycle progress
       progress: progressPercent,
       threshold: thresholdSeconds,
