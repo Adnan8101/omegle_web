@@ -169,7 +169,7 @@ export async function checkUserPermissions(
 
     // Check for view-only/trail mod roles (only if not already moderator or full access)
     const hasViewOnlyRole = !hasFullAccess && !hasModeratorRole && roles.some((roleId) =>
-      TRAIL_MOD_ROLE_IDS.includes(roleId)
+      VIEW_ONLY_ROLE_IDS.includes(roleId)
     );
 
     // Check for casino admin roles
