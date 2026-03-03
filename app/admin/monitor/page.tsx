@@ -379,12 +379,12 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
                     <div className="flex items-center gap-4 mt-2 text-xs text-[rgb(var(--color-text-tertiary))]">
                       <span className="flex items-center gap-1">
                         <FiClock />
-                        {formatDuration(user.duration)}
+                        {formatDuration(user.duration)} session
                       </span>
                       <span>Rate: {user.rate}</span>
                       {user.staged > 0 && (
-                        <span className="text-yellow-400">
-                          ⚡ {formatDuration(user.staged)} credits consumed
+                        <span className="text-emerald-400">
+                          +{formatDuration(user.staged)} saved
                         </span>
                       )}
                     </div>
@@ -392,14 +392,14 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
                     {user.isEarning && (
                       <div className="mt-2">
                         <div className="flex justify-between text-xs mb-1">
-                          <span>Progress to next reward</span>
+                          <span>Cycle: {formatDuration(user.totalProgress || 0)} / {formatDuration(user.threshold)}</span>
                           <span>{user.progress}%</span>
                         </div>
                         <div className="w-full h-2 bg-[rgb(var(--color-bg-primary))] rounded-full overflow-hidden">
                           <div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all" style={{ width: `${user.progress}%` }} />
                         </div>
                         <div className="flex justify-between text-xs mt-1 text-[rgb(var(--color-text-tertiary))]">
-                          <span>Next in: {formatDuration(user.nextIn)}</span>
+                          <span>Next {user.ozyAmount || 1} coin(s) in: {formatDuration(user.nextIn)}</span>
                         </div>
                       </div>
                     )}

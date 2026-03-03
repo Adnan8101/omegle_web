@@ -144,8 +144,13 @@ async function fetchLiveData() {
     const vcEnabled = isAdvanced ? catReward.vc_enabled : true;
 
     const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
+    const stagedSeconds = userProg?.accumulated_seconds || 0;
     const thresholdSeconds = minutesPerPoint * 60;
-    const progressPercent = Math.round((sessionDuration % thresholdSeconds) / thresholdSeconds * 100);
+    
+    // Total progress = staged time (from DB) + current session time
+    const totalProgress = stagedSeconds + sessionDuration;
+    const progressInCurrentCycle = totalProgress % thresholdSeconds;
+    const progressPercent = Math.round((progressInCurrentCycle / thresholdSeconds) * 100);
     
     return {
       id: session.user_id,
@@ -159,11 +164,13 @@ async function fetchLiveData() {
       deafened: session.was_deafened,
       isEarning: !isBlacklisted && vcEnabled && (config?.enabled ?? false),
       isBlacklisted,
-      staged: userProg?.accumulated_seconds || 0,
+      staged: stagedSeconds, // Time loaded from DB when joined
+      totalProgress: progressInCurrentCycle, // Combined progress in current cycle
       progress: progressPercent,
       threshold: thresholdSeconds,
-      nextIn: thresholdSeconds - (sessionDuration % thresholdSeconds),
+      nextIn: thresholdSeconds - progressInCurrentCycle,
       rate: `${minutesPerPoint}m = ${ozyAmount}`,
+      ozyAmount,
       mode: isAdvanced ? 'category' : 'global'
     };
   });

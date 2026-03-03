@@ -162,12 +162,13 @@ export async function GET(request: NextRequest) {
       const vcEnabled = isAdvanced ? catReward.vc_enabled : true;
 
       const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
-      
-      // CREDITS SYSTEM: Credits are consumed when user joins (join time is offset)
-      // So sessionDuration already includes consumed credits
-      // Always show staged: 0 for active users (credits already applied)
+      const stagedSeconds = userProg?.accumulated_seconds || 0;
       const thresholdSeconds = minutesPerPoint * 60;
-      const progressPercent = Math.round((sessionDuration % thresholdSeconds) / thresholdSeconds * 100);
+      
+      // Total progress = staged time (from DB) + current session time
+      const totalProgress = stagedSeconds + sessionDuration;
+      const progressInCurrentCycle = totalProgress % thresholdSeconds;
+      const progressPercent = Math.round((progressInCurrentCycle / thresholdSeconds) * 100);
       
       return {
         id: session.user_id,
@@ -182,11 +183,13 @@ export async function GET(request: NextRequest) {
         // Earning details
         isEarning: !isBlacklisted && vcEnabled && (config?.enabled ?? false),
         isBlacklisted,
-        staged: 0, // Always 0 for active users - credits consumed on join
+        staged: stagedSeconds, // Time loaded from DB when joined
+        totalProgress: progressInCurrentCycle, // Combined progress in current cycle
         progress: progressPercent,
         threshold: thresholdSeconds,
-        nextIn: thresholdSeconds - (sessionDuration % thresholdSeconds),
+        nextIn: thresholdSeconds - progressInCurrentCycle,
         rate: `${minutesPerPoint}m = ${ozyAmount}`,
+        ozyAmount,
         mode: isAdvanced ? 'category' : 'global'
       };
     });
