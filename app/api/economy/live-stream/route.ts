@@ -113,7 +113,7 @@ async function fetchLiveData() {
 
   // Get category IDs for active users (to exclude only their active category)
   const activeCategoryMap = new Map<string, string>();
-  for (const sess of activeSessions.rows) {
+  for (const sess of activeVcSessions) {
     activeCategoryMap.set(sess.user_id, sess.category_id);
   }
 
@@ -134,7 +134,7 @@ async function fetchLiveData() {
   `, [GUILD_ID]);
 
   // Filter out entries where user is active in that specific category
-  const filteredStaged = stagedVcProgress.rows.filter((row: any) => {
+  const filteredStaged = stagedVcProgress.filter((row: any) => {
     const activeCategory = activeCategoryMap.get(row.user_id);
     return !activeCategory || activeCategory !== row.category_id;
   });
