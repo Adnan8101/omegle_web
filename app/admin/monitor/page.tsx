@@ -376,9 +376,6 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
                           <div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all" style={{ width: `${user.progress}%` }} />
                         </div>
                         <div className="flex justify-between text-xs mt-1 text-[rgb(var(--color-text-tertiary))]">
-                          <span>
-                            Today: {user.todayEarned}/{user.dailyLimit} {getEmojiDisplay(currency)}
-                          </span>
                           <span>Next in: {formatDuration(user.nextIn)}</span>
                         </div>
                       </div>
@@ -443,9 +440,6 @@ function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
                       <div className="w-full h-2 bg-[rgb(var(--color-bg-primary))] rounded-full overflow-hidden">
                         <div className="h-full bg-gradient-to-r from-purple-500 to-pink-400 transition-all" style={{ width: `${user.progress}%` }} />
                       </div>
-                      <div className="text-xs mt-1 text-[rgb(var(--color-text-tertiary))]">
-                        Today: {user.todayEarned}/{user.dailyLimit} {getEmojiDisplay(currency)}
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -504,12 +498,10 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
               <div className="text-sm text-[rgb(var(--color-text-secondary))]">Currently in: <span className="text-[rgb(var(--color-text-primary))]">{result.vc.channel}</span></div>
               <div className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">Joined: {formatTimeAgo(result.vc.joinedAt)}</div>
               <div className="text-sm text-yellow-400 mt-2">Staged: {formatDuration(result.vc.staged)}</div>
-              <div className="text-sm text-green-400">Today: {result.vc.todayEarned} {getEmojiDisplay(configEmoji)}</div>
             </div>
           ) : (
             <div className="text-[rgb(var(--color-text-tertiary))]">
               Not in voice
-              {result.vc.lastActive && <div className="text-xs mt-1">Last active: {result.vc.lastActive}</div>}
             </div>
           )}
         </div>
@@ -521,8 +513,6 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
           </h4>
           <div>
             <div className="text-sm text-yellow-400">Staged: {result.messages.staged} msgs</div>
-            <div className="text-sm text-green-400">Today: {result.messages.todayEarned} {getEmojiDisplay(configEmoji)}</div>
-            {result.messages.lastActive && <div className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">Last active: {result.messages.lastActive}</div>}
           </div>
         </div>
       </div>

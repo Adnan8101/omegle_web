@@ -159,7 +159,6 @@ export async function GET(request: NextRequest) {
       const isAdvanced = config?.advanced_mode && catReward;
       const minutesPerPoint = isAdvanced ? catReward.vc_minutes_per_point : (config?.minutes_per_point || 5);
       const ozyAmount = isAdvanced ? (catReward.vc_ozy_amount || 1) : (config?.vc_ozy_amount || 1);
-      const dailyLimit = isAdvanced ? (catReward.vc_daily_limit || 100) : (config?.daily_voice_cap || 100);
       const vcEnabled = isAdvanced ? catReward.vc_enabled : true;
 
       const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
@@ -169,7 +168,6 @@ export async function GET(request: NextRequest) {
       // Always show staged: 0 for active users (credits already applied)
       const thresholdSeconds = minutesPerPoint * 60;
       const progressPercent = Math.round((sessionDuration % thresholdSeconds) / thresholdSeconds * 100);
-      const todayEarned = userProg?.today_earned || 0;
       
       return {
         id: session.user_id,
@@ -189,8 +187,6 @@ export async function GET(request: NextRequest) {
         threshold: thresholdSeconds,
         nextIn: thresholdSeconds - (sessionDuration % thresholdSeconds),
         rate: `${minutesPerPoint}m = ${ozyAmount}`,
-        todayEarned,
-        dailyLimit,
         mode: isAdvanced ? 'category' : 'global'
       };
     });
@@ -202,9 +198,7 @@ export async function GET(request: NextRequest) {
       avatar: p.avatar_url,
       staged: p.accumulated_msgs,
       threshold: config?.messages_per_point || 25,
-      progress: Math.round((p.accumulated_msgs / (config?.messages_per_point || 25)) * 100),
-      todayEarned: p.today_earned,
-      dailyLimit: config?.daily_message_cap || 100
+      progress: Math.round((p.accumulated_msgs / (config?.messages_per_point || 25)) * 100)
     }));
 
     return NextResponse.json({
@@ -219,7 +213,6 @@ export async function GET(request: NextRequest) {
         config: {
           minutesPerPoint: config?.minutes_per_point || 5,
           ozyAmount: config?.vc_ozy_amount || 1,
-          dailyLimit: config?.daily_voice_cap || 100,
           minMembers: config?.require_two_members || 2
         },
         active: vcUsers,
@@ -236,15 +229,13 @@ export async function GET(request: NextRequest) {
           avatar: p.avatar_url,
           seconds: p.accumulated_seconds,
           category: p.category_id,
-          categoryName: p.category_name || (p.category_id === 'global' ? 'Global' : p.category_id),
-          todayEarned: p.today_earned
+          categoryName: p.category_name || (p.category_id === 'global' ? 'Global' : p.category_id)
         }))
       },
       messages: {
         config: {
           perPoint: config?.messages_per_point || 25,
           ozyAmount: config?.msg_ozy_amount || 1,
-          dailyLimit: config?.daily_message_cap || 100,
           cooldown: config?.message_cooldown || 5
         },
         active: msgActivity,
@@ -341,14 +332,10 @@ async function getUserHistory(userId: string, config: any, today: string) {
       inVc: activeVc.length > 0,
       channel: activeVc[0]?.channel_name,
       joinedAt: activeVc[0]?.joined_at,
-      staged: vc?.accumulated_seconds || 0,
-      todayEarned: vc?.today_earned || 0,
-      lastActive: vc?.last_date
+      staged: vc?.accumulated_seconds || 0
     },
     messages: {
-      staged: msg?.accumulated_msgs || 0,
-      todayEarned: msg?.today_earned || 0,
-      lastActive: msg?.last_date
+      staged: msg?.accumulated_msgs || 0
     },
     history: recentHistory.map((h: any) => ({
       amount: h.amount,
