@@ -34,6 +34,7 @@ model EconomyConfig {
   minutes_per_point     Int      @default(5)     // Minutes per cycle
   vc_ozy_amount         Int      @default(1)     // Coins per cycle
   require_two_members   Int      @default(1)     // Min members in VC
+  count_bots            Boolean  @default(false) // Include bots in member count
   ignore_afk_channel    Boolean  @default(true)
   ignore_self_muted     Boolean  @default(false)
   ignore_deafened       Boolean  @default(false)
@@ -106,6 +107,7 @@ model EconomyCategoryReward {
   vc_minutes_per_point Int    @default(5)       // Minutes per cycle
   vc_ozy_amount      Int      @default(1)       // Coins per cycle
   vc_min_members     Int      @default(1)       // Min members in VC
+  vc_count_bots      Boolean  @default(false)   // Include bots in member count
   
   // Message rewards
   message_enabled    Boolean  @default(true)

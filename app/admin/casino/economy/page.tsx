@@ -20,6 +20,7 @@ interface EconomyConfig {
   minutes_per_point: number;
   vc_ozy_amount: number;
   require_two_members: number;
+  count_bots: boolean;
   ignore_self_muted: boolean;
   ignore_deafened: boolean;
   currency_name: string;
@@ -38,6 +39,7 @@ interface CategoryReward {
   vcMinutesPerPoint: number;
   vcOzyAmount?: number;
   vcMinMembers?: number;
+  vcCountBots?: boolean;
   messageEnabled: boolean;
   messagesPerPoint: number;
   msgOzyAmount?: number;
@@ -611,6 +613,26 @@ export default function EconomyManagementPage() {
 
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Count Bots in Member Count
+                </label>
+                <button
+                  onClick={() => setConfig({ ...config, count_bots: !config.count_bots })}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                    config.count_bots
+                      ? 'bg-green-500/10 border-green-500/30 text-green-500'
+                      : 'bg-gray-500/10 border-gray-500/30 text-gray-400'
+                  }`}
+                >
+                  <span className="font-medium">{config.count_bots ? 'Bots Counted' : 'Bots Not Counted'}</span>
+                  {config.count_bots ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+                </button>
+                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                  {config.count_bots ? 'Bots are included in minimum member requirement' : 'Only real users count toward minimum members'}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Ignore Muted Users
                 </label>
                 <button
@@ -866,6 +888,7 @@ export default function EconomyManagementPage() {
                             messageEnabled: true,
                             vcMinutesPerPoint: config?.minutes_per_point || 1,
                             vcMinMembers: config?.require_two_members || 1,
+                            vcCountBots: config?.count_bots || false,
                             messagesPerPoint: config?.messages_per_point || 25,
                             msgMinLength: config?.min_message_length || 5,
                             msgCooldown: config?.message_cooldown || 5
@@ -997,6 +1020,24 @@ export default function EconomyManagementPage() {
                                 })}
                                 className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
                               />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                Count Bots
+                              </label>
+                              <button
+                                onClick={() => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  vcCountBots: !newCategoryReward.vcCountBots
+                                })}
+                                className={`w-full px-3 py-2 rounded-xl border transition-all ${
+                                  newCategoryReward.vcCountBots
+                                    ? 'bg-green-500/10 border-green-500/30 text-green-500'
+                                    : 'bg-gray-500/10 border-gray-500/30 text-gray-400'
+                                }`}
+                              >
+                                {newCategoryReward.vcCountBots ? 'Yes' : 'No'}
+                              </button>
                             </div>
                           </div>
                           <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
