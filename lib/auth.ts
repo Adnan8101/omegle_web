@@ -15,7 +15,8 @@ export const authOptions: NextAuthOptions = {
       authorization: { 
         params: { 
           scope: "identify guilds guilds.members.read",
-          prompt: "consent"
+          prompt: "consent",
+          permissions: "0" // Request all permissions to be included in response
         } 
       },
     }),

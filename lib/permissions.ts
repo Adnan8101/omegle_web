@@ -32,6 +32,15 @@ const CASINO_ADMIN_ROLE_IDS: string[] = [
   "1470329047262167040"  // Casino Role
 ];
 
+// Known administrator role IDs (as fallback if permissions field is not available)
+// These roles should have full admin access
+const ADMIN_ROLE_IDS: string[] = [
+  "910086064109133844",  // Common admin role pattern
+  "910922901107146823",  // Admin role
+  "1469439337635643504", // Another admin role
+  "1475568654560006165", // Tech support/admin role
+];
+
 // Moderator can access more than view-only (includes server stats)
 const MODERATOR_ACCESSIBLE_SECTIONS = [
   "vc_stats",
@@ -141,16 +150,33 @@ export async function checkUserPermissions(
       console.log("Member data fetched successfully via OAuth:", {
         hasRoles: Array.isArray(member.roles),
         roleCount: member.roles?.length || 0,
-        hasPermissions: !!member.permissions
+        hasPermissions: !!member.permissions,
+        permissionsValue: member.permissions,
+        permissionsType: typeof member.permissions
       });
     }
     
     const roles: string[] = member.roles || [];
-    const permissions = BigInt(member.permissions || 0);
+    // Handle both string and number permissions from Discord API
+    let permissions: bigint;
+    try {
+      if (typeof member.permissions === 'string') {
+        permissions = BigInt(member.permissions);
+      } else if (typeof member.permissions === 'number') {
+        permissions = BigInt(member.permissions);
+      } else {
+        permissions = 0n;
+      }
+    } catch (e) {
+      console.error("Failed to parse permissions:", member.permissions, e);
+      permissions = 0n;
+    }
 
     console.log("🔍 Checking permissions for user:", {
       roleCount: roles.length,
       roles: roles,
+      permissions: permissions.toString(),
+      permissionsHex: '0x' + permissions.toString(16),
       casinoRoleIds: CASINO_ADMIN_ROLE_IDS,
     });
 
@@ -158,9 +184,14 @@ export async function checkUserPermissions(
     const isAdmin = (permissions & PERMISSIONS.ADMINISTRATOR) !== 0n;
     const hasManageServer = (permissions & PERMISSIONS.MANAGE_GUILD) !== 0n;
 
-    // Note: Discord doesn't include owner in member.permissions directly,
-    // but admins typically have all permissions anyway
-    const hasFullAccess = isAdmin || hasManageServer;
+    // Also check if user has server owner indicator (member.owner field)
+    const isOwner = member.owner === true;
+
+    // Fallback: Check for known admin role IDs (in case permissions field is not available)
+    const hasAdminRole = roles.some((roleId) => ADMIN_ROLE_IDS.includes(roleId));
+
+    // Full access if admin, manage server, server owner, or has admin role
+    const hasFullAccess = isAdmin || hasManageServer || isOwner || hasAdminRole;
 
     // Check for moderator roles (VC + chat + server stats)
     const hasModeratorRole = !hasFullAccess && roles.some((roleId) =>
@@ -180,12 +211,18 @@ export async function checkUserPermissions(
     const hasCasinoAccess = hasFullAccess || hasCasinoRole;
 
     console.log("✅ Permission check results:", {
+      isOwner,
+      isAdmin,
+      hasManageServer,
+      hasAdminRole,
       hasFullAccess,
       hasModeratorRole,
       hasViewOnlyRole,
       hasCasinoRole,
       hasCasinoAccess,
-      matchedCasinoRole: roles.find(r => allCasinoRoles.includes(r))
+      matchedCasinoRole: roles.find(r => allCasinoRoles.includes(r)),
+      matchedViewOnlyRole: roles.find(r => VIEW_ONLY_ROLE_IDS.includes(r)),
+      matchedAdminRole: roles.find(r => ADMIN_ROLE_IDS.includes(r))
     });
 
     return {
@@ -194,7 +231,7 @@ export async function checkUserPermissions(
       hasViewOnlyAccess: hasViewOnlyRole,
       hasCasinoAccess,
       hasAnyAccess: hasFullAccess || hasModeratorRole || hasViewOnlyRole || hasCasinoAccess,
-      isOwner: false, // Can't reliably detect from member endpoint
+      isOwner,
       isAdmin,
       hasManageServer,
       roles,
