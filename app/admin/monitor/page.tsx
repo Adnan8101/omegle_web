@@ -573,6 +573,24 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
 }
 
 function RecentAwardsPanel({ title, awards, formatTimeAgo, buildAvatarUrl, getEmojiDisplay, currency }: any) {
+  // Aggregate awards by user
+  const aggregated = awards.reduce((acc: any, award: any) => {
+    const existing = acc.find((a: any) => a.id === award.id);
+    if (existing) {
+      existing.amount += award.amount;
+      // Keep the most recent time
+      if (new Date(award.time) > new Date(existing.time)) {
+        existing.time = award.time;
+      }
+    } else {
+      acc.push({ ...award });
+    }
+    return acc;
+  }, []);
+
+  // Sort by total amount descending
+  aggregated.sort((a: any, b: any) => b.amount - a.amount);
+
   return (
     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))]">
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border))]">
@@ -585,11 +603,11 @@ function RecentAwardsPanel({ title, awards, formatTimeAgo, buildAvatarUrl, getEm
         </h3>
       </div>
       <div className="max-h-[400px] overflow-y-auto">
-        {awards.length === 0 ? (
+        {aggregated.length === 0 ? (
           <div className="p-4 text-center text-[rgb(var(--color-text-tertiary))] text-sm">No recent awards</div>
         ) : (
           <div className="divide-y divide-[rgb(var(--color-border))]">
-            {awards.map((award: any, i: number) => (
+            {aggregated.map((award: any, i: number) => (
               <div key={i} className="px-4 py-2 flex items-center gap-2 hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors">
                 <img src={buildAvatarUrl(award.id, award.avatar, '0', 24)} alt={award.name} className="w-5 h-5 rounded-full" />
                 <span className="text-sm truncate flex-1">{award.name}</span>
