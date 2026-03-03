@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     let vcProgress: any[] = [];
     if (activeUserIds.length > 0) {
       vcProgress = await queryBotDb(`
-        SELECT user_id, category_id, accumulated_seconds, today_earned, last_date
+        SELECT user_id, category_id, accumulated_seconds
         FROM economy_vc_progress
         WHERE guild_id = $1 AND user_id = ANY($2)
       `, [GUILD_ID, activeUserIds]);
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     if (config?.advanced_mode) {
       categoryRewards = await queryBotDb(`
         SELECT category_id, category_name, vc_enabled, vc_minutes_per_point, 
-               vc_ozy_amount, vc_daily_limit, vc_min_members
+               vc_ozy_amount, vc_min_members
         FROM economy_category_rewards
         WHERE guild_id = $1
       `, [GUILD_ID]);
@@ -108,19 +108,19 @@ export async function GET(request: NextRequest) {
 
     // Get message progress for users actively earning
     const activeMsgProgress = await queryBotDb(`
-      SELECT emp.user_id, emp.accumulated_msgs, emp.today_earned, emp.last_date,
+      SELECT emp.user_id, emp.accumulated_msgs,
              duc.username, duc.display_name, duc.avatar_url
       FROM economy_message_progress emp
       LEFT JOIN discord_user_cache duc ON duc.user_id = emp.user_id
-      WHERE emp.guild_id = $1 AND emp.last_date = $2 AND emp.accumulated_msgs > 0
-      ORDER BY emp.today_earned DESC
+      WHERE emp.guild_id = $1 AND emp.accumulated_msgs > 0
+      ORDER BY emp.accumulated_msgs DESC
       LIMIT 100
-    `, [GUILD_ID, today]);
+    `, [GUILD_ID]);
 
     // Get all users with staged VC time (accumulated but not yet rewarded)
     // Exclude users currently in VC since their credits are already consumed
     const stagedVcProgress = await queryBotDb(`
-      SELECT evp.user_id, evp.category_id, evp.accumulated_seconds, evp.today_earned,
+      SELECT evp.user_id, evp.category_id, evp.accumulated_seconds,
              duc.username, duc.display_name, duc.avatar_url,
              ecr.category_name
       FROM economy_vc_progress evp
@@ -286,13 +286,13 @@ async function getUserHistory(userId: string, config: any, today: string) {
 
   // Get VC progress
   const vcProgress = await queryBotDb(`
-    SELECT category_id, accumulated_seconds, today_earned, last_date
+    SELECT category_id, accumulated_seconds
     FROM economy_vc_progress WHERE guild_id = $1 AND user_id = $2
   `, [GUILD_ID, userId]);
 
   // Get message progress
   const msgProgress = await queryBotDb(`
-    SELECT accumulated_msgs, today_earned, last_date
+    SELECT accumulated_msgs
     FROM economy_message_progress WHERE guild_id = $1 AND user_id = $2
   `, [GUILD_ID, userId]);
 
