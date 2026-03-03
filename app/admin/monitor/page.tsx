@@ -417,7 +417,9 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
 
 function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
   const users = data?.messages?.active || [];
-  const config = data?.messages?.config || {};
+  const config = data?.messages?.config || data?.messages?.settings || {};
+  const messagesPerPoint = config?.perPoint ?? config?.messagesPerPoint ?? 25;
+  const ozyAmount = config?.ozyAmount ?? 1;
 
   return (
     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))]">
@@ -427,14 +429,10 @@ function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
       </div>
       
       <div className="p-4 bg-[rgb(var(--color-bg-primary))] border-b border-[rgb(var(--color-border))]">
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 gap-4 text-sm">
           <div>
             <span className="text-[rgb(var(--color-text-tertiary))]">Rate:</span>
-            <p className="text-[rgb(var(--color-text-primary))]">{config.perPoint} msgs = {config.ozyAmount} {getEmojiDisplay(currency)}</p>
-          </div>
-          <div>
-            <span className="text-[rgb(var(--color-text-tertiary))]">Daily Limit:</span>
-            <p className="text-[rgb(var(--color-text-primary))]">{config.dailyLimit}</p>
+            <p className="text-[rgb(var(--color-text-primary))]">{messagesPerPoint} msgs = {ozyAmount} {getEmojiDisplay(currency)}</p>
           </div>
         </div>
       </div>
@@ -454,7 +452,7 @@ function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
                   <div className="flex-1">
                     <div className="font-medium text-[rgb(var(--color-text-primary))]">{user.name}</div>
                     <div className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-                      Staged messages: {user.staged}/{config.perPoint}
+                      Staged messages: {user.staged}/{messagesPerPoint}
                     </div>
                     <div className="mt-2">
                       <div className="flex justify-between text-xs mb-1">
