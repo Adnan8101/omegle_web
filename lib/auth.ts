@@ -71,7 +71,7 @@ export const authOptions: NextAuthOptions = {
       const nowMs = Date.now();
       if (!token.accessCheckedAt || nowMs - token.accessCheckedAt > ACCESS_CHECK_INTERVAL) {
         try {
-          // Fetch casino roles from database
+          // Fetch casino roles from database (with error handling)
           let casinoRoleIds: string[] = [];
           try {
             const casinoRoles = await prismaBot.casinoAdminRole.findMany({
@@ -80,7 +80,10 @@ export const authOptions: NextAuthOptions = {
             casinoRoleIds = casinoRoles.map((r: any) => r.role_id);
             console.log('[Auth] Fetched casino roles from DB:', casinoRoleIds);
           } catch (dbError) {
-            console.error('[Auth] Failed to fetch casino roles from DB:', dbError);
+            // Database error should not break authentication
+            console.error('[Auth] Failed to fetch casino roles from DB (non-fatal):', dbError);
+            // Use hardcoded fallback
+            casinoRoleIds = ["1470329047262167040"];
           }
           
           const permissions = await checkUserPermissions(token.accessToken, casinoRoleIds);
@@ -92,8 +95,11 @@ export const authOptions: NextAuthOptions = {
           });
           token.permissions = permissions;
           token.hasAccess = permissions.hasAnyAccess;
+          token.accessCheckedAt = nowMs;
         } catch (error) {
-          if (!token.accessCheckedAt) {
+          console.error('[Auth] Permission check failed:', error);
+          // Keep existing permissions if we have them, otherwise use defaults
+          if (!token.permissions || !token.accessCheckedAt) {
             token.permissions = {
               hasFullAccess: false,
               hasModeratorAccess: false,
@@ -107,8 +113,9 @@ export const authOptions: NextAuthOptions = {
             };
             token.hasAccess = false;
           }
+          // Still update the timestamp to avoid infinite retries
+          token.accessCheckedAt = nowMs;
         }
-        token.accessCheckedAt = nowMs;
       }
 
       return token;

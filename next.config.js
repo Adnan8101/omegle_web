@@ -7,6 +7,16 @@ const nextConfig = {
   images: {
     unoptimized: true, // For GIF animations
     formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.blob.vercel-storage.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.discordapp.com',
+      },
+    ],
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
