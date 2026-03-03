@@ -138,8 +138,8 @@ export async function GET(request: NextRequest) {
       SELECT 
         COUNT(DISTINCT CASE WHEN source = 'vc' THEN user_id END) as vc_users,
         COUNT(DISTINCT CASE WHEN source = 'message' THEN user_id END) as msg_users,
-        SUM(CASE WHEN source = 'vc' THEN amount ELSE 0 END) as vc_earned,
-        SUM(CASE WHEN source = 'message' THEN amount ELSE 0 END) as msg_earned,
+        COALESCE(SUM(CASE WHEN source = 'vc' THEN amount ELSE 0 END), 0) as vc_earned,
+        COALESCE(SUM(CASE WHEN source = 'message' THEN amount ELSE 0 END), 0) as msg_earned,
         COUNT(*) as total_transactions
       FROM economy_point_logs
       WHERE guild_id = $1 AND created_at >= $2::date AND amount > 0
@@ -254,11 +254,11 @@ export async function GET(request: NextRequest) {
         rate: `${c.vc_minutes_per_point}m = ${c.vc_ozy_amount || 1}`
       })),
       stats: {
-        vcUsers: parseInt(todayStats[0]?.vc_users || '0'),
-        msgUsers: parseInt(todayStats[0]?.msg_users || '0'),
-        vcEarned: parseInt(todayStats[0]?.vc_earned || '0'),
-        msgEarned: parseInt(todayStats[0]?.msg_earned || '0'),
-        transactions: parseInt(todayStats[0]?.total_transactions || '0')
+        vcUsers: Number(todayStats[0]?.vc_users || 0),
+        msgUsers: Number(todayStats[0]?.msg_users || 0),
+        vcEarned: Number(todayStats[0]?.vc_earned || 0),
+        msgEarned: Number(todayStats[0]?.msg_earned || 0),
+        transactions: Number(todayStats[0]?.total_transactions || 0)
       }
     });
   } catch (error) {
