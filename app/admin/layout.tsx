@@ -8,7 +8,7 @@ import Image from 'next/image';
 import {
     FiHome, FiFileText, FiLogOut, FiGlobe, FiMenu, FiX,
     FiUsers, FiMessageSquare, FiBarChart2, FiMic, FiDollarSign,
-    FiSun, FiMoon
+    FiSun, FiMoon, FiActivity
 } from 'react-icons/fi';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -109,6 +109,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             name: 'Dashboard',
             href: '/admin/dashboard',
             icon: <FiHome className="w-5 h-5" />,
+            requiresFullAccess: true,
+            requiresModeratorAccess: false,
+            requiresCasinoAccess: false,
+        },
+        {
+            name: 'Live Monitor',
+            href: '/admin/monitor',
+            icon: <FiActivity className="w-5 h-5" />,
             requiresFullAccess: true,
             requiresModeratorAccess: false,
             requiresCasinoAccess: false,

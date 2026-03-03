@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   FiFileText, FiClock, FiCheckCircle, FiXCircle,
-  FiChevronRight, FiLogOut
+  FiChevronRight, FiLogOut, FiActivity, FiDollarSign
 } from 'react-icons/fi';
 
 interface Stats {
@@ -194,6 +194,32 @@ export default function AdminDashboard() {
             <div className="min-w-0">
               <h3 className="font-semibold text-[rgb(var(--color-text-primary))] text-sm sm:text-base">Pending Applications</h3>
               <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-light truncate">Review applications awaiting decision</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/monitor"
+            className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] active:scale-95 rounded-apple border border-[rgb(var(--color-border))] apple-transition group shadow-apple-sm touch-manipulation"
+          >
+            <div className="p-2.5 sm:p-3 bg-[rgb(var(--color-bg-primary))] rounded-apple group-hover:scale-110 apple-transition shrink-0">
+              <FiActivity className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-[rgb(var(--color-text-primary))] text-sm sm:text-base">Live Economy Monitor</h3>
+              <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-light truncate">Real-time VC coins and activity tracking</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/casino"
+            className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] active:scale-95 rounded-apple border border-[rgb(var(--color-border))] apple-transition group shadow-apple-sm touch-manipulation"
+          >
+            <div className="p-2.5 sm:p-3 bg-[rgb(var(--color-bg-primary))] rounded-apple group-hover:scale-110 apple-transition shrink-0">
+              <FiDollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-[rgb(var(--color-text-primary))] text-sm sm:text-base">Casino / Shop</h3>
+              <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-light truncate">Manage economy, shop items, purchases</p>
             </div>
           </Link>
         </div>

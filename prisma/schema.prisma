@@ -15,16 +15,18 @@ datasource db {
 model EconomyConfig {
   guild_id              String   @id
   
-  // Message settings
-  messages_per_point    Int      @default(25)
+  // Message settings (global/simple mode)
+  messages_per_point    Int      @default(25)    // X messages = threshold
+  msg_ozy_amount        Int      @default(1)     // Ozy to award when threshold met
   min_message_length    Int      @default(5)
-  message_cooldown      Int      @default(5)
-  daily_message_cap     Int      @default(100)
+  message_cooldown      Int      @default(5)     // seconds between counted messages
+  daily_message_cap     Int      @default(100)   // max Ozy from messages per day
   
-  // Voice settings
-  minutes_per_point     Int      @default(1)
-  daily_voice_cap       Int      @default(100)
-  require_two_members   Boolean  @default(true)
+  // Voice settings (global/simple mode)
+  minutes_per_point     Int      @default(5)     // X minutes = threshold
+  vc_ozy_amount         Int      @default(1)     // Ozy to award when threshold met
+  daily_voice_cap       Int      @default(100)   // max Ozy from VC per day
+  require_two_members   Int      @default(2)     // Minimum members required in VC
   ignore_afk_channel    Boolean  @default(true)
   ignore_self_muted     Boolean  @default(false)
   afk_channel_id        String?
@@ -34,7 +36,7 @@ model EconomyConfig {
   currency_emoji        String   @default("🪙")
   
   // Leaderboard settings
-  leaderboard_sync      Boolean  @default(true)
+  leaderboard_sync      Boolean  @default(true)   // If true, spending reduces leaderboard. If false, only earnings count
   
   // Logs
   logs_channel_id       String?
@@ -151,11 +153,18 @@ model EconomyCategoryReward {
   
   // Voice rewards for this category
   vc_enabled         Boolean  @default(true)
-  vc_minutes_per_point Int    @default(1)
+  vc_minutes_per_point Int    @default(1)      // X minutes = 1 coin (renamed from amount)
+  vc_ozy_amount      Int      @default(1)      // How many Ozy to give when threshold met
+  vc_daily_limit     Int      @default(100)    // Daily cap per user
+  vc_min_members     Int      @default(2)      // Minimum members in VC
   
   // Message rewards for this category  
   message_enabled    Boolean  @default(true)
-  messages_per_point Int      @default(25)
+  messages_per_point Int      @default(25)     // X messages = 1 coin (threshold)
+  msg_ozy_amount     Int      @default(1)      // How many Ozy to give when threshold met
+  msg_daily_limit    Int      @default(100)    // Daily cap per user
+  msg_min_length     Int      @default(5)      // Min message length
+  msg_cooldown       Int      @default(5)      // Cooldown between messages in seconds
   
   created_at         DateTime @default(now())
   updated_at         DateTime @updatedAt
@@ -505,4 +514,178 @@ model Reminder {
 model GuildPrefix {
   guild_id String @id
   prefix   String @default("!")
+}
+
+// ===== VOICE TRACKING SYSTEM =====
+
+model VoiceTracking {
+  id                   String   @id @default(uuid())
+  guild_id             String
+  user_id              String
+  channel_id           String
+  joined_at            DateTime @default(now())
+  left_at              DateTime?
+  
+  // Time tracking in seconds
+  time_speaking        Int      @default(0) // Time with mic on
+  time_muted           Int      @default(0) // Time with mic muted
+  time_deafened        Int      @default(0) // Time deafened
+  time_listening       Int      @default(0) // Time not muted/deafened (active listening)
+  
+  // State tracking
+  was_muted            Boolean  @default(false)
+  was_deafened         Boolean  @default(false)
+  last_state_change    DateTime @default(now())
+
+  @@index([guild_id, user_id])
+  @@index([guild_id, channel_id])
+  @@map("voice_tracking")
+}
+
+model VoiceUserStats {
+  id                      String   @id @default(uuid())
+  guild_id                String
+  user_id                 String
+  
+  // Cumulative time in seconds
+  total_time_in_vc        Int      @default(0)
+  total_time_speaking     Int      @default(0)
+  total_time_muted        Int      @default(0)
+  total_time_deafened     Int      @default(0)
+  total_time_listening    Int      @default(0)
+  
+  // Session counts
+  total_sessions          Int      @default(0)
+  
+  // Stats
+  last_joined_at          DateTime?
+  updated_at              DateTime @updatedAt
+
+  @@unique([guild_id, user_id])
+  @@index([guild_id])
+  @@map("voice_user_stats")
+}
+
+// ===== ECONOMY PROGRESS TRACKING =====
+
+// Track partial progress for VC time per category (accumulation system)
+model EconomyVCProgress {
+  id                String   @id @default(uuid())
+  guild_id          String
+  user_id           String
+  category_id       String   // Category being tracked (or "global" for non-advanced mode)
+  
+  accumulated_seconds Int    @default(0)    // Total seconds accumulated towards next reward
+  today_earned      Int      @default(0)    // Ozy earned today in this category
+  last_date         String?                 // YYYY-MM-DD for daily reset
+  
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  @@unique([guild_id, user_id, category_id])
+  @@index([guild_id, user_id])
+  @@map("economy_vc_progress")
+}
+
+// Track partial progress for messages per category (accumulation system)
+model EconomyMessageProgress {
+  id                String   @id @default(uuid())
+  guild_id          String
+  user_id           String
+  category_id       String   // Category being tracked (or "global" for non-advanced mode)
+  
+  accumulated_msgs  Int      @default(0)    // Messages accumulated towards next reward
+  today_earned      Int      @default(0)    // Ozy earned today in this category  
+  last_message_at   DateTime?               // For cooldown tracking
+  last_date         String?                 // YYYY-MM-DD for daily reset
+  
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  @@unique([guild_id, user_id, category_id])
+  @@index([guild_id, user_id])
+  @@map("economy_message_progress")
+}
+
+// ===== DISCORD USER CACHE =====
+
+model DiscordUserCache {
+  user_id        String   @id
+  username       String
+  display_name   String
+  avatar_url     String?
+  global_name    String?
+  discriminator  String   @default("0")
+  in_guild       Boolean  @default(true)
+  roles          String?  // JSON array of role IDs
+  nickname       String?
+  joined_at      String?
+  updated_at     DateTime @updatedAt
+  created_at     DateTime @default(now())
+
+  @@index([username])
+  @@index([display_name])
+  @@map("discord_user_cache")
+}
+
+// ===== DISCORD CHANNEL CACHE =====
+
+model DiscordChannelCache {
+  channel_id     String   @id
+  guild_id       String
+  name           String
+  type           Int      @default(2)  // 0=text, 2=voice, 13=stage, etc.
+  parent_id      String?              // Category channel ID
+  parent_name    String?              // Category channel name
+  position       Int      @default(0)
+  is_deleted     Boolean  @default(false)
+  updated_at     DateTime @updatedAt
+  created_at     DateTime @default(now())
+
+  @@index([guild_id])
+  @@index([name])
+  @@map("discord_channel_cache")
+}
+
+// ===== VOICE LOGS =====
+
+model VoiceLog {
+  id                    String    @id @default(uuid())
+  guild_id              String
+  user_id               String
+  channel_id            String
+  channel_name          String?
+  joined_at             DateTime  @default(now())
+  left_at               DateTime?
+  duration_seconds      Int?
+  
+  // Activity tracking
+  mute_count            Int?      @default(0)
+  unmute_count          Int?      @default(0)
+  deaf_count            Int?      @default(0)
+  undeaf_count          Int?      @default(0)
+  video_on_count        Int?      @default(0)
+  video_off_count       Int?      @default(0)
+  screen_share_start    Int?      @default(0)
+  screen_share_stop     Int?      @default(0)
+  
+  // Session details
+  members_present       String?   // JSON array of member IDs with join/leave times
+  peak_member_count     Int?
+  first_joiner_id       String?
+  last_leaver_id        String?
+  join_order            Int?      // User's position in join order
+  leave_order           Int?      // User's position in leave order
+  
+  // Messages during session
+  messages_sent         Int?      @default(0)
+  
+  // Rejoin tracking
+  is_rejoin             Boolean?  @default(false)
+  rejoin_count          Int?      @default(0)
+
+  @@index([guild_id, user_id])
+  @@index([guild_id, channel_id])
+  @@index([joined_at])
+  @@map("voice_logs")
 }
