@@ -184,15 +184,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             return item.requiresCasinoAccess;
         }
         
-        // Check specific requirements
+        // Casino access users can see casino items
+        if (item.requiresCasinoAccess && perms?.hasCasinoAccess) {
+            return true;
+        }
+        
+        // Full access required items
         if (item.requiresFullAccess) {
-            return false; // Already handled above
+            return perms?.hasFullAccess;
         }
-        if (item.requiresCasinoAccess) {
-            return perms?.hasCasinoAccess;
-        }
+        
+        // Moderator access required items
         if (item.requiresModeratorAccess) {
-            return perms?.hasModeratorAccess;
+            return perms?.hasModeratorAccess || perms?.hasFullAccess;
         }
         
         // View-only and moderators can see non-restricted items
