@@ -58,13 +58,12 @@ export async function GET(request: NextRequest) {
     // Get VC progress for active users
     const activeUserIds = activeVcSessions.map((s: any) => s.user_id);
     
-    // Get member counts per channel (non-bot members only)
+    // Get member counts per channel
     const channelMemberCounts = await queryBotDb(`
-      SELECT vt.channel_id, COUNT(DISTINCT vt.user_id) as member_count
-      FROM voice_tracking vt
-      LEFT JOIN discord_user_cache duc ON duc.user_id = vt.user_id
-      WHERE vt.guild_id = $1 AND vt.left_at IS NULL AND (duc.bot IS NULL OR duc.bot = false)
-      GROUP BY vt.channel_id
+      SELECT channel_id, COUNT(DISTINCT user_id) as member_count
+      FROM voice_tracking
+      WHERE guild_id = $1 AND left_at IS NULL
+      GROUP BY channel_id
     `, [GUILD_ID]);
     
     const memberCountMap = new Map(channelMemberCounts.map((c: any) => [c.channel_id, Number(c.member_count)]));
