@@ -162,13 +162,12 @@ export async function GET(request: NextRequest) {
       const vcEnabled = isAdvanced ? catReward.vc_enabled : true;
 
       const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
-      const stagedSeconds = userProg?.accumulated_seconds || 0;
       const thresholdSeconds = minutesPerPoint * 60;
       
-      // Total progress = staged time (from DB) + current session time
-      const totalProgress = stagedSeconds + sessionDuration;
-      const progressInCurrentCycle = totalProgress % thresholdSeconds;
-      const progressPercent = Math.round((progressInCurrentCycle / thresholdSeconds) * 100);
+      // The DB accumulated_seconds is the current cycle progress
+      // Bot updates it every 10s: adds elapsed time, awards complete cycles, saves remainder
+      const cycleProgress = userProg?.accumulated_seconds || 0;
+      const progressPercent = Math.round((cycleProgress / thresholdSeconds) * 100);
       
       return {
         id: session.user_id,
@@ -183,11 +182,10 @@ export async function GET(request: NextRequest) {
         // Earning details
         isEarning: !isBlacklisted && vcEnabled && (config?.enabled ?? false),
         isBlacklisted,
-        staged: stagedSeconds, // Time loaded from DB when joined
-        totalProgress: progressInCurrentCycle, // Combined progress in current cycle
+        totalProgress: cycleProgress, // Current cycle progress from DB
         progress: progressPercent,
         threshold: thresholdSeconds,
-        nextIn: thresholdSeconds - progressInCurrentCycle,
+        nextIn: thresholdSeconds - cycleProgress,
         rate: `${minutesPerPoint}m = ${ozyAmount}`,
         ozyAmount,
         mode: isAdvanced ? 'category' : 'global'

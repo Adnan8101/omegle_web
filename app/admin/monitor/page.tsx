@@ -379,14 +379,9 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
                     <div className="flex items-center gap-4 mt-2 text-xs text-[rgb(var(--color-text-tertiary))]">
                       <span className="flex items-center gap-1">
                         <FiClock />
-                        {formatDuration(user.duration)} session
+                        {formatDuration(user.duration)}
                       </span>
                       <span>Rate: {user.rate}</span>
-                      {user.staged > 0 && (
-                        <span className="text-emerald-400">
-                          +{formatDuration(user.staged)} saved
-                        </span>
-                      )}
                     </div>
                     
                     {user.isEarning && (
