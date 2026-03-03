@@ -84,24 +84,24 @@ export async function GET(request: NextRequest) {
     `, [GUILD_ID]);
     const blacklistedChannelIds = new Set(blacklistedChannels.map((c: any) => c.channel_id));
 
-    // Get recent VC awards (last 30 minutes)
+    // Get recent VC awards (last 24 hours)
     const recentVcAwards = await queryBotDb(`
-      SELECT epl.user_id, epl.amount, epl.created_at, duc.username, duc.display_name, duc.avatar_url
+      SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
       FROM economy_point_logs epl
       LEFT JOIN discord_user_cache duc ON duc.user_id = epl.user_id
       WHERE epl.guild_id = $1 AND epl.source = 'vc' 
-        AND epl.created_at > NOW() - INTERVAL '30 minutes'
+        AND epl.created_at > NOW() - INTERVAL '24 hours'
       ORDER BY epl.created_at DESC
       LIMIT 50
     `, [GUILD_ID]);
 
-    // Get recent message awards (last 30 minutes)
+    // Get recent message awards (last 24 hours)
     const recentMsgAwards = await queryBotDb(`
-      SELECT epl.user_id, epl.amount, epl.created_at, duc.username, duc.display_name, duc.avatar_url
+      SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
       FROM economy_point_logs epl
       LEFT JOIN discord_user_cache duc ON duc.user_id = epl.user_id
       WHERE epl.guild_id = $1 AND epl.source = 'message'
-        AND epl.created_at > NOW() - INTERVAL '30 minutes'
+        AND epl.created_at > NOW() - INTERVAL '24 hours'
       ORDER BY epl.created_at DESC
       LIMIT 50
     `, [GUILD_ID]);
@@ -221,6 +221,7 @@ export async function GET(request: NextRequest) {
           name: a.display_name || a.username || a.user_id,
           avatar: a.avatar_url,
           amount: a.amount,
+          reason: a.reason,
           time: a.created_at
         })),
         staged: stagedVcProgress.map((p: any) => ({
@@ -244,6 +245,7 @@ export async function GET(request: NextRequest) {
           name: a.display_name || a.username || a.user_id,
           avatar: a.avatar_url,
           amount: a.amount,
+          reason: a.reason,
           time: a.created_at
         }))
       },

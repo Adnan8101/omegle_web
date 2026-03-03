@@ -575,18 +575,21 @@ function RecentAwardsPanel({ title, awards, formatTimeAgo, buildAvatarUrl, getEm
   return (
     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))]">
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border))]">
-        <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">{title}</h3>
+        <h3 className="font-semibold text-[rgb(var(--color-text-primary))] flex items-center justify-between">
+          <span>{title}</span>
+          <span className="text-xs text-[rgb(var(--color-text-tertiary))] font-normal">Last 24h • Top {awards.length}</span>
+        </h3>
       </div>
-      <div className="max-h-[250px] overflow-y-auto">
+      <div className="max-h-[400px] overflow-y-auto">
         {awards.length === 0 ? (
           <div className="p-4 text-center text-[rgb(var(--color-text-tertiary))] text-sm">No recent awards</div>
         ) : (
           <div className="divide-y divide-[rgb(var(--color-border))]">
-            {awards.slice(0, 10).map((award: any, i: number) => (
-              <div key={i} className="px-4 py-2 flex items-center gap-2">
+            {awards.map((award: any, i: number) => (
+              <div key={i} className="px-4 py-2 flex items-center gap-2 hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors">
                 <img src={buildAvatarUrl(award.id, award.avatar, '0', 24)} alt={award.name} className="w-5 h-5 rounded-full" />
                 <span className="text-sm truncate flex-1">{award.name}</span>
-                <span className="text-sm font-medium text-green-400">+{award.amount}</span>
+                <span className="text-sm font-medium text-green-400">+{award.amount} {getEmojiDisplay(currency)}</span>
                 <span className="text-xs text-[rgb(var(--color-text-tertiary))]">{formatTimeAgo(award.time)}</span>
               </div>
             ))}
