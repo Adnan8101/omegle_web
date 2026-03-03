@@ -178,7 +178,6 @@ export default function EconomyManagementPage() {
       const data = await res.json();
       if (res.ok) {
         setConfig(data.config);
-        setCategoryRewards(data.categoryRewards || []);
       }
     } catch (err) {
       console.error('Error fetching config:', err);
@@ -1188,6 +1187,7 @@ export default function EconomyManagementPage() {
                                   vcMinutesPerPoint: reward.vcMinutesPerPoint,
                                   vcOzyAmount: reward.vcOzyAmount,
                                   vcMinMembers: reward.vcMinMembers,
+                                  vcCountBots: reward.vcCountBots,
                                   messagesPerPoint: reward.messagesPerPoint,
                                   msgOzyAmount: reward.msgOzyAmount,
                                   msgMinLength: reward.msgMinLength,
