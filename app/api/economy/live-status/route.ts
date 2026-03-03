@@ -159,14 +159,12 @@ export async function GET(request: NextRequest) {
       const vcEnabled = isAdvanced ? catReward.vc_enabled : true;
 
       const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
-      const stagedSeconds = userProg?.accumulated_seconds || 0;
       
-      // CRITICAL: Add staged time to session duration for total progress
-      // Bot keeps staged time in database and adds it during calculations
-      // Website must do the same to show correct progress
-      const totalSeconds = stagedSeconds + sessionDuration;
+      // CREDITS SYSTEM: Credits are consumed when user joins (join time is offset)
+      // So sessionDuration already includes consumed credits
+      // Always show staged: 0 for active users (credits already applied)
       const thresholdSeconds = minutesPerPoint * 60;
-      const progressPercent = Math.round((totalSeconds % thresholdSeconds) / thresholdSeconds * 100);
+      const progressPercent = Math.round((sessionDuration % thresholdSeconds) / thresholdSeconds * 100);
       const todayEarned = userProg?.today_earned || 0;
       
       return {
@@ -182,10 +180,10 @@ export async function GET(request: NextRequest) {
         // Earning details
         isEarning: !isBlacklisted && vcEnabled && (config?.enabled ?? false),
         isBlacklisted,
-        staged: stagedSeconds, // Show current staged time from database
+        staged: 0, // Always 0 for active users - credits consumed on join
         progress: progressPercent,
         threshold: thresholdSeconds,
-        nextIn: thresholdSeconds - (totalSeconds % thresholdSeconds),
+        nextIn: thresholdSeconds - (sessionDuration % thresholdSeconds),
         rate: `${minutesPerPoint}m = ${ozyAmount}`,
         todayEarned,
         dailyLimit,
