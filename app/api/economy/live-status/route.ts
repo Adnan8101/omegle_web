@@ -84,24 +84,24 @@ export async function GET(request: NextRequest) {
     `, [GUILD_ID]);
     const blacklistedChannelIds = new Set(blacklistedChannels.map((c: any) => c.channel_id));
 
-    // Get recent VC awards (last 24 hours)
+    // Get recent VC awards (live - last 1 hour)
     const recentVcAwards = await queryBotDb(`
       SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
       FROM economy_point_logs epl
       LEFT JOIN discord_user_cache duc ON duc.user_id = epl.user_id
-      WHERE epl.guild_id = $1 AND epl.source = 'vc' 
-        AND epl.created_at > NOW() - INTERVAL '24 hours'
+      WHERE epl.guild_id = $1 AND epl.source = 'voice' 
+        AND epl.created_at > NOW() - INTERVAL '1 hour'
       ORDER BY epl.created_at DESC
       LIMIT 50
     `, [GUILD_ID]);
 
-    // Get recent message awards (last 24 hours)
+    // Get recent message awards (live - last 1 hour)
     const recentMsgAwards = await queryBotDb(`
       SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
       FROM economy_point_logs epl
       LEFT JOIN discord_user_cache duc ON duc.user_id = epl.user_id
       WHERE epl.guild_id = $1 AND epl.source = 'message'
-        AND epl.created_at > NOW() - INTERVAL '24 hours'
+        AND epl.created_at > NOW() - INTERVAL '1 hour'
       ORDER BY epl.created_at DESC
       LIMIT 50
     `, [GUILD_ID]);
@@ -136,14 +136,14 @@ export async function GET(request: NextRequest) {
     // Get today's stats
     const todayStats = await queryBotDb(`
       SELECT 
-        COUNT(DISTINCT CASE WHEN source = 'vc' THEN user_id END) as vc_users,
+        COUNT(DISTINCT CASE WHEN source = 'voice' THEN user_id END) as vc_users,
         COUNT(DISTINCT CASE WHEN source = 'message' THEN user_id END) as msg_users,
-        COALESCE(SUM(CASE WHEN source = 'vc' THEN amount ELSE 0 END), 0) as vc_earned,
+        COALESCE(SUM(CASE WHEN source = 'voice' THEN amount ELSE 0 END), 0) as vc_earned,
         COALESCE(SUM(CASE WHEN source = 'message' THEN amount ELSE 0 END), 0) as msg_earned,
         COUNT(*) as total_transactions
       FROM economy_point_logs
-      WHERE guild_id = $1 AND created_at >= $2::date AND amount > 0
-    `, [GUILD_ID, today]);
+      WHERE guild_id = $1 AND created_at >= CURRENT_DATE AND amount > 0
+    `, [GUILD_ID]);
 
     // Format VC users with detailed earning info
     const vcUsers = activeVcSessions.map((session: any) => {

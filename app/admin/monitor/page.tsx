@@ -572,7 +572,10 @@ function RecentAwardsPanel({ title, awards, formatTimeAgo, buildAvatarUrl, getEm
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border))]">
         <h3 className="font-semibold text-[rgb(var(--color-text-primary))] flex items-center justify-between">
           <span>{title}</span>
-          <span className="text-xs text-[rgb(var(--color-text-tertiary))] font-normal">Last 24h • Top {awards.length}</span>
+          <span className="text-xs text-green-400 font-normal flex items-center gap-1">
+            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            Live
+          </span>
         </h3>
       </div>
       <div className="max-h-[400px] overflow-y-auto">
