@@ -384,6 +384,12 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
                       <span>Rate: {user.rate}</span>
                     </div>
                     
+                    {user.trackingDisabled && (
+                      <div className="mt-2 p-2 bg-orange-500/10 border border-orange-500/30 rounded text-xs text-orange-400">
+                        ⚠️ Tracking disabled: {user.memberCount}/{user.minMembers} members (min: {user.minMembers})
+                      </div>
+                    )}
+                    
                     {user.isEarning && (
                       <div className="mt-2">
                         <div className="flex justify-between text-xs mb-1">

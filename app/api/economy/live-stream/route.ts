@@ -40,6 +40,17 @@ async function fetchLiveData() {
 
   const activeUserIds = activeVcSessions.map((s: any) => s.user_id);
   
+  // Get member counts per channel (non-bot members only)
+  const channelMemberCounts = await queryBotDb(`
+    SELECT vt.channel_id, COUNT(DISTINCT vt.user_id) as member_count
+    FROM voice_tracking vt
+    LEFT JOIN discord_user_cache duc ON duc.user_id = vt.user_id
+    WHERE vt.guild_id = $1 AND vt.left_at IS NULL AND (duc.bot IS NULL OR duc.bot = false)
+    GROUP BY vt.channel_id
+  `, [GUILD_ID]);
+  
+  const memberCountMap = new Map(channelMemberCounts.map((c: any) => [c.channel_id, Number(c.member_count)]));
+  
   // Get VC progress
   let vcProgress: any[] = [];
   if (activeUserIds.length > 0) {
@@ -144,9 +155,14 @@ async function fetchLiveData() {
     const minutesPerPoint = isAdvanced ? catReward.vc_minutes_per_point : (config?.minutes_per_point || 5);
     const ozyAmount = isAdvanced ? (catReward.vc_ozy_amount || 1) : (config?.vc_ozy_amount || 1);
     const vcEnabled = isAdvanced ? catReward.vc_enabled : true;
+    const minMembers = isAdvanced ? (catReward.vc_min_members || 1) : (config?.require_two_members || 1);
 
     const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
     const thresholdSeconds = minutesPerPoint * 60;
+    
+    // Check member count
+    const currentMemberCount = memberCountMap.get(session.channel_id) || 1;
+    const hasEnoughMembers = currentMemberCount >= minMembers;
     
     // The DB accumulated_seconds is the current cycle progress
     // Bot updates it every 10s: adds elapsed time, awards complete cycles, saves remainder
@@ -164,8 +180,11 @@ async function fetchLiveData() {
       duration: sessionDuration,
       muted: session.was_muted,
       deafened: session.was_deafened,
-      isEarning: !isBlacklisted && vcEnabled && (config?.enabled ?? false),
+      isEarning: !isBlacklisted && vcEnabled && (config?.enabled ?? false) && hasEnoughMembers,
       isBlacklisted,
+      memberCount: currentMemberCount,
+      minMembers: minMembers,
+      trackingDisabled: !hasEnoughMembers,
       totalProgress: cycleProgress, // Current cycle progress from DB
       progress: progressPercent,
       threshold: thresholdSeconds,
