@@ -361,7 +361,7 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
                       <span>Rate: {user.rate}</span>
                       {user.staged > 0 && (
                         <span className="text-yellow-400">
-                          Staged: {formatDuration(user.staged)}
+                          ⚡ {formatDuration(user.staged)} credits consumed
                         </span>
                       )}
                     </div>
@@ -590,7 +590,7 @@ function StagedPanel({ users, formatDuration, buildAvatarUrl }: any) {
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border))]">
         <h3 className="font-semibold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
           <FiCpu className="text-yellow-400" />
-          Staged Time (Not Yet Rewarded)
+          Credits Available (Not in VC)
         </h3>
       </div>
       <div className="max-h-[250px] overflow-y-auto">
@@ -598,7 +598,12 @@ function StagedPanel({ users, formatDuration, buildAvatarUrl }: any) {
           {users.slice(0, 15).map((user: any) => (
             <div key={user.id} className="px-4 py-2 flex items-center gap-2">
               <img src={buildAvatarUrl(user.id, user.avatar, '0', 24)} alt={user.name} className="w-5 h-5 rounded-full" />
-              <span className="text-sm truncate flex-1">{user.name}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm truncate">{user.name}</div>
+                <div className="text-xs text-[rgb(var(--color-text-tertiary))] truncate">
+                  {user.categoryName || 'Unknown Category'}
+                </div>
+              </div>
               <span className="text-sm font-medium text-yellow-400">{formatDuration(user.seconds)}</span>
             </div>
           ))}

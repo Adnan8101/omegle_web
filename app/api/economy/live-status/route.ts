@@ -118,15 +118,20 @@ export async function GET(request: NextRequest) {
     `, [GUILD_ID, today]);
 
     // Get all users with staged VC time (accumulated but not yet rewarded)
+    // Exclude users currently in VC since their credits are already consumed
     const stagedVcProgress = await queryBotDb(`
       SELECT evp.user_id, evp.category_id, evp.accumulated_seconds, evp.today_earned,
-             duc.username, duc.display_name, duc.avatar_url
+             duc.username, duc.display_name, duc.avatar_url,
+             ecr.category_name
       FROM economy_vc_progress evp
       LEFT JOIN discord_user_cache duc ON duc.user_id = evp.user_id
-      WHERE evp.guild_id = $1 AND evp.accumulated_seconds > 0
+      LEFT JOIN economy_category_rewards ecr ON ecr.guild_id = evp.guild_id AND ecr.category_id = evp.category_id
+      WHERE evp.guild_id = $1 
+        AND evp.accumulated_seconds > 0
+        AND evp.user_id != ALL($2)
       ORDER BY evp.accumulated_seconds DESC
       LIMIT 100
-    `, [GUILD_ID]);
+    `, [GUILD_ID, activeUserIds.length > 0 ? activeUserIds : ['__none__']]);
 
     // Get today's stats
     const todayStats = await queryBotDb(`
@@ -144,8 +149,7 @@ export async function GET(request: NextRequest) {
     const vcUsers = activeVcSessions.map((session: any) => {
       const categoryId = session.category_id || 'global';
       const userProg = vcProgress.find((p: any) => 
-        p.user_id === session.user_id && 
-        (p.category_id === categoryId || p.category_id === 'global')
+        p.user_id === session.user_id && p.category_id === categoryId
       );
       
       const catReward = categoryRewards.find((c: any) => c.category_id === categoryId);
@@ -232,6 +236,7 @@ export async function GET(request: NextRequest) {
           avatar: p.avatar_url,
           seconds: p.accumulated_seconds,
           category: p.category_id,
+          categoryName: p.category_name || (p.category_id === 'global' ? 'Global' : p.category_id),
           todayEarned: p.today_earned
         }))
       },
