@@ -10,6 +10,7 @@ import {
   FiAlertCircle, FiCheckCircle, FiXCircle, FiZap, FiLayers,
   FiMessageSquare, FiHeadphones, FiAward, FiBarChart2
 } from 'react-icons/fi';
+import { buildAvatarUrl } from '@/lib/userUtils';
 
 interface ActiveVcUser {
   userId: string;
@@ -159,10 +160,9 @@ function getEmojiDisplay(emoji: string, size: string = 'w-5 h-5') {
   return <span className="inline-block">{emoji}</span>;
 }
 
+// Use the shared utility for consistent avatar URL building
 function getAvatarUrl(avatarUrl: string | null, userId: string, size: number = 64): string {
-  if (avatarUrl) return avatarUrl;
-  const defaultAvatar = parseInt(userId) % 5;
-  return `https://cdn.discordapp.com/embed/avatars/${defaultAvatar}.png?size=${size}`;
+  return buildAvatarUrl(userId, avatarUrl, '0', size);
 }
 
 export default function LiveMonitorPage() {
