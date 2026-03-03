@@ -163,11 +163,21 @@ async function fetchLiveData() {
     const currentMemberCount = memberCountMap.get(session.channel_id) || 1;
     const hasEnoughMembers = currentMemberCount >= minMembers;
     
-    // The DB accumulated_seconds is the current cycle progress
-    // Bot updates it every 10s: adds elapsed time, awards complete cycles, saves remainder
-    // So we just use it directly as the cycle progress
-    const cycleProgress = userProg?.accumulated_seconds || 0;
-    const progressPercent = Math.round((cycleProgress / thresholdSeconds) * 100);
+    // Calculate real-time cycle progress
+    // Bot syncs every 10s, so estimate elapsed time since last sync
+    const dbProgress = userProg?.accumulated_seconds || 0;
+    
+    // If currently earning, add estimated time since last sync (max 10s)
+    // This gives smoother real-time updates between bot syncs
+    let liveProgress = dbProgress;
+    if (hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false)) {
+      // Estimate: add up to 10 seconds (time since last bot sync)
+      // Use modulo to estimate where we are in the 10s cycle
+      const estimatedElapsed = Math.min(sessionDuration % 10, 10);
+      liveProgress = (dbProgress + estimatedElapsed) % thresholdSeconds;
+    }
+    
+    const progressPercent = Math.round((liveProgress / thresholdSeconds) * 100);
     
     return {
       id: session.user_id,
@@ -184,10 +194,10 @@ async function fetchLiveData() {
       memberCount: currentMemberCount,
       minMembers: minMembers,
       trackingDisabled: !hasEnoughMembers,
-      totalProgress: cycleProgress, // Current cycle progress from DB
+      totalProgress: liveProgress, // Real-time cycle progress
       progress: progressPercent,
       threshold: thresholdSeconds,
-      nextIn: thresholdSeconds - cycleProgress,
+      nextIn: thresholdSeconds - liveProgress,
       rate: `${minutesPerPoint}m = ${ozyAmount}`,
       ozyAmount,
       mode: isAdvanced ? 'category' : 'global'

@@ -182,10 +182,17 @@ export async function GET(request: NextRequest) {
       const currentMemberCount = memberCountMap.get(session.channel_id) || 1;
       const hasEnoughMembers = currentMemberCount >= minMembers;
       
-      // The DB accumulated_seconds is the current cycle progress
-      // Bot updates it every 10s: adds elapsed time, awards complete cycles, saves remainder
-      const cycleProgress = userProg?.accumulated_seconds || 0;
-      const progressPercent = Math.round((cycleProgress / thresholdSeconds) * 100);
+      // Calculate real-time cycle progress
+      const dbProgress = userProg?.accumulated_seconds || 0;
+      
+      // If currently earning, add estimated time since last sync (max 10s)
+      let liveProgress = dbProgress;
+      if (hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false)) {
+        const estimatedElapsed = Math.min(sessionDuration % 10, 10);
+        liveProgress = (dbProgress + estimatedElapsed) % thresholdSeconds;
+      }
+      
+      const progressPercent = Math.round((liveProgress / thresholdSeconds) * 100);
       
       return {
         id: session.user_id,
@@ -203,10 +210,10 @@ export async function GET(request: NextRequest) {
         memberCount: currentMemberCount,
         minMembers: minMembers,
         trackingDisabled: !hasEnoughMembers,
-        totalProgress: cycleProgress, // Current cycle progress from DB
+        totalProgress: liveProgress, // Real-time cycle progress
         progress: progressPercent,
         threshold: thresholdSeconds,
-        nextIn: thresholdSeconds - cycleProgress,
+        nextIn: thresholdSeconds - liveProgress,
         rate: `${minutesPerPoint}m = ${ozyAmount}`,
         ozyAmount,
         mode: isAdvanced ? 'category' : 'global'
