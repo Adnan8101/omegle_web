@@ -160,6 +160,10 @@ export async function GET(request: NextRequest) {
 
       const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
       const stagedSeconds = userProg?.accumulated_seconds || 0;
+      
+      // CRITICAL: Add staged time to session duration for total progress
+      // Bot keeps staged time in database and adds it during calculations
+      // Website must do the same to show correct progress
       const totalSeconds = stagedSeconds + sessionDuration;
       const thresholdSeconds = minutesPerPoint * 60;
       const progressPercent = Math.round((totalSeconds % thresholdSeconds) / thresholdSeconds * 100);
@@ -178,7 +182,7 @@ export async function GET(request: NextRequest) {
         // Earning details
         isEarning: !isBlacklisted && vcEnabled && (config?.enabled ?? false),
         isBlacklisted,
-        staged: stagedSeconds,
+        staged: stagedSeconds, // Show current staged time from database
         progress: progressPercent,
         threshold: thresholdSeconds,
         nextIn: thresholdSeconds - (totalSeconds % thresholdSeconds),
