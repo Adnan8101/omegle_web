@@ -251,7 +251,7 @@ export default function LiveMonitorPage() {
           <div className="lg:col-span-2">
             {activeTab === 'vc' && <VoiceTab data={data} formatDuration={formatDuration} buildAvatarUrl={buildAvatarUrl} currency={currency} getEmojiDisplay={getEmojiDisplay} />}
             {activeTab === 'messages' && <MessagesTab data={data} buildAvatarUrl={buildAvatarUrl} currency={currency} getEmojiDisplay={getEmojiDisplay} />}
-            {activeTab === 'search' && searchResult && <SearchTab result={searchResult} formatDuration={formatDuration} formatTimeAgo={formatTimeAgo} buildAvatarUrl={buildAvatarUrl} currency={searchResult.config.currency} getEmojiDisplay={getEmojiDisplay} />}
+            {activeTab === 'search' && searchResult && <SearchTab result={searchResult} formatDuration={formatDuration} formatTimeAgo={formatTimeAgo} buildAvatarUrl={buildAvatarUrl} currency={searchResult?.config?.emoji || '🪙'} getEmojiDisplay={getEmojiDisplay} />}
           </div>
 
           {/* Sidebar */}
@@ -459,6 +459,8 @@ function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
 }
 
 function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, currency, getEmojiDisplay }: any) {
+  const configEmoji = result?.config?.emoji || currency || '🪙';
+  
   return (
     <div className="space-y-4">
       {/* User Info */}
@@ -477,7 +479,7 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
         <div className="grid grid-cols-3 gap-4 p-4 bg-[rgb(var(--color-bg-primary))] rounded-lg">
           <div>
             <div className="text-[rgb(var(--color-text-tertiary))] text-sm">Balance</div>
-            <div className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{result.balance} {getEmojiDisplay(result.config.emoji)}</div>
+            <div className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{result.balance} {getEmojiDisplay(configEmoji)}</div>
           </div>
           <div>
             <div className="text-[rgb(var(--color-text-tertiary))] text-sm">VC Time</div>
@@ -502,7 +504,7 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
               <div className="text-sm text-[rgb(var(--color-text-secondary))]">Currently in: <span className="text-[rgb(var(--color-text-primary))]">{result.vc.channel}</span></div>
               <div className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">Joined: {formatTimeAgo(result.vc.joinedAt)}</div>
               <div className="text-sm text-yellow-400 mt-2">Staged: {formatDuration(result.vc.staged)}</div>
-              <div className="text-sm text-green-400">Today: {result.vc.todayEarned} {getEmojiDisplay(result.config.emoji)}</div>
+              <div className="text-sm text-green-400">Today: {result.vc.todayEarned} {getEmojiDisplay(configEmoji)}</div>
             </div>
           ) : (
             <div className="text-[rgb(var(--color-text-tertiary))]">
@@ -519,7 +521,7 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
           </h4>
           <div>
             <div className="text-sm text-yellow-400">Staged: {result.messages.staged} msgs</div>
-            <div className="text-sm text-green-400">Today: {result.messages.todayEarned} {getEmojiDisplay(result.config.emoji)}</div>
+            <div className="text-sm text-green-400">Today: {result.messages.todayEarned} {getEmojiDisplay(configEmoji)}</div>
             {result.messages.lastActive && <div className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">Last active: {result.messages.lastActive}</div>}
           </div>
         </div>
@@ -539,7 +541,7 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
                 <div key={i} className="px-4 py-2">
                   <div className="flex items-center justify-between">
                     <span className={`font-medium ${h.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {h.amount > 0 ? '+' : ''}{h.amount} {getEmojiDisplay(result.config.emoji)}
+                      {h.amount > 0 ? '+' : ''}{h.amount} {getEmojiDisplay(configEmoji)}
                     </span>
                     <span className="text-xs text-[rgb(var(--color-text-tertiary))]">{formatTimeAgo(h.time)}</span>
                   </div>
