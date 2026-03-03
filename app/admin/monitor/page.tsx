@@ -21,8 +21,7 @@ export default function LiveMonitorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
-  const [autoRefresh, setAutoRefresh] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState(5);
+  const [connected, setConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   
   // Search
@@ -84,16 +83,45 @@ export default function LiveMonitorPage() {
         router.push('/admin');
         return;
       }
-      fetchData();
-    }
-  }, [status, session, router, fetchData]);
 
-  useEffect(() => {
-    if (!autoRefresh || status !== 'authenticated') return;
-    
-    const interval = setInterval(fetchData, refreshInterval * 1000);
-    return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, fetchData, status]);
+      // Set up Server-Sent Events connection
+      const eventSource = new EventSource('/api/economy/live-stream');
+
+      eventSource.onopen = () => {
+        setConnected(true);
+        setError(null);
+      };
+
+      eventSource.onmessage = (event) => {
+        try {
+          const result = JSON.parse(event.data);
+          setData(result);
+          setLastUpdate(new Date());
+          setLoading(false);
+          setError(null);
+        } catch (err) {
+          console.error('Error parsing SSE data:', err);
+        }
+      };
+
+      eventSource.onerror = () => {
+        setConnected(false);
+        setError('Connection lost. Reconnecting...');
+        eventSource.close();
+        
+        // Reconnect after 3 seconds
+        setTimeout(() => {
+          if (status === 'authenticated') {
+            window.location.reload();
+          }
+        }, 3000);
+      };
+
+      return () => {
+        eventSource.close();
+      };
+    }
+  }, [status, session, router]);
 
   const formatDuration = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
@@ -174,27 +202,22 @@ export default function LiveMonitorPage() {
           
           <div className="flex items-center gap-3">
             <div className={`px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 ${
-              data?.economy?.enabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+              data?.config?.enabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
             }`}>
-              {data?.economy?.enabled ? <FiCheckCircle /> : <FiXCircle />}
-              {data?.economy?.enabled ? 'Active' : 'Disabled'}
+              {data?.config?.enabled ? <FiCheckCircle /> : <FiXCircle />}
+              {data?.config?.enabled ? 'Economy Active' : 'Economy Disabled'}
             </div>
             
-            <div className="flex items-center gap-2 bg-[rgb(var(--color-bg-secondary))] rounded-lg px-3 py-1.5">
-              <button onClick={() => setAutoRefresh(!autoRefresh)} className={`p-1.5 rounded ${autoRefresh ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
-                <FiRefreshCw className={autoRefresh ? 'animate-spin' : ''} />
-              </button>
-              <select value={refreshInterval} onChange={(e) => setRefreshInterval(Number(e.target.value))} className="bg-transparent text-sm outline-none">
-                <option value={3}>3s</option>
-                <option value={5}>5s</option>
-                <option value={10}>10s</option>
-                <option value={30}>30s</option>
-              </select>
+            <div className={`px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 ${
+              connected ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${connected ? 'bg-blue-400 animate-pulse' : 'bg-gray-400'}`} />
+              {connected ? 'Live' : 'Connecting...'}
             </div>
 
             {lastUpdate && (
               <span className="text-xs text-[rgb(var(--color-text-tertiary))]">
-                {lastUpdate.toLocaleTimeString()}
+                Updated: {lastUpdate.toLocaleTimeString()}
               </span>
             )}
           </div>
