@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
 
     // Get category IDs for active users (to exclude only their active category)
     const activeCategoryMap = new Map<string, string>();
-    for (const sess of activeSessions.rows) {
+    for (const sess of activeVcSessions) {
       activeCategoryMap.set(sess.user_id, sess.category_id);
     }
 
