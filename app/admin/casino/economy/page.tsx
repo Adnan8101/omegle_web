@@ -70,6 +70,14 @@ interface Role {
   position: number;
 }
 
+interface Member {
+  id: string;
+  username: string;
+  discriminator: string;
+  avatar: string | null;
+  global_name: string | null;
+}
+
 interface BlacklistedItem {
   id: string;
   name: string;
@@ -120,6 +128,9 @@ export default function EconomyManagementPage() {
   const [blacklistedCategories, setBlacklistedCategories] = useState<BlacklistedItem[]>([]);
   const [blacklistedRoles, setBlacklistedRoles] = useState<BlacklistedItem[]>([]);
   const [blacklistedMembers, setBlacklistedMembers] = useState<BlacklistedItem[]>([]);
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const [memberSearchResults, setMemberSearchResults] = useState<Member[]>([]);
+  const [searchingMembers, setSearchingMembers] = useState(false);
 
   // Shop state
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
@@ -1504,35 +1515,114 @@ export default function EconomyManagementPage() {
                   </div>
                 ))}
                 {blacklistTab === 'members' && (
-                  <div className="text-center py-8">
-                    <p className="text-[rgb(var(--color-text-tertiary))] mb-4">
-                      To blacklist a member, enter their Discord User ID below:
+                  <div className="space-y-4">
+                    <p className="text-[rgb(var(--color-text-tertiary))] text-center mb-4">
+                      Search by username or paste Discord User ID
                     </p>
-                    <div className="flex gap-2 max-w-md mx-auto">
+                    
+                    {/* Search Input */}
+                    <div className="relative max-w-2xl mx-auto">
+                      <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-tertiary))]" />
                       <input
                         type="text"
-                        placeholder="Discord User ID (e.g., 123456789012345678)"
-                        value={blacklistSearch}
-                        onChange={(e) => setBlacklistSearch(e.target.value)}
-                        className="flex-1 px-4 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                      />
-                      <button
-                        onClick={() => {
-                          if (blacklistSearch.trim() && /^\d{17,19}$/.test(blacklistSearch.trim())) {
-                            addToBlacklist('member', blacklistSearch.trim());
-                            setBlacklistSearch('');
+                        placeholder="Search members by username or paste User ID..."
+                        value={memberSearchQuery}
+                        onChange={async (e) => {
+                          const value = e.target.value;
+                          setMemberSearchQuery(value);
+                          
+                          if (value.length >= 2) {
+                            setSearchingMembers(true);
+                            try {
+                              const res = await fetch(`/api/discord/search-members?query=${encodeURIComponent(value)}&limit=10`);
+                              const data = await res.json();
+                              if (res.ok) {
+                                setMemberSearchResults(data.members || []);
+                              }
+                            } catch (err) {
+                              console.error('Error searching members:', err);
+                            } finally {
+                              setSearchingMembers(false);
+                            }
                           } else {
-                            setError('Please enter a valid Discord User ID (17-19 digits)');
-                            setTimeout(() => setError(null), 3000);
+                            setMemberSearchResults([]);
                           }
                         }}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all"
-                      >
-                        <FiPlus className="w-5 h-5" />
-                      </button>
+                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                      />
+                      {searchingMembers && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          <FiRefreshCw className="w-4 h-4 animate-spin text-[rgb(var(--color-text-tertiary))]" />
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
-                      💡 Right-click a user in Discord → Copy User ID (Developer Mode must be enabled)
+
+                    {/* Search Results */}
+                    {memberSearchResults.length > 0 && (
+                      <div className="max-w-2xl mx-auto space-y-2 max-h-96 overflow-y-auto">
+                        {memberSearchResults.map(member => {
+                          const avatarUrl = member.avatar 
+                            ? `https://cdn.discordapp.com/avatars/${member.id}/${member.avatar}.png?size=64`
+                            : `https://cdn.discordapp.com/embed/avatars/${parseInt(member.discriminator) % 5}.png`;
+                          const displayName = member.global_name || member.username;
+                          
+                          return (
+                            <div 
+                              key={member.id} 
+                              className="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-all border border-[rgb(var(--color-border))]"
+                            >
+                              <div className="flex items-center gap-3">
+                                <img 
+                                  src={avatarUrl} 
+                                  alt={displayName}
+                                  className="w-10 h-10 rounded-full"
+                                />
+                                <div>
+                                  <div className="font-medium text-[rgb(var(--color-text-primary))]">
+                                    {displayName}
+                                  </div>
+                                  <div className="text-xs text-[rgb(var(--color-text-tertiary))]">
+                                    @{member.username} • {member.id}
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={async () => {
+                                  await addToBlacklist('member', member.id);
+                                  setMemberSearchQuery('');
+                                  setMemberSearchResults([]);
+                                }}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all flex items-center gap-2"
+                              >
+                                <FiPlus className="w-4 h-4" />
+                                Blacklist
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Direct ID Input */}
+                    {/^\d{17,19}$/.test(memberSearchQuery.trim()) && memberSearchResults.length === 0 && (
+                      <div className="max-w-2xl mx-auto">
+                        <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30 text-center">
+                          <p className="text-blue-400 mb-3">Valid User ID detected</p>
+                          <button
+                            onClick={async () => {
+                              await addToBlacklist('member', memberSearchQuery.trim());
+                              setMemberSearchQuery('');
+                            }}
+                            className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
+                          >
+                            Blacklist User {memberSearchQuery}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-[rgb(var(--color-text-tertiary))] text-center mt-4">
+                      💡 Tip: Enable Developer Mode in Discord to copy User IDs
                     </p>
                   </div>
                 )}
