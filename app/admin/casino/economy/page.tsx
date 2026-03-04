@@ -83,6 +83,9 @@ interface BlacklistedItem {
   name: string;
   type?: string;
   color?: number;
+  username?: string;
+  discriminator?: string;
+  avatar?: string | null;
 }
 
 interface ShopItem {
@@ -1439,20 +1442,26 @@ export default function EconomyManagementPage() {
                     </button>
                   </div>
                 ))}
-                {blacklistTab === 'members' && blacklistedMembers.map(item => (
-                  <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                    <div className="flex items-center gap-2">
-                      <span className="text-red-500">👤</span>
-                      <span className="text-[rgb(var(--color-text-primary))]">{item.name || `User ${item.id}`}</span>
+                {blacklistTab === 'members' && blacklistedMembers.map(item => {
+                  const avatarUrl = item.avatar 
+                    ? `https://cdn.discordapp.com/avatars/${item.id}/${item.avatar}.png?size=32`
+                    : `https://cdn.discordapp.com/embed/avatars/${parseInt(item.discriminator || '0') % 5}.png`;
+                  
+                  return (
+                    <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                      <div className="flex items-center gap-2">
+                        <img src={avatarUrl} alt={item.name} className="w-6 h-6 rounded-full" />
+                        <span className="text-[rgb(var(--color-text-primary))]">{item.name || `User ${item.id}`}</span>
+                      </div>
+                      <button
+                        onClick={() => removeFromBlacklist('member', item.id)}
+                        className="p-1 rounded hover:bg-red-500/20"
+                      >
+                        <FiX className="w-4 h-4 text-red-500" />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => removeFromBlacklist('member', item.id)}
-                      className="p-1 rounded hover:bg-red-500/20"
-                    >
-                      <FiX className="w-4 h-4 text-red-500" />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
                 {((blacklistTab === 'channels' && blacklistedChannels.length === 0) ||
                   (blacklistTab === 'categories' && blacklistedCategories.length === 0) ||
                   (blacklistTab === 'roles' && blacklistedRoles.length === 0) ||

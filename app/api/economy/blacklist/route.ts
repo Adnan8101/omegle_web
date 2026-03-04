@@ -146,10 +146,46 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    const mappedBlacklistedMembers = blacklistedMembers.map(m => ({
-      id: m.user_id,
-      name: m.user_name || `User ${m.user_id}`
-    }));
+    const mappedBlacklistedMembers = await Promise.all(
+      blacklistedMembers.map(async (m) => {
+        // Try to fetch member data from Discord
+        try {
+          const memberRes = await fetch(
+            `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${m.user_id}`,
+            {
+              headers: {
+                Authorization: `Bot ${botToken}`,
+                'Content-Type': 'application/json',
+              },
+              cache: 'no-store',
+            }
+          );
+
+          if (memberRes.ok) {
+            const memberData = await memberRes.json();
+            const user = memberData.user;
+            return {
+              id: m.user_id,
+              name: user.global_name || user.username,
+              username: user.username,
+              discriminator: user.discriminator,
+              avatar: user.avatar
+            };
+          }
+        } catch (err) {
+          console.log(`Could not fetch member ${m.user_id}:`, err);
+        }
+
+        // Fallback to stored name
+        return {
+          id: m.user_id,
+          name: m.user_name || `User ${m.user_id}`,
+          username: m.user_name,
+          discriminator: '0',
+          avatar: null
+        };
+      })
+    );
 
     console.log('=== BLACKLIST API END ===');
 
