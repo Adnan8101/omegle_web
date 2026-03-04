@@ -175,6 +175,14 @@ export function getAvatarUrl(user: DiscordUser, size = 128): string {
 }
 
 /**
+ * Get Discord user avatar URL (wrapper for getAvatarUrl)
+ */
+export function getDiscordUserAvatar(user: DiscordUser | undefined | null, size = 128): string | null {
+  if (!user) return null;
+  return getAvatarUrl(user, size);
+}
+
+/**
  * Get display name (nickname > global_name > username)
  */
 export function getDisplayName(member: DiscordMember): string {

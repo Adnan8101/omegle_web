@@ -63,15 +63,17 @@ export async function GET(request: NextRequest) {
     console.log('Roles fetched:', roles.length);
 
     // Get blacklisted items from database
-    const [blacklistedChannels, blacklistedCategories, blacklistedRoles] = await Promise.all([
+    const [blacklistedChannels, blacklistedCategories, blacklistedRoles, blacklistedMembers] = await Promise.all([
       prismaBot.economyBlacklistChannel.findMany({ where: { guild_id: GUILD_ID } }),
       prismaBot.economyBlacklistCategory.findMany({ where: { guild_id: GUILD_ID } }),
-      prismaBot.economyBlacklistRole.findMany({ where: { guild_id: GUILD_ID } })
+      prismaBot.economyBlacklistRole.findMany({ where: { guild_id: GUILD_ID } }),
+      prismaBot.economyBlacklistMember.findMany({ where: { guild_id: GUILD_ID } })
     ]);
 
     console.log('Blacklisted channels:', blacklistedChannels.length);
     console.log('Blacklisted categories:', blacklistedCategories.length);
     console.log('Blacklisted roles:', blacklistedRoles.length);
+    console.log('Blacklisted members:', blacklistedMembers.length);
 
     // Map to include names
     const categories = channels
@@ -144,6 +146,11 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    const mappedBlacklistedMembers = blacklistedMembers.map(m => ({
+      id: m.user_id,
+      name: m.user_name || `User ${m.user_id}`
+    }));
+
     console.log('=== BLACKLIST API END ===');
 
     return NextResponse.json({
@@ -156,7 +163,8 @@ export async function GET(request: NextRequest) {
       blacklisted: {
         channels: mappedBlacklistedChannels,
         categories: mappedBlacklistedCategories,
-        roles: mappedBlacklistedRoles
+        roles: mappedBlacklistedRoles,
+        members: mappedBlacklistedMembers
       }
     });
   } catch (error) {
@@ -239,6 +247,23 @@ export async function POST(request: NextRequest) {
         });
         break;
 
+      case 'member':
+        await prismaBot.economyBlacklistMember.upsert({
+          where: {
+            guild_id_user_id: {
+              guild_id: GUILD_ID,
+              user_id: id
+            }
+          },
+          create: {
+            guild_id: GUILD_ID,
+            user_id: id,
+            added_by: session.user.id
+          },
+          update: {}
+        });
+        break;
+
       default:
         return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
@@ -301,6 +326,17 @@ export async function DELETE(request: NextRequest) {
             guild_id_role_id: {
               guild_id: GUILD_ID,
               role_id: id
+            }
+          }
+        });
+        break;
+
+      case 'member':
+        await prismaBot.economyBlacklistMember.delete({
+          where: {
+            guild_id_user_id: {
+              guild_id: GUILD_ID,
+              user_id: id
             }
           }
         });

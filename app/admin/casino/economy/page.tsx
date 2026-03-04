@@ -40,6 +40,8 @@ interface CategoryReward {
   vcOzyAmount?: number;
   vcMinMembers?: number;
   vcCountBots?: boolean;
+  vcIgnoreSelfMuted?: boolean;
+  vcIgnoreDeafened?: boolean;
   messageEnabled: boolean;
   messagesPerPoint: number;
   msgOzyAmount?: number;
@@ -110,13 +112,14 @@ export default function EconomyManagementPage() {
 
   // Blacklist state
   const [blacklistSearch, setBlacklistSearch] = useState('');
-  const [blacklistTab, setBlacklistTab] = useState<'channels' | 'categories' | 'roles'>('channels');
+  const [blacklistTab, setBlacklistTab] = useState<'channels' | 'categories' | 'roles' | 'members'>('channels');
   const [availableChannels, setAvailableChannels] = useState<Channel[]>([]);
   const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
   const [availableRoles, setAvailableRoles] = useState<Role[]>([]);
   const [blacklistedChannels, setBlacklistedChannels] = useState<BlacklistedItem[]>([]);
   const [blacklistedCategories, setBlacklistedCategories] = useState<BlacklistedItem[]>([]);
   const [blacklistedRoles, setBlacklistedRoles] = useState<BlacklistedItem[]>([]);
+  const [blacklistedMembers, setBlacklistedMembers] = useState<BlacklistedItem[]>([]);
 
   // Shop state
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
@@ -214,6 +217,7 @@ export default function EconomyManagementPage() {
         setBlacklistedChannels(data.blacklisted.channels);
         setBlacklistedCategories(data.blacklisted.categories);
         setBlacklistedRoles(data.blacklisted.roles);
+        setBlacklistedMembers(data.blacklisted.members || []);
       }
     } catch (err) {
       console.error('Error fetching blacklist:', err);
@@ -628,7 +632,13 @@ export default function EconomyManagementPage() {
                       : 'bg-gray-500/10 border-gray-500/30 text-gray-400'
                   }`}
                 >
-                  <span className="font-medium">{config.count_bots ? 'Bots Counted' : 'Bots Not Counted'}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{config.count_bots ? '✓' : '✗'}</span>
+                    <div className="text-left">
+                      <div className="font-semibold">{config.count_bots ? 'ON' : 'OFF'}</div>
+                      <div className="text-xs opacity-80">{config.count_bots ? 'Bots Counted' : 'Bots Not Counted'}</div>
+                    </div>
+                  </div>
                   {config.count_bots ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
                 </button>
                 <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
@@ -648,7 +658,13 @@ export default function EconomyManagementPage() {
                       : 'bg-green-500/10 border-green-500/30 text-green-500'
                   }`}
                 >
-                  <span className="font-medium">{config.ignore_self_muted ? 'Not Counting Muted' : 'Counting Muted'}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{config.ignore_self_muted ? '✓' : '✗'}</span>
+                    <div className="text-left">
+                      <div className="font-semibold">{config.ignore_self_muted ? 'ON (Ignoring)' : 'OFF (Counting)'}</div>
+                      <div className="text-xs opacity-80">{config.ignore_self_muted ? 'Muted users NOT earning' : 'Muted users earning'}</div>
+                    </div>
+                  </div>
                   {config.ignore_self_muted ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
                 </button>
                 <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
@@ -668,7 +684,13 @@ export default function EconomyManagementPage() {
                       : 'bg-green-500/10 border-green-500/30 text-green-500'
                   }`}
                 >
-                  <span className="font-medium">{config.ignore_deafened ? 'Not Counting Deafened' : 'Counting Deafened'}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{config.ignore_deafened ? '✓' : '✗'}</span>
+                    <div className="text-left">
+                      <div className="font-semibold">{config.ignore_deafened ? 'ON (Ignoring)' : 'OFF (Counting)'}</div>
+                      <div className="text-xs opacity-80">{config.ignore_deafened ? 'Deafened users NOT earning' : 'Deafened users earning'}</div>
+                    </div>
+                  </div>
                   {config.ignore_deafened ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
                 </button>
                 <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
@@ -894,6 +916,8 @@ export default function EconomyManagementPage() {
                             vcMinutesPerPoint: config?.minutes_per_point || 1,
                             vcMinMembers: config?.require_two_members || 1,
                             vcCountBots: config?.count_bots || false,
+                            vcIgnoreSelfMuted: config?.ignore_self_muted || false,
+                            vcIgnoreDeafened: config?.ignore_deafened || false,
                             messagesPerPoint: config?.messages_per_point || 25,
                             msgMinLength: config?.min_message_length || 5,
                             msgCooldown: config?.message_cooldown || 5
@@ -1045,6 +1069,55 @@ export default function EconomyManagementPage() {
                               </button>
                             </div>
                           </div>
+                          
+                          {/* Additional VC Toggles */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                Ignore Muted Users
+                              </label>
+                              <button
+                                onClick={() => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  vcIgnoreSelfMuted: !newCategoryReward.vcIgnoreSelfMuted
+                                })}
+                                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                                  newCategoryReward.vcIgnoreSelfMuted
+                                    ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                                    : 'bg-green-500/10 border-green-500/30 text-green-500'
+                                }`}
+                              >
+                                <span className="font-medium">{newCategoryReward.vcIgnoreSelfMuted ? 'Not Counting Muted' : 'Counting Muted'}</span>
+                                {newCategoryReward.vcIgnoreSelfMuted ? <FiToggleRight className="w-5 h-5" /> : <FiToggleLeft className="w-5 h-5" />}
+                              </button>
+                              <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                                {newCategoryReward.vcIgnoreSelfMuted ? 'Muted users will NOT earn coins' : 'Muted users will still earn coins'}
+                              </p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                                Ignore Deafened Users
+                              </label>
+                              <button
+                                onClick={() => setNewCategoryReward({
+                                  ...newCategoryReward,
+                                  vcIgnoreDeafened: !newCategoryReward.vcIgnoreDeafened
+                                })}
+                                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                                  newCategoryReward.vcIgnoreDeafened
+                                    ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                                    : 'bg-green-500/10 border-green-500/30 text-green-500'
+                                }`}
+                              >
+                                <span className="font-medium">{newCategoryReward.vcIgnoreDeafened ? 'Not Counting Deafened' : 'Counting Deafened'}</span>
+                                {newCategoryReward.vcIgnoreDeafened ? <FiToggleRight className="w-5 h-5" /> : <FiToggleLeft className="w-5 h-5" />}
+                              </button>
+                              <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                                {newCategoryReward.vcIgnoreDeafened ? 'Deafened users will NOT earn coins' : 'Deafened users will still earn coins'}
+                              </p>
+                            </div>
+                          </div>
+                          
                           <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
                             Users earn {newCategoryReward.vcOzyAmount || 1} {config?.currency_name || 'Ozy'} after {newCategoryReward.vcMinutesPerPoint || 5} minutes in VC (accumulates across sessions)
                           </p>
@@ -1194,6 +1267,8 @@ export default function EconomyManagementPage() {
                                   vcOzyAmount: reward.vcOzyAmount,
                                   vcMinMembers: reward.vcMinMembers,
                                   vcCountBots: reward.vcCountBots,
+                                  vcIgnoreSelfMuted: reward.vcIgnoreSelfMuted,
+                                  vcIgnoreDeafened: reward.vcIgnoreDeafened,
                                   messagesPerPoint: reward.messagesPerPoint,
                                   msgOzyAmount: reward.msgOzyAmount,
                                   msgMinLength: reward.msgMinLength,
@@ -1223,6 +1298,22 @@ export default function EconomyManagementPage() {
                             <FiMessageSquare className="w-4 h-4 text-blue-500" />
                             <span>Msgs: <strong className="text-[rgb(var(--color-text-primary))]">{reward.msgOzyAmount || 1}</strong> {config?.currency_name || 'Ozy'} per <strong>{reward.messagesPerPoint}</strong> msgs</span>
                           </div>
+                        </div>
+                        
+                        {/* VC Settings Badges */}
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="px-2 py-1 text-xs rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                            Min {reward.vcMinMembers || 1} members
+                          </span>
+                          <span className={`px-2 py-1 text-xs rounded-lg border ${reward.vcCountBots ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                            Bots: {reward.vcCountBots ? 'Counted' : 'Not Counted'}
+                          </span>
+                          <span className={`px-2 py-1 text-xs rounded-lg border ${reward.vcIgnoreSelfMuted ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20'}`}>
+                            Muted: {reward.vcIgnoreSelfMuted ? 'Ignored' : 'Counted'}
+                          </span>
+                          <span className={`px-2 py-1 text-xs rounded-lg border ${reward.vcIgnoreDeafened ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20'}`}>
+                            Deafened: {reward.vcIgnoreDeafened ? 'Ignored' : 'Counted'}
+                          </span>
                         </div>
                         
                         {/* Channels in this category */}
@@ -1258,6 +1349,8 @@ export default function EconomyManagementPage() {
               {[
                 { id: 'channels', label: 'Channels', count: blacklistedChannels.length },
                 { id: 'categories', label: 'Categories', count: blacklistedCategories.length },
+                { id: 'roles', label: 'Roles', count: blacklistedRoles.length },
+                { id: 'members', label: 'Members', count: blacklistedMembers.length },
                 { id: 'roles', label: 'Roles', count: blacklistedRoles.length },
               ].map(tab => (
                 <button
@@ -1335,9 +1428,24 @@ export default function EconomyManagementPage() {
                     </button>
                   </div>
                 ))}
+                {blacklistTab === 'members' && blacklistedMembers.map(item => (
+                  <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <div className="flex items-center gap-2">
+                      <span className="text-red-500">👤</span>
+                      <span className="text-[rgb(var(--color-text-primary))]">{item.name || `User ${item.id}`}</span>
+                    </div>
+                    <button
+                      onClick={() => removeFromBlacklist('member', item.id)}
+                      className="p-1 rounded hover:bg-red-500/20"
+                    >
+                      <FiX className="w-4 h-4 text-red-500" />
+                    </button>
+                  </div>
+                ))}
                 {((blacklistTab === 'channels' && blacklistedChannels.length === 0) ||
                   (blacklistTab === 'categories' && blacklistedCategories.length === 0) ||
-                  (blacklistTab === 'roles' && blacklistedRoles.length === 0)) && (
+                  (blacklistTab === 'roles' && blacklistedRoles.length === 0) ||
+                  (blacklistTab === 'members' && blacklistedMembers.length === 0)) && (
                   <p className="text-center text-[rgb(var(--color-text-tertiary))] py-4">No items blacklisted</p>
                 )}
               </div>
@@ -1395,6 +1503,39 @@ export default function EconomyManagementPage() {
                     </button>
                   </div>
                 ))}
+                {blacklistTab === 'members' && (
+                  <div className="text-center py-8">
+                    <p className="text-[rgb(var(--color-text-tertiary))] mb-4">
+                      To blacklist a member, enter their Discord User ID below:
+                    </p>
+                    <div className="flex gap-2 max-w-md mx-auto">
+                      <input
+                        type="text"
+                        placeholder="Discord User ID (e.g., 123456789012345678)"
+                        value={blacklistSearch}
+                        onChange={(e) => setBlacklistSearch(e.target.value)}
+                        className="flex-1 px-4 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                      />
+                      <button
+                        onClick={() => {
+                          if (blacklistSearch.trim() && /^\d{17,19}$/.test(blacklistSearch.trim())) {
+                            addToBlacklist('member', blacklistSearch.trim());
+                            setBlacklistSearch('');
+                          } else {
+                            setError('Please enter a valid Discord User ID (17-19 digits)');
+                            setTimeout(() => setError(null), 3000);
+                          }
+                        }}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all"
+                      >
+                        <FiPlus className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
+                      💡 Right-click a user in Discord → Copy User ID (Developer Mode must be enabled)
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

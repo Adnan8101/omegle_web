@@ -99,6 +99,18 @@ model EconomyBlacklistCategory {
   @@map("economy_blacklist_categories")
 }
 
+model EconomyBlacklistMember {
+  guild_id   String
+  user_id    String
+  user_name  String?
+  added_by   String
+  created_at DateTime @default(now())
+
+  @@id([guild_id, user_id])
+  @@index([guild_id])
+  @@map("economy_blacklist_members")
+}
+
 // Category-based rewards for advanced mode
 model EconomyCategoryReward {
   id                 String   @id @default(uuid())
@@ -112,6 +124,8 @@ model EconomyCategoryReward {
   vc_ozy_amount      Int      @default(1)       // Coins per cycle
   vc_min_members     Int      @default(1)       // Min members in VC
   vc_count_bots      Boolean  @default(false)   // Include bots in member count
+  vc_ignore_self_muted Boolean @default(false)  // Ignore users who are self-muted
+  vc_ignore_deafened Boolean  @default(false)   // Ignore users who are deafened
   
   // Message rewards
   message_enabled    Boolean  @default(true)
