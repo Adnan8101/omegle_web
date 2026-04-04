@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     // Get top selling items
     const topItemsData = await prismaBot.shopPurchase.groupBy({
-      by: ['item_id'],
+      by: ['item_id', 'item_name'],
       where: { guild_id: GUILD_ID },
       _count: { item_id: true },
       _sum: { price_paid: true },
@@ -77,8 +77,9 @@ export async function GET(request: NextRequest) {
           where: { id: data.item_id },
           select: { name: true }
         });
+        const fallbackName = data.item_name ? `Deleted: ${data.item_name}` : 'Deleted Item';
         return {
-          name: item?.name || 'Unknown',
+          name: item?.name || fallbackName,
           purchaseCount: data._count.item_id,
           totalRevenue: data._sum.price_paid || 0
         };
