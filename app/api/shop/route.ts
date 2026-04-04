@@ -7,6 +7,9 @@ import crypto from 'crypto';
 
 const GUILD_ID = "910043773130661918";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 function generateCode(): string {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
@@ -101,6 +104,10 @@ export async function GET(request: NextRequest) {
           createdAt: p.created_at.toISOString()
         }))
       } : null
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      }
     });
 
   } catch (error) {

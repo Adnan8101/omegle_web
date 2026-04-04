@@ -142,7 +142,7 @@ export default function ShopPage() {
   const fetchShop = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/shop');
+      const res = await fetch('/api/shop', { cache: 'no-store' });
       const data = await res.json();
 
       if (res.ok) {
@@ -544,7 +544,7 @@ export default function ShopPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((item) => {
               const canAfford = session ? userBalance >= item.price : false;
-              const isOutOfStock = item.out_of_stock || (item.stock !== null && item.stock <= 0);
+              const isOutOfStock = item.out_of_stock || (item.stock !== null && item.stock !== -1 && item.stock <= 0);
               const isDisabled = !item.enabled;
               const isUnavailable = isOutOfStock || isDisabled;
               const daysLeft = item.expires_at
@@ -594,7 +594,7 @@ export default function ShopPage() {
                     )}
 
                     {/* Stock Badge */}
-                    {!isOutOfStock && item.stock !== null && (
+                    {!isOutOfStock && item.stock !== null && item.stock !== -1 && (
                       <div className={`absolute top-3 right-3 px-2 py-1 rounded-lg text-xs font-semibold ${
                         item.stock <= 5 ? 'bg-orange-500/90 text-white' : 
                         'bg-[rgb(var(--color-bg-secondary))]/90 text-[rgb(var(--color-text-primary))]'
