@@ -297,6 +297,15 @@ export default function ShopPage() {
 
                 <Link
                   href="/purchases"
+                  className="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-colors text-sm"
+                  title="See all your stuff"
+                >
+                  <FiPackage className="w-4 h-4" />
+                  <span>My Stuff</span>
+                </Link>
+
+                <Link
+                  href="/purchases"
                   className="relative p-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
                   title="My Purchases"
                 >
