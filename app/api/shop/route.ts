@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { sendDM } from '@/lib/discord';
 import { getDiscordUser } from '@/lib/discord';
+import { getGuildRoleName } from '@/lib/discord';
 import crypto from 'crypto';
 
 const GUILD_ID = "910043773130661918";
@@ -56,6 +57,18 @@ export async function GET(request: NextRequest) {
     let userPurchases: any[] = [];
     let userRoleIds: string[] = [];
 
+    const roleNameCache = new Map<string, string | null>();
+    const resolveRoleName = async (roleId: string | null): Promise<string | null> => {
+      if (!roleId) return null;
+      if (roleNameCache.has(roleId)) {
+        return roleNameCache.get(roleId) || null;
+      }
+
+      const roleName = await getGuildRoleName(GUILD_ID, roleId);
+      roleNameCache.set(roleId, roleName);
+      return roleName;
+    };
+
     // If user is logged in, get their balance and purchases
     if (userId) {
       const [economyUser, member, pendingPurchases] = await Promise.all([
@@ -80,8 +93,7 @@ export async function GET(request: NextRequest) {
       userPurchases = pendingPurchases;
     }
 
-    return NextResponse.json({
-      items: items.map((item: any) => ({
+    const mappedItems = await Promise.all(items.map(async (item: any) => ({
         id: item.id,
         name: item.name,
         price: item.price,
@@ -91,6 +103,7 @@ export async function GET(request: NextRequest) {
         income_amount: item.income_amount,
         time_hours: item.time_hours,
         role_required_id: item.role_required_id,
+        role_required_name: await resolveRoleName(item.role_required_id),
         has_required_role: userId
           ? (!item.role_required_id || userRoleIds.includes(item.role_required_id))
           : null,
@@ -98,7 +111,10 @@ export async function GET(request: NextRequest) {
         expires_at: item.expires_at?.toISOString() || null,
         out_of_stock: item.stock !== null && item.stock !== -1 && item.stock <= 0,
         enabled: item.enabled
-      })),
+      })));
+
+    return NextResponse.json({
+      items: mappedItems,
       config: {
         currencyEmoji: config?.currency_emoji || '🪙',
         currencyName: config?.currency_name || 'Ozy'
@@ -347,8 +363,11 @@ export async function POST(request: NextRequest) {
       }
       if (error.message.startsWith('MISSING_REQUIRED_ROLE:')) {
         const [, roleId] = error.message.split(':');
+        const roleName = await getGuildRoleName(GUILD_ID, roleId);
         return NextResponse.json({
-          error: `You need role <@&${roleId}> to buy this item.`
+          error: roleName
+            ? `You need ${roleName} to buy this item.`
+            : 'You need the required role to buy this item.'
         }, { status: 403 });
       }
       if (error.message.startsWith('INSUFFICIENT_BALANCE:')) {

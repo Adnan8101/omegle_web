@@ -19,6 +19,7 @@ interface ShopItem {
   income_amount: number | null;
   time_hours: number | null;
   role_required_id: string | null;
+  role_required_name: string | null;
   has_required_role: boolean | null;
   required_balance: number | null;
   expires_at: string | null;
@@ -183,7 +184,8 @@ export default function ShopPage() {
     }
 
     if (item.role_required_id && item.has_required_role === false) {
-      setError(`You need role ID ${item.role_required_id} to buy this item.`);
+      const roleName = item.role_required_name || 'the required role';
+      setError(`You need ${roleName} to buy this item.`);
       return;
     }
 
@@ -705,7 +707,7 @@ export default function ShopPage() {
                     {session && missingRequiredRole && (
                       <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
                         <FiLock className="w-3 h-3" />
-                        Requires role ID {item.role_required_id}
+                        Requires role: {item.role_required_name || 'Required role'}
                       </div>
                     )}
                   </div>
