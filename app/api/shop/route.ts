@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
         role_required_id: item.role_required_id,
         required_balance: item.required_balance,
         expires_at: item.expires_at?.toISOString() || null,
-        out_of_stock: item.stock !== null && item.stock <= 0,
+        out_of_stock: item.stock !== null && item.stock !== -1 && item.stock <= 0,
         enabled: item.enabled
       })),
       config: {
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check stock
-    if (item.stock !== null && item.stock <= 0) {
+    if (item.stock !== null && item.stock !== -1 && item.stock <= 0) {
       return NextResponse.json({ error: 'This item is out of stock' }, { status: 400 });
     }
 
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Decrement stock if applicable
-    if (item.stock !== null && item.stock > 0) {
+    if (item.stock !== null && item.stock !== -1 && item.stock > 0) {
       await prismaBot.shopItem.update({
         where: { id: item.id },
         data: { stock: { decrement: 1 } }
