@@ -5,6 +5,9 @@ import { prismaBot } from '@/lib/prismaBot';
 
 const GUILD_ID = "910043773130661918";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET - Fetch shop items with their toggle states
 export async function GET(request: NextRequest) {
   try {
@@ -39,6 +42,10 @@ export async function GET(request: NextRequest) {
         stock: item.stock,
         enabled: item.enabled
       }))
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      }
     });
   } catch (error) {
     console.error('Error fetching shop items:', error);
@@ -63,6 +70,10 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { type, itemId, enabled } = body;
 
+    if (typeof enabled !== 'boolean') {
+      return NextResponse.json({ error: 'Invalid enabled value' }, { status: 400 });
+    }
+
     if (type === 'shop') {
       // Toggle entire shop
       await prismaBot.economyConfig.upsert({
@@ -73,10 +84,15 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: true, shopEnabled: enabled });
     } else if (type === 'item' && itemId) {
       // Toggle individual item
-      await prismaBot.shopItem.update({
-        where: { id: itemId },
-        data: { enabled }
+      const updated = await prismaBot.shopItem.updateMany({
+        where: { id: itemId, guild_id: GUILD_ID },
+        data: { enabled },
       });
+
+      if (updated.count === 0) {
+        return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+      }
+
       return NextResponse.json({ success: true, itemId, enabled });
     }
 

@@ -199,18 +199,6 @@ export async function POST(request: NextRequest) {
         attempts++;
       }
 
-      // Use config for leaderboard sync setting
-      const leaderboardSync = config?.leaderboard_sync ?? true;
-
-      // Deduct points from user
-      await tx.economyUser.update({
-        where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } },
-        data: {
-          total_points: { decrement: item.price },
-          leaderboard_points: leaderboardSync ? { decrement: item.price } : undefined
-        }
-      });
-
       // Decrement stock if applicable (atomic guard to avoid race/oversell)
       if (item.stock !== null && item.stock !== -1) {
         const stockUpdate = await tx.shopItem.updateMany({
@@ -221,6 +209,26 @@ export async function POST(request: NextRequest) {
         if (stockUpdate.count === 0) {
           throw new Error('OUT_OF_STOCK');
         }
+      }
+
+      // Use config for leaderboard sync setting
+      const leaderboardSync = config?.leaderboard_sync ?? true;
+
+      // Deduct points with atomic guard against concurrent balance changes.
+      const pointsUpdate = await tx.economyUser.updateMany({
+        where: {
+          guild_id: GUILD_ID,
+          user_id: userId,
+          total_points: { gte: item.price }
+        },
+        data: {
+          total_points: { decrement: item.price },
+          leaderboard_points: leaderboardSync ? { decrement: item.price } : undefined
+        }
+      });
+
+      if (pointsUpdate.count === 0) {
+        throw new Error(`INSUFFICIENT_BALANCE:${item.price}:${economyUser.total_points}:${currencyName}`);
       }
 
       // Create purchase record

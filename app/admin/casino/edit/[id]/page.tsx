@@ -99,20 +99,23 @@ export default function EditItemPage() {
       }
 
       const item = data.item;
+      const toInput = (value: number | null | undefined) =>
+        value === null || value === undefined ? '' : String(value);
+
       setFormData({
         name: item.name || '',
-        price: item.price?.toString() || '',
+        price: toInput(item.price),
         description: item.description || '',
         thumbnail: item.thumbnail || '',
-        stock: item.stock?.toString() || '',
-        income_amount: item.income_amount?.toString() || '',
-        time_hours: item.time_hours?.toString() || '',
+        stock: toInput(item.stock),
+        income_amount: toInput(item.income_amount),
+        time_hours: toInput(item.time_hours),
         role_required_id: item.role_required_id || '',
         role_given_id: item.role_given_id || '',
         role_removed_id: item.role_removed_id || '',
-        required_balance: item.required_balance?.toString() || '',
+        required_balance: toInput(item.required_balance),
         reply_message: item.reply_message || '',
-        expires_in_days: item.expires_in_days?.toString() || '',
+        expires_in_days: toInput(item.expires_in_days),
       });
       setCurrencyEmoji(data.currencyEmoji || '🪙');
     } catch (err: any) {

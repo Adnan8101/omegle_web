@@ -10,6 +10,20 @@ const GUILD_ID = "910043773130661918";
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+function parseOptionalInt(value: unknown): number | null | 'INVALID' {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number') {
+    return Number.isSafeInteger(value) ? value : 'INVALID';
+  }
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (!/^-?\d+$/.test(raw)) return 'INVALID';
+
+  const parsed = Number(raw);
+  return Number.isSafeInteger(parsed) ? parsed : 'INVALID';
+}
+
 // GET - Get all shop items for admin
 export async function GET(request: NextRequest) {
   try {
@@ -71,20 +85,26 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const parseOptionalInt = (value: unknown) => {
-      if (value === null || value === undefined || value === '') return null;
-      const parsed = parseInt(String(value), 10);
-      return Number.isFinite(parsed) ? parsed : null;
-    };
-
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     const price = parseOptionalInt(body.price);
     const rawStock = parseOptionalInt(body.stock);
-    const stock = rawStock === -1 ? null : rawStock;
     const incomeAmount = parseOptionalInt(body.income_amount);
     const timeHours = parseOptionalInt(body.time_hours);
     const requiredBalance = parseOptionalInt(body.required_balance);
     const expiresInDays = parseOptionalInt(body.expires_in_days);
+
+    if (
+      price === 'INVALID' ||
+      rawStock === 'INVALID' ||
+      incomeAmount === 'INVALID' ||
+      timeHours === 'INVALID' ||
+      requiredBalance === 'INVALID' ||
+      expiresInDays === 'INVALID'
+    ) {
+      return NextResponse.json({ error: 'One or more numeric fields are invalid' }, { status: 400 });
+    }
+
+    const stock = rawStock === null || rawStock === -1 ? null : rawStock;
 
     if (!name) {
       return NextResponse.json({ error: 'Item name is required' }, { status: 400 });
