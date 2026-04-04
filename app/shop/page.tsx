@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   FiShoppingCart, FiDollarSign, FiPackage, FiClock, FiCheck,
-  FiX, FiCopy, FiRefreshCw, FiLock, FiAlertCircle
+  FiX, FiCopy, FiRefreshCw, FiLock, FiAlertCircle, FiMessageCircle
 } from 'react-icons/fi';
 
 interface ShopItem {
@@ -465,10 +465,12 @@ export default function ShopPage() {
 
               {/* Redeem Instructions */}
               <div className="p-4 bg-[#5865F2]/10 border border-[#5865F2]/30 rounded-xl mb-4 text-left">
-                <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] mb-2">📩 How to Redeem:</p>
+                <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] mb-2 flex items-center gap-2">
+                  <FiMessageCircle className="w-4 h-4 text-[#5865F2]" />
+                  How to Redeem
+                </p>
                 <ol className="text-sm text-[rgb(var(--color-text-secondary))] space-y-1 list-decimal list-inside">
-                  <li>DM <span className="text-[#5865F2] font-semibold">Omeglee Bot</span> to open a ticket</li>
-                  <li>Select <span className="font-semibold">Casino</span> category</li>
+                  <li>DM <span className="text-[#5865F2] font-semibold">Omeglee Bot</span></li>
                   <li>Send your code: <code className="bg-[rgb(var(--color-bg-tertiary))] px-1.5 py-0.5 rounded text-yellow-500 font-mono">{purchaseResult.redeemCode}</code></li>
                 </ol>
               </div>

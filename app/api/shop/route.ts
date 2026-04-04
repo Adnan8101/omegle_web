@@ -267,8 +267,8 @@ export async function POST(request: NextRequest) {
           fields: [
             { name: '📦 Item', value: item.name, inline: true },
             { name: '💰 Price Paid', value: `${currencyEmoji}${formatNumber(item.price)}`, inline: true },
-            { name: '🎟️ Your Redeem Code', value: `\`\`\`${code}\`\`\``, inline: false },
-            { name: '📝 How to Redeem', value: `Go to **Omeglee server** and use:\n\`/redeem code:${code}\``, inline: false }
+            { name: '🎟️ Your Redeem Code', value: `\`\`\`${purchase.redeem_code}\`\`\``, inline: false },
+            { name: '📝 How to Redeem', value: `DM **Omeglee Bot** and send your code:\n\`/redeem code:${purchase.redeem_code}\``, inline: false }
           ],
           footer: { text: '⚠️ Keep this code safe! • Omeglee Shop' },
           timestamp: new Date().toISOString()
@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
         id: purchase.id,
         itemName: item.name,
         pricePaid: item.price,
-        redeemCode: code,
+        redeemCode: purchase.redeem_code,
         replyMessage: item.reply_message,
         createdAt: purchase.created_at.toISOString()
       },
