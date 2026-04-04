@@ -142,108 +142,114 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'The shop is currently closed' }, { status: 400 });
     }
 
-    // Get the item
-    const item = await prismaBot.shopItem.findFirst({
-      where: { id: itemId, guild_id: GUILD_ID }
-    });
-
-    if (!item) {
-      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
-    }
-
-    // Check if item is enabled
-    if (!item.enabled) {
-      return NextResponse.json({ error: 'This item is currently unavailable' }, { status: 400 });
-    }
-
-    // Check if item is expired
-    if (item.expires_at && new Date() > item.expires_at) {
-      return NextResponse.json({ error: 'This item has expired and is no longer available' }, { status: 400 });
-    }
-
-    // Check stock
-    if (item.stock !== null && item.stock !== -1 && item.stock <= 0) {
-      return NextResponse.json({ error: 'This item is out of stock' }, { status: 400 });
-    }
-
-    // Get user's economy data
-    const economyUser = await prismaBot.economyUser.findUnique({
-      where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
-    });
-
-    // Use already fetched config for currency name
-    const currencyName = config?.currency_name || 'Ozy';
-
-    if (!economyUser) {
-      return NextResponse.json({ error: `You don't have an economy account. Earn some ${currencyName} first!` }, { status: 400 });
-    }
-
-    // Check balance
-    if (economyUser.total_points < item.price) {
-      return NextResponse.json({ 
-        error: `Insufficient balance. You need ${item.price.toLocaleString()} ${currencyName} but only have ${economyUser.total_points.toLocaleString()}.` 
-      }, { status: 400 });
-    }
-
-    // Check minimum balance requirement
-    if (item.required_balance && economyUser.total_points < item.required_balance) {
-      return NextResponse.json({ 
-        error: `You need a minimum balance of ${item.required_balance.toLocaleString()} ${currencyName} to purchase this item.` 
-      }, { status: 400 });
-    }
-
-    // Generate unique redeem code
-    let code = generateCode();
-    let attempts = 0;
-    while (attempts < 10) {
-      const existing = await prismaBot.shopPurchase.findUnique({ where: { redeem_code: code } });
-      if (!existing) break;
-      code = generateCode();
-      attempts++;
-    }
-
-    // Use config for leaderboard sync setting
-    const leaderboardSync = config?.leaderboard_sync ?? true;
-
-    // Deduct points from user
-    await prismaBot.economyUser.update({
-      where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } },
-      data: {
-        total_points: { decrement: item.price },
-        leaderboard_points: leaderboardSync ? { decrement: item.price } : undefined
-      }
-    });
-
-    // Decrement stock if applicable
-    if (item.stock !== null && item.stock !== -1 && item.stock > 0) {
-      await prismaBot.shopItem.update({
-        where: { id: item.id },
-        data: { stock: { decrement: 1 } }
+    const result = await prismaBot.$transaction(async (tx) => {
+      // Get the item
+      const item = await tx.shopItem.findFirst({
+        where: { id: itemId, guild_id: GUILD_ID }
       });
-    }
 
-    // Create purchase record
-    const purchase = await prismaBot.shopPurchase.create({
-      data: {
-        guild_id: GUILD_ID,
-        user_id: userId,
-        item_id: item.id,
-        item_name: item.name,
-        price_paid: item.price,
-        redeem_code: code
+      if (!item) {
+        throw new Error('ITEM_NOT_FOUND');
       }
+
+      // Check if item is enabled
+      if (!item.enabled) {
+        throw new Error('ITEM_DISABLED');
+      }
+
+      // Check if item is expired
+      if (item.expires_at && new Date() > item.expires_at) {
+        throw new Error('ITEM_EXPIRED');
+      }
+
+      // Check stock
+      if (item.stock !== null && item.stock !== -1 && item.stock <= 0) {
+        throw new Error('OUT_OF_STOCK');
+      }
+
+      // Get user's economy data
+      const economyUser = await tx.economyUser.findUnique({
+        where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
+      });
+
+      // Use already fetched config for currency name
+      const currencyName = config?.currency_name || 'Ozy';
+
+      if (!economyUser) {
+        throw new Error(`NO_ECONOMY_ACCOUNT:${currencyName}`);
+      }
+
+      // Check balance
+      if (economyUser.total_points < item.price) {
+        throw new Error(`INSUFFICIENT_BALANCE:${item.price}:${economyUser.total_points}:${currencyName}`);
+      }
+
+      // Check minimum balance requirement
+      if (item.required_balance && economyUser.total_points < item.required_balance) {
+        throw new Error(`MIN_BALANCE:${item.required_balance}:${currencyName}`);
+      }
+
+      // Generate unique redeem code
+      let code = generateCode();
+      let attempts = 0;
+      while (attempts < 10) {
+        const existing = await tx.shopPurchase.findUnique({ where: { redeem_code: code } });
+        if (!existing) break;
+        code = generateCode();
+        attempts++;
+      }
+
+      // Use config for leaderboard sync setting
+      const leaderboardSync = config?.leaderboard_sync ?? true;
+
+      // Deduct points from user
+      await tx.economyUser.update({
+        where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } },
+        data: {
+          total_points: { decrement: item.price },
+          leaderboard_points: leaderboardSync ? { decrement: item.price } : undefined
+        }
+      });
+
+      // Decrement stock if applicable (atomic guard to avoid race/oversell)
+      if (item.stock !== null && item.stock !== -1) {
+        const stockUpdate = await tx.shopItem.updateMany({
+          where: { id: item.id, guild_id: GUILD_ID, stock: { gt: 0 } },
+          data: { stock: { decrement: 1 } }
+        });
+
+        if (stockUpdate.count === 0) {
+          throw new Error('OUT_OF_STOCK');
+        }
+      }
+
+      // Create purchase record
+      const purchase = await tx.shopPurchase.create({
+        data: {
+          guild_id: GUILD_ID,
+          user_id: userId,
+          item_id: item.id,
+          item_name: item.name,
+          price_paid: item.price,
+          redeem_code: code
+        }
+      });
+
+      // Create point log
+      await tx.economyPointLog.create({
+        data: {
+          guild_id: GUILD_ID,
+          user_id: userId,
+          amount: -item.price,
+          reason: `Purchased ${item.name} (Website)`,
+          source: 'shop'
+        }
+      });
+
+      return { item, purchase, economyUser };
     });
 
-    // Create point log
-    await prismaBot.economyPointLog.create({
-      data: {
-        guild_id: GUILD_ID,
-        user_id: userId,
-        amount: -item.price,
-        reason: `Purchased ${item.name} (Website)`,
-        source: 'shop'
-      }
-    });
+    const { item, purchase, economyUser } = result;
 
     // Get currency emoji for the DM
     const currencyEmoji = config?.currency_emoji || '🪙';
@@ -291,6 +297,36 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'ITEM_NOT_FOUND') {
+        return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+      }
+      if (error.message === 'ITEM_DISABLED') {
+        return NextResponse.json({ error: 'This item is currently unavailable' }, { status: 400 });
+      }
+      if (error.message === 'ITEM_EXPIRED') {
+        return NextResponse.json({ error: 'This item has expired and is no longer available' }, { status: 400 });
+      }
+      if (error.message === 'OUT_OF_STOCK') {
+        return NextResponse.json({ error: 'This item is out of stock' }, { status: 400 });
+      }
+      if (error.message.startsWith('NO_ECONOMY_ACCOUNT:')) {
+        const currencyName = error.message.split(':')[1] || 'Ozy';
+        return NextResponse.json({ error: `You don't have an economy account. Earn some ${currencyName} first!` }, { status: 400 });
+      }
+      if (error.message.startsWith('MIN_BALANCE:')) {
+        const [, requiredBalance, currencyName] = error.message.split(':');
+        return NextResponse.json({
+          error: `You need a minimum balance of ${Number(requiredBalance).toLocaleString()} ${currencyName} to purchase this item.`
+        }, { status: 400 });
+      }
+      if (error.message.startsWith('INSUFFICIENT_BALANCE:')) {
+        const [, required, current, currencyName] = error.message.split(':');
+        return NextResponse.json({
+          error: `Insufficient balance. You need ${Number(required).toLocaleString()} ${currencyName} but only have ${Number(current).toLocaleString()}.`
+        }, { status: 400 });
+      }
+    }
     console.error('Error purchasing item:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

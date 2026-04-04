@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -60,6 +60,7 @@ export default function ShopPage() {
   const [showPurchases, setShowPurchases] = useState(false);
   const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null);
   const [shopDisabled, setShopDisabled] = useState(false);
+  const purchaseInFlightRef = useRef(false);
 
   // Authentication check
   useEffect(() => {
@@ -186,9 +187,10 @@ export default function ShopPage() {
 
   const confirmPurchase = async () => {
     if (!confirmItem) return;
+    if (purchaseInFlightRef.current || purchasing) return;
+    purchaseInFlightRef.current = true;
     
     const item = confirmItem;
-    setConfirmItem(null);
     setPurchasing(item.id);
     setError(null);
     setPurchaseResult(null);
@@ -219,6 +221,8 @@ export default function ShopPage() {
       setError(err.message || 'Failed to purchase item');
     } finally {
       setPurchasing(null);
+      setConfirmItem(null);
+      purchaseInFlightRef.current = false;
     }
   };
 
@@ -387,15 +391,17 @@ export default function ShopPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmItem(null)}
-                  className="flex-1 px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] rounded-xl transition-colors font-medium"
+                  disabled={Boolean(purchasing)}
+                  className="flex-1 px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmPurchase}
-                  className="flex-1 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors font-semibold"
+                  disabled={Boolean(purchasing)}
+                  className="flex-1 px-4 py-3 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-colors font-semibold"
                 >
-                  Confirm Purchase
+                  {purchasing ? 'Processing...' : 'Confirm Purchase'}
                 </button>
               </div>
             </div>

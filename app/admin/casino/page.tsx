@@ -501,13 +501,15 @@ export default function CasinoDashboard() {
                   )}
                   {item.stock !== null && (
                     <div className={`absolute top-3 right-3 px-2 py-1 rounded-lg text-xs font-medium ${
-                      item.stock === 0 
+                      item.stock === -1
+                        ? 'bg-green-500/90 text-white'
+                        : item.stock === 0 
                         ? 'bg-red-500/90 text-white' 
                         : item.stock <= 5 
                         ? 'bg-yellow-500/90 text-black' 
                         : 'bg-[rgb(var(--color-bg-secondary))]/90 text-[rgb(var(--color-text-primary))]'
                     }`}>
-                      {item.stock === 0 ? 'Sold Out' : `${item.stock} left`}
+                      {item.stock === -1 ? 'Unlimited' : item.stock === 0 ? 'Sold Out' : `${item.stock} left`}
                     </div>
                   )}
                 </div>

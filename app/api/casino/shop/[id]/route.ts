@@ -28,6 +28,15 @@ export async function GET(
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }
 
+    const existing = await prismaBot.shopItem.findFirst({
+      where: { id, guild_id: GUILD_ID },
+      select: { id: true }
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+    }
+
     const item = await prismaBot.shopItem.findUnique({
       where: { id }
     });
@@ -88,7 +97,8 @@ export async function PUT(
 
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     const price = parseOptionalInt(body.price);
-    const stock = parseOptionalInt(body.stock);
+    const rawStock = parseOptionalInt(body.stock);
+    const stock = rawStock === -1 ? null : rawStock;
     const incomeAmount = parseOptionalInt(body.income_amount);
     const timeHours = parseOptionalInt(body.time_hours);
     const requiredBalance = parseOptionalInt(body.required_balance);
@@ -100,6 +110,10 @@ export async function PUT(
 
     if (price === null || price < 0) {
       return NextResponse.json({ error: 'Price must be a non-negative number' }, { status: 400 });
+    }
+
+    if (stock !== null && stock < 0) {
+      return NextResponse.json({ error: 'Stock must be 0 or greater' }, { status: 400 });
     }
 
     // Calculate expiration date if specified
