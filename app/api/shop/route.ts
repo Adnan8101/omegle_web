@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { sendDM } from '@/lib/discord';
+import { getDiscordUser } from '@/lib/discord';
 import crypto from 'crypto';
 
 const GUILD_ID = "910043773130661918";
@@ -53,24 +54,30 @@ export async function GET(request: NextRequest) {
 
     let userBalance = 0;
     let userPurchases: any[] = [];
+    let userRoleIds: string[] = [];
 
     // If user is logged in, get their balance and purchases
     if (userId) {
-      const economyUser = await prismaBot.economyUser.findUnique({
-        where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
-      });
-      userBalance = economyUser?.total_points || 0;
+      const [economyUser, member, pendingPurchases] = await Promise.all([
+        prismaBot.economyUser.findUnique({
+          where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
+        }),
+        getDiscordUser(userId),
+        prismaBot.shopPurchase.findMany({
+          where: {
+            guild_id: GUILD_ID,
+            user_id: userId,
+            status: 'pending'
+          },
+          orderBy: { created_at: 'desc' },
+          take: 10
+        })
+      ]);
 
-      // Get user's pending purchases
-      userPurchases = await prismaBot.shopPurchase.findMany({
-        where: {
-          guild_id: GUILD_ID,
-          user_id: userId,
-          status: 'pending'
-        },
-        orderBy: { created_at: 'desc' },
-        take: 10
-      });
+      userBalance = economyUser?.total_points || 0;
+      userRoleIds = member?._fromGuild ? (member.roles || []) : [];
+
+      userPurchases = pendingPurchases;
     }
 
     return NextResponse.json({
@@ -84,6 +91,9 @@ export async function GET(request: NextRequest) {
         income_amount: item.income_amount,
         time_hours: item.time_hours,
         role_required_id: item.role_required_id,
+        has_required_role: userId
+          ? (!item.role_required_id || userRoleIds.includes(item.role_required_id))
+          : null,
         required_balance: item.required_balance,
         expires_at: item.expires_at?.toISOString() || null,
         out_of_stock: item.stock !== null && item.stock !== -1 && item.stock <= 0,
@@ -129,6 +139,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { itemId } = body;
 
+    const member = await getDiscordUser(userId);
+    const userRoleIds = member?._fromGuild ? (member.roles || []) : [];
+
     if (!itemId) {
       return NextResponse.json({ error: 'Item ID is required' }, { status: 400 });
     }
@@ -160,6 +173,10 @@ export async function POST(request: NextRequest) {
       // Check if item is expired
       if (item.expires_at && new Date() > item.expires_at) {
         throw new Error('ITEM_EXPIRED');
+      }
+
+      if (item.role_required_id && !userRoleIds.includes(item.role_required_id)) {
+        throw new Error(`MISSING_REQUIRED_ROLE:${item.role_required_id}`);
       }
 
       // Check stock
@@ -327,6 +344,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           error: `You need a minimum balance of ${Number(requiredBalance).toLocaleString()} ${currencyName} to purchase this item.`
         }, { status: 400 });
+      }
+      if (error.message.startsWith('MISSING_REQUIRED_ROLE:')) {
+        const [, roleId] = error.message.split(':');
+        return NextResponse.json({
+          error: `You need role <@&${roleId}> to buy this item.`
+        }, { status: 403 });
       }
       if (error.message.startsWith('INSUFFICIENT_BALANCE:')) {
         const [, required, current, currencyName] = error.message.split(':');

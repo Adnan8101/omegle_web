@@ -19,6 +19,7 @@ interface ShopItem {
   income_amount: number | null;
   time_hours: number | null;
   role_required_id: string | null;
+  has_required_role: boolean | null;
   required_balance: number | null;
   expires_at: string | null;
   out_of_stock?: boolean;
@@ -178,6 +179,11 @@ export default function ShopPage() {
 
     if (userBalance < item.price) {
       setError(`Insufficient balance. You need ${item.price.toLocaleString()} ${currencyName} but only have ${userBalance.toLocaleString()} ${currencyName}.`);
+      return;
+    }
+
+    if (item.role_required_id && item.has_required_role === false) {
+      setError(`You need role ID ${item.role_required_id} to buy this item.`);
       return;
     }
 
@@ -563,6 +569,7 @@ export default function ShopPage() {
               const canAfford = session ? userBalance >= item.price : false;
               const isOutOfStock = item.out_of_stock || (item.stock !== null && item.stock !== -1 && item.stock <= 0);
               const isDisabled = !item.enabled;
+              const missingRequiredRole = Boolean(session && item.role_required_id && item.has_required_role === false);
               const isUnavailable = isOutOfStock || isDisabled;
               const daysLeft = item.expires_at
                 ? Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -656,10 +663,12 @@ export default function ShopPage() {
 
                       <button
                         onClick={() => handlePurchase(item)}
-                        disabled={purchasing === item.id || (session && !canAfford) || isUnavailable}
+                        disabled={purchasing === item.id || (session && !canAfford) || isUnavailable || missingRequiredRole}
                         className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors ${
                           isUnavailable
                             ? 'bg-red-500/20 text-red-400 cursor-not-allowed'
+                            : missingRequiredRole
+                            ? 'bg-orange-500/20 text-orange-400 cursor-not-allowed'
                             : !session
                             ? 'bg-[#5865F2] hover:bg-[#4752C4] text-white'
                             : canAfford
@@ -673,6 +682,8 @@ export default function ShopPage() {
                           'Sold Out'
                         ) : isDisabled ? (
                           'Unavailable'
+                        ) : missingRequiredRole ? (
+                          'Role Required'
                         ) : !session ? (
                           'Login'
                         ) : canAfford ? (
@@ -688,6 +699,13 @@ export default function ShopPage() {
                       <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
                         <FiAlertCircle className="w-3 h-3" />
                         Requires {getEmojiDisplay(currencyEmoji, 'w-3.5 h-3.5')}{formatNumber(item.required_balance)} minimum balance
+                      </div>
+                    )}
+
+                    {session && missingRequiredRole && (
+                      <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
+                        <FiLock className="w-3 h-3" />
+                        Requires role ID {item.role_required_id}
                       </div>
                     )}
                   </div>
