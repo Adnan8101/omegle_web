@@ -7,6 +7,9 @@ import { Prisma } from '@prisma/client';
 
 const GUILD_ID = "910043773130661918";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET - Get single shop item
 export async function GET(
   request: NextRequest,
@@ -45,6 +48,10 @@ export async function GET(
         expires_at: item.expires_at?.toISOString() || null
       },
       currencyEmoji: config?.currency_emoji || '🪙'
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      }
     });
 
   } catch (error) {

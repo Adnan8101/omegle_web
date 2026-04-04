@@ -91,7 +91,7 @@ export default function EditItemPage() {
 
   const fetchItem = async () => {
     try {
-      const res = await fetch(`/api/casino/shop/${itemId}`);
+      const res = await fetch(`/api/casino/shop/${itemId}`, { cache: 'no-store' });
       const data = await res.json();
 
       if (!res.ok) {

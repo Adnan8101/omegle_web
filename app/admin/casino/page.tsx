@@ -120,8 +120,8 @@ export default function CasinoDashboard() {
     
     try {
       const [itemsRes, statsRes] = await Promise.all([
-        fetch('/api/casino/shop'),
-        fetch('/api/casino/stats')
+        fetch('/api/casino/shop', { cache: 'no-store' }),
+        fetch('/api/casino/stats', { cache: 'no-store' })
       ]);
       
       const itemsData = await itemsRes.json();
