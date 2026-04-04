@@ -611,7 +611,7 @@ export default function AddItemPage() {
           <div className="flex gap-4">
             <Link
               href="/admin/casino"
-              className="flex-1 sm:flex-none px-6 py-3 text-center bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] rounded-xl font-medium apple-transition"
+              className="flex-1 sm:flex-none px-6 py-3 text-center bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] rounded-xl font-medium apple-transition"
             >
               Cancel
             </Link>

@@ -7,9 +7,10 @@ import { getErrorMessage } from '@/lib/constants';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user?.hasAccess) {
@@ -19,8 +20,6 @@ export async function GET(
       );
     }
 
-    const { userId } = params;
-    
     // Try cached user first (faster, includes proper avatar URL)
     const cachedUser = await getUserDisplay(userId, 256);
     if (cachedUser && cachedUser.inGuild) {

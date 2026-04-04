@@ -3,16 +3,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTheme } from '@/contexts/ThemeContext';
-import { FiSun, FiMoon } from 'react-icons/fi';
 
 export default function Home() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
 
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition relative overflow-hidden">
-      {/* Hero Section with Video Background */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-        {/* Video Background - Only in hero section */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-20">
         <div className="absolute inset-0 overflow-hidden">
           <video 
             className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2 object-cover opacity-30 dark:opacity-15"
@@ -23,11 +20,9 @@ export default function Home() {
           >
             <source src="/Discord:Omegle.mp4" type="video/mp4" />
           </video>
-          {/* Gradient overlay for better readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-[rgb(var(--color-bg-primary))]/80 via-[rgb(var(--color-bg-primary))]/50 to-[rgb(var(--color-bg-primary))]"></div>
         </div>
 
-        {/* Background - Blue blobs only in light mode */}
         {theme === 'light' && (
           <div className="absolute inset-0">
             <div className="absolute top-0 -left-4 w-[500px] h-[500px] bg-blue-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float"></div>
@@ -36,26 +31,9 @@ export default function Home() {
           </div>
         )}
 
-      {/* Theme Toggle */}
-      <div className="fixed top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 z-50">
-        <button
-          onClick={toggleTheme}
-          className="p-3 sm:p-3.5 rounded-2xl bg-[rgb(var(--color-bg-tertiary))]/80 hover:bg-[rgb(var(--color-hover))] active:scale-95 apple-hover border border-[rgb(var(--color-border))] shadow-apple-md touch-manipulation hover:shadow-blue-glow backdrop-blur-xl will-change-transform"
-          aria-label="Toggle theme"
-        >
-          {theme === 'dark' ? (
-            <FiSun className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-          ) : (
-            <FiMoon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-          )}
-        </button>
-      </div>
-
-        {/* Hero Content */}
         <div className="relative z-10 max-w-6xl w-full px-4 sm:px-6 md:px-8 py-12 sm:py-16 md:py-20">
           <div className="text-center space-y-8 sm:space-y-10 md:space-y-12 animate-fade-in">
             
-            {/* Large Prominent Logo Banner */}
             <div className="flex justify-center animate-slide-down mb-8">
               <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 drop-shadow-2xl will-change-transform">
                 <Image
@@ -69,7 +47,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Brand Title */}
             <div className="space-y-4 sm:space-y-5 md:space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 dark:from-white dark:via-gray-200 dark:to-white animate-slide-up will-change-transform">
                 Omeglee
@@ -84,7 +61,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Join Discord Card */}
             <div className="max-w-2xl mx-auto animate-scale-in will-change-transform" style={{ animationDelay: '0.2s' }}>
               <a 
                 href="https://discord.gg/omegle" 
@@ -119,10 +95,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Coming Soon Section */}
       <section className="relative bg-[rgb(var(--color-bg-primary))] py-16 sm:py-20 md:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
-          {/* Coming Soon Card */}
           <div className="glass-blue rounded-3xl p-8 sm:p-10 md:p-12 lg:p-16 border border-blue-500/30 dark:border-white/10 shadow-blue-glow animate-scale-in backdrop-blur-xl hover:border-blue-500/50 dark:hover:border-white/20 apple-transition will-change-transform">
             <div className="space-y-6 sm:space-y-7 md:space-y-8 text-center">
               <div className="inline-flex items-center justify-center px-6 py-2 bg-blue-500/20 dark:bg-white/10 rounded-full border border-blue-500/30 dark:border-white/20 mb-4">
@@ -135,8 +109,7 @@ export default function Home() {
                 We're crafting an extraordinary experience that will redefine how communities connect and engage.
               </p>
               
-              {/* Staff Application Link */}
-              <div className="pt-4">
+              <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
                 <Link 
                   href="/staff-application"
                   className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 dark:from-white dark:to-gray-200 dark:hover:from-gray-200 dark:hover:to-white text-white dark:text-black active:scale-95 font-semibold px-8 sm:px-10 md:px-12 py-4 sm:py-5 md:py-6 rounded-2xl apple-transition shadow-blue-glow hover:shadow-xl text-base sm:text-lg md:text-xl touch-manipulation w-full sm:w-auto group will-change-transform"
@@ -156,11 +129,41 @@ export default function Home() {
                   </svg>
                   <span className="whitespace-nowrap">Join Our Staff Team</span>
                 </Link>
+                <Link
+                  href="/donator"
+                  className="inline-flex items-center justify-center gap-3 bg-transparent border-2 border-blue-500 dark:border-white hover:bg-blue-500/10 dark:hover:bg-white/10 text-blue-600 dark:text-white active:scale-95 font-semibold px-8 sm:px-10 md:px-12 py-4 sm:py-5 md:py-6 rounded-2xl apple-transition text-base sm:text-lg md:text-xl touch-manipulation w-full sm:w-auto group will-change-transform"
+                >
+                  <svg
+                    className="w-6 h-6 sm:w-7 sm:h-7 group-hover:scale-110 apple-transition will-change-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  <span className="whitespace-nowrap">Subscription Plans</span>
+                </Link>
+                <Link
+                  href="/shop"
+                  className="inline-flex items-center justify-center gap-3 bg-transparent border-2 border-blue-500 dark:border-white hover:bg-blue-500/10 dark:hover:bg-white/10 text-blue-600 dark:text-white active:scale-95 font-semibold px-8 sm:px-10 md:px-12 py-4 sm:py-5 md:py-6 rounded-2xl apple-transition text-base sm:text-lg md:text-xl touch-manipulation w-full sm:w-auto group will-change-transform"
+                >
+                  <svg
+                    className="w-6 h-6 sm:w-7 sm:h-7 group-hover:scale-110 apple-transition will-change-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2m0 0L7 13h10l2-8H5.4m0 0L5 5m2 8l-1.2 6.2A1 1 0 006.8 20h10.4a1 1 0 001-.8L20 13M9 22a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+                  </svg>
+                  <span className="whitespace-nowrap">Shop</span>
+                </Link>
               </div>
+
             </div>
           </div>
 
-          {/* Footer */}
           <div className="text-[rgb(var(--color-text-tertiary))] text-sm font-light animate-fade-in space-y-3 pt-16 text-center">
             <p className="text-base">© 2026 Omeglee. All rights reserved.</p>
           </div>

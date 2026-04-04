@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { canAccessCasino } from '@/lib/apiAuth';
+import { Prisma } from '@prisma/client';
 
 const GUILD_ID = "910043773130661918";
 
@@ -63,28 +64,51 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
+    const parseOptionalInt = (value: unknown) => {
+      if (value === null || value === undefined || value === '') return null;
+      const parsed = parseInt(String(value), 10);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+
+    const name = typeof body.name === 'string' ? body.name.trim() : '';
+    const price = parseOptionalInt(body.price);
+    const stock = parseOptionalInt(body.stock);
+    const incomeAmount = parseOptionalInt(body.income_amount);
+    const timeHours = parseOptionalInt(body.time_hours);
+    const requiredBalance = parseOptionalInt(body.required_balance);
+    const expiresInDays = parseOptionalInt(body.expires_in_days);
+
+    if (!name) {
+      return NextResponse.json({ error: 'Item name is required' }, { status: 400 });
+    }
+
+    if (price === null || price < 0) {
+      return NextResponse.json({ error: 'Price must be a non-negative number' }, { status: 400 });
+    }
+
     // Calculate expiration date if specified
     let expiresAt = null;
-    if (body.expires_in_days && parseInt(body.expires_in_days) > 0) {
+    if (expiresInDays && expiresInDays > 0) {
       expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + parseInt(body.expires_in_days));
+      expiresAt.setDate(expiresAt.getDate() + expiresInDays);
     }
 
     const item = await prismaBot.shopItem.create({
       data: {
         guild_id: GUILD_ID,
-        name: body.name,
-        price: parseInt(body.price),
+        name,
+        price,
         description: body.description || null,
         thumbnail: body.thumbnail || null,
-        stock: body.stock ? parseInt(body.stock) : null,
-        income_amount: body.income_amount ? parseInt(body.income_amount) : null,
-        time_hours: body.time_hours ? parseInt(body.time_hours) : null,
+        stock,
+        income_amount: incomeAmount,
+        time_hours: timeHours,
         role_required_id: body.role_required_id || null,
         role_given_id: body.role_given_id || null,
         role_removed_id: body.role_removed_id || null,
-        required_balance: body.required_balance ? parseInt(body.required_balance) : null,
+        required_balance: requiredBalance,
         reply_message: body.reply_message || null,
+        expires_in_days: expiresInDays,
         expires_at: expiresAt,
         created_by: session?.user?.id || 'web-admin'
       }
@@ -100,6 +124,11 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json({ error: 'An item with this name already exists' }, { status: 409 });
+      }
+    }
     console.error('Error creating shop item:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

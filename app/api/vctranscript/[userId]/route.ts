@@ -39,15 +39,15 @@ const emptyChatStats = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
+  const { userId } = await params;
   try {
     const session = await getServerSession(authOptions);
     if (!session || !canAccessVCAndChats(session.user?.permissions)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { userId } = params;
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
@@ -87,7 +87,7 @@ export async function GET(
   } catch (error: unknown) {
     console.error('Error fetching VC transcript:', getErrorMessage(error));
     return NextResponse.json({
-      userId: params.userId,
+      userId,
       vcStats: emptyVCStats,
       vcSessions: [],
       chatStats: emptyChatStats,

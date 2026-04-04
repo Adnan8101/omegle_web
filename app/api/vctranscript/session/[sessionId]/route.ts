@@ -7,9 +7,10 @@ import { canAccessVCAndChats } from '@/lib/apiAuth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
+    const { sessionId } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user?.hasAccess) {
@@ -18,8 +19,6 @@ export async function GET(
         { status: 401 }
       );
     }
-
-    const { sessionId } = params;
 
     // Get detailed session info (with channel name from cache)
     const sessionData = await queryBotDb(`

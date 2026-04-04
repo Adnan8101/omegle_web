@@ -9,9 +9,10 @@ const GUILD_ID = "910043773130661918";
 // GET - Fetch invites for a specific user with full details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
@@ -24,7 +25,6 @@ export async function GET(
       return NextResponse.json({ error: 'Insufficient permissions - Admin only' }, { status: 403 });
     }
 
-    const userId = params.userId;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');

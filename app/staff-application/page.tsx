@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { FiSun, FiMoon, FiLock, FiSend, FiCheckCircle, FiX } from 'react-icons/fi';
+import { FiLock, FiSend, FiCheckCircle, FiX } from 'react-icons/fi';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function StaffApplication() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(true);
   const [isApplicationsOpen, setIsApplicationsOpen] = useState(true);
@@ -183,36 +183,6 @@ export default function StaffApplication() {
           <div className="absolute -bottom-8 left-20 w-96 h-96 bg-blue-400/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '4s' }}></div>
         </div>
       )}
-
-      {/* Navigation with Logo */}
-      <nav className="sticky top-0 z-50 glass-blue border-b border-blue-500/20 dark:border-white/10 shadow-apple-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="flex items-center gap-2 sm:gap-3 apple-hover">
-              <div className="relative w-8 h-8 sm:w-10 sm:h-10">
-                <Image
-                  src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
-                  alt="Omegle Logo"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <span className="text-lg sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[180px] sm:max-w-none">Omeglee Community</span>
-            </Link>
-            <button
-              onClick={toggleTheme}
-              className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] apple-hover border border-[rgb(var(--color-border))] hover:shadow-blue-glow flex-shrink-0"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? (
-                <FiSun className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              ) : (
-                <FiMoon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-              )}
-            </button>
-          </div>
-        </div>
-      </nav>
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-16">

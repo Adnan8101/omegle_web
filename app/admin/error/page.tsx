@@ -15,7 +15,7 @@ function ErrorContent() {
         return {
           title: 'Configuration Error',
           description: 'There is a problem with the server configuration. Please contact the administrator.',
-          suggestion: 'Make sure NEXTAUTH_URL is set to https://www.omegleecommunity.com'
+          suggestion: 'Make sure NEXTAUTH_URL matches your running app URL (e.g. http://localhost:3000 for local or your production domain in prod).'
         };
       case 'AccessDenied':
         return {

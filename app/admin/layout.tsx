@@ -8,7 +8,7 @@ import Image from 'next/image';
 import {
     FiHome, FiFileText, FiLogOut, FiGlobe, FiMenu, FiX,
     FiUsers, FiMessageSquare, FiBarChart2, FiMic, FiDollarSign,
-    FiSun, FiMoon, FiActivity, FiUserPlus
+    FiSun, FiMoon, FiActivity, FiUserPlus, FiShield, FiCreditCard, FiAlertOctagon
 } from 'react-icons/fi';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -146,6 +146,46 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresCasinoAccess: false,
         },
         {
+            name: 'AutoMod',
+            href: '/admin/automod',
+            icon: <FiShield className="w-5 h-5" />,
+            requiresFullAccess: false,
+            requiresModeratorAccess: true,
+            requiresCasinoAccess: false,
+        },
+        {
+            name: 'Dead Hand',
+            href: '/admin/deadhand',
+            icon: <FiAlertOctagon className="w-5 h-5" />,
+            requiresFullAccess: true,
+            requiresModeratorAccess: false,
+            requiresCasinoAccess: false,
+        },
+        {
+            name: 'Donator Plans',
+            href: '/admin/donator',
+            icon: <FiCreditCard className="w-5 h-5" />,
+            requiresFullAccess: false,
+            requiresModeratorAccess: true,
+            requiresCasinoAccess: false,
+        },
+        {
+            name: 'Donator Subs',
+            href: '/admin/donator/subscriptions',
+            icon: <FiUsers className="w-5 h-5" />,
+            requiresFullAccess: false,
+            requiresModeratorAccess: true,
+            requiresCasinoAccess: false,
+        },
+        {
+            name: 'Donator Payments',
+            href: '/admin/donator/payments',
+            icon: <FiDollarSign className="w-5 h-5" />,
+            requiresFullAccess: false,
+            requiresModeratorAccess: true,
+            requiresCasinoAccess: false,
+        },
+        {
             name: 'Mod Stats',
             href: '/admin/mods-stats',
             icon: <FiUsers className="w-5 h-5" />,
@@ -226,6 +266,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         }
         if (href === '/admin/mods-stats') {
             return pathname.startsWith('/admin/mods-stats');
+        }
+        if (href === '/admin/donator') {
+            return pathname === '/admin/donator';
+        }
+        if (href === '/admin/donator/subscriptions') {
+            return pathname.startsWith('/admin/donator/subscriptions');
+        }
+        if (href === '/admin/donator/payments') {
+            return pathname.startsWith('/admin/donator/payments');
         }
         if (href === '/admin/vctranscript/chatlogs') {
             return pathname.startsWith('/admin/vctranscript/chatlogs');

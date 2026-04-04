@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -17,6 +17,8 @@ export default function LiveMonitorPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  const MONITOR_CACHE_KEY = 'admin_monitor_snapshot_v1';
+
   const [activeTab, setActiveTab] = useState<TabType>('vc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +30,24 @@ export default function LiveMonitorPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<any>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptRef = useRef(0);
+
+  const clearReconnectTimer = () => {
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+  };
+
+  const closeStream = () => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    clearReconnectTimer();
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -42,6 +62,11 @@ export default function LiveMonitorPage() {
       setData(result);
       setLastUpdate(new Date());
       setError(null);
+      try {
+        sessionStorage.setItem(MONITOR_CACHE_KEY, JSON.stringify(result));
+      } catch {
+        // Ignore storage failures.
+      }
     } catch (err) {
       console.error('Error fetching live status:', err);
       setError('Failed to connect to server');
@@ -55,7 +80,7 @@ export default function LiveMonitorPage() {
     
     setSearchLoading(true);
     try {
-      const res = await fetch(`/api/economy/live-status?userId=${searchQuery}`);
+      const res = await fetch(`/api/economy/live-status?userId=${encodeURIComponent(searchQuery.trim())}`);
       const result = await res.json();
       
       if (res.ok) {
@@ -68,6 +93,52 @@ export default function LiveMonitorPage() {
       setSearchLoading(false);
     }
   }, [searchQuery]);
+
+  const connectStream = useCallback(() => {
+    closeStream();
+
+    const stream = new EventSource('/api/economy/live-stream');
+    eventSourceRef.current = stream;
+
+    stream.onopen = () => {
+      reconnectAttemptRef.current = 0;
+      setConnected(true);
+      setError(null);
+    };
+
+    stream.onmessage = (event) => {
+      try {
+        const result = JSON.parse(event.data);
+        setData(result);
+        setLastUpdate(new Date());
+        setLoading(false);
+        setConnected(true);
+        setError(null);
+        try {
+          sessionStorage.setItem(MONITOR_CACHE_KEY, JSON.stringify(result));
+        } catch {
+          // Ignore storage failures.
+        }
+      } catch (err) {
+        console.error('Error parsing SSE data:', err);
+      }
+    };
+
+    stream.onerror = () => {
+      setConnected(false);
+      setError('Connection interrupted. Reconnecting...');
+      stream.close();
+      eventSourceRef.current = null;
+
+      const nextAttempt = Math.min(reconnectAttemptRef.current + 1, 5);
+      reconnectAttemptRef.current = nextAttempt;
+      const delayMs = Math.min(1000 * Math.pow(2, nextAttempt), 10_000);
+      clearReconnectTimer();
+      reconnectTimerRef.current = setTimeout(() => {
+        connectStream();
+      }, delayMs);
+    };
+  }, []);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -84,44 +155,28 @@ export default function LiveMonitorPage() {
         return;
       }
 
-      // Set up Server-Sent Events connection
-      const eventSource = new EventSource('/api/economy/live-stream');
-
-      eventSource.onopen = () => {
-        setConnected(true);
-        setError(null);
-      };
-
-      eventSource.onmessage = (event) => {
-        try {
-          const result = JSON.parse(event.data);
-          setData(result);
-          setLastUpdate(new Date());
-          setLoading(false);
-          setError(null);
-        } catch (err) {
-          console.error('Error parsing SSE data:', err);
-        }
-      };
-
-      eventSource.onerror = () => {
-        setConnected(false);
-        setError('Connection lost. Reconnecting...');
-        eventSource.close();
-        
-        // Reconnect after 3 seconds
-        setTimeout(() => {
-          if (status === 'authenticated') {
-            window.location.reload();
+      try {
+        const cached = sessionStorage.getItem(MONITOR_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed) {
+            setData(parsed);
+            setLoading(false);
+            setLastUpdate(new Date());
           }
-        }, 3000);
-      };
+        }
+      } catch {
+        // Ignore cache read failures.
+      }
+
+      void fetchData();
+      connectStream();
 
       return () => {
-        eventSource.close();
+        closeStream();
       };
     }
-  }, [status, session, router]);
+  }, [status, session, router, fetchData, connectStream]);
 
   const formatDuration = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;

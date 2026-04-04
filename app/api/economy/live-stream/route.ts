@@ -112,6 +112,16 @@ async function fetchLiveData() {
     LIMIT 100
   `, [GUILD_ID]);
 
+  const vcProgressMap = new Map<string, any>();
+  for (const progress of vcProgress) {
+    vcProgressMap.set(`${progress.user_id}:${progress.category_id}`, progress);
+  }
+
+  const categoryRewardMap = new Map<string, any>();
+  for (const reward of categoryRewards) {
+    categoryRewardMap.set(reward.category_id, reward);
+  }
+
   // Get category IDs for active users (to exclude only their active category)
   const activeCategoryMap = new Map<string, string>();
   for (const sess of activeVcSessions) {
@@ -155,11 +165,9 @@ async function fetchLiveData() {
   // Format VC users
   const vcUsers = activeVcSessions.map((session: any) => {
     const categoryId = session.category_id || 'global';
-    const userProg = vcProgress.find((p: any) => 
-      p.user_id === session.user_id && p.category_id === categoryId
-    );
-    
-    const catReward = categoryRewards.find((c: any) => c.category_id === categoryId);
+    const userProg = vcProgressMap.get(`${session.user_id}:${categoryId}`);
+
+    const catReward = categoryRewardMap.get(categoryId);
     const isBlacklisted = blacklistedChannelIds.has(session.channel_id);
     
     const isAdvanced = config?.advanced_mode && catReward;
@@ -221,7 +229,7 @@ async function fetchLiveData() {
 
   // Format message activity
   const msgActivity = activeMsgProgress.map((p: any) => {
-    const catReward = categoryRewards.find((c: any) => c.category_id === p.category_id);
+    const catReward = categoryRewardMap.get(p.category_id);
     const useCategorySettings = config?.advanced_mode && p.category_id !== 'global' && !!catReward;
     const threshold = useCategorySettings
       ? (catReward.messages_per_point || 25)
@@ -322,27 +330,63 @@ export async function GET(request: NextRequest) {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
-        const sendData = async () => {
+        let closed = false;
+        let pollingTimer: ReturnType<typeof setTimeout> | null = null;
+        let inFlight = false;
+
+        const safeClose = () => {
+          if (closed) return;
+          closed = true;
+          if (pollingTimer) {
+            clearTimeout(pollingTimer);
+            pollingTimer = null;
+          }
+          try {
+            controller.close();
+          } catch {
+            // Ignore close races when stream is already closed.
+          }
+        };
+
+        const safeEnqueue = (payload: string) => {
+          if (closed) return;
+          try {
+            controller.enqueue(encoder.encode(payload));
+          } catch (err: any) {
+            if (err?.code === 'ERR_INVALID_STATE') {
+              safeClose();
+              return;
+            }
+            throw err;
+          }
+        };
+
+        const pollOnce = async () => {
+          if (closed || inFlight) return;
+          inFlight = true;
           try {
             const data = await fetchLiveData();
-            const message = `data: ${JSON.stringify(data)}\n\n`;
-            controller.enqueue(encoder.encode(message));
+            safeEnqueue(`data: ${JSON.stringify(data)}\n\n`);
           } catch (error) {
             console.error('SSE error:', error);
+            if (!closed) {
+              safeEnqueue(`event: error\ndata: ${JSON.stringify({ message: 'live stream temporarily unavailable' })}\n\n`);
+            }
+          } finally {
+            inFlight = false;
+            if (!closed) {
+              pollingTimer = setTimeout(() => {
+                void pollOnce();
+              }, 3000);
+            }
           }
         };
 
         // Send initial data
-        await sendData();
-
-        // Send updates every 3 seconds
-        const interval = setInterval(sendData, 3000);
+        await pollOnce();
 
         // Clean up on connection close
-        request.signal.addEventListener('abort', () => {
-          clearInterval(interval);
-          controller.close();
-        });
+        request.signal.addEventListener('abort', safeClose);
       },
     });
 

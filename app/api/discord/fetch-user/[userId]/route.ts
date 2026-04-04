@@ -9,16 +9,15 @@ import { getErrorMessage } from '@/lib/constants';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
+  const { userId } = await params;
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.hasAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = params.userId;
-    
     // Fetch directly from Discord API
     const discordRes = await fetch(`https://discord.com/api/v10/users/${userId}`, {
       headers: {
@@ -63,7 +62,6 @@ export async function GET(
     });
   } catch (error: unknown) {
     console.error('Error fetching user from Discord:', getErrorMessage(error));
-    const userId = params.userId;
     const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
     return NextResponse.json({
       id: userId,

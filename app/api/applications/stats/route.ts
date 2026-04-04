@@ -15,18 +15,40 @@ export async function GET() {
 
     await dbConnect();
 
-    const total = await StaffApplication.countDocuments();
-    const pending = await StaffApplication.countDocuments({ status: 'pending' });
-    const considered = await StaffApplication.countDocuments({ status: 'considered' });
-    const denied = await StaffApplication.countDocuments({ status: 'denied' });
+    const [stats] = await StaffApplication.aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          pending: {
+            $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] }
+          },
+          considered: {
+            $sum: { $cond: [{ $eq: ['$status', 'considered'] }, 1, 0] }
+          },
+          denied: {
+            $sum: { $cond: [{ $eq: ['$status', 'denied'] }, 1, 0] }
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          total: 1,
+          pending: 1,
+          considered: 1,
+          denied: 1,
+        },
+      },
+    ]);
 
     return NextResponse.json({
       success: true,
       data: {
-        total,
-        pending,
-        considered,
-        denied,
+        total: Number(stats?.total || 0),
+        pending: Number(stats?.pending || 0),
+        considered: Number(stats?.considered || 0),
+        denied: Number(stats?.denied || 0),
       },
     });
   } catch (error: unknown) {

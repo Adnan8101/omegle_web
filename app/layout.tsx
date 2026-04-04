@@ -1,7 +1,21 @@
 import type { Metadata } from "next";
+import { Manrope, Sora } from 'next/font/google';
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { Providers } from "./providers";
+import FrontendNavbarMount from '@/components/FrontendNavbarMount';
+
+const displayFont = Sora({
+  subsets: ['latin'],
+  variable: '--font-display',
+  weight: ['500', '600', '700', '800'],
+});
+
+const bodyFont = Manrope({
+  subsets: ['latin'],
+  variable: '--font-body',
+  weight: ['400', '500', '600', '700'],
+});
 
 export const metadata: Metadata = {
   title: "Omeglee Community - Where Connections Become Conversations",
@@ -28,9 +42,12 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif" />
       </head>
-      <body className="font-sans">
+      <body className={`${displayFont.variable} ${bodyFont.variable} font-sans`}>
         <Providers>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <FrontendNavbarMount />
+            {children}
+          </ThemeProvider>
         </Providers>
       </body>
     </html>

@@ -4,8 +4,11 @@ import { checkUserPermissions, UserPermissions } from "./permissions";
 import { prismaBot } from "./prismaBot";
 
 // Cache permission checks to avoid hitting Discord API on every request
-const ACCESS_CHECK_INTERVAL = 10 * 1000; // 10 seconds (for immediate updates)
+const ACCESS_CHECK_INTERVAL = 60 * 1000; // 60 seconds
+const CASINO_ROLE_DB_RETRY_MS = 5 * 60 * 1000; // 5 minutes
 const GUILD_ID = "910043773130661918";
+
+let casinoRoleDbFailedAt = 0;
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -74,28 +77,48 @@ export const authOptions: NextAuthOptions = {
         try {
           // Fetch casino roles from database (with error handling)
           let casinoRoleIds: string[] = [];
+          const shouldSkipDbFetch = casinoRoleDbFailedAt > 0 && (nowMs - casinoRoleDbFailedAt < CASINO_ROLE_DB_RETRY_MS);
           try {
-            const casinoRoles = await prismaBot.casinoAdminRole.findMany({
-              where: { guild_id: GUILD_ID }
-            });
-            casinoRoleIds = casinoRoles.map((r: any) => r.role_id);
-            console.log('[Auth] Fetched casino roles from DB:', casinoRoleIds);
+            if (!shouldSkipDbFetch) {
+              const casinoRoles = await prismaBot.casinoAdminRole.findMany({
+                where: { guild_id: GUILD_ID }
+              });
+              casinoRoleIds = casinoRoles.map((r: any) => r.role_id);
+              casinoRoleDbFailedAt = 0;
+              console.log('[Auth] Fetched casino roles from DB:', casinoRoleIds);
+            } else {
+              casinoRoleIds = ["1470329047262167040"];
+            }
           } catch (dbError) {
             // Database error should not break authentication
+            casinoRoleDbFailedAt = nowMs;
             console.error('[Auth] Failed to fetch casino roles from DB (non-fatal):', dbError);
             // Use hardcoded fallback
             casinoRoleIds = ["1470329047262167040"];
           }
           
+          const previousPermissions = token.permissions as UserPermissions | undefined;
           const permissions = await checkUserPermissions(token.accessToken, casinoRoleIds);
+          const lostAccessTransiently =
+            Boolean(previousPermissions?.hasAnyAccess) &&
+            !permissions.hasAnyAccess &&
+            Array.isArray(permissions.roles) &&
+            permissions.roles.length === 0;
+
+          const nextPermissions = lostAccessTransiently ? previousPermissions! : permissions;
+
+          if (lostAccessTransiently) {
+            console.warn('[Auth] Preserving previous permissions due transient empty Discord permission response');
+          }
+
           console.log('[Auth] Permission check result:', {
-            hasCasinoAccess: permissions.hasCasinoAccess,
-            hasFullAccess: permissions.hasFullAccess,
-            roles: permissions.roles,
+            hasCasinoAccess: nextPermissions.hasCasinoAccess,
+            hasFullAccess: nextPermissions.hasFullAccess,
+            roles: nextPermissions.roles,
             casinoRoleIds
           });
-          token.permissions = permissions;
-          token.hasAccess = permissions.hasAnyAccess;
+          token.permissions = nextPermissions;
+          token.hasAccess = nextPermissions.hasAnyAccess;
           token.accessCheckedAt = nowMs;
         } catch (error) {
           console.error('[Auth] Permission check failed:', error);

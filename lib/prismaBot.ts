@@ -7,7 +7,7 @@ declare global {
 export const prismaBot = global.prismaBotClient || new PrismaClient({
   datasources: {
     db: {
-      url: process.env.BOT_DATABASE_URL,
+      url: process.env.BOT_DATABASE_WRITE_URL || process.env.BOT_DATABASE_URL,
     },
   },
 });

@@ -4,11 +4,10 @@ import { GUILD_ID, getErrorMessage } from '@/lib/constants';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string; targetUserId: string } }
+  { params }: { params: Promise<{ userId: string; targetUserId: string }> }
 ) {
   try {
-    const { userId, targetUserId } = params;
-
+    const { userId, targetUserId } = await params;
     // Simplified query matching the mutuals logic
     const query = `
       SELECT 

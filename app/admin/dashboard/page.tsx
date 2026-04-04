@@ -27,6 +27,9 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
 
+  const DASHBOARD_CACHE_KEY = 'admin_dashboard_stats_v1';
+  const DASHBOARD_CACHE_TTL_MS = 60_000;
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.replace('/admin');
@@ -41,7 +44,23 @@ export default function AdminDashboard() {
         router.replace('/admin');
       }
     } else if (status === 'authenticated' && session?.user?.permissions?.hasFullAccess) {
+      try {
+        const cachedRaw = sessionStorage.getItem(DASHBOARD_CACHE_KEY);
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw) as { timestamp: number; stats: Stats };
+          if (Date.now() - cached.timestamp < DASHBOARD_CACHE_TTL_MS) {
+            setStats(cached.stats);
+            setLoading(false);
+          }
+        }
+      } catch {
+        // Ignore cache parse errors.
+      }
+
       fetchStats();
+      router.prefetch('/admin/monitor');
+      router.prefetch('/admin/casino');
+      router.prefetch('/admin/dashboard/applications');
     }
   }, [status, session, router]);
 
@@ -51,6 +70,14 @@ export default function AdminDashboard() {
       const result = await response.json();
       if (result.success) {
         setStats(result.data);
+        try {
+          sessionStorage.setItem(
+            DASHBOARD_CACHE_KEY,
+            JSON.stringify({ timestamp: Date.now(), stats: result.data })
+          );
+        } catch {
+          // Ignore storage quota/runtime restrictions.
+        }
       }
     } catch (error) {
       console.error('Error fetching stats:', error);

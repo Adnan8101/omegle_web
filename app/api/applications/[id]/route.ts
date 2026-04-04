@@ -10,16 +10,17 @@ import { queryBotDb, getUsersDisplay } from '@/lib/botDb';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session || !canAccessAdminFeatures(session.user?.permissions)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await dbConnect();
-    const application = await StaffApplication.findById(params.id);
+    const application = await StaffApplication.findById(id);
 
     if (!application) {
       return NextResponse.json(
@@ -133,14 +134,15 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await dbConnect();
     const body = await request.json();
 
     const application = await StaffApplication.findByIdAndUpdate(
-      params.id,
+      id,
       { $set: body },
       { new: true, runValidators: true }
     );
@@ -163,11 +165,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await dbConnect();
-    const application = await StaffApplication.findByIdAndDelete(params.id);
+    const application = await StaffApplication.findByIdAndDelete(id);
 
     if (!application) {
       return NextResponse.json(

@@ -3,7 +3,9 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
-  optimizeFonts: true,
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     unoptimized: true, // For GIF animations
     formats: ['image/avif', 'image/webp'],

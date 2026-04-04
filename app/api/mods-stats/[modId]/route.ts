@@ -36,16 +36,16 @@ function buildDateClause(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { modId: string } }
+  { params }: { params: Promise<{ modId: string }> }
 ) {
   try {
+    const { modId } = await params;
     const session = await getServerSession(authOptions);
     // Mods stats requires full access (admin/manage server)
     if (!session || !session.user?.permissions?.hasFullAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const modId = params.modId;
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');

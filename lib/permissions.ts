@@ -186,7 +186,28 @@ export async function checkUserPermissions(
     const hasManageServer = (permissions & PERMISSIONS.MANAGE_GUILD) !== 0n;
     
     // Also check if user has server owner indicator (member.owner field)
-    const isOwner = member.owner === true;
+    let isOwner = member.owner === true;
+
+    // Fallback: check guild ownership via /users/@me/guilds
+    if (!isOwner) {
+      try {
+        const guildsResponse = await fetch('https://discord.com/api/v10/users/@me/guilds', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (guildsResponse.ok) {
+          const guilds = await guildsResponse.json();
+          const targetGuild = Array.isArray(guilds)
+            ? guilds.find((guild: any) => guild?.id === GUILD_ID)
+            : null;
+          isOwner = Boolean(targetGuild?.owner);
+        }
+      } catch (guildError) {
+        console.error('Failed to check guild ownership:', guildError);
+      }
+    }
 
     // Check for known admin role IDs (always check, not just as fallback)
     const hasAdminRole = roles.some((roleId) => {

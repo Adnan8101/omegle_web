@@ -129,6 +129,16 @@ export async function GET(request: NextRequest) {
       LIMIT 100
     `, [GUILD_ID]);
 
+    const vcProgressMap = new Map<string, any>();
+    for (const progress of vcProgress) {
+      vcProgressMap.set(`${progress.user_id}:${progress.category_id}`, progress);
+    }
+
+    const categoryRewardMap = new Map<string, any>();
+    for (const reward of categoryRewards) {
+      categoryRewardMap.set(reward.category_id, reward);
+    }
+
     // Get category IDs for active users (to exclude only their active category)
     const activeCategoryMap = new Map<string, string>();
     for (const sess of activeVcSessions) {
@@ -172,11 +182,9 @@ export async function GET(request: NextRequest) {
     // Format VC users with detailed earning info
     const vcUsers = activeVcSessions.map((session: any) => {
       const categoryId = session.category_id || 'global';
-      const userProg = vcProgress.find((p: any) => 
-        p.user_id === session.user_id && p.category_id === categoryId
-      );
-      
-      const catReward = categoryRewards.find((c: any) => c.category_id === categoryId);
+      const userProg = vcProgressMap.get(`${session.user_id}:${categoryId}`);
+
+      const catReward = categoryRewardMap.get(categoryId);
       const isBlacklisted = blacklistedChannelIds.has(session.channel_id);
       
       // Get settings based on mode
@@ -235,7 +243,7 @@ export async function GET(request: NextRequest) {
 
     // Format message activity
     const msgActivity = activeMsgProgress.map((p: any) => {
-      const catReward = categoryRewards.find((c: any) => c.category_id === p.category_id);
+      const catReward = categoryRewardMap.get(p.category_id);
       const useCategorySettings = config?.advanced_mode && p.category_id !== 'global' && !!catReward;
       const threshold = useCategorySettings
         ? (catReward.messages_per_point || 25)
