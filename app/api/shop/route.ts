@@ -16,6 +16,18 @@ function generateCode(): string {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
+function normalizeRoleId(roleRef: string | null | undefined): string | null {
+  if (!roleRef) return null;
+
+  const trimmed = roleRef.trim();
+  if (/^\d{17,20}$/.test(trimmed)) return trimmed;
+
+  const mentionMatch = trimmed.match(/^<@&?(\d{17,20})>$/);
+  if (mentionMatch) return mentionMatch[1];
+
+  return null;
+}
+
 // GET - Get public shop items and user balance (if logged in)
 export async function GET(request: NextRequest) {
   try {
@@ -58,7 +70,8 @@ export async function GET(request: NextRequest) {
     let userRoleIds: string[] = [];
 
     const roleNameCache = new Map<string, string | null>();
-    const resolveRoleName = async (roleId: string | null): Promise<string | null> => {
+    const resolveRoleName = async (roleRef: string | null): Promise<string | null> => {
+      const roleId = normalizeRoleId(roleRef);
       if (!roleId) return null;
       if (roleNameCache.has(roleId)) {
         return roleNameCache.get(roleId) || null;
@@ -102,10 +115,13 @@ export async function GET(request: NextRequest) {
         stock: item.stock,
         income_amount: item.income_amount,
         time_hours: item.time_hours,
-        role_required_id: item.role_required_id,
+        role_required_id: normalizeRoleId(item.role_required_id),
         role_required_name: await resolveRoleName(item.role_required_id),
         has_required_role: userId
-          ? (!item.role_required_id || userRoleIds.includes(item.role_required_id))
+          ? (() => {
+              const requiredRoleId = normalizeRoleId(item.role_required_id);
+              return !requiredRoleId || userRoleIds.includes(requiredRoleId);
+            })()
           : null,
         required_balance: item.required_balance,
         expires_at: item.expires_at?.toISOString() || null,
@@ -191,8 +207,9 @@ export async function POST(request: NextRequest) {
         throw new Error('ITEM_EXPIRED');
       }
 
-      if (item.role_required_id && !userRoleIds.includes(item.role_required_id)) {
-        throw new Error(`MISSING_REQUIRED_ROLE:${item.role_required_id}`);
+      const requiredRoleId = normalizeRoleId(item.role_required_id);
+      if (requiredRoleId && !userRoleIds.includes(requiredRoleId)) {
+        throw new Error(`MISSING_REQUIRED_ROLE:${requiredRoleId}`);
       }
 
       // Check stock
@@ -362,8 +379,9 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       }
       if (error.message.startsWith('MISSING_REQUIRED_ROLE:')) {
-        const [, roleId] = error.message.split(':');
-        const roleName = await getGuildRoleName(GUILD_ID, roleId);
+        const [, roleRef] = error.message.split(':');
+        const roleId = normalizeRoleId(roleRef);
+        const roleName = roleId ? await getGuildRoleName(GUILD_ID, roleId) : null;
         return NextResponse.json({
           error: roleName
             ? `You need ${roleName} to buy this item.`
