@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         shopDisabled: true,
         items: [],
         config: {
-          currencyEmoji: config?.currency_emoji || '🪙',
+          currencyEmoji: config?.currency_emoji || 'OZY',
           currencyName: config?.currency_name || 'Ozy'
         },
         user: null
@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       items: mappedItems,
       config: {
-        currencyEmoji: config?.currency_emoji || '🪙',
+        currencyEmoji: config?.currency_emoji || 'OZY',
         currencyName: config?.currency_name || 'Ozy'
       },
       user: userId ? {
@@ -341,13 +341,13 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      return { item, purchase, economyUser };
+      return { item, purchase, economyUser, purchaseExpiresAt };
     });
 
-    const { item, purchase, economyUser } = result;
+    const { item, purchase, economyUser, purchaseExpiresAt } = result;
 
     // Get currency emoji for the DM
-    const currencyEmoji = config?.currency_emoji || '🪙';
+    const currencyEmoji = config?.currency_emoji || 'OZY';
     const formatNumber = (n: number) => n.toLocaleString();
 
     // Send DM notification to user with purchase receipt
@@ -355,18 +355,18 @@ export async function POST(request: NextRequest) {
     try {
       const dmResult = await sendDM(userId, {
         embed: {
-          title: '🎉 Purchase Successful!',
+          title: 'Purchase Successful',
           description: `Thank you for your purchase from **Omeglee Community Shop**!`,
           color: 0x57F287, // Green color
           thumbnail: item.thumbnail ? { url: item.thumbnail } : undefined,
           fields: [
-            { name: '📦 Item', value: item.name, inline: true },
-            { name: '💰 Price Paid', value: `${currencyEmoji}${formatNumber(item.price)}`, inline: true },
-            { name: '🎟️ Your Redeem Code', value: `\`\`\`${purchase.redeem_code}\`\`\``, inline: false },
-            { name: '⏳ Expires', value: `<t:${Math.floor(purchase.expires_at.getTime() / 1000)}:F>`, inline: false },
-            { name: '📝 How to Redeem', value: `DM **Omeglee Bot** and send your code:\n\`/redeem code:${purchase.redeem_code}\``, inline: false }
+            { name: 'Item', value: item.name, inline: true },
+            { name: 'Price Paid', value: `${currencyEmoji}${formatNumber(item.price)}`, inline: true },
+            { name: 'Redeem Code', value: `\`\`\`${purchase.redeem_code}\`\`\``, inline: false },
+            { name: 'Expires', value: `<t:${Math.floor(purchaseExpiresAt.getTime() / 1000)}:F>`, inline: false },
+            { name: 'How to Redeem', value: `DM **Omeglee Bot** and send your code:\n\`/redeem code:${purchase.redeem_code}\``, inline: false }
           ],
-          footer: { text: '⚠️ Keep this code safe! • Omeglee Shop' },
+          footer: { text: 'Keep this code safe | Omeglee Shop' },
           timestamp: new Date().toISOString()
         }
       });
@@ -387,7 +387,7 @@ export async function POST(request: NextRequest) {
         redeemCode: purchase.redeem_code,
         replyMessage: item.reply_message,
         createdAt: purchase.created_at.toISOString(),
-        expiresAt: purchase.expires_at?.toISOString() || null
+        expiresAt: purchaseExpiresAt.toISOString()
       },
       newBalance: economyUser.total_points - item.price,
       dmSent
