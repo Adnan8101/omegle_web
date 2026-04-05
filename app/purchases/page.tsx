@@ -14,12 +14,15 @@ interface Purchase {
   redeem_code: string;
   status: string;
   is_item_deleted: boolean;
+  item_deleted_at: string | null;
+  expires_at: string | null;
+  is_expired: boolean;
   created_at: string;
   redeemed_at: string | null;
   redeemed_by: string | null;
 }
 
-const SUPPORT_SERVER_URL = 'https://discord.gg/omeglee';
+const SUPPORT_SERVER_URL = 'https://discord.gg/omegle';
 
 export default function PurchasesPage() {
   const { data: session, status } = useSession();
@@ -167,15 +170,28 @@ export default function PurchasesPage() {
                       <h3 className="font-semibold text-lg text-[rgb(var(--color-text-primary))]">
                         {purchase.item_name}
                       </h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        purchase.status === 'redeemed'
+                      {(() => {
+                        const isRedeemed = purchase.status === 'redeemed';
+                        const isExpired = !isRedeemed && purchase.is_expired;
+                        const badgeClass = isRedeemed
                           ? 'bg-green-500/20 text-green-500'
-                          : 'bg-yellow-500/20 text-yellow-500'
+                          : isExpired
+                            ? 'bg-red-500/20 text-red-500'
+                            : 'bg-yellow-500/20 text-yellow-500';
+
+                        return (
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        badgeClass
                       }`}>
-                        {purchase.status === 'redeemed' ? (
+                        {isRedeemed ? (
                           <span className="flex items-center gap-1">
                             <FiCheckCircle className="w-3 h-3" />
                             Redeemed
+                          </span>
+                        ) : isExpired ? (
+                          <span className="flex items-center gap-1">
+                            <FiAlertTriangle className="w-3 h-3" />
+                            Expired
                           </span>
                         ) : (
                           <span className="flex items-center gap-1">
@@ -184,6 +200,8 @@ export default function PurchasesPage() {
                           </span>
                         )}
                       </span>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4 text-sm text-[rgb(var(--color-text-secondary))]">
@@ -201,7 +219,13 @@ export default function PurchasesPage() {
                       </p>
                     )}
 
-                    {purchase.is_item_deleted && (
+                    {purchase.status !== 'redeemed' && purchase.expires_at && (
+                      <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
+                        {purchase.is_expired ? 'Expired on' : 'Expires on'} {formatDate(purchase.expires_at)}
+                      </p>
+                    )}
+
+                    {purchase.is_item_deleted && purchase.status !== 'redeemed' && (
                       <div className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
                         <div className="flex items-start gap-2">
                           <FiAlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
@@ -209,6 +233,11 @@ export default function PurchasesPage() {
                             <p className="text-sm font-semibold text-amber-300">
                               This item was deleted from the shop.
                             </p>
+                            {purchase.item_deleted_at && (
+                              <p className="text-xs text-amber-200/90">
+                                Deleted on {formatDate(purchase.item_deleted_at)}.
+                              </p>
+                            )}
                             <p className="text-xs text-amber-200/90">
                               Your redeem code is still visible above and can still be reviewed by staff.
                             </p>

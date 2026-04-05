@@ -1197,13 +1197,17 @@ model ShopPurchase {
   price_paid    Int
   redeem_code   String    @unique
   status        String    @default("pending")
+  expires_at    DateTime?
   redeemed_by   String?
   redeemed_at   DateTime?
+  item_deleted_at DateTime?
   proof_link    String?
   created_at    DateTime  @default(now())
 
   @@index([guild_id, user_id])
   @@index([redeem_code])
+  @@index([expires_at])
+  @@index([item_deleted_at])
   @@map("shop_purchases")
 }
 

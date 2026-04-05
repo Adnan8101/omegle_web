@@ -16,6 +16,12 @@ function generateCode(): string {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
+function calculatePurchaseExpiry(baseDate: Date): Date {
+  const expiresAt = new Date(baseDate);
+  expiresAt.setMonth(expiresAt.getMonth() + 1);
+  return expiresAt;
+}
+
 function normalizeRoleId(roleRef: string | null | undefined): string | null {
   if (!roleRef) return null;
 
@@ -171,7 +177,8 @@ export async function GET(request: NextRequest) {
           itemName: p.item_name,
           pricePaid: p.price_paid,
           redeemCode: p.redeem_code,
-          createdAt: p.created_at.toISOString()
+          createdAt: p.created_at.toISOString(),
+          expiresAt: p.expires_at?.toISOString() || null
         }))
       } : null
     }, {
@@ -310,6 +317,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Create purchase record
+      const purchaseExpiresAt = calculatePurchaseExpiry(new Date());
       const purchase = await tx.shopPurchase.create({
         data: {
           guild_id: GUILD_ID,
@@ -317,7 +325,8 @@ export async function POST(request: NextRequest) {
           item_id: item.id,
           item_name: item.name,
           price_paid: item.price,
-          redeem_code: code
+          redeem_code: code,
+          expires_at: purchaseExpiresAt
         }
       });
 
@@ -354,6 +363,7 @@ export async function POST(request: NextRequest) {
             { name: '📦 Item', value: item.name, inline: true },
             { name: '💰 Price Paid', value: `${currencyEmoji}${formatNumber(item.price)}`, inline: true },
             { name: '🎟️ Your Redeem Code', value: `\`\`\`${purchase.redeem_code}\`\`\``, inline: false },
+            { name: '⏳ Expires', value: `<t:${Math.floor(purchase.expires_at.getTime() / 1000)}:F>`, inline: false },
             { name: '📝 How to Redeem', value: `DM **Omeglee Bot** and send your code:\n\`/redeem code:${purchase.redeem_code}\``, inline: false }
           ],
           footer: { text: '⚠️ Keep this code safe! • Omeglee Shop' },
@@ -376,7 +386,8 @@ export async function POST(request: NextRequest) {
         pricePaid: item.price,
         redeemCode: purchase.redeem_code,
         replyMessage: item.reply_message,
-        createdAt: purchase.created_at.toISOString()
+        createdAt: purchase.created_at.toISOString(),
+        expiresAt: purchase.expires_at?.toISOString() || null
       },
       newBalance: economyUser.total_points - item.price,
       dmSent

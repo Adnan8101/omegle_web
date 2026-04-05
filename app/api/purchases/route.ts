@@ -58,6 +58,9 @@ export async function GET(request: NextRequest) {
         redeem_code: p.redeem_code,
         status: p.status,
         is_item_deleted: !existingItemIds.has(p.item_id),
+        item_deleted_at: p.item_deleted_at?.toISOString() || null,
+        expires_at: p.expires_at?.toISOString() || null,
+        is_expired: p.status !== 'redeemed' && !!p.expires_at && new Date() > p.expires_at,
         created_at: p.created_at.toISOString(),
         redeemed_at: p.redeemed_at?.toISOString() || null,
         redeemed_by: p.redeemed_by

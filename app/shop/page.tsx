@@ -33,6 +33,7 @@ interface PendingPurchase {
   pricePaid: number;
   redeemCode: string;
   createdAt: string;
+  expiresAt: string | null;
 }
 
 interface PurchaseResult {
@@ -42,6 +43,7 @@ interface PurchaseResult {
   redeemCode: string;
   replyMessage: string | null;
   createdAt: string;
+  expiresAt: string | null;
   dmSent?: boolean;
 }
 
@@ -461,6 +463,17 @@ export default function ShopPage() {
                     )}
                   </button>
                 </div>
+                {purchaseResult.expiresAt && (
+                  <p className="mt-2 text-xs text-[rgb(var(--color-text-tertiary))]">
+                    Expires on {new Date(purchaseResult.expiresAt).toLocaleString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                )}
               </div>
 
               {purchaseResult.replyMessage && (
@@ -531,6 +544,17 @@ export default function ShopPage() {
                     )}
                   </button>
                 </div>
+                {purchase.expiresAt && (
+                  <p className="mt-2 text-xs text-[rgb(var(--color-text-tertiary))]">
+                    Expires on {new Date(purchase.expiresAt).toLocaleString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                )}
               </div>
             ))}
           </div>

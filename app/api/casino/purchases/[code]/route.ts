@@ -46,7 +46,9 @@ export async function GET(
       purchase: {
         ...purchase,
         created_at: purchase.created_at.toISOString(),
-        redeemed_at: purchase.redeemed_at?.toISOString() || null
+        redeemed_at: purchase.redeemed_at?.toISOString() || null,
+        expires_at: purchase.expires_at?.toISOString() || null,
+        item_deleted_at: purchase.item_deleted_at?.toISOString() || null
       },
       item,
       currencyEmoji: config?.currency_emoji || '🪙'
@@ -90,6 +92,20 @@ export async function PUT(
     if (purchase.status === 'redeemed') {
       return NextResponse.json({ error: 'This code has already been redeemed' }, { status: 400 });
     }
+
+    if (purchase.status === 'expired') {
+      return NextResponse.json({ error: 'This code has already expired' }, { status: 400 });
+    }
+
+    if (purchase.expires_at && new Date() > purchase.expires_at) {
+      await prismaBot.shopPurchase.update({
+        where: { redeem_code: code.toUpperCase() },
+        data: { status: 'expired' }
+      });
+      return NextResponse.json({
+        error: `This code expired on ${purchase.expires_at.toISOString()}`
+      }, { status: 400 });
+    }
     
     const updated = await prismaBot.shopPurchase.update({
       where: { redeem_code: code.toUpperCase() },
@@ -106,7 +122,9 @@ export async function PUT(
       purchase: {
         ...updated,
         created_at: updated.created_at.toISOString(),
-        redeemed_at: updated.redeemed_at?.toISOString() || null
+        redeemed_at: updated.redeemed_at?.toISOString() || null,
+        expires_at: updated.expires_at?.toISOString() || null,
+        item_deleted_at: updated.item_deleted_at?.toISOString() || null
       }
     });
     

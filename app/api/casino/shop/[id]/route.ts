@@ -233,8 +233,21 @@ export async function DELETE(
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }
 
-    const deleted = await prismaBot.shopItem.deleteMany({
-      where: { id, guild_id: GUILD_ID }
+    const deletedAt = new Date();
+
+    const deleted = await prismaBot.$transaction(async (tx) => {
+      await tx.shopPurchase.updateMany({
+        where: {
+          guild_id: GUILD_ID,
+          item_id: id,
+          item_deleted_at: null
+        },
+        data: { item_deleted_at: deletedAt }
+      });
+
+      return tx.shopItem.deleteMany({
+        where: { id, guild_id: GUILD_ID }
+      });
     });
 
     if (deleted.count === 0) {
