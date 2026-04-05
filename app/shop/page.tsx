@@ -18,8 +18,8 @@ interface ShopItem {
   stock: number | null;
   income_amount: number | null;
   time_hours: number | null;
-  role_required_id: string | null;
-  role_required_name: string | null;
+  role_required_ids: string[];
+  role_required_names: string[];
   has_required_role: boolean | null;
   required_balance: number | null;
   expires_at: string | null;
@@ -183,9 +183,11 @@ export default function ShopPage() {
       return;
     }
 
-    if (item.role_required_id && item.has_required_role === false) {
-      const roleName = item.role_required_name || 'the required role';
-      setError(`You need ${roleName} to buy this item.`);
+    if (item.role_required_ids?.length > 0 && item.has_required_role === false) {
+      const requiredRoles = item.role_required_ids?.length
+        ? item.role_required_ids.map((id) => `<@&${id}>`).join(', ')
+        : (item.role_required_names?.length ? item.role_required_names.join(', ') : 'the required role');
+      setError(`You need any one of the following roles to buy this item: ${requiredRoles}`);
       return;
     }
 
@@ -571,7 +573,7 @@ export default function ShopPage() {
               const canAfford = session ? userBalance >= item.price : false;
               const isOutOfStock = item.out_of_stock || (item.stock !== null && item.stock !== -1 && item.stock <= 0);
               const isDisabled = !item.enabled;
-              const missingRequiredRole = Boolean(session && item.role_required_id && item.has_required_role === false);
+              const missingRequiredRole = Boolean(session && item.role_required_ids?.length > 0 && item.has_required_role === false);
               const isUnavailable = isOutOfStock || isDisabled;
               const daysLeft = item.expires_at
                 ? Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -707,7 +709,7 @@ export default function ShopPage() {
                     {session && missingRequiredRole && (
                       <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
                         <FiLock className="w-3 h-3" />
-                        Requires role: {item.role_required_name || 'Required role'}
+                        Requires any role: {item.role_required_names?.length ? item.role_required_names.join(', ') : 'Required role'}
                       </div>
                     )}
                   </div>

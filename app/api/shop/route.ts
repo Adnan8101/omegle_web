@@ -28,6 +28,20 @@ function normalizeRoleId(roleRef: string | null | undefined): string | null {
   return null;
 }
 
+function parseRoleIds(roleRef: string | null | undefined): string[] {
+  if (!roleRef) return [];
+
+  const unique = new Set<string>();
+  const parts = roleRef.split(/[\s,|/]+/).filter(Boolean);
+
+  for (const part of parts) {
+    const normalized = normalizeRoleId(part);
+    if (normalized) unique.add(normalized);
+  }
+
+  return Array.from(unique);
+}
+
 // GET - Get public shop items and user balance (if logged in)
 export async function GET(request: NextRequest) {
   try {
@@ -82,6 +96,18 @@ export async function GET(request: NextRequest) {
       return roleName;
     };
 
+    const resolveRoleNames = async (roleRef: string | null): Promise<string[]> => {
+      const roleIds = parseRoleIds(roleRef);
+      if (roleIds.length === 0) return [];
+
+      const names = await Promise.all(roleIds.map(async (roleId) => {
+        const roleName = await resolveRoleName(roleId);
+        return roleName || `@${roleId}`;
+      }));
+
+      return names;
+    };
+
     // If user is logged in, get their balance and purchases
     if (userId) {
       const [economyUser, member, pendingPurchases] = await Promise.all([
@@ -116,11 +142,13 @@ export async function GET(request: NextRequest) {
         income_amount: item.income_amount,
         time_hours: item.time_hours,
         role_required_id: normalizeRoleId(item.role_required_id),
+        role_required_ids: parseRoleIds(item.role_required_id),
         role_required_name: await resolveRoleName(item.role_required_id),
+        role_required_names: await resolveRoleNames(item.role_required_id),
         has_required_role: userId
           ? (() => {
-              const requiredRoleId = normalizeRoleId(item.role_required_id);
-              return !requiredRoleId || userRoleIds.includes(requiredRoleId);
+              const requiredRoleIds = parseRoleIds(item.role_required_id);
+              return requiredRoleIds.length === 0 || requiredRoleIds.some((requiredRoleId) => userRoleIds.includes(requiredRoleId));
             })()
           : null,
         required_balance: item.required_balance,
@@ -207,9 +235,9 @@ export async function POST(request: NextRequest) {
         throw new Error('ITEM_EXPIRED');
       }
 
-      const requiredRoleId = normalizeRoleId(item.role_required_id);
-      if (requiredRoleId && !userRoleIds.includes(requiredRoleId)) {
-        throw new Error(`MISSING_REQUIRED_ROLE:${requiredRoleId}`);
+      const requiredRoleIds = parseRoleIds(item.role_required_id);
+      if (requiredRoleIds.length > 0 && !requiredRoleIds.some((requiredRoleId) => userRoleIds.includes(requiredRoleId))) {
+        throw new Error(`MISSING_REQUIRED_ROLE:${requiredRoleIds.join(',')}`);
       }
 
       // Check stock
@@ -380,12 +408,17 @@ export async function POST(request: NextRequest) {
       }
       if (error.message.startsWith('MISSING_REQUIRED_ROLE:')) {
         const [, roleRef] = error.message.split(':');
-        const roleId = normalizeRoleId(roleRef);
-        const roleName = roleId ? await getGuildRoleName(GUILD_ID, roleId) : null;
+        const requiredRoleIds = parseRoleIds(roleRef);
+        const roleNames = await Promise.all(requiredRoleIds.map(async (roleId) => {
+          const roleName = await getGuildRoleName(GUILD_ID, roleId);
+          return roleName || roleId;
+        }));
+        const roleMentions = requiredRoleIds.map((roleId) => `<@&${roleId}>`).join(', ');
         return NextResponse.json({
-          error: roleName
-            ? `You need ${roleName} to buy this item.`
-            : 'You need the required role to buy this item.'
+          error: requiredRoleIds.length > 0
+            ? `You need any one of the following roles: ${roleMentions}`
+            : 'You need the required role to buy this item.',
+          roleNames
         }, { status: 403 });
       }
       if (error.message.startsWith('INSUFFICIENT_BALANCE:')) {

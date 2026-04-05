@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FiArrowLeft, FiSave, FiPackage, FiImage, FiAlertCircle, FiCheck, FiUpload, FiX, FiLoader } from 'react-icons/fi';
 
+interface GuildRole {
+  id: string;
+  name: string;
+  color: number;
+}
+
 interface FormData {
   name: string;
   price: string;
@@ -48,6 +54,11 @@ export default function AddItemPage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [roles, setRoles] = useState<GuildRole[]>([]);
+  const [selectedRequiredRoles, setSelectedRequiredRoles] = useState<string[]>([]);
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+
+  const toHexColor = (value: number) => `#${(value || 0).toString(16).padStart(6, '0')}`;
 
   // Function to convert Discord emoji to CDN URL
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
@@ -85,12 +96,23 @@ export default function AddItemPage() {
       .then(res => res.json())
       .then(data => {
         if (data.currencyEmoji) setCurrencyEmoji(data.currencyEmoji);
+        if (Array.isArray(data.roles)) setRoles(data.roles);
       })
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, role_required_id: selectedRequiredRoles.join(',') }));
+  }, [selectedRequiredRoles]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const toggleRequiredRole = (roleId: string) => {
+    setSelectedRequiredRoles((prev) =>
+      prev.includes(roleId) ? prev.filter((id) => id !== roleId) : [...prev, roleId]
+    );
   };
 
   // Compress image before upload
@@ -517,16 +539,52 @@ export default function AddItemPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Role Required (ID)
+                  Required Role(s)
                 </label>
-                <input
-                  type="text"
-                  name="role_required_id"
-                  value={formData.role_required_id}
-                  onChange={handleChange}
-                  placeholder="Role ID"
-                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
-                />
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setRoleDropdownOpen((prev) => !prev)}
+                    className="w-full px-4 py-3 text-left bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  >
+                    {selectedRequiredRoles.length > 0
+                      ? `${selectedRequiredRoles.length} role(s) selected`
+                      : 'Select required roles'}
+                  </button>
+
+                  {roleDropdownOpen && (
+                    <div className="max-h-56 overflow-y-auto rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-tertiary))] p-2 space-y-1">
+                      {roles.map((role) => {
+                        const selected = selectedRequiredRoles.includes(role.id);
+                        return (
+                          <button
+                            key={role.id}
+                            type="button"
+                            onClick={() => toggleRequiredRole(role.id)}
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${selected ? 'bg-blue-500/20 border border-blue-500/40' : 'hover:bg-[rgb(var(--color-hover))] border border-transparent'}`}
+                          >
+                            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: role.color ? toHexColor(role.color) : '#99aab5' }} />
+                            <span className="text-sm text-[rgb(var(--color-text-primary))]">{role.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {selectedRequiredRoles.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedRequiredRoles.map((roleId) => {
+                        const role = roles.find((r) => r.id === roleId);
+                        return (
+                          <span key={roleId} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-blue-500/15 border border-blue-500/30 text-blue-400">
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: role?.color ? toHexColor(role.color) : '#99aab5' }} />
+                            {role?.name || roleId}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">

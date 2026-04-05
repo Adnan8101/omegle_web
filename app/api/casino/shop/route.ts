@@ -6,6 +6,7 @@ import { canAccessCasino } from '@/lib/apiAuth';
 import { Prisma } from '@prisma/client';
 
 const GUILD_ID = "910043773130661918";
+const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -24,6 +25,63 @@ function parseOptionalInt(value: unknown): number | null | 'INVALID' {
   return Number.isSafeInteger(parsed) ? parsed : 'INVALID';
 }
 
+function normalizeRoleId(roleRef: string | null | undefined): string | null {
+  if (!roleRef) return null;
+
+  const trimmed = roleRef.trim();
+  if (/^\d{17,20}$/.test(trimmed)) return trimmed;
+
+  const mentionMatch = trimmed.match(/^<@&?(\d{17,20})>$/);
+  if (mentionMatch) return mentionMatch[1];
+
+  return null;
+}
+
+function parseRoleIds(roleRef: string | null | undefined): string[] {
+  if (!roleRef) return [];
+
+  const unique = new Set<string>();
+  const parts = roleRef.split(/[\s,|/]+/).filter(Boolean);
+
+  for (const part of parts) {
+    const normalized = normalizeRoleId(part);
+    if (normalized) unique.add(normalized);
+  }
+
+  return Array.from(unique);
+}
+
+function serializeRoleIds(roleIds: string[]): string | null {
+  return roleIds.length > 0 ? roleIds.join(',') : null;
+}
+
+async function fetchGuildRoles() {
+  if (!BOT_TOKEN) return [];
+
+  try {
+    const res = await fetch(`https://discord.com/api/v10/guilds/${GUILD_ID}/roles`, {
+      headers: { Authorization: `Bot ${BOT_TOKEN}` },
+      cache: 'no-store'
+    });
+
+    if (!res.ok) return [];
+
+    const roles = await res.json();
+    if (!Array.isArray(roles)) return [];
+
+    return roles
+      .filter((role: any) => role?.id && role?.name && role.name !== '@everyone')
+      .sort((a: any, b: any) => Number(b.position || 0) - Number(a.position || 0))
+      .map((role: any) => ({
+        id: String(role.id),
+        name: String(role.name),
+        color: Number(role.color || 0)
+      }));
+  } catch {
+    return [];
+  }
+}
+
 // GET - Get all shop items for admin
 export async function GET(request: NextRequest) {
   try {
@@ -40,10 +98,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all shop items (including expired)
-    const items = await prismaBot.shopItem.findMany({
+    const [items, roles] = await Promise.all([
+      prismaBot.shopItem.findMany({
       where: { guild_id: GUILD_ID },
       orderBy: { created_at: 'desc' }
-    });
+      }),
+      fetchGuildRoles()
+    ]);
 
     // Get economy config
     const config = await prismaBot.economyConfig.findUnique({
@@ -53,10 +114,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       items: items.map((item: any) => ({
         ...item,
+        role_required_ids: parseRoleIds(item.role_required_id),
         created_at: item.created_at.toISOString(),
         expires_at: item.expires_at?.toISOString() || null
       })),
-      currencyEmoji: config?.currency_emoji || '🪙'
+      currencyEmoji: config?.currency_emoji || '🪙',
+      roles
     }, {
       headers: {
         'Cache-Control': 'no-store, max-age=0',
@@ -105,6 +168,7 @@ export async function POST(request: NextRequest) {
     }
 
     const stock = rawStock === null || rawStock === -1 ? null : rawStock;
+    const requiredRoleIds = parseRoleIds(body.role_required_id);
 
     if (!name) {
       return NextResponse.json({ error: 'Item name is required' }, { status: 400 });
@@ -135,7 +199,7 @@ export async function POST(request: NextRequest) {
         stock,
         income_amount: incomeAmount,
         time_hours: timeHours,
-        role_required_id: body.role_required_id || null,
+        role_required_id: serializeRoleIds(requiredRoleIds),
         role_given_id: body.role_given_id || null,
         role_removed_id: body.role_removed_id || null,
         required_balance: requiredBalance,
