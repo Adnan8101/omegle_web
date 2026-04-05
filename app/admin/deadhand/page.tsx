@@ -138,9 +138,18 @@ function SearchDropdown({
         for (const id of nextIds) {
             if (currentSet.has(id)) continue;
 
-            const found = latestResults.find((r) => r.id === id) || selected.find((r) => r.id === id);
-            if (found) {
-                onAdd(found);
+            const foundRemote = latestResults.find((r) => r.id === id);
+            if (foundRemote) {
+                onAdd(foundRemote);
+                continue;
+            }
+
+            const foundSelected = selected.find((r) => r.id === id);
+            if (foundSelected) {
+                onAdd({
+                    ...foundSelected,
+                    type: type === 'member' ? 'user' : 'role',
+                });
                 continue;
             }
 
