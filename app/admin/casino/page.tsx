@@ -176,28 +176,28 @@ export default function CasinoDashboard() {
       title: 'Total Items',
       value: stats?.totalItems || 0,
       icon: <FiPackage className="w-6 h-6 sm:w-8 sm:h-8" />,
-      color: 'from-blue-500 to-blue-600',
+      iconColor: 'text-blue-500',
       bgColor: 'bg-blue-500/20',
     },
     {
       title: 'Total Purchases',
       value: stats?.totalPurchases || 0,
       icon: <FiShoppingCart className="w-6 h-6 sm:w-8 sm:h-8" />,
-      color: 'from-green-500 to-green-600',
+      iconColor: 'text-green-500',
       bgColor: 'bg-green-500/20',
     },
     {
       title: 'Pending Redemptions',
       value: stats?.pendingRedemptions || 0,
       icon: <FiClock className="w-6 h-6 sm:w-8 sm:h-8" />,
-      color: 'from-yellow-500 to-yellow-600',
+      iconColor: 'text-yellow-500',
       bgColor: 'bg-yellow-500/20',
     },
     {
       title: 'Total Revenue',
       value: formatNumber(stats?.totalRevenue || 0),
       icon: <FiDollarSign className="w-6 h-6 sm:w-8 sm:h-8" />,
-      color: 'from-purple-500 to-purple-600',
+      iconColor: 'text-purple-500',
       bgColor: 'bg-purple-500/20',
       showCurrency: true,
     },
@@ -315,7 +315,7 @@ export default function CasinoDashboard() {
           >
             <div className="flex items-start justify-between mb-3 sm:mb-4">
               <div className={`p-2 sm:p-3 ${card.bgColor} rounded-xl`}>
-                <div className={`bg-gradient-to-br ${card.color} bg-clip-text text-transparent flex justify-center items-center`}>
+                <div className={`flex justify-center items-center ${card.iconColor}`}>
                   {card.icon}
                 </div>
               </div>

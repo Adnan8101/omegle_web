@@ -4,10 +4,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import EntityDropdown from '@/components/ui/entity-dropdown';
 import {
   FiChevronLeft,
-  FiChevronDown,
-  FiChevronUp,
   FiPlus,
   FiSave,
   FiTrash2,
@@ -43,14 +42,6 @@ interface AutoModConfig {
   ignored_roles: string[];
   ignored_users?: string[];
   ignored_channels: string[];
-}
-
-function normalizeSearchText(value: string): string {
-  return value
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
 }
 
 interface AutoModRule {
@@ -506,72 +497,24 @@ function MultiCheckDropdown({
   selectedIds: string[];
   onChange: (next: string[]) => void;
 }) {
-  const [search, setSearch] = useState('');
-
-  const filtered = useMemo(() => {
-    const needle = normalizeSearchText(search);
-    if (!needle) return options;
-    return options.filter((opt) =>
-      normalizeSearchText(opt.id).includes(needle) ||
-      normalizeSearchText(opt.name).includes(needle) ||
-      normalizeSearchText(String(opt.username || '')).includes(needle)
-    );
-  }, [options, search]);
-
-  const toggle = (id: string) => {
-    if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter((x) => x !== id));
-    } else {
-      onChange([...selectedIds, id]);
-    }
-  };
-
   return (
     <div>
       <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">{label}</p>
-      <details className="mt-2 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))]">
-        <summary className="list-none px-4 py-3 text-sm cursor-pointer flex items-center justify-between">
-          <span>{selectedIds.length > 0 ? `${selectedIds.length} selected` : `Select ${label.toLowerCase()}`}</span>
-          <FiChevronDown className="text-[rgb(var(--color-text-secondary))]" />
-        </summary>
-        <div className="border-t border-[rgb(var(--color-border))] p-2 space-y-2">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or id"
-            className="w-full px-3 py-2 rounded-lg bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-sm"
-          />
-
-          <div className="max-h-48 overflow-auto space-y-1">
-          {filtered.map((opt) => (
-            <label key={opt.id} className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[rgb(var(--color-bg-primary))] text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedIds.includes(opt.id)}
-                onChange={() => toggle(opt.id)}
-                className="accent-blue-500"
-              />
-
-              {opt.avatar ? (
-                <img src={opt.avatar} alt={opt.name} className="w-6 h-6 rounded-full object-cover" />
-              ) : (
-                <span
-                  className="inline-block w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: opt.color || 'rgb(148 163 184)' }}
-                />
-              )}
-
-              <div className="min-w-0 flex-1">
-                <p className="truncate" style={opt.color ? { color: opt.color } : undefined}>{opt.name}</p>
-                {opt.username && opt.username !== opt.name && (
-                  <p className="text-xs text-[rgb(var(--color-text-secondary))] truncate">@{opt.username}</p>
-                )}
-              </div>
-            </label>
-          ))}
-          </div>
-        </div>
-      </details>
+      <EntityDropdown
+        className="mt-2"
+        options={options.map((opt) => ({
+          id: opt.id,
+          name: opt.name,
+          subtitle: opt.username && opt.username !== opt.name ? `@${opt.username}` : undefined,
+          avatarUrl: opt.avatar || null,
+          color: opt.color || null,
+        }))}
+        selectedIds={selectedIds}
+        onChange={onChange}
+        multiple
+        placeholder={`Select ${label.toLowerCase()}`}
+        searchPlaceholder="Search by name or id"
+      />
     </div>
   );
 }
@@ -1314,16 +1257,18 @@ export default function AutoModPage() {
 
             <div>
               <label className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] block mb-2">Global Logging Channel</label>
-              <select
-                value={config.log_channel_id || ''}
-                onChange={(e) => setConfig((p) => ({ ...p, log_channel_id: e.target.value || null }))}
-                className="w-full px-3 py-2 rounded-lg bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))]"
-              >
-                <option value="">No logging channel</option>
-                {channels.map((channel) => (
-                  <option key={channel.id} value={channel.id}>#{channel.name}</option>
-                ))}
-              </select>
+              <EntityDropdown
+                options={channels.map((channel) => ({
+                  id: channel.id,
+                  name: `#${channel.name}`,
+                  subtitle: channel.id,
+                }))}
+                selectedIds={config.log_channel_id ? [config.log_channel_id] : []}
+                onChange={(values) => setConfig((p) => ({ ...p, log_channel_id: values[0] || null }))}
+                multiple={false}
+                placeholder="No logging channel"
+                searchPlaceholder="Search channels"
+              />
             </div>
           </div>
         </div>
@@ -1580,16 +1525,19 @@ export default function AutoModPage() {
 
                 <div>
                   <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Logging Channel</p>
-                  <select
-                    value={String(newRuleDraft.settings.logChannelId || '')}
-                    onChange={(e) => setNewRuleDraft((p) => ({ ...p, settings: { ...p.settings, logChannelId: e.target.value } }))}
-                    className="w-full mt-2 px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-sm"
-                  >
-                    <option value="">Use global logging channel</option>
-                    {channels.map((channel) => (
-                      <option key={channel.id} value={channel.id}>#{channel.name}</option>
-                    ))}
-                  </select>
+                  <EntityDropdown
+                    className="mt-2"
+                    options={channels.map((channel) => ({
+                      id: channel.id,
+                      name: `#${channel.name}`,
+                      subtitle: channel.id,
+                    }))}
+                    selectedIds={newRuleDraft.settings.logChannelId ? [String(newRuleDraft.settings.logChannelId)] : []}
+                    onChange={(values) => setNewRuleDraft((p) => ({ ...p, settings: { ...p.settings, logChannelId: values[0] || '' } }))}
+                    multiple={false}
+                    placeholder="Use global logging channel"
+                    searchPlaceholder="Search channels"
+                  />
                 </div>
                 </div>
               </div>

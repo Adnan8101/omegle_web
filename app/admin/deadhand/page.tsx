@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import EntityDropdown from '@/components/ui/entity-dropdown';
 import {
     FiShield, FiAlertTriangle, FiChevronDown, FiChevronUp,
-    FiX, FiPlus, FiSave, FiRotateCcw,
+    FiPlus, FiSave, FiRotateCcw,
 } from 'react-icons/fi';
 
 // ---------------------------------------------------------------------------
@@ -80,64 +81,83 @@ function SearchDropdown({
     onAdd: (r: SearchResult) => void;
     onRemove: (id: string) => void;
 }) {
-    const [query, setQuery] = useState('');
-    const [results, setResults] = useState<SearchResult[]>([]);
-    const [loading, setLoading] = useState(false);
-    const debounce = useRef<ReturnType<typeof setTimeout>>();
+    const [latestResults, setLatestResults] = useState<SearchResult[]>([]);
 
-    useEffect(() => {
-        clearTimeout(debounce.current);
-        if (!query.trim()) { setResults([]); return; }
-        debounce.current = setTimeout(async () => {
-            setLoading(true);
-            try {
-                const res = await fetch(`/api/deadhand/search?guildId=${guildId}&query=${encodeURIComponent(query)}&type=${type}`);
-                const data = await res.json();
-                setResults((data.results ?? []).filter((r: SearchResult) => !selected.find(s => s.id === r.id)));
-            } catch { setResults([]); }
-            setLoading(false);
-        }, 350);
-    }, [query, guildId, type, selected]);
+    const selectedIds = useMemo(() => selected.map((s) => s.id), [selected]);
+
+    const selectedOptions = useMemo(
+        () => selected.map((s) => ({
+            id: s.id,
+            name: s.name,
+            avatarUrl: s.avatarUrl || null,
+            color: s.color ?? null,
+        })),
+        [selected]
+    );
+
+    const fetchOptions = useCallback(async (query: string) => {
+        if (!guildId) return [];
+
+        try {
+            const res = await fetch(`/api/deadhand/search?guildId=${guildId}&query=${encodeURIComponent(query)}&type=${type}`);
+            const data = await res.json();
+            const results = Array.isArray(data.results) ? data.results as SearchResult[] : [];
+            setLatestResults(results);
+
+            return results
+                .filter((r) => !selectedIds.includes(r.id))
+                .map((r) => ({
+                    id: r.id,
+                    name: r.name,
+                    subtitle: r.id,
+                    avatarUrl: r.avatarUrl || null,
+                    color: r.color ?? null,
+                }));
+        } catch {
+            setLatestResults([]);
+            return [];
+        }
+    }, [guildId, selectedIds, type]);
+
+    const handleChange = useCallback((nextIds: string[]) => {
+        const currentSet = new Set(selectedIds);
+        const nextSet = new Set(nextIds);
+
+        for (const currentId of selectedIds) {
+            if (!nextSet.has(currentId)) {
+                onRemove(currentId);
+            }
+        }
+
+        for (const id of nextIds) {
+            if (currentSet.has(id)) continue;
+
+            const found = latestResults.find((r) => r.id === id) || selected.find((r) => r.id === id);
+            if (found) {
+                onAdd(found);
+                continue;
+            }
+
+            onAdd({
+                id,
+                name: id,
+                type: type === 'member' ? 'user' : 'role',
+            });
+        }
+    }, [latestResults, onAdd, onRemove, selected, selectedIds, type]);
 
     return (
-        <div className="space-y-2">
-            <div className="relative">
-                <input
-                    value={query} onChange={e => setQuery(e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-sm text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                />
-                {loading && <div className="absolute right-3 top-3.5 w-4 h-4 border-2 border-[rgb(var(--color-border))] border-t-blue-500 rounded-full animate-spin" />}
-                {results.length > 0 && (
-                    <div className="absolute z-20 mt-1 w-full rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] shadow-2xl overflow-hidden">
-                        {results.slice(0, 6).map(r => (
-                            <button key={r.id} type="button"
-                                onClick={() => { onAdd(r); setQuery(''); setResults([]); }}
-                                className="flex items-center gap-2 w-full px-4 py-3 hover:bg-[rgb(var(--color-hover))] text-sm text-left transition-colors border-b border-[rgb(var(--color-border))] last:border-0"
-                            >
-                                {r.avatarUrl ? <img src={r.avatarUrl} className="w-8 h-8 rounded-full" alt="" /> :
-                                    <span className="w-8 h-8 rounded-full inline-block" style={{ background: r.color ? `#${r.color.toString(16).padStart(6,'0')}` : '#3b82f6' }} />}
-                                <span className="font-semibold text-[rgb(var(--color-text-primary))]">{r.name}</span>
-                                <span className="text-[rgb(var(--color-text-tertiary))] text-xs ml-auto">{r.id}</span>
-                            </button>
-                        ))}
-                    </div>
-                )}
-            </div>
-            {selected.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                    {selected.map(s => (
-                        <span key={s.id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                            {s.avatarUrl ? <img src={s.avatarUrl} className="w-5 h-5 rounded-full" alt="" /> : null}
-                            {s.name}
-                            <button type="button" onClick={() => onRemove(s.id)} className="ml-1 text-[rgb(var(--color-text-tertiary))] hover:text-red-500 transition-colors">
-                                <FiX size={14} />
-                            </button>
-                        </span>
-                    ))}
-                </div>
-            )}
-        </div>
+        <EntityDropdown
+            options={[]}
+            selectedIds={selectedIds}
+            selectedOptions={selectedOptions}
+            onChange={handleChange}
+            multiple
+            placeholder={placeholder}
+            searchPlaceholder="Search by name or id"
+            fetchOptions={fetchOptions}
+            emptyMessage="No results found"
+        />
     );
 }
 
@@ -520,13 +540,14 @@ export default function DeadHandPage() {
                         <div className="space-y-3 pt-4">
                             <p className="text-lg text-[rgb(var(--color-text-primary))] font-bold">Logging Channel</p>
                             <p className="text-sm font-medium text-[rgb(var(--color-text-secondary))]">All Dead Hand events and potential nukes will be broadcasted here.</p>
-                            <select
-                                value={config.log_channel_id ?? ''}
-                                onChange={e => saveConfig({ log_channel_id: e.target.value || null })}
-                                className="w-full px-5 py-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] font-semibold text-base focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none shadow-sm cursor-pointer">
-                                <option value="">No logging channel selected</option>
-                                {channels.map(ch => <option key={ch.id} value={ch.id}>#{ch.name}</option>)}
-                            </select>
+                            <EntityDropdown
+                                options={channels.map((ch) => ({ id: ch.id, name: `#${ch.name}`, subtitle: ch.id }))}
+                                selectedIds={config.log_channel_id ? [config.log_channel_id] : []}
+                                onChange={(values) => saveConfig({ log_channel_id: values[0] || null })}
+                                multiple={false}
+                                placeholder="No logging channel selected"
+                                searchPlaceholder="Search channels"
+                            />
                         </div>
                     </div>
 

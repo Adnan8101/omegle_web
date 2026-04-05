@@ -91,28 +91,28 @@ export default function AdminDashboard() {
       title: 'Total Applications',
       value: stats.total,
       icon: <FiFileText className="w-8 h-8" />,
-      color: 'from-blue-500 to-blue-600',
+      iconColor: 'text-blue-500',
       bgColor: 'bg-blue-500/20',
     },
     {
       title: 'Pending Review',
       value: stats.pending,
       icon: <FiClock className="w-8 h-8" />,
-      color: 'from-yellow-500 to-yellow-600',
+      iconColor: 'text-yellow-500',
       bgColor: 'bg-yellow-500/20',
     },
     {
       title: 'Considered',
       value: stats.considered,
       icon: <FiCheckCircle className="w-8 h-8" />,
-      color: 'from-green-500 to-green-600',
+      iconColor: 'text-green-500',
       bgColor: 'bg-green-500/20',
     },
     {
       title: 'Denied',
       value: stats.denied,
       icon: <FiXCircle className="w-8 h-8" />,
-      color: 'from-red-500 to-red-600',
+      iconColor: 'text-red-500',
       bgColor: 'bg-red-500/20',
     },
   ];
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
             >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
                 <div className={`p-2 sm:p-3 ${card.bgColor} rounded-apple`}>
-                  <div className={`bg-gradient-to-br ${card.color} bg-clip-text text-transparent flex justify-center items-center scale-75 sm:scale-100 origin-top-left`}>
+                  <div className={`flex justify-center items-center scale-75 sm:scale-100 origin-top-left ${card.iconColor}`}>
                     {card.icon}
                   </div>
                 </div>
