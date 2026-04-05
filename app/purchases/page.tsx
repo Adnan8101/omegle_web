@@ -4,18 +4,22 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FiArrowLeft, FiPackage, FiClock, FiCheckCircle, FiCopy, FiCheck } from 'react-icons/fi';
+import { FiArrowLeft, FiPackage, FiClock, FiCheckCircle, FiCopy, FiCheck, FiAlertTriangle, FiExternalLink } from 'react-icons/fi';
 
 interface Purchase {
   id: string;
+  item_id: string;
   item_name: string;
   price_paid: number;
   redeem_code: string;
   status: string;
+  is_item_deleted: boolean;
   created_at: string;
   redeemed_at: string | null;
   redeemed_by: string | null;
 }
+
+const SUPPORT_SERVER_URL = 'https://discord.gg/omeglee';
 
 export default function PurchasesPage() {
   const { data: session, status } = useSession();
@@ -195,6 +199,36 @@ export default function PurchasesPage() {
                       <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
                         Redeemed on {formatDate(purchase.redeemed_at)}
                       </p>
+                    )}
+
+                    {purchase.is_item_deleted && (
+                      <div className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
+                        <div className="flex items-start gap-2">
+                          <FiAlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                          <div className="space-y-1.5">
+                            <p className="text-sm font-semibold text-amber-300">
+                              This item was deleted from the shop.
+                            </p>
+                            <p className="text-xs text-amber-200/90">
+                              Your redeem code is still visible above and can still be reviewed by staff.
+                            </p>
+                            <p className="text-xs text-amber-200/90">
+                              You can also DM <strong>Omeglee Bot</strong> and ask staff to review this redeem code.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <a
+                            href={SUPPORT_SERVER_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-400/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 text-xs font-medium apple-transition"
+                          >
+                            <FiExternalLink className="w-3.5 h-3.5" />
+                            Join Discord Server
+                          </a>
+                        </div>
+                      </div>
                     )}
                   </div>
 
