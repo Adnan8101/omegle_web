@@ -609,6 +609,16 @@ export default function AutoModPage() {
     [config.ignored_users]
   );
 
+  const ruleTypeOptions = useMemo(
+    () => RULE_TYPES.map((type) => ({ id: type, name: RULE_TYPE_LABELS[type] })),
+    []
+  );
+
+  const actionPresetOptions = useMemo(
+    () => (Object.keys(ACTION_PRESET_LABELS) as RuleActionPreset[]).map((preset) => ({ id: preset, name: ACTION_PRESET_LABELS[preset] })),
+    []
+  );
+
   const setGlobalRoleWhitelistIds = (roleIds: string[]) => {
     setConfig((prev) => ({ ...prev, ignored_roles: roleIds }));
   };
@@ -1159,16 +1169,14 @@ export default function AutoModPage() {
       <div className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5 md:p-6 shadow-apple-lg space-y-5">
         <div>
           <label className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] block mb-2">Select Server</label>
-          <select
-            value={selectedGuildId}
-            onChange={(e) => setSelectedGuildId(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] cursor-pointer text-base"
-          >
-            <option value="">Choose your mutual server...</option>
-            {guilds.map((g) => (
-              <option key={g.id} value={g.id}>{g.name}</option>
-            ))}
-          </select>
+          <EntityDropdown
+            options={guilds.map((g) => ({ id: g.id, name: g.name }))}
+            selectedIds={selectedGuildId ? [selectedGuildId] : []}
+            onChange={(values) => setSelectedGuildId(values[0] || '')}
+            multiple={false}
+            placeholder="Choose your mutual server..."
+            searchPlaceholder="Search servers"
+          />
           <p className="mt-2 text-sm text-[rgb(var(--color-text-secondary))]">Only servers where you have access permissions and the bot is present are listed.</p>
           {guilds.length === 0 && (
             <p className="mt-2 text-sm text-[rgb(var(--color-text-secondary))]">
@@ -1393,44 +1401,40 @@ export default function AutoModPage() {
                   <ToggleSwitch checked={newRuleDraft.enabled} onChange={(v) => setNewRuleDraft((p) => ({ ...p, enabled: v }))} />
                 </div>
               ) : (
-              <select
-                value={newRuleDraft.type}
-                onChange={(e) => {
-                  const type = e.target.value as RuleType | '';
+              <EntityDropdown
+                options={ruleTypeOptions}
+                selectedIds={newRuleDraft.type ? [newRuleDraft.type] : []}
+                onChange={(values) => {
+                  const type = (values[0] || '') as RuleType | '';
                   setNewRuleDraft((p) => ({
                     ...p,
                     type,
                     settings: type ? normalizeSettings(type, p.settings) : {},
                   }));
                 }}
-                className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-sm"
-              >
-                <option value="">Select rule type...</option>
-                {RULE_TYPES.map((type) => (
-                  <option key={type} value={type}>{RULE_TYPE_LABELS[type]}</option>
-                ))}
-              </select>
+                multiple={false}
+                placeholder="Select rule type..."
+                searchPlaceholder="Search rule types"
+              />
               )}
             </div>
 
             {ruleModalMode === 'edit' && (
-              <select
-                value={newRuleDraft.type}
-                onChange={(e) => {
-                  const type = e.target.value as RuleType | '';
+              <EntityDropdown
+                options={ruleTypeOptions}
+                selectedIds={newRuleDraft.type ? [newRuleDraft.type] : []}
+                onChange={(values) => {
+                  const type = (values[0] || '') as RuleType | '';
                   setNewRuleDraft((p) => ({
                     ...p,
                     type,
                     settings: type ? normalizeSettings(type, p.settings) : {},
                   }));
                 }}
-                className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-sm"
-              >
-                <option value="">Select rule type...</option>
-                {RULE_TYPES.map((type) => (
-                  <option key={type} value={type}>{RULE_TYPE_LABELS[type]}</option>
-                ))}
-              </select>
+                multiple={false}
+                placeholder="Select rule type..."
+                searchPlaceholder="Search rule types"
+              />
             )}
 
             {newRuleDraft.type && (
@@ -1452,15 +1456,15 @@ export default function AutoModPage() {
                 <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] p-4 space-y-3">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Action</p>
-                  <select
-                    value={newRuleDraft.actionPreset}
-                    onChange={(e) => setNewRuleDraft((p) => ({ ...p, actionPreset: e.target.value as RuleActionPreset }))}
-                    className="w-full mt-2 px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-sm"
-                  >
-                    {(Object.keys(ACTION_PRESET_LABELS) as RuleActionPreset[]).map((preset) => (
-                      <option key={preset} value={preset}>{ACTION_PRESET_LABELS[preset]}</option>
-                    ))}
-                  </select>
+                  <EntityDropdown
+                    className="mt-2"
+                    options={actionPresetOptions}
+                    selectedIds={[newRuleDraft.actionPreset]}
+                    onChange={(values) => setNewRuleDraft((p) => ({ ...p, actionPreset: (values[0] || p.actionPreset) as RuleActionPreset }))}
+                    multiple={false}
+                    placeholder="Select action"
+                    searchPlaceholder="Search actions"
+                  />
                 </div>
 
                 {actionPresetIncludesMute(newRuleDraft.actionPreset) && (

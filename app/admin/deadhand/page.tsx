@@ -47,6 +47,12 @@ const SEVERITY_COLORS: Record<string, string> = {
 };
 const LOCK_LABELS = ['Off', 'Soft', 'Medium', 'Hard'];
 const LOCK_COLORS = ['#8b949e', '#f59e0b', '#f97316', '#ef4444']; // Adjusted off color for better contrast in light mode
+const MODULE_ACTION_OPTIONS = [
+    { id: 'mute', name: 'Mute' },
+    { id: 'kick', name: 'Kick' },
+    { id: 'ban', name: 'Ban' },
+    { id: 'takedown_roles', name: 'Takedown Danger Roles' },
+];
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -239,13 +245,14 @@ function ModuleCard({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-sm font-bold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Action</label>
-                            <select value={module.action} onChange={e => onChange({ action: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-base text-[rgb(var(--color-text-primary))] font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/30">
-                                <option value="mute">Mute</option>
-                                <option value="kick">Kick</option>
-                                <option value="ban">Ban</option>
-                                <option value="takedown_roles">Takedown Danger Roles</option>
-                            </select>
+                            <EntityDropdown
+                                options={MODULE_ACTION_OPTIONS}
+                                selectedIds={[module.action]}
+                                onChange={(values) => onChange({ action: values[0] || module.action })}
+                                multiple={false}
+                                placeholder="Select action"
+                                searchPlaceholder="Search actions"
+                            />
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-bold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Cooldown (sec)</label>
@@ -459,13 +466,14 @@ export default function DeadHandPage() {
             {/* Guild selector */}
             <div className="rounded-3xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] p-6 space-y-3 shadow-apple-lg">
                 <label className="text-sm font-bold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider block">Server</label>
-                <select value={guildId} onChange={e => setGuildId(e.target.value)}
-                    className="w-full px-5 py-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none cursor-pointer shadow-sm">
-                    <option value="">Select a server…</option>
-                    {guilds.map(g => (
-                        <option key={g.id} value={g.id}>{g.name}</option>
-                    ))}
-                </select>
+                <EntityDropdown
+                    options={guilds.map((g) => ({ id: g.id, name: g.name }))}
+                    selectedIds={guildId ? [guildId] : []}
+                    onChange={(values) => setGuildId(values[0] || '')}
+                    multiple={false}
+                    placeholder="Select a server..."
+                    searchPlaceholder="Search servers"
+                />
             </div>
 
             {/* Permission error */}

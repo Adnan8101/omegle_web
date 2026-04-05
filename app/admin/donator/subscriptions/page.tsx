@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Eye, RefreshCw, ShieldX } from 'lucide-react';
+import EntityDropdown from '@/components/ui/entity-dropdown';
 
 interface GuildInfo {
   id: string;
@@ -330,21 +331,17 @@ export default function DonatorSubscriptionsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-[rgb(var(--color-text-primary))] mb-2">Select Server</label>
-            <select
-              value={guildId}
-              onChange={(event) => {
-                setGuildId(event.target.value);
+            <EntityDropdown
+              options={guilds.map((guild) => ({ id: guild.id, name: guild.name }))}
+              selectedIds={guildId ? [guildId] : []}
+              onChange={(values) => {
+                setGuildId(values[0] || '');
                 setOffset(0);
               }}
-              className="w-full rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] px-4 py-3 text-[rgb(var(--color-text-primary))]"
-            >
-              <option value="">Choose a mutual server</option>
-              {guilds.map((guild) => (
-                <option key={guild.id} value={guild.id}>
-                  {guild.name}
-                </option>
-              ))}
-            </select>
+              multiple={false}
+              placeholder="Choose a mutual server"
+              searchPlaceholder="Search servers"
+            />
           </div>
 
           <div>

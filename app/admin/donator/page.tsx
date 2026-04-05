@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Bold, Italic, Underline } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import EntityDropdown, { EntityDropdownOption } from '@/components/ui/entity-dropdown';
 
 interface Plan {
   id: string;
@@ -30,6 +31,12 @@ interface Plan {
 interface GuildInfo {
   id: string;
   name: string;
+}
+
+interface RoleSearchResult {
+  id: string;
+  name: string;
+  color?: number;
 }
 
 interface FormData {
@@ -83,6 +90,8 @@ export default function DonatorAdminPage() {
   const [fontSize, setFontSize] = useState('3');
   const [saving, setSaving] = useState(false);
   const perkEditorRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const [roleLookup, setRoleLookup] = useState<Record<string, EntityDropdownOption>>({});
+  const [selectedRoleOption, setSelectedRoleOption] = useState<EntityDropdownOption | null>(null);
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -202,6 +211,7 @@ export default function DonatorAdminPage() {
   const openCreateModal = () => {
     setEditingPlan(null);
     setFormData(initialFormData);
+    setSelectedRoleOption(null);
     setShowModal(true);
     setError('');
   };
@@ -220,6 +230,11 @@ export default function DonatorAdminPage() {
       ozy_enabled: plan.ozy_enabled ?? false,
       price_ozy: plan.price_ozy != null ? String(plan.price_ozy) : '',
     });
+    setSelectedRoleOption(
+      plan.linked_role_id
+        ? { id: plan.linked_role_id, name: plan.linked_role_id }
+        : null
+    );
     setActivePerkIndex(0);
     setShowModal(true);
     setError('');
@@ -229,9 +244,40 @@ export default function DonatorAdminPage() {
     if (saving) return;
     setShowModal(false);
     setEditingPlan(null);
+    setSelectedRoleOption(null);
     setActivePerkIndex(0);
     setFontSize('3');
   };
+
+  const fetchRoleOptions = useCallback(async (query: string): Promise<EntityDropdownOption[]> => {
+    if (!guildId) return [];
+
+    try {
+      const response = await fetch(`/api/deadhand/search?guildId=${guildId}&type=role&query=${encodeURIComponent(query)}`);
+      const data = await response.json().catch(() => ({}));
+      const results: RoleSearchResult[] = Array.isArray(data?.results) ? data.results : [];
+
+      const mapped = results.map((role) => ({
+        id: role.id,
+        name: role.name,
+        color: role.color,
+      }));
+
+      if (mapped.length > 0) {
+        setRoleLookup((prev) => {
+          const next = { ...prev };
+          for (const item of mapped) {
+            next[item.id] = item;
+          }
+          return next;
+        });
+      }
+
+      return mapped;
+    } catch {
+      return [];
+    }
+  }, [guildId]);
 
   const resetFlashMessage = () => {
     setTimeout(() => setSuccess(''), 2600);
@@ -446,18 +492,14 @@ export default function DonatorAdminPage() {
 
       <div className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5 md:p-6 shadow-apple-lg space-y-3">
         <label className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] block">Select Server</label>
-        <select
-          value={guildId}
-          onChange={(event) => setGuildId(event.target.value)}
-          className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] cursor-pointer text-base"
-        >
-          <option value="">Choose a mutual server</option>
-          {guilds.map((guild) => (
-            <option key={guild.id} value={guild.id}>
-              {guild.name}
-            </option>
-          ))}
-        </select>
+        <EntityDropdown
+          options={guilds.map((guild) => ({ id: guild.id, name: guild.name }))}
+          selectedIds={guildId ? [guildId] : []}
+          onChange={(values) => setGuildId(values[0] || '')}
+          multiple={false}
+          placeholder="Choose a mutual server"
+          searchPlaceholder="Search servers"
+        />
         <p className="text-xs text-[rgb(var(--color-text-secondary))]">
           Only mutual servers where your account and bot both exist are shown.
         </p>
@@ -657,12 +699,20 @@ export default function DonatorAdminPage() {
                 </div>
                 <div>
                   <label className="block text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-2">Linked Role ID</label>
-                  <input
-                    type="text"
-                    value={formData.linked_role_id}
-                    onChange={(event) => setFormData((prev) => ({ ...prev, linked_role_id: event.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-sm"
-                    placeholder="Discord role id"
+                  <EntityDropdown
+                    options={[]}
+                    selectedIds={formData.linked_role_id ? [formData.linked_role_id] : []}
+                    selectedOptions={selectedRoleOption ? [selectedRoleOption] : []}
+                    onChange={(values) => {
+                      const roleId = values[0] || '';
+                      setFormData((prev) => ({ ...prev, linked_role_id: roleId }));
+                      setSelectedRoleOption(roleId ? (roleLookup[roleId] || { id: roleId, name: roleId }) : null);
+                    }}
+                    multiple={false}
+                    placeholder="Search and select linked role"
+                    searchPlaceholder="Search roles"
+                    fetchOptions={fetchRoleOptions}
+                    disabled={!guildId}
                   />
                 </div>
               </div>
@@ -681,20 +731,26 @@ export default function DonatorAdminPage() {
                     <Button variant="outline" size="icon" onClick={() => runPerkCommand('underline')} title="Underline">
                       <Underline className="h-4 w-4" />
                     </Button>
-                    <select
-                      value={fontSize}
-                      onChange={(event) => {
-                        setFontSize(event.target.value);
-                        runPerkCommand('fontSize', event.target.value);
-                      }}
-                      className="h-10 px-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] text-sm"
-                    >
-                      <option value="1">XS</option>
-                      <option value="2">SM</option>
-                      <option value="3">Base</option>
-                      <option value="4">LG</option>
-                      <option value="5">XL</option>
-                    </select>
+                    <div className="w-36">
+                      <EntityDropdown
+                        options={[
+                          { id: '1', name: 'XS' },
+                          { id: '2', name: 'SM' },
+                          { id: '3', name: 'Base' },
+                          { id: '4', name: 'LG' },
+                          { id: '5', name: 'XL' },
+                        ]}
+                        selectedIds={[fontSize]}
+                        onChange={(values) => {
+                          const next = values[0] || '3';
+                          setFontSize(next);
+                          runPerkCommand('fontSize', next);
+                        }}
+                        multiple={false}
+                        placeholder="Font size"
+                        searchPlaceholder="Search size"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">

@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import EntityDropdown from '@/components/ui/entity-dropdown';
 
 interface Payment {
   id: string;
@@ -133,7 +134,7 @@ export default function DonatorPaymentsPage() {
         offset: String(offset),
       });
 
-      if (statusFilter) params.set('status', statusFilter);
+      if (statusFilter !== 'all') params.set('status', statusFilter);
       if (searchUserId.trim()) params.set('user_id', searchUserId.trim());
 
       const response = await fetch(`/api/donator/payments?${params.toString()}`);
@@ -222,40 +223,39 @@ export default function DonatorPaymentsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-[rgb(var(--color-text-primary))] mb-2">Select Server</label>
-              <select
-                value={guildId}
-                onChange={(event) => {
-                  setGuildId(event.target.value);
+              <EntityDropdown
+                options={guilds.map((guild) => ({ id: guild.id, name: guild.name }))}
+                selectedIds={guildId ? [guildId] : []}
+                onChange={(values) => {
+                  setGuildId(values[0] || '');
                   setOffset(0);
                 }}
-                className="w-full rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] px-4 py-3 text-[rgb(var(--color-text-primary))]"
-              >
-                <option value="">Choose a mutual server</option>
-                {guilds.map((guild) => (
-                  <option key={guild.id} value={guild.id}>
-                    {guild.name}
-                  </option>
-                ))}
-              </select>
+                multiple={false}
+                placeholder="Choose a mutual server"
+                searchPlaceholder="Search servers"
+              />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-[rgb(var(--color-text-primary))] mb-2">Status</label>
-              <select
-                value={statusFilter}
-                onChange={(event) => {
-                  setStatusFilter(event.target.value);
+              <EntityDropdown
+                options={[
+                  { id: 'captured', name: 'Captured' },
+                  { id: 'authorized', name: 'Authorized' },
+                  { id: 'created', name: 'Created' },
+                  { id: 'failed', name: 'Failed' },
+                  { id: 'error', name: 'Error' },
+                  { id: 'all', name: 'All' },
+                ]}
+                selectedIds={[statusFilter]}
+                onChange={(values) => {
+                  setStatusFilter(values[0] || 'all');
                   setOffset(0);
                 }}
-                className="w-full rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] px-4 py-3 text-[rgb(var(--color-text-primary))]"
-              >
-                <option value="captured">Captured</option>
-                <option value="authorized">Authorized</option>
-                <option value="created">Created</option>
-                <option value="failed">Failed</option>
-                <option value="error">Error</option>
-                <option value="">All</option>
-              </select>
+                multiple={false}
+                placeholder="Select status"
+                searchPlaceholder="Search status"
+              />
             </div>
 
             <div>
