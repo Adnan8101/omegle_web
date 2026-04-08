@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, Sora } from 'next/font/google';
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -32,6 +32,12 @@ export const metadata: Metadata = {
   }
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,7 +52,9 @@ export default function RootLayout({
         <Providers>
           <ThemeProvider>
             <FrontendNavbarMount />
-            {children}
+            <div className="min-h-screen w-full overflow-x-clip">
+              {children}
+            </div>
           </ThemeProvider>
         </Providers>
       </body>

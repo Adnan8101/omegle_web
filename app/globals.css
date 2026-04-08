@@ -56,7 +56,15 @@
 *,
 *::before,
 *::after {
+  box-sizing: border-box;
   will-change: auto;
+}
+
+html {
+  width: 100%;
+  max-width: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -68,6 +76,32 @@ body {
   font-family: var(--font-body), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
   letter-spacing: -0.01em;
   overflow-x: hidden;
+}
+
+main,
+section,
+article,
+aside,
+header,
+footer,
+nav {
+  min-width: 0;
+}
+
+img,
+picture,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+input,
+textarea,
+select,
+button {
+  max-width: 100%;
 }
 
 h1,
@@ -82,6 +116,15 @@ h6 {
 
 /* Modern smooth animations with hardware acceleration */
 @layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .text-balance {
     text-wrap: balance;
   }
@@ -203,6 +246,44 @@ button {
 :focus-visible {
   outline: 2px solid rgb(var(--color-accent));
   outline-offset: 2px;
+}
+
+/* Mobile + small tablet global tuning */
+@media (max-width: 768px) {
+  .text-6xl {
+    font-size: clamp(2rem, 9vw, 3.25rem) !important;
+    line-height: 1.05 !important;
+  }
+
+  .text-5xl {
+    font-size: clamp(1.85rem, 7.5vw, 2.75rem) !important;
+    line-height: 1.1 !important;
+  }
+
+  .text-4xl {
+    font-size: clamp(1.6rem, 6.5vw, 2.25rem) !important;
+    line-height: 1.15 !important;
+  }
+
+  .p-8 {
+    padding: 1.5rem !important;
+  }
+
+  .px-8 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .py-8 {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .p-8 {
+    padding: 1.25rem !important;
+  }
 }
 /* Recharts tooltip styling - Fix black text visibility */
 .recharts-tooltip-wrapper {

@@ -44,6 +44,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         }
     }, [status, session, router, pathname]);
 
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [pathname]);
+
     const handleLogout = async () => {
         try { localStorage.clear(); sessionStorage.clear(); } catch (e) { }
         // Use redirect: true to ensure proper signout flow
@@ -286,7 +290,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     };
 
     return (
-        <div className="min-h-screen flex flex-col md:flex-row bg-[rgb(var(--color-bg-primary))] apple-transition">
+        <div className="min-h-screen w-full overflow-x-clip flex flex-col md:flex-row bg-[rgb(var(--color-bg-primary))] apple-transition">
             {/* Mobile Header */}
             <div className="md:hidden sticky top-0 z-50 bg-[rgb(var(--color-bg-secondary))]/80 backdrop-blur-xl border-b border-[rgb(var(--color-border))] px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -442,7 +446,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             )}
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto bg-[rgb(var(--color-bg-primary))]">
+            <main className="flex-1 min-w-0 w-full overflow-x-hidden overflow-y-auto bg-[rgb(var(--color-bg-primary))]">
                 {children}
             </main>
         </div>

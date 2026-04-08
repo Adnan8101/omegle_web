@@ -4,12 +4,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { signIn, signOut, useSession } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
 import { FiSun, FiMoon, FiChevronDown, FiMenu, FiX } from 'react-icons/fi';
 
 export default function SiteNavbar() {
   const { theme, toggleTheme } = useTheme();
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
@@ -25,6 +27,23 @@ export default function SiteNavbar() {
     document.addEventListener('click', onDocClick);
     return () => document.removeEventListener('click', onDocClick);
   }, []);
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setProfileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      document.body.style.overflow = '';
+      return;
+    }
+
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
 
   const links = useMemo(
     () => [
@@ -144,7 +163,7 @@ export default function SiteNavbar() {
         </div>
 
         {mobileOpen && (
-          <div className="md:hidden border-t border-black/10 dark:border-white/10 px-2 py-2 space-y-1.5">
+          <div className="md:hidden border-t border-black/10 dark:border-white/10 px-2 py-2 pb-4 space-y-1.5 max-h-[calc(100vh-3.5rem)] overflow-y-auto">
             {links.map((item) => (
               <Link
                 key={item.href}
