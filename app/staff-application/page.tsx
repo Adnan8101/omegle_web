@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { signIn, signOut, useSession } from 'next-auth/react';
-import { FiArrowLeft, FiCheckCircle, FiLock, FiSend, FiShield, FiUser } from 'react-icons/fi';
+import { FiArrowLeft, FiCheckCircle, FiLock, FiSend, FiUser } from 'react-icons/fi';
+import { FaCalendarAlt, FaGamepad, FaGavel, FaMusic } from 'react-icons/fa';
+import { MdLiveTv } from 'react-icons/md';
+import { IconType } from 'react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -26,6 +29,94 @@ interface SubmitResponse {
   success: boolean;
   error?: string;
 }
+
+type RoleVisualStyle = {
+  Icon: IconType;
+  openCard: string;
+  openIcon: string;
+  openChip: string;
+  openGlow: string;
+  softBorder: string;
+  softGlow: string;
+  badge: string;
+  focusRing: string;
+  button: string;
+  buttonHover: string;
+  avatarBorder: string;
+};
+
+const ROLE_VISUALS: Record<StaffRole, RoleVisualStyle> = {
+  moderation: {
+    Icon: FaGavel,
+    openCard: 'bg-cyan-500/10 border-cyan-300/45 hover:border-cyan-200/70',
+    openIcon: 'text-cyan-300',
+    openChip: 'bg-cyan-500/20 text-cyan-200',
+    openGlow: 'hover:shadow-[0_0_35px_rgba(34,211,238,0.28)]',
+    softBorder: 'border-cyan-300/35',
+    softGlow: 'shadow-[0_0_30px_rgba(34,211,238,0.16)]',
+    badge: 'bg-cyan-500/15 text-cyan-200',
+    focusRing: 'focus:ring-cyan-300',
+    button: 'bg-cyan-600 dark:bg-cyan-500',
+    buttonHover: 'hover:bg-cyan-700 dark:hover:bg-cyan-400',
+    avatarBorder: 'border-cyan-400',
+  },
+  event_team: {
+    Icon: FaCalendarAlt,
+    openCard: 'bg-amber-300/10 border-amber-200/45 hover:border-amber-100/70',
+    openIcon: 'text-amber-200',
+    openChip: 'bg-amber-300/20 text-amber-100',
+    openGlow: 'hover:shadow-[0_0_35px_rgba(251,191,36,0.25)]',
+    softBorder: 'border-amber-200/35',
+    softGlow: 'shadow-[0_0_30px_rgba(251,191,36,0.14)]',
+    badge: 'bg-amber-300/15 text-amber-100',
+    focusRing: 'focus:ring-amber-200',
+    button: 'bg-amber-500 dark:bg-amber-400',
+    buttonHover: 'hover:bg-amber-600 dark:hover:bg-amber-300',
+    avatarBorder: 'border-amber-300',
+  },
+  gaming_mod: {
+    Icon: FaGamepad,
+    openCard: 'bg-red-500/10 border-red-300/45 hover:border-red-200/70',
+    openIcon: 'text-red-300',
+    openChip: 'bg-red-500/20 text-red-200',
+    openGlow: 'hover:shadow-[0_0_35px_rgba(239,68,68,0.28)]',
+    softBorder: 'border-red-300/35',
+    softGlow: 'shadow-[0_0_30px_rgba(239,68,68,0.14)]',
+    badge: 'bg-red-500/15 text-red-200',
+    focusRing: 'focus:ring-red-300',
+    button: 'bg-red-600 dark:bg-red-500',
+    buttonHover: 'hover:bg-red-700 dark:hover:bg-red-400',
+    avatarBorder: 'border-red-400',
+  },
+  media_team: {
+    Icon: MdLiveTv,
+    openCard: 'bg-emerald-500/10 border-emerald-300/45 hover:border-emerald-200/70',
+    openIcon: 'text-emerald-300',
+    openChip: 'bg-emerald-500/20 text-emerald-200',
+    openGlow: 'hover:shadow-[0_0_35px_rgba(16,185,129,0.28)]',
+    softBorder: 'border-emerald-300/35',
+    softGlow: 'shadow-[0_0_30px_rgba(16,185,129,0.14)]',
+    badge: 'bg-emerald-500/15 text-emerald-200',
+    focusRing: 'focus:ring-emerald-300',
+    button: 'bg-emerald-600 dark:bg-emerald-500',
+    buttonHover: 'hover:bg-emerald-700 dark:hover:bg-emerald-400',
+    avatarBorder: 'border-emerald-400',
+  },
+  entertainment_team: {
+    Icon: FaMusic,
+    openCard: 'bg-purple-500/10 border-purple-300/45 hover:border-purple-200/70',
+    openIcon: 'text-purple-300',
+    openChip: 'bg-purple-500/20 text-purple-200',
+    openGlow: 'hover:shadow-[0_0_35px_rgba(168,85,247,0.28)]',
+    softBorder: 'border-purple-300/35',
+    softGlow: 'shadow-[0_0_30px_rgba(168,85,247,0.14)]',
+    badge: 'bg-purple-500/15 text-purple-200',
+    focusRing: 'focus:ring-purple-300',
+    button: 'bg-purple-600 dark:bg-purple-500',
+    buttonHover: 'hover:bg-purple-700 dark:hover:bg-purple-400',
+    avatarBorder: 'border-purple-400',
+  },
+};
 
 export default function StaffApplicationPage() {
   const { theme } = useTheme();
@@ -127,6 +218,7 @@ export default function StaffApplicationPage() {
   };
 
   const selectedRoleSetting = selectedRole ? roleForms[selectedRole] : null;
+  const selectedRoleVisual = selectedRole ? ROLE_VISUALS[selectedRole] : null;
   const isSelectedRoleClosed = Boolean(selectedRoleSetting && !selectedRoleSetting.isOpen);
   const selectedRoleClosedMessage =
     (selectedRoleSetting?.closedMessage || '').trim() ||
@@ -392,6 +484,8 @@ export default function StaffApplicationPage() {
                   {STAFF_ROLES.map((role) => {
                     const roleSetting = roleForms[role.id];
                     const isRoleOpen = roleSetting?.isOpen ?? true;
+                    const roleVisual = ROLE_VISUALS[role.id];
+                    const RoleIcon = roleVisual.Icon;
                     return (
                       <button
                         key={role.id}
@@ -399,19 +493,19 @@ export default function StaffApplicationPage() {
                         onClick={() => handleRoleSelect(role.id)}
                         className={`text-left border rounded-2xl p-5 transition-all ${
                           isRoleOpen
-                            ? 'bg-[rgb(var(--color-bg-secondary))] border-[rgb(var(--color-border))] hover:border-blue-500/60 hover:shadow-blue-glow'
+                            ? `${roleVisual.openCard} ${roleVisual.openGlow}`
                             : 'bg-[rgb(var(--color-bg-secondary))]/60 border-red-500/30 opacity-75'
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2">
-                            <FiShield className={`w-4 h-4 ${isRoleOpen ? 'text-blue-500' : 'text-red-400'}`} />
+                            <RoleIcon className={`w-5 h-5 ${isRoleOpen ? roleVisual.openIcon : 'text-red-400'}`} />
                             <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">{role.label}</h3>
                           </div>
                           <span
                             className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
                               isRoleOpen
-                                ? 'bg-emerald-500/20 text-emerald-400'
+                                ? roleVisual.openChip
                                 : 'bg-red-500/20 text-red-400'
                             }`}
                           >
@@ -441,10 +535,10 @@ export default function StaffApplicationPage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md space-y-5">
+                <div className={`glass-blue rounded-3xl p-6 sm:p-8 border ${selectedRoleVisual?.softBorder || 'border-blue-500/20'} shadow-apple-md space-y-5`}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="space-y-1">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 text-xs font-semibold uppercase tracking-wide">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${selectedRoleVisual?.badge || 'bg-blue-500/10 text-blue-500'}`}>
                         Selected Role
                       </div>
                       <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">{getRoleLabel(selectedRole)}</h2>
@@ -461,10 +555,10 @@ export default function StaffApplicationPage() {
 
                   <div className="flex items-center gap-3 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl p-4">
                     {session.user?.image ? (
-                      <img src={session.user.image} alt={session.user.name || 'User'} className="w-12 h-12 rounded-full border border-blue-500" />
+                      <img src={session.user.image} alt={session.user.name || 'User'} className={`w-12 h-12 rounded-full border ${selectedRoleVisual?.avatarBorder || 'border-blue-500'}`} />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <FiUser className="w-5 h-5 text-blue-500" />
+                      <div className={`w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border ${selectedRoleVisual?.avatarBorder || 'border-blue-500'}`}>
+                        <FiUser className={`w-5 h-5 ${selectedRoleVisual?.openIcon || 'text-blue-500'}`} />
                       </div>
                     )}
                     <div className="min-w-0">
@@ -474,7 +568,7 @@ export default function StaffApplicationPage() {
                   </div>
                 </div>
 
-                <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md space-y-5">
+                <div className={`glass-blue rounded-3xl p-6 sm:p-8 border ${selectedRoleVisual?.softBorder || 'border-blue-500/20'} shadow-apple-md space-y-5`}>
                   <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">Basic Information</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <label className="space-y-2">
@@ -484,7 +578,7 @@ export default function StaffApplicationPage() {
                         value={profileData.country}
                         onChange={(event) => setProfileData((prev) => ({ ...prev, country: event.target.value }))}
                         placeholder="India"
-                        className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className={`w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 ${selectedRoleVisual?.focusRing || 'focus:ring-blue-500'}`}
                       />
                     </label>
                     <label className="space-y-2">
@@ -494,7 +588,7 @@ export default function StaffApplicationPage() {
                         value={profileData.timezone}
                         onChange={(event) => setProfileData((prev) => ({ ...prev, timezone: event.target.value }))}
                         placeholder="IST (UTC+5:30)"
-                        className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className={`w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 ${selectedRoleVisual?.focusRing || 'focus:ring-blue-500'}`}
                       />
                     </label>
                     <label className="space-y-2">
@@ -505,13 +599,13 @@ export default function StaffApplicationPage() {
                         value={profileData.age}
                         onChange={(event) => setProfileData((prev) => ({ ...prev, age: event.target.value }))}
                         placeholder="18"
-                        className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className={`w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 ${selectedRoleVisual?.focusRing || 'focus:ring-blue-500'}`}
                       />
                     </label>
                   </div>
                 </div>
 
-                <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md space-y-6">
+                <div className={`glass-blue rounded-3xl p-6 sm:p-8 border ${selectedRoleVisual?.softBorder || 'border-blue-500/20'} shadow-apple-md space-y-6`}>
                   <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">Application Form</h3>
 
                   {activeQuestions.map((question, index) => (
@@ -525,7 +619,7 @@ export default function StaffApplicationPage() {
                         onChange={(event) => updateAnswer(question.id, event.target.value)}
                         rows={5}
                         placeholder={question.placeholder}
-                        className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                        className={`w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 ${selectedRoleVisual?.focusRing || 'focus:ring-blue-500'} resize-y`}
                       />
                     </div>
                   ))}
@@ -534,7 +628,7 @@ export default function StaffApplicationPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-8 py-4 rounded-2xl transition-all shadow-apple-md hover:shadow-blue-glow disabled:opacity-60 disabled:cursor-not-allowed"
+                  className={`w-full flex items-center justify-center gap-2 text-white dark:text-black font-semibold px-8 py-4 rounded-2xl transition-all shadow-apple-md disabled:opacity-60 disabled:cursor-not-allowed ${selectedRoleVisual?.button || 'bg-blue-600 dark:bg-white'} ${selectedRoleVisual?.buttonHover || 'hover:bg-blue-700 dark:hover:bg-gray-200'}`}
                 >
                   {isSubmitting ? (
                     <>

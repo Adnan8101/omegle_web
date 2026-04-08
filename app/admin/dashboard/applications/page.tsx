@@ -389,11 +389,11 @@ export default function ApplicationsPage() {
             <p className="text-xs sm:text-base text-gray-400">Review and manage all staff applications</p>
           </div>
 
-          {/* Application Status Toggle */}
+          {/* Global Application Status Toggle */}
           <div className="bg-discord-light/50 rounded-xl p-3 sm:p-4 border border-gray-700 w-full sm:w-auto">
             <div className="flex items-center justify-between sm:justify-start gap-4">
               <div>
-                <p className="text-sm text-gray-400 mb-1">Application Status</p>
+                <p className="text-sm text-gray-400 mb-1">Application Status (Global)</p>
                 <p className={`text-lg font-bold ${isApplicationsOpen ? 'text-green-500' : 'text-red-500'}`}>
                   {isApplicationsOpen ? 'OPEN' : 'CLOSED'}
                 </p>
@@ -413,6 +413,66 @@ export default function ApplicationsPage() {
                 </span>
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Per-Role Application Status */}
+        <div className="mt-4 bg-discord-light/50 rounded-xl p-4 sm:p-5 border border-gray-700">
+          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+            <div>
+              <p className="text-sm text-gray-400">Role Application Status</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Global OFF closes all forms. Role toggles below control each section when global is ON.
+              </p>
+            </div>
+            <span
+              className={`text-xs font-semibold px-3 py-1 rounded-full border ${
+                isApplicationsOpen
+                  ? 'bg-green-500/15 text-green-400 border-green-500/40'
+                  : 'bg-red-500/15 text-red-400 border-red-500/40'
+              }`}
+            >
+              Master: {isApplicationsOpen ? 'ON' : 'OFF'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {STAFF_ROLES.map((role) => {
+              const roleSetting = roleForms[role.id] || { isOpen: true, closedMessage: '' };
+              const isRoleOpen = roleSetting.isOpen;
+              return (
+                <div
+                  key={role.id}
+                  className="bg-discord-dark/40 border border-gray-700 rounded-lg p-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{role.label}</p>
+                      <p className={`text-xs mt-1 ${isRoleOpen ? 'text-green-400' : 'text-red-400'}`}>
+                        {isRoleOpen ? 'OPEN' : 'CLOSED'}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleRoleForm(role.id)}
+                      disabled={settingsLoading}
+                      className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+                        isRoleOpen ? 'bg-green-500' : 'bg-gray-600'
+                      }`}
+                      title={`Toggle ${role.label} applications`}
+                    >
+                      <span
+                        className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${
+                          isRoleOpen ? 'translate-x-9' : 'translate-x-1'
+                        }`}
+                      />
+                      <span className="sr-only">Toggle {role.label} applications</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
