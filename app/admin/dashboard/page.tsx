@@ -185,7 +185,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
-              <h3 className="text-[rgb(var(--color-text-tertiary))] text-[10px] sm:text-sm font-medium mb-1 truncate">
+              <h3 className="text-[rgb(var(--color-text-secondary))] text-xs sm:text-sm font-semibold mb-1 truncate uppercase tracking-wide">
                 {card.title}
               </h3>
               <p className="text-xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))]">{card.value}</p>

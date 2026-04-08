@@ -385,7 +385,7 @@ export default function ApplicationsPage() {
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-4xl font-bold text-white mb-1 sm:mb-2">Staff Applications</h1>
+            <h1 className="text-2xl sm:text-4xl font-bold text-[rgb(var(--color-text-primary))] mb-1 sm:mb-2">Staff Applications</h1>
             <p className="text-xs sm:text-base text-gray-400">Review and manage all staff applications</p>
           </div>
 
@@ -443,11 +443,11 @@ export default function ApplicationsPage() {
               return (
                 <div
                   key={role.id}
-                  className="bg-discord-dark/40 border border-gray-700 rounded-lg p-3"
+                  className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-lg p-3"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{role.label}</p>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">{role.label}</p>
                       <p className={`text-xs mt-1 ${isRoleOpen ? 'text-green-400' : 'text-red-400'}`}>
                         {isRoleOpen ? 'OPEN' : 'CLOSED'}
                       </p>
@@ -531,7 +531,7 @@ export default function ApplicationsPage() {
             placeholder="Search by role, country, age, or answers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-3 pl-12 bg-discord-light border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-discord-blurple text-white placeholder-gray-500"
+            className="w-full px-4 py-3 pl-12 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))]"
           />
           <svg
             className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"
@@ -591,7 +591,7 @@ export default function ApplicationsPage() {
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center justify-between sm:justify-start gap-3 mb-3">
-                    <h3 className="text-base sm:text-lg font-semibold text-white">
+                    <h3 className="text-base sm:text-lg font-semibold text-[rgb(var(--color-text-primary))]">
                       {getRoleLabel(app.applicationRole || 'moderation')} Applicant
                     </h3>
                     <span

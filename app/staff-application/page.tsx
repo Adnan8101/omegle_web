@@ -48,73 +48,73 @@ type RoleVisualStyle = {
 const ROLE_VISUALS: Record<StaffRole, RoleVisualStyle> = {
   moderation: {
     Icon: FaGavel,
-    openCard: 'bg-cyan-500/10 border-cyan-300/45 hover:border-cyan-200/70',
-    openIcon: 'text-cyan-300',
-    openChip: 'bg-cyan-500/20 text-cyan-200',
-    openGlow: 'hover:shadow-[0_0_35px_rgba(34,211,238,0.28)]',
+    openCard: 'bg-cyan-50/90 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-300/45 hover:border-cyan-300 dark:hover:border-cyan-200/70',
+    openIcon: 'text-cyan-700 dark:text-cyan-300',
+    openChip: 'bg-cyan-100 text-cyan-800 border border-cyan-200 dark:bg-cyan-500/20 dark:text-cyan-200 dark:border-cyan-400/30',
+    openGlow: 'hover:shadow-[0_0_24px_rgba(14,116,144,0.12)] dark:hover:shadow-[0_0_35px_rgba(34,211,238,0.28)]',
     softBorder: 'border-cyan-300/35',
     softGlow: 'shadow-[0_0_30px_rgba(34,211,238,0.16)]',
-    badge: 'bg-cyan-500/15 text-cyan-200',
+    badge: 'bg-cyan-100 text-cyan-800 border border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-200 dark:border-cyan-400/30',
     focusRing: 'focus:ring-cyan-300',
     button: 'bg-cyan-600 dark:bg-cyan-500',
     buttonHover: 'hover:bg-cyan-700 dark:hover:bg-cyan-400',
-    avatarBorder: 'border-cyan-400',
+    avatarBorder: 'border-cyan-500 dark:border-cyan-400',
   },
   event_team: {
     Icon: FaCalendarAlt,
-    openCard: 'bg-amber-300/10 border-amber-200/45 hover:border-amber-100/70',
-    openIcon: 'text-amber-200',
-    openChip: 'bg-amber-300/20 text-amber-100',
-    openGlow: 'hover:shadow-[0_0_35px_rgba(251,191,36,0.25)]',
+    openCard: 'bg-amber-50/90 dark:bg-amber-300/10 border-amber-200 dark:border-amber-200/45 hover:border-amber-300 dark:hover:border-amber-100/70',
+    openIcon: 'text-amber-700 dark:text-amber-200',
+    openChip: 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-300/20 dark:text-amber-100 dark:border-amber-300/30',
+    openGlow: 'hover:shadow-[0_0_24px_rgba(180,83,9,0.12)] dark:hover:shadow-[0_0_35px_rgba(251,191,36,0.25)]',
     softBorder: 'border-amber-200/35',
     softGlow: 'shadow-[0_0_30px_rgba(251,191,36,0.14)]',
-    badge: 'bg-amber-300/15 text-amber-100',
+    badge: 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-300/15 dark:text-amber-100 dark:border-amber-300/30',
     focusRing: 'focus:ring-amber-200',
     button: 'bg-amber-500 dark:bg-amber-400',
     buttonHover: 'hover:bg-amber-600 dark:hover:bg-amber-300',
-    avatarBorder: 'border-amber-300',
+    avatarBorder: 'border-amber-500 dark:border-amber-300',
   },
   gaming_mod: {
     Icon: FaGamepad,
-    openCard: 'bg-red-500/10 border-red-300/45 hover:border-red-200/70',
-    openIcon: 'text-red-300',
-    openChip: 'bg-red-500/20 text-red-200',
-    openGlow: 'hover:shadow-[0_0_35px_rgba(239,68,68,0.28)]',
+    openCard: 'bg-rose-50/90 dark:bg-red-500/10 border-rose-200 dark:border-red-300/45 hover:border-rose-300 dark:hover:border-red-200/70',
+    openIcon: 'text-rose-700 dark:text-red-300',
+    openChip: 'bg-rose-100 text-rose-800 border border-rose-200 dark:bg-red-500/20 dark:text-red-200 dark:border-red-400/30',
+    openGlow: 'hover:shadow-[0_0_24px_rgba(190,24,93,0.12)] dark:hover:shadow-[0_0_35px_rgba(239,68,68,0.28)]',
     softBorder: 'border-red-300/35',
     softGlow: 'shadow-[0_0_30px_rgba(239,68,68,0.14)]',
-    badge: 'bg-red-500/15 text-red-200',
+    badge: 'bg-rose-100 text-rose-800 border border-rose-200 dark:bg-red-500/15 dark:text-red-200 dark:border-red-400/30',
     focusRing: 'focus:ring-red-300',
     button: 'bg-red-600 dark:bg-red-500',
     buttonHover: 'hover:bg-red-700 dark:hover:bg-red-400',
-    avatarBorder: 'border-red-400',
+    avatarBorder: 'border-rose-500 dark:border-red-400',
   },
   media_team: {
     Icon: MdLiveTv,
-    openCard: 'bg-emerald-500/10 border-emerald-300/45 hover:border-emerald-200/70',
-    openIcon: 'text-emerald-300',
-    openChip: 'bg-emerald-500/20 text-emerald-200',
-    openGlow: 'hover:shadow-[0_0_35px_rgba(16,185,129,0.28)]',
+    openCard: 'bg-emerald-50/90 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-300/45 hover:border-emerald-300 dark:hover:border-emerald-200/70',
+    openIcon: 'text-emerald-700 dark:text-emerald-300',
+    openChip: 'bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-200 dark:border-emerald-400/30',
+    openGlow: 'hover:shadow-[0_0_24px_rgba(4,120,87,0.12)] dark:hover:shadow-[0_0_35px_rgba(16,185,129,0.28)]',
     softBorder: 'border-emerald-300/35',
     softGlow: 'shadow-[0_0_30px_rgba(16,185,129,0.14)]',
-    badge: 'bg-emerald-500/15 text-emerald-200',
+    badge: 'bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:border-emerald-400/30',
     focusRing: 'focus:ring-emerald-300',
     button: 'bg-emerald-600 dark:bg-emerald-500',
     buttonHover: 'hover:bg-emerald-700 dark:hover:bg-emerald-400',
-    avatarBorder: 'border-emerald-400',
+    avatarBorder: 'border-emerald-500 dark:border-emerald-400',
   },
   entertainment_team: {
     Icon: FaMusic,
-    openCard: 'bg-purple-500/10 border-purple-300/45 hover:border-purple-200/70',
-    openIcon: 'text-purple-300',
-    openChip: 'bg-purple-500/20 text-purple-200',
-    openGlow: 'hover:shadow-[0_0_35px_rgba(168,85,247,0.28)]',
+    openCard: 'bg-violet-50/90 dark:bg-purple-500/10 border-violet-200 dark:border-purple-300/45 hover:border-violet-300 dark:hover:border-purple-200/70',
+    openIcon: 'text-violet-700 dark:text-purple-300',
+    openChip: 'bg-violet-100 text-violet-800 border border-violet-200 dark:bg-purple-500/20 dark:text-purple-200 dark:border-purple-400/30',
+    openGlow: 'hover:shadow-[0_0_24px_rgba(109,40,217,0.12)] dark:hover:shadow-[0_0_35px_rgba(168,85,247,0.28)]',
     softBorder: 'border-purple-300/35',
     softGlow: 'shadow-[0_0_30px_rgba(168,85,247,0.14)]',
-    badge: 'bg-purple-500/15 text-purple-200',
+    badge: 'bg-violet-100 text-violet-800 border border-violet-200 dark:bg-purple-500/15 dark:text-purple-200 dark:border-purple-400/30',
     focusRing: 'focus:ring-purple-300',
     button: 'bg-purple-600 dark:bg-purple-500',
     buttonHover: 'hover:bg-purple-700 dark:hover:bg-purple-400',
-    avatarBorder: 'border-purple-400',
+    avatarBorder: 'border-violet-500 dark:border-purple-400',
   },
 };
 
@@ -397,7 +397,7 @@ export default function StaffApplicationPage() {
             </header>
 
             {!showFormFlow ? (
-              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md space-y-6">
+              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
                 <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Terms of Service</h2>
                 <div className="space-y-4 text-[rgb(var(--color-text-secondary))] max-h-80 overflow-y-auto pr-1 text-sm leading-relaxed">
                   <p><span className="font-semibold text-[rgb(var(--color-text-primary))]">1. Professional Conduct:</span> Staff members must remain respectful, impartial, and responsible in all community interactions.</p>
@@ -432,7 +432,7 @@ export default function StaffApplicationPage() {
                 </div>
               </div>
             ) : !session ? (
-              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md text-center space-y-6">
+              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))] shadow-apple-md text-center space-y-6">
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#5865F2]/20">
                   <FiLock className="w-7 h-7 text-[#5865F2]" />
                 </div>
@@ -461,13 +461,13 @@ export default function StaffApplicationPage() {
                 </div>
               </div>
             ) : !selectedRole ? (
-              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md space-y-6">
+              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Choose Your Team Role</h2>
                   <button
                     type="button"
                     onClick={() => signOut({ callbackUrl: '/staff-application' })}
-                    className="text-xs sm:text-sm px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg transition-all"
+                    className="text-xs sm:text-sm px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition-all"
                   >
                     Logout
                   </button>
@@ -477,7 +477,7 @@ export default function StaffApplicationPage() {
                 </p>
                 {roleClosedNotice && (
                   <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3">
-                    <p className="text-sm text-amber-400">{roleClosedNotice}</p>
+                    <p className="text-sm text-amber-700 dark:text-amber-400">{roleClosedNotice}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -503,7 +503,7 @@ export default function StaffApplicationPage() {
                             <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">{role.label}</h3>
                           </div>
                           <span
-                            className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
+                            className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full ${
                               isRoleOpen
                                 ? roleVisual.openChip
                                 : 'bg-red-500/20 text-red-400'
