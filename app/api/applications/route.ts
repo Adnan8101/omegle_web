@@ -1,15 +1,41 @@
 import { getErrorMessage, GUILD_ID } from '@/lib/constants';
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import StaffApplication from '@/models/StaffApplication';
 import { queryBotDb } from '@/lib/botDb';
+import { STAFF_ROLES } from '@/lib/staffApplicationForm';
 
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: 'You must be logged in with Discord to submit an application.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
+    const validRoles = new Set(STAFF_ROLES.map((role) => role.id));
+    const selectedRole = validRoles.has(body.applicationRole) ? body.applicationRole : 'moderation';
+    const dailyAvailability = body.dailyAvailability || body.hoursPerWeek || '';
+    const roleAnswers = body.roleAnswers && typeof body.roleAnswers === 'object' ? body.roleAnswers : {};
+    const formVersion = Number(body.formVersion) >= 2 ? 2 : 1;
+    const normalizedBody = {
+      ...body,
+      applicationRole: selectedRole,
+      dailyAvailability,
+      hoursPerWeek: body.hoursPerWeek || dailyAvailability,
+      roleAnswers,
+      formVersion,
+      discordUserId: session.user.id,
+      discordUsername: session.user.name || body.discordUsername || '',
+    };
     
-    const userId = body.discordUserId;
+    const userId = normalizedBody.discordUserId;
     
     // Fetch user data from bot database
     let userProfile = null;
@@ -91,7 +117,7 @@ export async function POST(request: NextRequest) {
     }
 
     const application = await StaffApplication.create({
-      ...body,
+      ...normalizedBody,
       status: 'pending',
       userProfile,
       userStats,
@@ -139,6 +165,8 @@ export async function GET(request: NextRequest) {
         { country: { $regex: search, $options: 'i' } },
         { age: { $regex: search, $options: 'i' } },
         { aboutYourself: { $regex: search, $options: 'i' } },
+        { whyJoin: { $regex: search, $options: 'i' } },
+        { applicationRole: { $regex: search, $options: 'i' } },
       ];
     }
 

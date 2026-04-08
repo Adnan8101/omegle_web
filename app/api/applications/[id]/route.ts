@@ -7,6 +7,23 @@ import dbConnect from '@/lib/mongodb';
 import StaffApplication from '@/models/StaffApplication';
 import { queryBotDb, getUsersDisplay } from '@/lib/botDb';
 
+type ApplicationStatus = 'pending' | 'considered' | 'denied';
+
+const VALID_APPLICATION_STATUSES = new Set<ApplicationStatus>([
+  'pending',
+  'considered',
+  'denied',
+]);
+
+async function assertAdminAccess() {
+  const session = await getServerSession(authOptions);
+  if (!session || !canAccessAdminFeatures(session.user?.permissions)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  return null;
+}
+
 
 export async function GET(
   request: NextRequest,
@@ -137,13 +154,42 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const unauthorized = await assertAdminAccess();
+    if (unauthorized) {
+      return unauthorized;
+    }
+
     const { id } = await params;
-    await dbConnect();
     const body = await request.json();
+
+    const updates: Record<string, unknown> = {};
+
+    if (typeof body.status === 'string') {
+      if (!VALID_APPLICATION_STATUSES.has(body.status as ApplicationStatus)) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid status value' },
+          { status: 400 }
+        );
+      }
+      updates.status = body.status;
+    }
+
+    if (typeof body.notes === 'string') {
+      updates.notes = body.notes;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'No valid fields to update' },
+        { status: 400 }
+      );
+    }
+
+    await dbConnect();
 
     const application = await StaffApplication.findByIdAndUpdate(
       id,
-      { $set: body },
+      { $set: updates },
       { new: true, runValidators: true }
     );
 
@@ -168,6 +214,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const unauthorized = await assertAdminAccess();
+    if (unauthorized) {
+      return unauthorized;
+    }
+
     const { id } = await params;
     await dbConnect();
     const application = await StaffApplication.findByIdAndDelete(id);

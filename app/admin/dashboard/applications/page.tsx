@@ -3,34 +3,53 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { getQuestionTitle, getRoleLabel, STAFF_ROLES, StaffRole } from '@/lib/staffApplicationForm';
+
+type RoleFormSetting = {
+  isOpen: boolean;
+  closedMessage?: string;
+};
+
+const DEFAULT_ROLE_FORM_SETTINGS: Record<StaffRole, RoleFormSetting> = {
+  moderation: { isOpen: true, closedMessage: '' },
+  event_team: { isOpen: true, closedMessage: '' },
+  gaming_mod: { isOpen: true, closedMessage: '' },
+  media_team: { isOpen: true, closedMessage: '' },
+  entertainment_team: { isOpen: true, closedMessage: '' },
+};
 
 interface Application {
   _id: string;
+  applicationRole?: StaffRole;
+  dailyAvailability?: string;
+  roleAnswers?: Record<string, string>;
+  formVersion?: number;
+
   // Discord & Personal Info
-  discordUsername: string;
+  discordUsername?: string;
   discordUserId: string;
-  country: string;
-  timezone: string;
-  age: string;
+  country?: string;
+  timezone?: string;
+  age?: string;
 
   // General Questions
-  aboutYourself: string;
-  whyJoin: string;
-  hoursPerWeek: string;
-  languages: string;
-  vcAvailability: string;
-  vcFrequency: string;
+  aboutYourself?: string;
+  whyJoin?: string;
+  hoursPerWeek?: string;
+  languages?: string;
+  vcAvailability?: string;
+  vcFrequency?: string;
 
   // Moderation Questions
-  moderationExperience: string;
-  moderatorDefinition: string;
-  leadershipExperience: string;
+  moderationExperience?: string;
+  moderatorDefinition?: string;
+  leadershipExperience?: string;
 
   // Bot Experience
-  discordBotExperience: string;
-  automodKnowledge: string;
-  moderationBotsFamiliarity: string;
-  modCommandsKnowledge: string;
+  discordBotExperience?: string;
+  automodKnowledge?: string;
+  moderationBotsFamiliarity?: string;
+  modCommandsKnowledge?: string;
 
   // Status & Metadata
   status: 'pending' | 'considered' | 'denied';
@@ -74,11 +93,13 @@ export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [activeRoleTab, setActiveRoleTab] = useState<'all' | StaffRole>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [notes, setNotes] = useState('');
   const [isApplicationsOpen, setIsApplicationsOpen] = useState(true);
+  const [roleForms, setRoleForms] = useState<Record<StaffRole, RoleFormSetting>>(DEFAULT_ROLE_FORM_SETTINGS);
   const [modalTab, setModalTab] = useState<'details' | 'userData'>('details');
   const [settingsLoading, setSettingsLoading] = useState(false);
 
@@ -97,6 +118,20 @@ export default function ApplicationsPage() {
       const result = await response.json();
       if (result.success) {
         setIsApplicationsOpen(result.data.isOpen);
+        if (result.data.roleForms) {
+          setRoleForms((prev) => {
+            const next = { ...prev };
+            for (const role of STAFF_ROLES) {
+              const incoming = result.data.roleForms?.[role.id];
+              if (!incoming) continue;
+              next[role.id] = {
+                isOpen: typeof incoming.isOpen === 'boolean' ? incoming.isOpen : true,
+                closedMessage: incoming.closedMessage || '',
+              };
+            }
+            return next;
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -144,6 +179,42 @@ export default function ApplicationsPage() {
     } catch (error) {
       console.error('Error updating settings:', error);
       alert('Failed to update application status');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const toggleRoleForm = async (role: StaffRole) => {
+    setSettingsLoading(true);
+    try {
+      const current = roleForms[role] || { isOpen: true, closedMessage: '' };
+      const response = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roleForms: {
+            [role]: {
+              isOpen: !current.isOpen,
+              closedMessage: current.closedMessage || '',
+            },
+          },
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        const updated = result.data?.roleForms?.[role];
+        setRoleForms((prev) => ({
+          ...prev,
+          [role]: {
+            isOpen: typeof updated?.isOpen === 'boolean' ? updated.isOpen : !current.isOpen,
+            closedMessage: updated?.closedMessage || current.closedMessage || '',
+          },
+        }));
+      }
+    } catch (error) {
+      console.error('Error updating role form status:', error);
+      alert('Failed to update role form status');
     } finally {
       setSettingsLoading(false);
     }
@@ -290,6 +361,24 @@ export default function ApplicationsPage() {
     },
   ];
 
+  const roleTabs: Array<{ id: 'all' | StaffRole; label: string; count: number }> = [
+    {
+      id: 'all',
+      label: 'All Roles',
+      count: applications.length,
+    },
+    ...STAFF_ROLES.map((role) => ({
+      id: role.id,
+      label: role.label,
+      count: applications.filter((application) => (application.applicationRole || 'moderation') === role.id).length,
+    })),
+  ];
+
+  const visibleApplications = applications.filter((application) => {
+    if (activeRoleTab === 'all') return true;
+    return (application.applicationRole || 'moderation') === activeRoleTab;
+  });
+
   return (
     <div className="p-4 sm:p-8">
       {/* Header */}
@@ -350,12 +439,36 @@ export default function ApplicationsPage() {
         ))}
       </div>
 
+      {/* Role Filter Tabs */}
+      <div className="flex overflow-x-auto no-scrollbar gap-2 mb-6 pb-2 snap-x touch-pan-x">
+        {roleTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveRoleTab(tab.id)}
+            className={`flex-shrink-0 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition-all duration-200 text-sm sm:text-base ${
+              activeRoleTab === tab.id
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-discord-light text-gray-300 hover:bg-discord-light/80'
+            }`}
+          >
+            {tab.label}
+            <span
+              className={`ml-2 px-2 py-1 rounded-full text-[10px] sm:text-xs ${
+                activeRoleTab === tab.id ? 'bg-white/20' : 'bg-gray-700'
+              }`}
+            >
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
       {/* Search */}
       <div className="mb-6">
         <div className="relative">
           <input
             type="text"
-            placeholder="Search by country, age, or content..."
+            placeholder="Search by role, country, age, or answers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full px-4 py-3 pl-12 bg-discord-light border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-discord-blurple text-white placeholder-gray-500"
@@ -381,7 +494,7 @@ export default function ApplicationsPage() {
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-discord-blurple"></div>
         </div>
-      ) : applications.length === 0 ? (
+      ) : visibleApplications.length === 0 ? (
         <div className="bg-discord-light/50 rounded-xl p-12 text-center border border-gray-700">
           <svg
             className="w-16 h-16 text-gray-600 mx-auto mb-4"
@@ -402,12 +515,14 @@ export default function ApplicationsPage() {
           <p className="text-gray-500">
             {searchTerm
               ? 'Try adjusting your search terms'
-              : 'Applications will appear here once submitted'}
+              : activeRoleTab !== 'all'
+                ? `No ${getRoleLabel(activeRoleTab)} applications for this filter`
+                : 'Applications will appear here once submitted'}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {applications.map((app) => (
+          {visibleApplications.map((app) => (
             <div
               key={app._id}
               className="bg-discord-light/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-700 hover:border-gray-600 transition-all duration-200 cursor-pointer shadow-apple-sm hover:shadow-apple-md"
@@ -417,7 +532,7 @@ export default function ApplicationsPage() {
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center justify-between sm:justify-start gap-3 mb-3">
                     <h3 className="text-base sm:text-lg font-semibold text-white">
-                      Applicant from {app.country}
+                      {getRoleLabel(app.applicationRole || 'moderation')} Applicant
                     </h3>
                     <span
                       className={`px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold border ${getStatusColor(
@@ -442,7 +557,7 @@ export default function ApplicationsPage() {
                           d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                         />
                       </svg>
-                      <span>Age: {app.age}</span>
+                      <span>Country: {app.country || 'N/A'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <svg
@@ -458,7 +573,7 @@ export default function ApplicationsPage() {
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
-                      <span>{app.hoursPerWeek} hrs/week</span>
+                      <span>{(app.dailyAvailability || app.hoursPerWeek || 'N/A')} daily availability</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <svg
@@ -474,7 +589,7 @@ export default function ApplicationsPage() {
                           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                         />
                       </svg>
-                      <span>
+                      <span className="truncate">
                         {new Date(app.createdAt).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -483,9 +598,9 @@ export default function ApplicationsPage() {
                       </span>
                     </div>
                   </div>
-                  {app.aboutYourself && (
+                  {(app.whyJoin || app.aboutYourself) && (
                     <p className="mt-3 text-gray-300 text-xs sm:text-sm line-clamp-2">
-                      {app.aboutYourself}
+                      {app.whyJoin || app.aboutYourself}
                     </p>
                   )}
                 </div>
@@ -667,8 +782,16 @@ export default function ApplicationsPage() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
+                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Applied Role</p>
+                      <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{getRoleLabel(selectedApp.applicationRole || 'moderation')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Daily Availability</p>
+                      <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.dailyAvailability || selectedApp.hoursPerWeek || 'N/A'}</p>
+                    </div>
+                    <div>
                       <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Discord Username</p>
-                      <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.discordUsername}</p>
+                      <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.discordUsername || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Discord User ID</p>
@@ -676,148 +799,174 @@ export default function ApplicationsPage() {
                     </div>
                     <div>
                       <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Country</p>
-                      <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.country}</p>
+                      <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.country || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Timezone</p>
-                      <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.timezone}</p>
+                      <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.timezone || 'N/A'}</p>
                     </div>
                     <div className="md:col-span-2">
                       <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Age</p>
-                      <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.age}</p>
+                      <p className="text-[rgb(var(--color-text-primary))] font-semibold text-lg">{selectedApp.age || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* General Questions */}
-                <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
-                  <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
-                    General Questions
-                  </h3>
-                  <div className="space-y-5">
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
-                        Tell us about yourself:
-                      </p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                        {selectedApp.aboutYourself}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Why do you want to join the staff team?</p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                        {selectedApp.whyJoin}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">How many hours per week can you dedicate?</p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                        {selectedApp.hoursPerWeek}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">What languages do you speak?</p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                        {selectedApp.languages}
-                      </p>
+                {selectedApp.roleAnswers && Object.keys(selectedApp.roleAnswers).length > 0 ? (
+                  <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                    <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
+                      Role Form Responses
+                    </h3>
+                    <div className="space-y-5">
+                      {Object.entries(selectedApp.roleAnswers)
+                        .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+                        .map(([key, value]) => (
+                          <div key={key}>
+                            <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                              {getQuestionTitle(selectedApp.applicationRole, key)}
+                            </p>
+                            <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                              {String(value)}
+                            </p>
+                          </div>
+                        ))}
                     </div>
                   </div>
-                </div>
-
-                {/* Moderation Experience */}
-                <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
-                  <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
-                    Moderation Experience
-                  </h3>
-                  <div className="space-y-5">
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
-                        Previous moderation experience:
-                      </p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                        {selectedApp.moderationExperience}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">What does being a moderator mean to you?</p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                        {selectedApp.moderatorDefinition}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Leadership experience:</p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                        {selectedApp.leadershipExperience}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* VC Availability */}
-                <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
-                  <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
-                    VC Availability
-                  </h3>
-                  <div className="space-y-5">
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
-                        Can connect in VC regularly:
-                      </p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple capitalize">
-                        {selectedApp.vcAvailability === 'listen' ? 'Yes, but can listen' : selectedApp.vcAvailability}
-                      </p>
-                    </div>
-                    {selectedApp.vcFrequency && (
-                      <div>
-                        <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
-                          VC frequency:
-                        </p>
-                        <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                          {selectedApp.vcFrequency}
-                        </p>
+                ) : (
+                  <>
+                    {/* General Questions (Legacy) */}
+                    <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                      <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
+                        General Questions
+                      </h3>
+                      <div className="space-y-5">
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                            Tell us about yourself:
+                          </p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                            {selectedApp.aboutYourself || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Why do you want to join the staff team?</p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                            {selectedApp.whyJoin || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">How much time can you dedicate daily?</p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                            {selectedApp.dailyAvailability || selectedApp.hoursPerWeek || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">What languages do you speak?</p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                            {selectedApp.languages || 'N/A'}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-                <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
-                  <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
-                    Discord Bot Experience
-                  </h3>
-                  <div className="space-y-5">
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
-                        Discord bot experience (1-5):
-                      </p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                        {selectedApp.discordBotExperience}/5
-                      </p>
                     </div>
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
-                        AutoMod knowledge:
-                      </p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                        {selectedApp.automodKnowledge}
-                      </p>
+
+                    {/* Moderation Experience (Legacy) */}
+                    <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                      <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
+                        Moderation Experience
+                      </h3>
+                      <div className="space-y-5">
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                            Previous moderation experience:
+                          </p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                            {selectedApp.moderationExperience || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">What does being a moderator mean to you?</p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                            {selectedApp.moderatorDefinition || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">Leadership experience:</p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                            {selectedApp.leadershipExperience || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
-                        Moderation bots familiarity:
-                      </p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                        {selectedApp.moderationBotsFamiliarity}
-                      </p>
+
+                    {/* VC Availability (Legacy) */}
+                    <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                      <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
+                        VC Availability
+                      </h3>
+                      <div className="space-y-5">
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                            Can connect in VC regularly:
+                          </p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple capitalize">
+                            {selectedApp.vcAvailability === 'listen' ? 'Yes, but can listen' : (selectedApp.vcAvailability || 'N/A')}
+                          </p>
+                        </div>
+                        {selectedApp.vcFrequency && (
+                          <div>
+                            <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                              VC frequency:
+                            </p>
+                            <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                              {selectedApp.vcFrequency}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
-                        Mod commands knowledge:
-                      </p>
-                      <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
-                        {selectedApp.modCommandsKnowledge}
-                      </p>
+
+                    {/* Discord Bot Experience (Legacy) */}
+                    <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
+                      <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
+                        Discord Bot Experience
+                      </h3>
+                      <div className="space-y-5">
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                            Discord bot experience (1-5):
+                          </p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                            {selectedApp.discordBotExperience ? `${selectedApp.discordBotExperience}/5` : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                            AutoMod knowledge:
+                          </p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                            {selectedApp.automodKnowledge || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                            Moderation bots familiarity:
+                          </p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                            {selectedApp.moderationBotsFamiliarity || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 font-semibold">
+                            Mod commands knowledge:
+                          </p>
+                          <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed whitespace-pre-wrap bg-[rgb(var(--color-bg-tertiary))] p-4 rounded-apple">
+                            {selectedApp.modCommandsKnowledge || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
 
                 {/* Admin Notes */}
                 <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
@@ -1045,6 +1194,44 @@ export default function ApplicationsPage() {
               </>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Role Form Toggles */}
+      <div className="mb-6 bg-discord-light/50 rounded-xl p-4 sm:p-5 border border-gray-700">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base sm:text-lg font-semibold text-white">Dedicated Role Forms</h2>
+          <span className="text-xs text-gray-400">Toggle role form availability</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {STAFF_ROLES.map((role) => {
+            const roleConfig = roleForms[role.id] || { isOpen: true, closedMessage: '' };
+            return (
+              <div key={role.id} className="rounded-lg border border-gray-700 bg-discord-dark/50 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{role.label}</p>
+                    <p className={`text-xs font-semibold ${roleConfig.isOpen ? 'text-green-400' : 'text-red-400'}`}>
+                      {roleConfig.isOpen ? 'OPEN' : 'CLOSED'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => toggleRoleForm(role.id)}
+                    disabled={settingsLoading}
+                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors disabled:opacity-50 ${
+                      roleConfig.isOpen ? 'bg-green-500' : 'bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform ${
+                        roleConfig.isOpen ? 'translate-x-9' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

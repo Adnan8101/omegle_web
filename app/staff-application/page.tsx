@@ -1,91 +1,203 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSession, signIn, signOut } from 'next-auth/react';
-import { useTheme } from '@/contexts/ThemeContext';
-import { FiLock, FiSend, FiCheckCircle, FiX } from 'react-icons/fi';
+import { useEffect, useMemo, useState } from 'react';
+import { signIn, signOut, useSession } from 'next-auth/react';
+import { FiArrowLeft, FiCheckCircle, FiLock, FiSend, FiShield, FiUser } from 'react-icons/fi';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTheme } from '@/contexts/ThemeContext';
+import { COMMON_QUESTIONS, ROLE_QUESTIONS, STAFF_ROLES, StaffRole, getRoleLabel } from '@/lib/staffApplicationForm';
 
-export default function StaffApplication() {
+type RoleFormSetting = {
+  isOpen: boolean;
+  closedMessage?: string;
+};
+
+interface AppSettingsResponse {
+  success: boolean;
+  data?: {
+    isOpen: boolean;
+    closedMessage?: string;
+    roleForms?: Partial<Record<StaffRole, RoleFormSetting>>;
+  };
+}
+
+interface SubmitResponse {
+  success: boolean;
+  error?: string;
+}
+
+export default function StaffApplicationPage() {
   const { theme } = useTheme();
-  const { data: session, status } = useSession();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isApplicationsOpen, setIsApplicationsOpen] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [closedMessage, setClosedMessage] = useState('');
-  const [agreedToTOS, setAgreedToTOS] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const { data: session } = useSession();
 
-  const [formData, setFormData] = useState({
-    discordUsername: '',
-    discordUserId: '',
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isApplicationsOpen, setIsApplicationsOpen] = useState(true);
+  const [closedMessage, setClosedMessage] = useState('Staff applications are currently closed. Please check back later.');
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [agreedToTOS, setAgreedToTOS] = useState(false);
+  const [showFormFlow, setShowFormFlow] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<StaffRole | null>(null);
+  const [roleClosedNotice, setRoleClosedNotice] = useState('');
+  const [roleForms, setRoleForms] = useState<Record<StaffRole, RoleFormSetting>>({
+    moderation: { isOpen: true, closedMessage: '' },
+    event_team: { isOpen: true, closedMessage: '' },
+    gaming_mod: { isOpen: true, closedMessage: '' },
+    media_team: { isOpen: true, closedMessage: '' },
+    entertainment_team: { isOpen: true, closedMessage: '' },
+  });
+
+  const [profileData, setProfileData] = useState({
     country: '',
     timezone: '',
     age: '',
-    aboutYourself: '',
-    whyJoin: '',
-    hoursPerWeek: '',
-    languages: '',
-    vcAvailability: '',
-    vcFrequency: '',
-    moderationExperience: '',
-    moderatorDefinition: '',
-    leadershipExperience: '',
-    discordBotExperience: '',
-    automodKnowledge: '',
-    moderationBotsFamiliarity: '',
-    modCommandsKnowledge: '',
   });
 
-  // Auto-fill Discord data when session is available
-  useEffect(() => {
-    if (session?.user) {
-      setFormData(prev => ({
-        ...prev,
-        discordUsername: session.user.name || '',
-        discordUserId: session.user.id || '',
-      }));
-    }
-  }, [session]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+
+  const activeQuestions = useMemo(() => {
+    if (!selectedRole) return [];
+    return [...COMMON_QUESTIONS, ...ROLE_QUESTIONS[selectedRole]];
+  }, [selectedRole]);
 
   useEffect(() => {
-    fetchApplicationStatus();
+    const loadSettings = async () => {
+      try {
+        const response = await fetch('/api/settings', { cache: 'no-store' });
+        const result: AppSettingsResponse = await response.json();
+        if (result.success && result.data) {
+          setIsApplicationsOpen(result.data.isOpen);
+          setClosedMessage(result.data.closedMessage || 'Staff applications are currently closed. Please check back later.');
+          if (result.data.roleForms) {
+            setRoleForms((prev) => {
+              const next = { ...prev };
+              for (const role of STAFF_ROLES) {
+                const incoming = result.data?.roleForms?.[role.id];
+                if (!incoming) continue;
+                next[role.id] = {
+                  isOpen: typeof incoming.isOpen === 'boolean' ? incoming.isOpen : true,
+                  closedMessage: incoming.closedMessage || '',
+                };
+              }
+              return next;
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch staff application settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSettings();
   }, []);
 
-  const fetchApplicationStatus = async () => {
-    try {
-      const response = await fetch('/api/settings');
-      const result = await response.json();
-      if (result.success && result.data) {
-        setIsApplicationsOpen(result.data.isOpen);
-        setClosedMessage(result.data.closedMessage || 'Staff applications are currently closed. Please check back later.');
-      }
-    } catch (error) {
-      console.error('Error fetching application status:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const resetFlow = () => {
+    setShowFormFlow(false);
+    setSelectedRole(null);
+    setRoleClosedNotice('');
+    setAgreedToTOS(false);
+    setProfileData({ country: '', timezone: '', age: '' });
+    setAnswers({});
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+  const handleRoleSelect = (role: StaffRole) => {
+    const roleSetting = roleForms[role];
+    if (roleSetting && !roleSetting.isOpen) {
+      setSelectedRole(null);
+      setRoleClosedNotice(
+        roleSetting.closedMessage || `${getRoleLabel(role)} applications are currently closed.`
+      );
+      return;
+    }
+
+    setRoleClosedNotice('');
+    setSelectedRole(role);
+    setAnswers((prev) => {
+      const next = { ...prev };
+      const questionIds = [...COMMON_QUESTIONS, ...ROLE_QUESTIONS[role]].map((question) => question.id);
+      for (const id of questionIds) {
+        if (!next[id]) next[id] = '';
+      }
+      return next;
+    });
+  };
+
+  const selectedRoleSetting = selectedRole ? roleForms[selectedRole] : null;
+  const isSelectedRoleClosed = Boolean(selectedRoleSetting && !selectedRoleSetting.isOpen);
+  const selectedRoleClosedMessage =
+    (selectedRoleSetting?.closedMessage || '').trim() ||
+    (selectedRole ? `${getRoleLabel(selectedRole)} applications are currently closed.` : 'This application form is currently closed.');
+
+  const updateAnswer = (questionId: string, value: string) => {
+    setAnswers((prev) => ({
       ...prev,
-      [name]: value
+      [questionId]: value,
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Prevent submission if not logged in with Discord
-    if (!session) {
-      alert('Please login with Discord to submit your application.');
+  const validateForm = (): string | null => {
+    if (!session?.user?.id) return 'Please login with Discord before submitting.';
+    if (!selectedRole) return 'Please select one role before filling the form.';
+    if (!profileData.country.trim()) return 'Country is required.';
+    if (!profileData.timezone.trim()) return 'Timezone is required.';
+    if (!profileData.age.trim()) return 'Age is required.';
+
+    for (const question of activeQuestions) {
+      if (!answers[question.id]?.trim()) {
+        return `Please answer: ${question.title}`;
+      }
+    }
+
+    return null;
+  };
+
+  const buildPayload = () => {
+    const introduction = answers.introduction_purpose || '';
+    const dailyAvailability = answers.daily_availability || '';
+
+    return {
+      formVersion: 2,
+      applicationRole: selectedRole,
+
+      discordUsername: session?.user?.name || '',
+      discordUserId: session?.user?.id || '',
+
+      country: profileData.country.trim(),
+      timezone: profileData.timezone.trim(),
+      age: profileData.age.trim(),
+
+      aboutYourself: introduction,
+      whyJoin: introduction,
+      dailyAvailability,
+      hoursPerWeek: dailyAvailability,
+
+      roleAnswers: Object.fromEntries(
+        Object.entries(answers).map(([key, value]) => [key, value.trim()])
+      ),
+
+      moderationExperience: answers.moderation_experience || '',
+      moderatorDefinition: answers.moderator_definition || '',
+      leadershipExperience: answers.leadership_experience || '',
+      discordBotExperience: answers.discord_bot_experience || '',
+      automodKnowledge: answers.automod_knowledge || '',
+      moderationBotsFamiliarity: answers.moderation_bots_familiarity || '',
+      modCommandsKnowledge: answers.mod_commands_knowledge || '',
+    };
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const validationError = validateForm();
+    if (validationError) {
+      alert(validationError);
       return;
     }
-    
+
     setIsSubmitting(true);
 
     try {
@@ -94,673 +206,359 @@ export default function StaffApplication() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(buildPayload()),
       });
 
-      if (response.ok) {
-        setShowSuccessModal(true);
-        // Scroll to top smoothly when modal appears
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setFormData({
-          discordUsername: '',
-          discordUserId: '',
-          country: '',
-          timezone: '',
-          age: '',
-          aboutYourself: '',
-          whyJoin: '',
-          hoursPerWeek: '',
-          languages: '',
-          vcAvailability: '',
-          vcFrequency: '',
-          moderationExperience: '',
-          moderatorDefinition: '',
-          leadershipExperience: '',
-          discordBotExperience: '',
-          automodKnowledge: '',
-          moderationBotsFamiliarity: '',
-          modCommandsKnowledge: '',
-        });
-      } else {
-        const errorData = await response.json();
-        console.error('Submission error:', errorData);
-        console.log('Form data being sent:', formData);
-        
-        let errorMessage = 'Failed to submit application.\n\n';
-        
-        if (errorData.error) {
-          errorMessage += `Error: ${errorData.error}\n\n`;
-        }
-        
-        // Show missing required fields
-        const missingFields = [];
-        if (!formData.discordUsername) missingFields.push('Discord Username');
-        if (!formData.discordUserId) missingFields.push('Discord User ID');
-        if (!formData.country) missingFields.push('Country');
-        if (!formData.timezone) missingFields.push('Timezone');
-        if (!formData.age) missingFields.push('Age');
-        
-        if (missingFields.length > 0) {
-          errorMessage += `Missing fields: ${missingFields.join(', ')}\n`;
-        }
-        
-        errorMessage += `\nDiscord Username: ${formData.discordUsername || 'MISSING'}\n`;
-        errorMessage += `Discord User ID: ${formData.discordUserId || 'MISSING'}`;
-        
-        alert(errorMessage);
+      const result: SubmitResponse = await response.json();
+
+      if (!response.ok || !result.success) {
+        alert(result.error || 'Failed to submit application. Please try again.');
+        return;
       }
+
+      setShowSuccessModal(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      resetFlow();
     } catch (error) {
-      console.error('Error submitting application:', error);
-      alert('Network error. Please check your connection and try again.');
+      console.error('Failed to submit staff application:', error);
+      alert('Network error while submitting your application. Please try again.');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleContinueToForm = () => {
-    if (agreedToTOS) {
-      setShowForm(true);
-    } else {
-      alert('Please agree to the Terms of Service before continuing.');
     }
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-2 border-[rgb(var(--color-accent))] border-t-transparent"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-[rgb(var(--color-accent))] border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition relative overflow-hidden">
-      {/* Animated Blue Background - Light mode only */}
+    <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] relative overflow-hidden">
       {theme === 'light' && (
         <div className="fixed inset-0 -z-10">
-          <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float"></div>
-          <div className="absolute top-0 -right-4 w-96 h-96 bg-blue-600/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '2s' }}></div>
-          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-blue-400/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '4s' }}></div>
+          <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" />
+          <div className="absolute top-0 -right-4 w-96 h-96 bg-cyan-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '1.8s' }} />
+          <div className="absolute -bottom-8 left-24 w-96 h-96 bg-sky-400/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '4s' }} />
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-16">
-        {/* Success Modal */}
-        {showSuccessModal && (
-          <div className="fixed inset-0 z-50 bg-black/60 overflow-y-auto animate-fade-in" onClick={(e) => { if (e.target === e.currentTarget) { setShowSuccessModal(false); setShowForm(false); setAgreedToTOS(false); } }}>
-            <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-4">
-              <div className="glass-blue rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-blue-glow max-w-md w-full sm:my-4 animate-scale-in" onClick={(e) => e.stopPropagation()}>
-              {/* Drag handle for mobile */}
-              <div className="w-12 h-1.5 bg-gray-400/30 rounded-full mx-auto mb-4 sm:hidden"></div>
-              <div className="text-center space-y-4 sm:space-y-6">
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 overflow-y-auto animate-fade-in" onClick={(event) => event.target === event.currentTarget && setShowSuccessModal(false)}>
+          <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div className="glass-blue rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-blue-glow max-w-md w-full sm:my-4 animate-scale-in">
+              <div className="w-12 h-1.5 bg-gray-400/30 rounded-full mx-auto mb-4 sm:hidden" />
+              <div className="text-center space-y-5">
                 <div className="flex justify-center">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-500/20 flex items-center justify-center">
-                    <FiCheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
+                  <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <FiCheckCircle className="w-9 h-9 text-green-500" />
                   </div>
                 </div>
-                <div className="space-y-2 sm:space-y-3">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))]">
-                    Application Submitted!
-                  </h2>
-                  <div className="space-y-2 text-[rgb(var(--color-text-secondary))]">
-                    <p className="text-base sm:text-lg">
-                      Thank you for applying to join our staff team.
-                    </p>
-                    <p className="font-medium text-sm sm:text-base">
-                      If you are shortlisted, you will be contacted within 2 weeks.
-                    </p>
-                    <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))]">
-                      Note: We do not send rejection notifications.
-                    </p>
-                  </div>
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-bold text-[rgb(var(--color-text-primary))]">Application Submitted</h2>
+                  <p className="text-[rgb(var(--color-text-secondary))]">
+                    Your staff application has been received successfully.
+                  </p>
+                  <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                    If shortlisted, you will be contacted within 2 weeks.
+                  </p>
                 </div>
                 <button
-                  onClick={() => {
-                    setShowSuccessModal(false);
-                    setShowForm(false);
-                    setAgreedToTOS(false);
-                  }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-6 py-3 sm:py-3 rounded-2xl apple-transition hover:shadow-blue-glow"
+                  onClick={() => setShowSuccessModal(false)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-6 py-3 rounded-2xl transition-all"
                 >
                   Close
                 </button>
               </div>
-              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
         {!isApplicationsOpen ? (
-          // Closed State - Apple Style
-          <div className="text-center space-y-6 sm:space-y-8 animate-fade-in">
+          <section className="text-center space-y-8 animate-fade-in">
             <div className="flex justify-center">
-              <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 animate-float">
-                <Image
-                  src="/Resume folder-bro.svg"
-                  alt="Applications Closed"
-                  fill
-                  className="object-contain"
-                />
+              <div className="relative w-52 h-52 sm:w-72 sm:h-72 animate-float">
+                <Image src="/Resume folder-bro.svg" alt="Applications Closed" fill className="object-contain" />
               </div>
             </div>
-            <div className="space-y-3 sm:space-y-4">
-              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))]">
-                <FiLock className="w-6 h-6 sm:w-8 sm:h-8 text-[rgb(var(--color-text-secondary))]" />
-              </div>
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
-                Applications Closed
-              </h1>
-              <p className="text-base sm:text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light leading-relaxed px-4">
+            <div className="space-y-3">
+              <h1 className="text-4xl sm:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">Applications Closed</h1>
+              <p className="text-base sm:text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light px-3">
                 {closedMessage}
               </p>
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-6 py-3 sm:px-8 sm:py-4 rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow mt-4"
-              >
+              <Link href="/" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-8 py-4 rounded-2xl transition-all shadow-apple-md hover:shadow-blue-glow mt-4">
                 Return Home
               </Link>
             </div>
-          </div>
-        ) : !showForm ? (
-          // Terms of Service Section
-          <div className="animate-fade-in space-y-6 sm:space-y-8">
-            <div className="text-center space-y-3 sm:space-y-4">
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
-                Staff Application
-              </h1>
-              <p className="text-base sm:text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light px-4">
-                Please read and agree to our terms before proceeding
-              </p>
-            </div>
-
-            <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Terms of Service</h2>
-              
-              <div className="space-y-4 text-[rgb(var(--color-text-secondary))] max-h-96 overflow-y-auto pr-2">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">1. Staff Expectations</h3>
-                  <p className="text-sm leading-relaxed">
-                    By applying, you agree to dedicate time to moderation duties, follow server rules, and maintain professionalism at all times. Staff members are expected to be active, responsive, and fair in their decisions.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">2. Confidentiality</h3>
-                  <p className="text-sm leading-relaxed">
-                    All internal discussions, staff channels, and moderation decisions are confidential. Sharing private information or screenshots from staff channels is strictly prohibited.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">3. Code of Conduct</h3>
-                  <p className="text-sm leading-relaxed">
-                    Staff must maintain a positive attitude, treat community members with respect, and uphold the server's values. Abuse of power, harassment, or discrimination will result in immediate removal.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">4. Activity Requirements</h3>
-                  <p className="text-sm leading-relaxed">
-                    Staff members are expected to maintain consistent activity. Prolonged inactivity without notice may result in removal from the team.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">5. Application Process</h3>
-                  <p className="text-sm leading-relaxed">
-                    All information provided in this application must be truthful and accurate. False information may lead to immediate disqualification. If shortlisted, you will be contacted within 2 weeks. We do not send rejection notifications.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">6. Resignation</h3>
-                  <p className="text-sm leading-relaxed">
-                    Staff members may resign at any time by notifying the admin team. We ask for at least 1 week notice when possible to ensure smooth transitions.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-4 sm:pt-6 border-t border-[rgb(var(--color-border))] space-y-3 sm:space-y-4">
-                <label className="flex items-start sm:items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={agreedToTOS}
-                    onChange={(e) => setAgreedToTOS(e.target.checked)}
-                    className="w-5 h-5 mt-0.5 sm:mt-0 rounded border-2 border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] checked:bg-blue-600 dark:checked:bg-white checked:border-blue-600 dark:checked:border-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-white apple-transition cursor-pointer flex-shrink-0"
-                  />
-                  <span className="text-sm sm:text-base text-[rgb(var(--color-text-secondary))] group-hover:text-[rgb(var(--color-text-primary))] apple-transition">
-                    I have read and agree to the Terms of Service
-                  </span>
-                </label>
-
-                <button
-                  onClick={handleContinueToForm}
-                  disabled={!agreedToTOS}
-                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black disabled:opacity-50 disabled:cursor-not-allowed font-semibold px-6 py-3 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl apple-transition shadow-apple-md hover:shadow-blue-glow text-base sm:text-lg"
-                >
-                  Continue to Application
-                </button>
-              </div>
-            </div>
-          </div>
+          </section>
         ) : (
-          // Application Form - Apple Style
-          <>
-            {/* Header */}
-            <div className="text-center space-y-4 sm:space-y-6 mb-8 sm:mb-16 animate-fade-in">
-              <div className="flex justify-center">
-                <div className="relative w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 animate-float">
-                  <Image
-                    src="/Forms-cuate.svg"
-                    alt="Staff Application"
-                    fill
-                    className="object-contain"
-                  />
+          <section className="animate-fade-in space-y-7">
+            <header className="text-center space-y-4">
+              <h1 className="text-4xl sm:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">Staff Application</h1>
+              <p className="text-base sm:text-xl text-[rgb(var(--color-text-secondary))] max-w-3xl mx-auto font-light px-2">
+                Select a team role, answer the dedicated form, and submit through your Discord login.
+              </p>
+            </header>
+
+            {!showFormFlow ? (
+              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md space-y-6">
+                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Terms of Service</h2>
+                <div className="space-y-4 text-[rgb(var(--color-text-secondary))] max-h-80 overflow-y-auto pr-1 text-sm leading-relaxed">
+                  <p><span className="font-semibold text-[rgb(var(--color-text-primary))]">1. Professional Conduct:</span> Staff members must remain respectful, impartial, and responsible in all community interactions.</p>
+                  <p><span className="font-semibold text-[rgb(var(--color-text-primary))]">2. Confidentiality:</span> Internal decisions and staff conversations are private and cannot be shared externally.</p>
+                  <p><span className="font-semibold text-[rgb(var(--color-text-primary))]">3. Activity:</span> Consistent activity is required for all selected staff roles.</p>
+                  <p><span className="font-semibold text-[rgb(var(--color-text-primary))]">4. Accuracy:</span> Application details must be truthful and submitted by your own Discord account.</p>
+                </div>
+                <div className="pt-4 border-t border-[rgb(var(--color-border))] space-y-4">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={agreedToTOS}
+                      onChange={(event) => setAgreedToTOS(event.target.checked)}
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] checked:bg-blue-600 checked:border-blue-600 focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="text-sm sm:text-base text-[rgb(var(--color-text-secondary))]">
+                      I have read and agree to the terms.
+                    </span>
+                  </label>
+                  <button
+                    onClick={() => {
+                      if (!agreedToTOS) {
+                        alert('Please agree to the Terms of Service before continuing.');
+                        return;
+                      }
+                      setShowFormFlow(true);
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-8 py-4 rounded-2xl transition-all shadow-apple-md hover:shadow-blue-glow"
+                  >
+                    Continue to Role Selection
+                  </button>
                 </div>
               </div>
-              <div className="space-y-2 sm:space-y-3">
-                <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
-                  Staff Application
-                </h1>
-                <p className="text-base sm:text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light leading-relaxed px-4">
-                  Join our team and help build an amazing community experience.
-                </p>
+            ) : !session ? (
+              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md text-center space-y-6">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#5865F2]/20">
+                  <FiLock className="w-7 h-7 text-[#5865F2]" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Discord Login Required</h2>
+                  <p className="text-[rgb(var(--color-text-secondary))] max-w-xl mx-auto">
+                    Please login with your Discord account to continue and submit your application.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowFormFlow(false)}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-bg-secondary))] transition-all"
+                  >
+                    <FiArrowLeft className="w-4 h-4" />
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => signIn('discord')}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold transition-all"
+                  >
+                    Login with Discord
+                  </button>
+                </div>
               </div>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-8 animate-slide-up">
-              {/* Discord Information */}
-              <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
-                <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Discord Information</h2>
-                
-                {!session ? (
-                  <div className="text-center py-6 sm:py-8 space-y-3 sm:space-y-4">
-                    <p className="text-sm sm:text-base text-[rgb(var(--color-text-secondary))] mb-4 sm:mb-6 px-2">
-                      Please login with Discord to continue with your application
-                    </p>
+            ) : !selectedRole ? (
+              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md space-y-6">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Choose Your Team Role</h2>
+                  <button
+                    type="button"
+                    onClick={() => signOut({ callbackUrl: '/staff-application' })}
+                    className="text-xs sm:text-sm px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg transition-all"
+                  >
+                    Logout
+                  </button>
+                </div>
+                <p className="text-[rgb(var(--color-text-secondary))]">
+                  Select one option. You can submit one role application at a time.
+                </p>
+                {roleClosedNotice && (
+                  <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+                    <p className="text-sm text-amber-400">{roleClosedNotice}</p>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {STAFF_ROLES.map((role) => {
+                    const roleSetting = roleForms[role.id];
+                    const isRoleOpen = roleSetting?.isOpen ?? true;
+                    return (
+                      <button
+                        key={role.id}
+                        type="button"
+                        onClick={() => handleRoleSelect(role.id)}
+                        className={`text-left border rounded-2xl p-5 transition-all ${
+                          isRoleOpen
+                            ? 'bg-[rgb(var(--color-bg-secondary))] border-[rgb(var(--color-border))] hover:border-blue-500/60 hover:shadow-blue-glow'
+                            : 'bg-[rgb(var(--color-bg-secondary))]/60 border-red-500/30 opacity-75'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2">
+                            <FiShield className={`w-4 h-4 ${isRoleOpen ? 'text-blue-500' : 'text-red-400'}`} />
+                            <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">{role.label}</h3>
+                          </div>
+                          <span
+                            className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
+                              isRoleOpen
+                                ? 'bg-emerald-500/20 text-emerald-400'
+                                : 'bg-red-500/20 text-red-400'
+                            }`}
+                          >
+                            {isRoleOpen ? 'OPEN' : 'CLOSED'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{role.shortDescription}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : isSelectedRoleClosed ? (
+              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-red-500/30 shadow-apple-md space-y-5 text-center">
+                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">{getRoleLabel(selectedRole)} Form Closed</h2>
+                <p className="text-[rgb(var(--color-text-secondary))]">{selectedRoleClosedMessage}</p>
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole(null)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-bg-secondary))] transition-all"
+                  >
+                    <FiArrowLeft className="w-4 h-4" />
+                    Choose Another Role
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 text-xs font-semibold uppercase tracking-wide">
+                        Selected Role
+                      </div>
+                      <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">{getRoleLabel(selectedRole)}</h2>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => signIn('discord')}
-                      className="inline-flex items-center gap-2 sm:gap-3 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold px-6 py-3 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl apple-transition shadow-apple-md hover:shadow-lg text-sm sm:text-base"
+                      onClick={() => setSelectedRole(null)}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-bg-secondary))] transition-all"
                     >
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
-                      </svg>
-                      Login with Discord
+                      <FiArrowLeft className="w-4 h-4" />
+                      Change Role
                     </button>
                   </div>
-                ) : (
-                  <div className="space-y-4 sm:space-y-6">
-                    {/* User Profile Display */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl sm:rounded-apple">
-                      {session.user?.image && (
-                        <img 
-                          src={session.user.image} 
-                          alt={session.user.name || 'User'} 
-                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-blue-500"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-base sm:text-lg font-semibold text-[rgb(var(--color-text-primary))] truncate">
-                          {session.user?.name}
-                        </p>
-                        <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-mono truncate">
-                          ID: {session.user?.id || 'Loading...'}
-                        </p>
+
+                  <div className="flex items-center gap-3 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl p-4">
+                    {session.user?.image ? (
+                      <img src={session.user.image} alt={session.user.name || 'User'} className="w-12 h-12 rounded-full border border-blue-500" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                        <FiUser className="w-5 h-5 text-blue-500" />
                       </div>
-                      <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-green-500">
-                          <FiCheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                          <span className="text-xs sm:text-sm font-medium">Verified</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (confirm('Are you sure you want to logout? Your form data will not be saved.')) {
-                              signOut({ callbackUrl: '/staff-application' });
-                            }
-                          }}
-                          className="px-3 py-1.5 text-xs sm:text-sm bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg sm:rounded-apple apple-transition"
-                        >
-                          Logout
-                        </button>
-                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[rgb(var(--color-text-primary))] truncate">{session.user?.name || 'Discord User'}</p>
+                      <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-mono truncate">ID: {session.user?.id}</p>
                     </div>
-                    
-                    {/* Hidden fields for form submission */}
-                    <input type="hidden" name="discordUsername" value={formData.discordUsername} />
-                    <input type="hidden" name="discordUserId" value={formData.discordUserId} />
-                  </div>
-                )}
-              </div>
-
-              {/* Personal Information */}
-              <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
-                <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Personal Information</h2>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      Country
-                    </label>
-                    <input
-                      type="text"
-                      name="country"
-                      value={formData.country}
-                      onChange={handleChange}
-                      placeholder="INDIA"
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      Timezone
-                    </label>
-                    <input
-                      type="text"
-                      name="timezone"
-                      value={formData.timezone}
-                      onChange={handleChange}
-                      placeholder="IST"
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      Age
-                    </label>
-                    <input
-                      type="number"
-                      name="age"
-                      value={formData.age}
-                      onChange={handleChange}
-                      placeholder="18"
-                      min="16"
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
-                    />
                   </div>
                 </div>
-              </div>
 
-              {/* General Questions */}
-              <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
-                <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">General Questions</h2>
-                
-                <div className="space-y-4 sm:space-y-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      Tell us about yourself
+                <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md space-y-5">
+                  <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">Basic Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-[rgb(var(--color-text-secondary))]">Country</span>
+                      <input
+                        type="text"
+                        value={profileData.country}
+                        onChange={(event) => setProfileData((prev) => ({ ...prev, country: event.target.value }))}
+                        placeholder="India"
+                        className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
                     </label>
-                    <textarea
-                      name="aboutYourself"
-                      value={formData.aboutYourself}
-                      onChange={handleChange}
-                      placeholder="Your background, interests, hobbies, and what makes you unique..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      Why do you want to join our staff team?
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-[rgb(var(--color-text-secondary))]">Timezone</span>
+                      <input
+                        type="text"
+                        value={profileData.timezone}
+                        onChange={(event) => setProfileData((prev) => ({ ...prev, timezone: event.target.value }))}
+                        placeholder="IST (UTC+5:30)"
+                        className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
                     </label>
-                    <textarea
-                      name="whyJoin"
-                      value={formData.whyJoin}
-                      onChange={handleChange}
-                      placeholder="Share your motivation and what you hope to contribute..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      How many hours per week can you dedicate to moderation?
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-[rgb(var(--color-text-secondary))]">Age</span>
+                      <input
+                        type="number"
+                        min="13"
+                        value={profileData.age}
+                        onChange={(event) => setProfileData((prev) => ({ ...prev, age: event.target.value }))}
+                        placeholder="18"
+                        className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
                     </label>
-                    <input
-                      type="text"
-                      name="hoursPerWeek"
-                      value={formData.hoursPerWeek}
-                      onChange={handleChange}
-                      placeholder="10-15 hours"
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      What languages do you speak fluently?
-                    </label>
-                    <input
-                      type="text"
-                      name="languages"
-                      value={formData.languages}
-                      onChange={handleChange}
-                      placeholder="English, Hindi, etc."
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      Are you able to connect in VC regularly?
-                    </label>
-                    <select
-                      name="vcAvailability"
-                      value={formData.vcAvailability}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
-                    >
-                      <option value="">Select an option</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                      <option value="listen">Yes, but can listen</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      If yes, how often can you connect?
-                    </label>
-                    <input
-                      type="text"
-                      name="vcFrequency"
-                      value={formData.vcFrequency}
-                      onChange={handleChange}
-                      placeholder="e.g., Daily, 3-4 times a week, etc."
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition"
-                    />
                   </div>
                 </div>
-              </div>
 
-              {/* Moderation Questions */}
-              <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
-                <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Moderation Experience</h2>
-                
-                <div className="space-y-4 sm:space-y-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      Do you have any previous moderation experience?
-                    </label>
-                    <textarea
-                      name="moderationExperience"
-                      value={formData.moderationExperience}
-                      onChange={handleChange}
-                      placeholder="Describe your previous moderation roles, communities, and responsibilities..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
+                <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-apple-md space-y-6">
+                  <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">Application Form</h3>
 
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      What does being a good moderator mean to you?
-                    </label>
-                    <textarea
-                      name="moderatorDefinition"
-                      value={formData.moderatorDefinition}
-                      onChange={handleChange}
-                      placeholder="Define what qualities and responsibilities make an effective moderator..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      Do you have any experience in leadership?
-                    </label>
-                    <textarea
-                      name="leadershipExperience"
-                      value={formData.leadershipExperience}
-                      onChange={handleChange}
-                      placeholder="Describe your leadership experience, responsibilities, and how you've handled team situations..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Bot & Discord Experience */}
-              <div className="glass-blue rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-blue-500/20 shadow-apple-md hover:shadow-blue-glow apple-transition space-y-4 sm:space-y-6">
-                <h2 className="text-xl sm:text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Discord Bot Experience</h2>
-                
-                <div className="space-y-4 sm:space-y-6">
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      What is your experience with Discord bots? (Rate 1-5)
-                    </label>
-                    <div className="flex flex-wrap gap-3">
-                      {[1, 2, 3, 4, 5].map((rating) => (
-                        <label 
-                          key={rating} 
-                          className={`flex-1 min-w-[60px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 cursor-pointer apple-transition ${
-                            formData.discordBotExperience === rating.toString()
-                              ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                              : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] text-[rgb(var(--color-text-secondary))] hover:border-blue-500/50'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="discordBotExperience"
-                            value={rating.toString()}
-                            checked={formData.discordBotExperience === rating.toString()}
-                            onChange={handleChange}
-                            required
-                            className="sr-only"
-                          />
-                          <span className="text-lg font-semibold">{rating}</span>
-                        </label>
-                      ))}
+                  {activeQuestions.map((question, index) => (
+                    <div key={question.id} className="space-y-2">
+                      <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))]">
+                        {index + 1}. {question.title}
+                      </label>
+                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] leading-relaxed">{question.prompt}</p>
+                      <textarea
+                        value={answers[question.id] || ''}
+                        onChange={(event) => updateAnswer(question.id, event.target.value)}
+                        rows={5}
+                        placeholder={question.placeholder}
+                        className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                      />
                     </div>
-                    <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
-                      1 = No experience | 5 = Expert
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      How much do you know about AutoMod?
-                    </label>
-                    <textarea
-                      name="automodKnowledge"
-                      value={formData.automodKnowledge}
-                      onChange={handleChange}
-                      placeholder="Describe your knowledge of Discord's AutoMod feature, rules you've set up, experience with filters..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      Which moderation bots are you familiar with?
-                    </label>
-                    <textarea
-                      name="moderationBotsFamiliarity"
-                      value={formData.moderationBotsFamiliarity}
-                      onChange={handleChange}
-                      placeholder="MEE6, Dyno, Carl-bot, ProBot, Wick, etc. Describe which ones you've used and for what purpose..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))]">
-                      What moderation commands are you familiar with?
-                    </label>
-                    <textarea
-                      name="modCommandsKnowledge"
-                      value={formData.modCommandsKnowledge}
-                      onChange={handleChange}
-                      placeholder="Ban, kick, mute, timeout, warn, slowmode, lockdown, etc. Explain your experience using these commands..."
-                      rows={4}
-                      required
-                      className="w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-apple text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 apple-transition resize-none"
-                    />
-                  </div>
+                  ))}
                 </div>
-              </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isSubmitting || !session}
-                className="w-full flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black disabled:opacity-50 font-semibold px-6 py-4 sm:px-8 sm:py-5 rounded-xl sm:rounded-2xl apple-transition shadow-apple-lg hover:shadow-blue-glow text-base sm:text-lg disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white dark:border-black border-t-transparent"></div>
-                    <span>Submitting...</span>
-                  </>
-                ) : !session ? (
-                  <>
-                    <FiLock className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span>Login with Discord to Submit</span>
-                  </>
-                ) : (
-                  <>
-                    <FiSend className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span>Submit Application</span>
-                  </>
-                )}
-              </button>
-            </form>
-          </>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-8 py-4 rounded-2xl transition-all shadow-apple-md hover:shadow-blue-glow disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white dark:border-black border-t-transparent" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <FiSend className="w-5 h-5" />
+                      Submit Application
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+          </section>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-[rgb(var(--color-border))] mt-12 sm:mt-24">
+      <footer className="border-t border-[rgb(var(--color-border))] mt-14">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="text-center text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-light space-y-2">
             <p>© 2026 Omeglee. All rights reserved.</p>
-            <a href="https://discord.gg/omegle" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-[rgb(var(--color-text-secondary))] apple-transition">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
-              </svg>
+            <a href="https://discord.gg/omegle" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-[rgb(var(--color-text-secondary))] transition-all">
               Join Discord
             </a>
           </div>
