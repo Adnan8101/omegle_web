@@ -23,10 +23,21 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, discriminator
   }
   // Default avatar
   if (discriminator === '0' || !discriminator) {
-    const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+    if (!/^\d+$/.test(userId)) {
+      return 'https://cdn.discordapp.com/embed/avatars/0.png';
+    }
+
+    let defaultIndex = 0;
+    try {
+      defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+    } catch {
+      defaultIndex = 0;
+    }
+
     return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
   }
-  const defaultIndex = parseInt(discriminator) % 5;
+  const parsedDiscriminator = parseInt(discriminator, 10);
+  const defaultIndex = Number.isNaN(parsedDiscriminator) ? 0 : parsedDiscriminator % 5;
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
 

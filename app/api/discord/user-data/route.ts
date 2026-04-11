@@ -30,7 +30,17 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, size: number 
     const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
     return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
   }
-  const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+  if (!/^\d+$/.test(userId)) {
+    return 'https://cdn.discordapp.com/embed/avatars/0.png';
+  }
+
+  let defaultIndex = 0;
+  try {
+    defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+  } catch {
+    defaultIndex = 0;
+  }
+
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
 
@@ -51,7 +61,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userIds array required' }, { status: 400 });
     }
 
-    const limitedIds = userIds.slice(0, 500); // Limit to 500 users per request
+    const limitedIds = [...new Set(
+      userIds
+        .map((id) => (typeof id === 'string' ? id.trim() : String(id ?? '').trim()))
+        .filter((id) => /^\d{5,25}$/.test(id))
+    )].slice(0, 500); // Limit to 500 users per request
+
+    if (limitedIds.length === 0) {
+      return NextResponse.json({ users: {} }, { status: 200 });
+    }
     const results: Record<string, UserData> = {};
 
     // Step 1: Try to get users from cache first (fast and reliable)

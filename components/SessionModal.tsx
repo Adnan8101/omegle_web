@@ -17,7 +17,17 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, size: number 
     const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
     return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
   }
-  const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+  if (!/^\d+$/.test(userId)) {
+    return 'https://cdn.discordapp.com/embed/avatars/0.png';
+  }
+
+  let defaultIndex = 0;
+  try {
+    defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+  } catch {
+    defaultIndex = 0;
+  }
+
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
 

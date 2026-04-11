@@ -27,7 +27,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userIds array required' }, { status: 400 });
     }
 
-    const limitedIds = userIds.slice(0, 500);
+    const limitedIds = [...new Set(
+      userIds
+        .map((id) => (typeof id === 'string' ? id.trim() : String(id ?? '').trim()))
+        .filter((id) => /^\d{5,25}$/.test(id))
+    )].slice(0, 500);
+
+    if (limitedIds.length === 0) {
+      return NextResponse.json({ users: {} });
+    }
 
     // Use getUsersDisplay which returns proper avatar URLs
     const usersMap = await getUsersDisplay(limitedIds, 128);

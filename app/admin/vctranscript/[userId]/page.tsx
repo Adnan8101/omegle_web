@@ -239,6 +239,13 @@ export default function UserTranscriptPage() {
       return;
     }
 
+    const requestUserId = userId;
+    const isSafeUserId = /^\d{5,25}$/.test(requestUserId);
+    if (!isSafeUserId) {
+      if (!silent) setLoading(false);
+      return;
+    }
+
     if (!silent) setLoading(true);
     try {
       const dateParams = new URLSearchParams();
@@ -248,13 +255,13 @@ export default function UserTranscriptPage() {
       const dateSuffix = dateParams.toString() ? `?${dateParams}` : '';
 
       const [response, cachedUserRes, chatChRes] = await Promise.all([
-        fetch(`/api/vctranscript/${userId}${dateSuffix}`),
+        fetch(`/api/vctranscript/${requestUserId}${dateSuffix}`),
         fetch('/api/discord/cached-users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userIds: [userId] }),
+          body: JSON.stringify({ userIds: [requestUserId] }),
         }),
-        fetch(`/api/vctranscript/chat-channels/${userId}${dateSuffix}`),
+        fetch(`/api/vctranscript/chat-channels/${requestUserId}${dateSuffix}`),
       ]);
 
       const result = await response.json();
@@ -263,15 +270,17 @@ export default function UserTranscriptPage() {
       let userData: any = null;
       try {
         const cachedData = await cachedUserRes.json();
-        if (cachedData.users?.[userId]) {
-          userData = cachedData.users[userId];
+        if (cachedUserRes.ok && cachedData.users?.[requestUserId]) {
+          userData = cachedData.users[requestUserId];
         }
       } catch { }
 
       // Fallback to Discord API
       if (!userData) {
-        const userResponse = await fetch(`/api/discord/user/${userId}`);
-        userData = await userResponse.json();
+        const userResponse = await fetch(`/api/discord/user/${requestUserId}`);
+        if (userResponse.ok) {
+          userData = await userResponse.json();
+        }
       }
 
       setDiscordUser(userData);
