@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import SessionModal from '@/components/SessionModal';
@@ -27,7 +27,17 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, size: number 
     const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
     return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
   }
-  const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+
+  if (!/^\d+$/.test(userId)) {
+    return 'https://cdn.discordapp.com/embed/avatars/0.png';
+  }
+
+  let defaultIndex = 0;
+  try {
+    defaultIndex = Number(BigInt(userId) >> 22n) % 6;
+  } catch {
+    defaultIndex = 0;
+  }
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
 
@@ -133,11 +143,17 @@ const emptyChatStats: ChatStats = {
 
 type ActiveTab = 'overview' | 'sessions' | 'mutuals';
 
-export default function UserTranscriptPage({ params }: { params: { userId: string } }) {
+export default function UserTranscriptPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const params = useParams();
+  const userIdParam = params?.userId;
+  const userId = typeof userIdParam === 'string' ? userIdParam.trim() : '';
+  const hasValidUserId = /^\d{5,25}$/.test(userId);
+
   const [data, setData] = useState<TranscriptData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [invalidUserId, setInvalidUserId] = useState(false);
   const [hasDbError, setHasDbError] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
@@ -206,11 +222,23 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
       }
       
       setHasPermission(true);
+      if (!hasValidUserId) {
+        setInvalidUserId(true);
+        setLoading(false);
+        return;
+      }
+
+      setInvalidUserId(false);
       fetchData();
     }
-  }, [status, session, router]);
+  }, [status, session, router, hasValidUserId]);
 
   const fetchData = async (silent = false, range?: { startDate: string | null; endDate: string | null }) => {
+    if (!hasValidUserId) {
+      if (!silent) setLoading(false);
+      return;
+    }
+
     if (!silent) setLoading(true);
     try {
       const dateParams = new URLSearchParams();
@@ -220,13 +248,13 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
       const dateSuffix = dateParams.toString() ? `?${dateParams}` : '';
 
       const [response, cachedUserRes, chatChRes] = await Promise.all([
-        fetch(`/api/vctranscript/${params.userId}${dateSuffix}`),
+        fetch(`/api/vctranscript/${userId}${dateSuffix}`),
         fetch('/api/discord/cached-users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userIds: [params.userId] }),
+          body: JSON.stringify({ userIds: [userId] }),
         }),
-        fetch(`/api/vctranscript/chat-channels/${params.userId}${dateSuffix}`),
+        fetch(`/api/vctranscript/chat-channels/${userId}${dateSuffix}`),
       ]);
 
       const result = await response.json();
@@ -235,14 +263,14 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
       let userData: any = null;
       try {
         const cachedData = await cachedUserRes.json();
-        if (cachedData.users?.[params.userId]) {
-          userData = cachedData.users[params.userId];
+        if (cachedData.users?.[userId]) {
+          userData = cachedData.users[userId];
         }
       } catch { }
 
       // Fallback to Discord API
       if (!userData) {
-        const userResponse = await fetch(`/api/discord/user/${params.userId}`);
+        const userResponse = await fetch(`/api/discord/user/${userId}`);
         userData = await userResponse.json();
       }
 
@@ -270,7 +298,7 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
       });
 
       const transcriptData: TranscriptData = {
-        userId: result.userId || params.userId,
+        userId: result.userId || userId,
         vcStats: result.vcStats || emptyVCStats,
         vcSessions: processedSessions,
         chatStats: result.chatStats || emptyChatStats,
@@ -348,7 +376,7 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
     } catch (error: any) {
       console.error('Error fetching transcript:', error);
       if (!silent) {
-        setData({ userId: params.userId, vcStats: emptyVCStats, vcSessions: [], chatStats: emptyChatStats, interactions: [], voiceUserStats: null });
+        setData({ userId, vcStats: emptyVCStats, vcSessions: [], chatStats: emptyChatStats, interactions: [], voiceUserStats: null });
         setHasDbError(true);
       }
     } finally {
@@ -358,10 +386,11 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
   };
 
   const fetchMutuals = async () => {
+    if (!hasValidUserId) return;
     if (mutualsData) return;
     setMutualsLoading(true);
     try {
-      const res = await fetch(`/api/vctranscript/mutuals/${params.userId}`);
+      const res = await fetch(`/api/vctranscript/mutuals/${userId}`);
       const result = await res.json();
       setMutualsData(result);
 
@@ -486,6 +515,32 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
     );
   }
 
+  if (invalidUserId) {
+    return (
+      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
+        <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
+          <div className="text-center space-y-6">
+            <div className="text-yellow-500 text-5xl">⚠️</div>
+            <div>
+              <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">
+                Invalid User ID
+              </h2>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+                This transcript link is invalid. Please open a user from the transcript list.
+              </p>
+            </div>
+            <button
+              onClick={() => router.replace('/admin/vctranscript')}
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Back to Transcripts
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
@@ -533,7 +588,7 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
           <div className="flex items-center gap-4 mb-4">
             <div className="relative w-20 h-20 rounded-full overflow-hidden ring-4 ring-blue-500/30 flex-shrink-0">
               <Image
-                src={discordUser?.avatar || buildAvatarUrl(params.userId, null, 256)}
+                src={discordUser?.avatar || buildAvatarUrl(userId, null, 256)}
                 alt={discordUser?.displayName || 'User'}
                 fill
                 className="object-cover"
@@ -542,7 +597,7 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
             </div>
             <div>
               <h1 className="text-4xl font-bold text-[rgb(var(--color-text-primary))]">
-                {discordUser?.displayName || `User ${params.userId}`}
+                {discordUser?.displayName || `User ${userId}`}
               </h1>
               <p className="text-lg text-[rgb(var(--color-text-secondary))]">
                 @{discordUser?.username || 'unknown'}
@@ -552,7 +607,7 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
                   <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400">Not in Server</span>
                 )}
               </p>
-              <p className="text-[rgb(var(--color-text-tertiary))] text-sm mt-1">User ID: {params.userId}</p>
+              <p className="text-[rgb(var(--color-text-tertiary))] text-sm mt-1">User ID: {userId}</p>
             </div>
             {/* Manual refresh button */}
             <div className="ml-auto flex items-center gap-3 self-center">
@@ -1227,7 +1282,7 @@ export default function UserTranscriptPage({ params }: { params: { userId: strin
 
       {sharedSessionsUserId && (
         <SharedSessionsModal
-          userId={params.userId}
+          userId={userId}
           targetUserId={sharedSessionsUserId}
           targetUserName={getUserDisplay(sharedSessionsUserId).name}
           targetUserAvatar={getUserDisplay(sharedSessionsUserId).avatar}

@@ -494,19 +494,19 @@ export default function StaffApplicationPage() {
                         className={`text-left border rounded-2xl p-5 transition-all ${
                           isRoleOpen
                             ? `${roleVisual.openCard} ${roleVisual.openGlow}`
-                            : 'bg-[rgb(var(--color-bg-secondary))]/60 border-red-500/30 opacity-75'
+                            : 'bg-red-50/85 dark:bg-[rgb(var(--color-bg-secondary))]/60 border-red-300 dark:border-red-500/30 opacity-90 dark:opacity-75'
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2">
-                            <RoleIcon className={`w-5 h-5 ${isRoleOpen ? roleVisual.openIcon : 'text-red-400'}`} />
+                            <RoleIcon className={`w-5 h-5 ${isRoleOpen ? roleVisual.openIcon : 'text-red-700 dark:text-red-300'}`} />
                             <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">{role.label}</h3>
                           </div>
                           <span
-                            className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full ${
+                            className={`text-[11px] sm:text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ${
                               isRoleOpen
                                 ? roleVisual.openChip
-                                : 'bg-red-500/20 text-red-400'
+                                : 'bg-red-100 text-red-800 border border-red-300 dark:bg-red-500/20 dark:text-red-300 dark:border-red-400/30'
                             }`}
                           >
                             {isRoleOpen ? 'OPEN' : 'CLOSED'}

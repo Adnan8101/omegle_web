@@ -1,11 +1,9 @@
 import mongoose, { Schema, Model } from 'mongoose';
 import { StaffRole } from '@/lib/staffApplicationForm';
-
 export interface IRoleFormSetting {
   isOpen: boolean;
   closedMessage?: string;
 }
-
 export interface IApplicationSettings {
   _id?: string;
   isOpen: boolean;
@@ -13,7 +11,6 @@ export interface IApplicationSettings {
   roleForms?: Partial<Record<StaffRole, IRoleFormSetting>>;
   updatedAt: Date;
 }
-
 const RoleFormSettingSchema = new Schema<IRoleFormSetting>(
   {
     isOpen: { type: Boolean, default: true },
@@ -21,7 +18,6 @@ const RoleFormSettingSchema = new Schema<IRoleFormSetting>(
   },
   { _id: false }
 );
-
 const ApplicationSettingsSchema = new Schema<IApplicationSettings>(
   {
     isOpen: { type: Boolean, default: true },
@@ -41,9 +37,7 @@ const ApplicationSettingsSchema = new Schema<IApplicationSettings>(
     timestamps: true,
   }
 );
-
 const ApplicationSettings: Model<IApplicationSettings> =
   mongoose.models.ApplicationSettings ||
   mongoose.model<IApplicationSettings>('ApplicationSettings', ApplicationSettingsSchema);
-
 export default ApplicationSettings;

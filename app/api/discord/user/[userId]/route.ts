@@ -11,6 +11,14 @@ export async function GET(
 ) {
   try {
     const { userId } = await params;
+
+    if (!userId || !/^\d{5,25}$/.test(userId)) {
+      return NextResponse.json(
+        { error: 'Invalid userId parameter' },
+        { status: 400 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user?.hasAccess) {

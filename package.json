@@ -8,6 +8,7 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
+    "check:databases": "tsx scripts/check-databases.ts",
     "sync-users": "tsx scripts/syncAllUsers.ts",
     "fix-avatars": "tsx scripts/fixUserAvatars.ts",
     "test:applications-workflow": "tsx scripts/test-applications-workflow.ts"

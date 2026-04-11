@@ -3,9 +3,8 @@ import DiscordProvider from "next-auth/providers/discord";
 import { checkUserPermissions, UserPermissions } from "./permissions";
 import { prismaBot } from "./prismaBot";
 
-// Cache permission checks to avoid hitting Discord API on every request
-const ACCESS_CHECK_INTERVAL = 60 * 1000; // 60 seconds
-const CASINO_ROLE_DB_RETRY_MS = 5 * 60 * 1000; // 5 minutes
+const ACCESS_CHECK_INTERVAL = 60 * 1000; 
+const CASINO_ROLE_DB_RETRY_MS = 5 * 60 * 1000; 
 const GUILD_ID = "910043773130661918";
 
 let casinoRoleDbFailedAt = 0;
@@ -19,7 +18,7 @@ export const authOptions: NextAuthOptions = {
         params: { 
           scope: "identify guilds guilds.members.read",
           prompt: "consent",
-          permissions: "0" // Request all permissions to be included in response
+          permissions: "0" 
         } 
       },
     }),
@@ -31,7 +30,7 @@ export const authOptions: NextAuthOptions = {
         token.discordId = profile.id;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at;
-        // Initialize permissions on first login
+
         token.permissions = {
           hasFullAccess: false,
           hasModeratorAccess: false,
@@ -46,7 +45,6 @@ export const authOptions: NextAuthOptions = {
         token.accessCheckedAt = 0;
       }
 
-      // Check if token is expired (refresh if needed)
       const now = Math.floor(Date.now() / 1000);
       if (token.expiresAt && token.expiresAt < now) {
         try {

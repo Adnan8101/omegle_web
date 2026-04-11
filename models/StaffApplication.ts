@@ -7,14 +7,12 @@ export interface IStaffApplication {
   roleAnswers?: Record<string, string>;
   formVersion?: number;
 
-  // Discord & Personal Info
   discordUsername?: string;
   discordUserId?: string;
   country?: string;
   timezone?: string;
   age?: string;
   
-  // General Questions
   aboutYourself?: string;
   whyJoin?: string;
   hoursPerWeek?: string;
@@ -22,12 +20,10 @@ export interface IStaffApplication {
   vcAvailability?: string;
   vcFrequency?: string;
   
-  // Moderation Questions
   moderationExperience?: string;
   moderatorDefinition?: string;
   leadershipExperience?: string;
   
-  // Bot Experience
   discordBotExperience?: string;
   automodKnowledge?: string;
   moderationBotsFamiliarity?: string;
@@ -38,7 +34,6 @@ export interface IStaffApplication {
   updatedAt: Date;
   notes?: string;
   
-  // Fetched user data
   userProfile?: {
     username?: string;
     display_name?: string;
@@ -71,14 +66,12 @@ const StaffApplicationSchema = new Schema<IStaffApplication>(
     roleAnswers: { type: Schema.Types.Mixed, default: {} },
     formVersion: { type: Number, default: 1 },
 
-    // Discord & Personal Info
     discordUsername: { type: String, required: false },
     discordUserId: { type: String, required: false },
     country: { type: String, required: false },
     timezone: { type: String, required: false },
     age: { type: String, required: false },
     
-    // General Questions
     aboutYourself: { type: String, required: false },
     whyJoin: { type: String, required: false },
     hoursPerWeek: { type: String, required: false },
@@ -86,12 +79,10 @@ const StaffApplicationSchema = new Schema<IStaffApplication>(
     vcAvailability: { type: String, required: false },
     vcFrequency: { type: String, required: false },
     
-    // Moderation Questions
     moderationExperience: { type: String, required: false },
     moderatorDefinition: { type: String, required: false },
     leadershipExperience: { type: String, required: false },
-    
-    // Bot Experience
+
     discordBotExperience: { type: String, required: false },
     automodKnowledge: { type: String, required: false },
     moderationBotsFamiliarity: { type: String, required: false },
@@ -103,8 +94,7 @@ const StaffApplicationSchema = new Schema<IStaffApplication>(
       default: 'pending',
     },
     notes: { type: String, default: '' },
-    
-    // Fetched user data
+
     userProfile: { type: Schema.Types.Mixed, default: null },
     userStats: { type: Schema.Types.Mixed, default: null },
     modLogs: { type: [Schema.Types.Mixed], default: [] },

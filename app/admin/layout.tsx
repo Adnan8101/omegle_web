@@ -11,11 +11,12 @@ import {
     FiSun, FiMoon, FiActivity, FiUserPlus, FiShield, FiCreditCard, FiAlertOctagon
 } from 'react-icons/fi';
 import { useTheme } from '@/contexts/ThemeContext';
+import { QrCodeIcon } from 'lucide-react';
 
 interface AdminLayoutProps {
     children: React.ReactNode;
 }
-
+QrCodeIcon
 export default function AdminLayout({ children }: AdminLayoutProps) {
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -250,8 +251,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         if (item.requiresModeratorAccess) {
             return perms?.hasModeratorAccess || perms?.hasFullAccess;
         }
-        
-        // View-only and moderators can see non-restricted items
         return perms?.hasModeratorAccess || perms?.hasViewOnlyAccess;
     });
 
