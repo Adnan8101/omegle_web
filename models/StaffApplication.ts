@@ -46,12 +46,7 @@ export interface IStaffApplication {
     vc_sessions?: number;
     message_count?: number;
   } | null;
-  modLogs?: Array<{
-    action_type?: string;
-    reason?: string;
-    moderator_id?: string;
-    created_at?: string;
-  }>;
+  modLogs?: Array<Record<string, unknown>>;
   dataFetchedAt?: Date;
 }
 
@@ -97,7 +92,7 @@ const StaffApplicationSchema = new Schema<IStaffApplication>(
 
     userProfile: { type: Schema.Types.Mixed, default: null },
     userStats: { type: Schema.Types.Mixed, default: null },
-    modLogs: { type: [Schema.Types.Mixed], default: [] },
+    modLogs: { type: [Schema.Types.Mixed], default: [] } as any,
     dataFetchedAt: { type: Date, default: null },
   },
   {

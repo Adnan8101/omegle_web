@@ -11,7 +11,8 @@
     "check:databases": "tsx scripts/check-databases.ts",
     "sync-users": "tsx scripts/syncAllUsers.ts",
     "fix-avatars": "tsx scripts/fixUserAvatars.ts",
-    "test:applications-workflow": "tsx scripts/test-applications-workflow.ts"
+    "test:applications-workflow": "tsx scripts/test-applications-workflow.ts",
+    "test:staff-forms-workflow": "tsx scripts/test-staff-forms-workflow.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
