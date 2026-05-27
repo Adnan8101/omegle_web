@@ -22,7 +22,7 @@ interface Purchase {
   redeemed_by: string | null;
 }
 
-const SUPPORT_SERVER_URL = 'https://discord.gg/omegle';
+const SUPPORT_SERVER_URL = 'https://discord.gg/omeglee';
 
 export default function PurchasesPage() {
   const { data: session, status } = useSession();

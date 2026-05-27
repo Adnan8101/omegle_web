@@ -525,7 +525,7 @@ export async function GET(
       thickness: 1,
       color: black,
     });
-    page.drawText('For support: discord.gg/omegle', {
+    page.drawText('For support: discord.gg/omeglee', {
       x: margin,
       y: 30,
       size: 10,

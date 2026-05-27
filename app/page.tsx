@@ -75,7 +75,7 @@ export default function Home() {
 
             <div className="max-w-2xl mx-auto animate-scale-in will-change-transform" style={{ animationDelay: '0.2s' }}>
               <a 
-                href="https://discord.gg/omegle" 
+                href="https://discord.gg/omeglee" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="block glass-blue rounded-3xl p-8 sm:p-10 md:p-12 border border-[rgb(var(--color-border))] dark:border-white/10 shadow-apple-lg hover:shadow-xl backdrop-blur-xl hover:border-[rgb(var(--color-accent))] dark:hover:border-white/20 apple-transition group will-change-transform"

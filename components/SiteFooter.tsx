@@ -137,7 +137,7 @@ export default function SiteFooter() {
             <ul className="space-y-2 text-sm">
               <li>
                 <a
-                  href="https://discord.gg/omegle"
+                  href="https://discord.gg/omeglee"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-accent))] transition-colors flex items-center gap-1.5"
