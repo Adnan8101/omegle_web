@@ -35,15 +35,27 @@ export default function Home() {
           <div className="text-center space-y-8 sm:space-y-10 md:space-y-12 animate-fade-in">
             
             <div className="flex justify-center animate-slide-down mb-8">
-              <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 drop-shadow-2xl will-change-transform">
-                <Image
-                  src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
-                  alt="Omeglee Community Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                  unoptimized
-                />
+              <div className="relative group cursor-pointer">
+                {/* Premium Pulsing Backlight Glow */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-full blur-2xl opacity-60 group-hover:opacity-85 transition-opacity duration-500 animate-pulse"></div>
+                
+                {/* Rotating Border Ring */}
+                <div 
+                  className="absolute -inset-1.5 bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 rounded-full opacity-95 group-hover:scale-105 transition-all duration-500 shadow-blue-glow"
+                  style={{ animation: 'spin 12s linear infinite' }}
+                ></div>
+                
+                {/* Premium Circle Container */}
+                <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 bg-black dark:bg-[rgb(var(--color-bg-secondary))] rounded-full overflow-hidden border-[3px] border-white/90 dark:border-white/15 flex items-center justify-center shadow-inner group-hover:scale-[1.02] transition-transform duration-500">
+                  <Image
+                    src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
+                    alt="Omeglee Community Logo"
+                    fill
+                    className="object-cover rounded-full scale-102 transform group-hover:scale-110 transition-transform duration-500"
+                    priority
+                    unoptimized
+                  />
+                </div>
               </div>
             </div>
 
@@ -83,7 +95,7 @@ export default function Home() {
                     </p>
                   </div>
                   <div className="inline-flex items-center gap-2 text-[rgb(var(--color-accent))] dark:text-white font-semibold group-hover:gap-3 apple-transition">
-                    <span>discord.gg/omegle</span>
+                    <span>Join Discord Server</span>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>

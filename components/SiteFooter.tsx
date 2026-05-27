@@ -71,7 +71,7 @@ export default function SiteFooter() {
                   src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
                   alt="Omeglee Logo"
                   fill
-                  className="object-contain"
+                  className="object-cover rounded-full"
                   unoptimized
                 />
               </div>

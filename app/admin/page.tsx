@@ -59,7 +59,7 @@ export default function AdminLogin() {
                 src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
                 alt="Omegle Logo"
                 fill
-                className="object-contain drop-shadow-2xl"
+                className="object-cover rounded-full drop-shadow-2xl"
                 priority
               />
             </div>
