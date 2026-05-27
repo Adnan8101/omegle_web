@@ -163,10 +163,6 @@ export default function Home() {
 
             </div>
           </div>
-
-          <div className="text-[rgb(var(--color-text-tertiary))] text-sm font-light animate-fade-in space-y-3 pt-16 text-center">
-            <p className="text-base">© 2026 Omeglee. All rights reserved.</p>
-          </div>
         </div>
       </section>
     </main>

@@ -537,10 +537,6 @@ export default function DonatorPage() {
           ))}
         </section>
 
-      <div className="text-center text-[rgb(var(--color-text-tertiary))] text-sm py-4">
-        © 2026 Omeglee. All rights reserved.
-      </div>
-
       {showMethodModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-3xl p-6 w-full max-w-md shadow-2xl">

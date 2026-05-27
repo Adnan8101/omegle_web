@@ -648,16 +648,6 @@ export default function StaffApplicationPage() {
         )}
       </main>
 
-      <footer className="border-t border-[rgb(var(--color-border))] mt-14">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="text-center text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-light space-y-2">
-            <p>© 2026 Omeglee. All rights reserved.</p>
-            <a href="https://discord.gg/omegle" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 hover:text-[rgb(var(--color-text-secondary))] transition-all">
-              Join Discord
-            </a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

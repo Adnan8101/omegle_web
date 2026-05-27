@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { Providers } from "./providers";
 import FrontendNavbarMount from '@/components/FrontendNavbarMount';
+import FrontendFooterMount from '@/components/FrontendFooterMount';
 
 const displayFont = Sora({
   subsets: ['latin'],
@@ -52,8 +53,11 @@ export default function RootLayout({
         <Providers>
           <ThemeProvider>
             <FrontendNavbarMount />
-            <div className="min-h-screen w-full overflow-x-clip">
-              {children}
+            <div className="min-h-screen w-full overflow-x-clip flex flex-col justify-between">
+              <main className="flex-grow">
+                {children}
+              </main>
+              <FrontendFooterMount />
             </div>
           </ThemeProvider>
         </Providers>

@@ -742,15 +742,12 @@ export default function ShopPage() {
             })}
           </div>
         )}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-[rgb(var(--color-border))] py-6 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center text-sm text-[rgb(var(--color-text-tertiary))]">
-          <p>Omeglee Community Casino Economy</p>
+        {/* Info Banner at the bottom */}
+        <div className="mt-10 text-center text-sm text-[rgb(var(--color-text-tertiary))] bg-[rgb(var(--color-bg-secondary))]/50 border border-[rgb(var(--color-border))] rounded-2xl p-4 backdrop-blur-sm">
+          <p className="font-semibold text-[rgb(var(--color-text-primary))]">Omeglee Community Casino Economy</p>
           <p className="mt-1">Use redeem codes in Discord to claim your purchases</p>
         </div>
-      </footer>
+      </main>
     </div>
   );
 }
