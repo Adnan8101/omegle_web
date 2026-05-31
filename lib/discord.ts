@@ -3,7 +3,7 @@
  * Fetch user profiles, avatars, channel info, guild data
  */
 
-const GUILD_ID = '910043773130661918';
+const GUILD_ID = '1507458872225566811';
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
 import { prismaBot } from '@/lib/prismaBot';

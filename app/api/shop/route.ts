@@ -7,7 +7,7 @@ import { getDiscordUser } from '@/lib/discord';
 import { getGuildRoleName } from '@/lib/discord';
 import crypto from 'crypto';
 
-const GUILD_ID = "910043773130661918";
+const GUILD_ID = "1507458872225566811";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

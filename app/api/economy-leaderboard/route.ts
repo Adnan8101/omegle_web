@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prismaBot } from '@/lib/prismaBot';
 
-const GUILD_ID = "910043773130661918";
+const GUILD_ID = "1507458872225566811";
 
 export async function GET(request: NextRequest) {
   try {

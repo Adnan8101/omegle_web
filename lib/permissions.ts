@@ -7,7 +7,7 @@
  * 3. Casino Role IDs → Casino Economy Dashboard Access
  */
 
-const GUILD_ID = "910043773130661918";
+const GUILD_ID = "1507458872225566811";
 
 // Trail Mod / Staff Role IDs (can view VC stats and chat stats only)
 const TRAIL_MOD_ROLE_IDS = [

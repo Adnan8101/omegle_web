@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 
-const GUILD_ID = "910043773130661918";
+const GUILD_ID = "1507458872225566811";
 // Hardcoded fallback casino role ID
 const HARDCODED_CASINO_ROLES = ["1470329047262167040"];
 

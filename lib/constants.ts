@@ -1,4 +1,4 @@
-export const GUILD_ID = "910043773130661918";
+export const GUILD_ID = "1507458872225566811";
 
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {

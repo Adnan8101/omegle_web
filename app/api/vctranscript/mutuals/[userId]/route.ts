@@ -16,7 +16,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const guildId = '910043773130661918';
+    const guildId = GUILD_ID;
 
     // =============================================
     // VC Mutuals - computed directly from voice_logs

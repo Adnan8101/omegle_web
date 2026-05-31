@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { getDiscordUser, getDiscordUserAvatar } from '@/lib/discord';
 
-const GUILD_ID = "910043773130661918";
+const GUILD_ID = "1507458872225566811";
 
 // GET - Fetch all invites with stats and user info
 export async function GET(request: NextRequest) {

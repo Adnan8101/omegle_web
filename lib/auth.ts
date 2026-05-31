@@ -5,7 +5,7 @@ import { prismaBot } from "./prismaBot";
 
 const ACCESS_CHECK_INTERVAL = 60 * 1000; 
 const CASINO_ROLE_DB_RETRY_MS = 5 * 60 * 1000; 
-const GUILD_ID = "910043773130661918";
+const GUILD_ID = "1507458872225566811";
 
 let casinoRoleDbFailedAt = 0;
 
