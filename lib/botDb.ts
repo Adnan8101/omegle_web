@@ -5,10 +5,20 @@ import { cachedUserToDisplay, getUserDisplay as getUserDisplayFromCache, type Ca
 // Connection pool for bot database (read-only queries)
 let pool: Pool | null = null;
 
+function getBotDatabaseConnectionString() {
+  return process.env.BOT_DATABASE_URL || process.env.BOT_DATABASE_WRITE_URL || process.env.DATABASE_URL;
+}
+
 function getPool() {
   if (!pool) {
+    const connectionString = getBotDatabaseConnectionString();
+
+    if (!connectionString) {
+      throw new Error('Bot database connection string is not configured');
+    }
+
     pool = new Pool({
-      connectionString: process.env.BOT_DATABASE_URL,
+      connectionString,
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
