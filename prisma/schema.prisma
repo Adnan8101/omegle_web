@@ -1690,3 +1690,62 @@ model NowPaymentsPayment {
 // =====================================
 // END DONATOR SYSTEM
 // =====================================
+
+// =====================================
+// VOICE AUTOMATION ROLE SYSTEM
+// =====================================
+
+model VoiceAutomationRule {
+  id                   String   @id @default(uuid())
+  guild_id             String
+  name                 String
+  target_type          String   // "category" | "channel"
+  target_id            String   // category_id or channel_id
+  excluded_channel_ids String[] @default([])
+  rolling_days         Int
+  required_hours       Float
+  reward_role_id       String
+  count_deafened       Boolean  @default(false)
+  enabled              Boolean  @default(true)
+  created_by           String
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  audit_logs VoiceAutomationAuditLog[]
+
+  @@unique([guild_id, reward_role_id])
+  @@index([guild_id])
+  @@index([guild_id, enabled])
+  @@map("vc_automation_rules")
+}
+
+model VoiceAutomationGranted {
+  id         String   @id @default(uuid())
+  guild_id   String
+  rule_id    String
+  user_id    String
+  granted_at DateTime @default(now())
+
+  @@unique([guild_id, rule_id, user_id])
+  @@index([guild_id, rule_id])
+  @@index([guild_id, user_id])
+  @@map("vc_automation_granted")
+}
+
+model VoiceAutomationAuditLog {
+  id         String   @id @default(uuid())
+  guild_id   String
+  rule_id    String?
+  user_id    String?
+  action     String
+  reason     String?
+  meta       Json?
+  created_at DateTime @default(now())
+
+  rule VoiceAutomationRule? @relation(fields: [rule_id], references: [id], onDelete: SetNull)
+
+  @@index([guild_id, created_at])
+  @@index([guild_id, rule_id])
+  @@index([guild_id, user_id])
+  @@map("vc_automation_audit_logs")
+}

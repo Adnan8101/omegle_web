@@ -207,6 +207,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresCasinoAccess: false,
         },
         {
+            name: 'VC Automation',
+            href: '/admin/vc-automation',
+            icon: <FiShield className="w-5 h-5" />,
+            requiresFullAccess: true,
+            requiresModeratorAccess: false,
+            requiresCasinoAccess: false,
+        },
+        {
             name: 'Chat Stats',
             href: '/admin/vctranscript/chatlogs',
             icon: <FiMessageSquare className="w-5 h-5" />,
@@ -284,6 +292,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         }
         if (href === '/admin/vctranscript') {
             return pathname.startsWith('/admin/vctranscript') && !pathname.startsWith('/admin/vctranscript/chatlogs');
+        }
+        if (href === '/admin/vc-automation') {
+            return pathname.startsWith('/admin/vc-automation');
         }
         return pathname.startsWith(href);
     };
