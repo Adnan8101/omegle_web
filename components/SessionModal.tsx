@@ -261,9 +261,8 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
     .sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 overflow-y-auto" onClick={onClose}>
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-[rgb(var(--color-bg-secondary))] rounded-3xl max-w-6xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-[rgb(var(--color-border))] flex flex-col my-4" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-[rgb(var(--color-bg-secondary))] rounded-3xl max-w-6xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-[rgb(var(--color-border))] flex flex-col" onClick={(e) => e.stopPropagation()}>
         
         {/* Header - Compact */}
         <div className="p-4 sm:p-5 border-b border-[rgb(var(--color-border))] flex-shrink-0">
@@ -532,7 +531,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
               )}
             </div>
           )}
-        </div>
         </div>
       </div>
     </div>

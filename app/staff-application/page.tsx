@@ -338,10 +338,8 @@ export default function StaffApplicationPage() {
       )}
 
       {showSuccessModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 overflow-y-auto animate-fade-in" onClick={(event) => event.target === event.currentTarget && setShowSuccessModal(false)}>
-          <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div className="glass-blue rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-blue-glow max-w-md w-full sm:my-4 animate-scale-in">
-              <div className="w-12 h-1.5 bg-gray-400/30 rounded-full mx-auto mb-4 sm:hidden" />
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={(event) => event.target === event.currentTarget && setShowSuccessModal(false)}>
+            <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-blue-glow max-w-md w-full animate-scale-in">
               <div className="text-center space-y-5">
                 <div className="flex justify-center">
                   <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
@@ -365,7 +363,6 @@ export default function StaffApplicationPage() {
                 </button>
               </div>
             </div>
-          </div>
         </div>
       )}
 

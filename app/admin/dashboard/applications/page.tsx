@@ -702,11 +702,8 @@ export default function ApplicationsPage() {
 
       {/* Modal */}
       {showModal && selectedApp && (
-        <div className="fixed inset-0 bg-black/80 sm:bg-black/60 z-50 overflow-y-auto animate-fade-in" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div className="min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div className="glass-effect rounded-t-[2rem] sm:rounded-apple-xl max-w-5xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden border border-[rgb(var(--color-border))] shadow-apple-2xl flex flex-col pt-2 sm:pt-0 sm:my-4" onClick={(e) => e.stopPropagation()}>
-              {/* Drag Handle (Mobile) */}
-              <div className="w-16 h-1.5 bg-gray-500/30 rounded-full mx-auto mb-2 sm:hidden"></div>
+        <div className="fixed inset-0 bg-black/80 sm:bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
+            <div className="glass-effect rounded-[2rem] sm:rounded-apple-xl max-w-5xl w-full max-h-[85vh] overflow-hidden border border-[rgb(var(--color-border))] shadow-apple-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
 
               {/* Modal Header */}
               <div className="glass-effect border-b border-[rgb(var(--color-border))] p-5 sm:p-8 flex items-start justify-between flex-shrink-0 backdrop-blur-xl">
@@ -1256,6 +1253,7 @@ export default function ApplicationsPage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Role Form Toggles */}
       <div className="mb-6 bg-discord-light/50 rounded-xl p-4 sm:p-5 border border-gray-700">
@@ -1295,7 +1293,5 @@ export default function ApplicationsPage() {
         </div>
       </div>
     </div>
-  )}
-</div>
   );
 }

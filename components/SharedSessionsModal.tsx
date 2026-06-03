@@ -94,10 +94,9 @@ export default function SharedSessionsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 overflow-y-auto" onClick={onClose}>
-      <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
         <div 
-          className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl max-w-5xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-[rgb(var(--color-border))] flex flex-col my-4" 
+          className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl max-w-5xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-[rgb(var(--color-border))] flex flex-col" 
           onClick={(e) => e.stopPropagation()}
         >
         
@@ -215,7 +214,6 @@ export default function SharedSessionsModal({
               <p className="text-[rgb(var(--color-text-secondary))]">No shared sessions found</p>
             </div>
           )}
-        </div>
         </div>
       </div>
     </div>
