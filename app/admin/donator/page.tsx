@@ -614,10 +614,9 @@ export default function DonatorAdminPage() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" onClick={closeModal}>
-          <div className="min-h-full flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center" onClick={closeModal}>
             <div
-              className="w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] shadow-2xl"
+              className="w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] shadow-2xl"
               onClick={(event) => event.stopPropagation()}
             >
             <div className="px-6 py-5 border-b border-[rgb(var(--color-border))] flex items-start justify-between gap-3">
@@ -846,7 +845,6 @@ export default function DonatorAdminPage() {
               </button>
             </div>
             </div>
-          </div>
         </div>
       )}
     </div>

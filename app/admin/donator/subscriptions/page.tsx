@@ -515,9 +515,9 @@ export default function DonatorSubscriptionsPage() {
       </div>
 
       {selected && (
-        <div className="fixed inset-0 z-50 bg-black/60 p-4 md:p-8 flex items-center justify-center">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] shadow-apple-xl">
-            <div className="px-5 py-4 border-b border-[rgb(var(--color-border))] flex items-center justify-between gap-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center">
+          <div className="w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] shadow-apple-xl flex flex-col">
+            <div className="px-5 py-4 border-b border-[rgb(var(--color-border))] flex items-center justify-between gap-4 flex-shrink-0">
               <div>
                 <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Subscription Details</h2>
                 <p className="text-sm text-[rgb(var(--color-text-secondary))]">Clean review view with all available details in plain language.</p>
@@ -533,7 +533,7 @@ export default function DonatorSubscriptionsPage() {
               </button>
             </div>
 
-            <div className="p-5 overflow-y-auto max-h-[calc(90vh-80px)] space-y-6">
+            <div className="p-5 flex-1 overflow-y-auto space-y-6">
               <div className="flex items-center gap-4">
                 {selected.user_profile?.avatar ? (
                   <img src={selected.user_profile.avatar} alt="avatar" className="h-14 w-14 rounded-full object-cover" />
