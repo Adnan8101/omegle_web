@@ -7,9 +7,10 @@ import { GUILD_ID } from '@/lib/constants';
 // GET — get single rule with stats
 export async function GET(
     request: NextRequest,
-    { params }: { params: { ruleId: string } }
+    { params }: { params: Promise<{ ruleId: string }> }
 ) {
     try {
+        const { ruleId } = await params;
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -20,7 +21,7 @@ export async function GET(
         }
 
         const rule = await prismaBot.voiceAutomationRule.findFirst({
-            where: { id: params.ruleId, guild_id: GUILD_ID },
+            where: { id: ruleId, guild_id: GUILD_ID },
         });
         if (!rule) {
             return NextResponse.json({ error: 'Rule not found' }, { status: 404 });
@@ -46,9 +47,10 @@ export async function GET(
 // PATCH — update existing rule
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { ruleId: string } }
+    { params }: { params: Promise<{ ruleId: string }> }
 ) {
     try {
+        const { ruleId } = await params;
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -59,7 +61,7 @@ export async function PATCH(
         }
 
         const existing = await prismaBot.voiceAutomationRule.findFirst({
-            where: { id: params.ruleId, guild_id: GUILD_ID },
+            where: { id: ruleId, guild_id: GUILD_ID },
         });
         if (!existing) {
             return NextResponse.json({ error: 'Rule not found' }, { status: 404 });
@@ -83,7 +85,7 @@ export async function PATCH(
             const roleConflict = await prismaBot.voiceAutomationRule.findUnique({
                 where: { guild_id_reward_role_id: { guild_id: GUILD_ID, reward_role_id } },
             });
-            if (roleConflict && roleConflict.id !== params.ruleId) {
+            if (roleConflict && roleConflict.id !== ruleId) {
                 return NextResponse.json({
                     error: `This role is already used by rule "${roleConflict.name}".`,
                     conflictRuleId: roleConflict.id,
@@ -109,7 +111,7 @@ export async function PATCH(
                         target_id: channelInfo.parent_id,
                     },
                 });
-                if (categoryRule && !categoryRule.excluded_channel_ids.includes(newTargetId) && categoryRule.id !== params.ruleId) {
+                if (categoryRule && !categoryRule.excluded_channel_ids.includes(newTargetId) && categoryRule.id !== ruleId) {
                     return NextResponse.json({
                         error: `This voice channel is already covered by Category Rule "${categoryRule.name}".`,
                         conflictRuleId: categoryRule.id,
@@ -120,7 +122,7 @@ export async function PATCH(
         }
 
         const updated = await prismaBot.voiceAutomationRule.update({
-            where: { id: params.ruleId },
+            where: { id: ruleId },
             data: {
                 ...(name !== undefined && { name: name.trim() }),
                 ...(target_type !== undefined && { target_type }),
@@ -155,9 +157,10 @@ export async function PATCH(
 // DELETE — remove a rule and its associated data
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { ruleId: string } }
+    { params }: { params: Promise<{ ruleId: string }> }
 ) {
     try {
+        const { ruleId } = await params;
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -168,7 +171,7 @@ export async function DELETE(
         }
 
         const existing = await prismaBot.voiceAutomationRule.findFirst({
-            where: { id: params.ruleId, guild_id: GUILD_ID },
+            where: { id: ruleId, guild_id: GUILD_ID },
         });
         if (!existing) {
             return NextResponse.json({ error: 'Rule not found' }, { status: 404 });
@@ -188,17 +191,17 @@ export async function DELETE(
 
         // Delete granted records first
         await prismaBot.voiceAutomationGranted.deleteMany({
-            where: { guild_id: GUILD_ID, rule_id: params.ruleId },
+            where: { guild_id: GUILD_ID, rule_id: ruleId },
         });
 
         // Delete audit logs
         await prismaBot.voiceAutomationAuditLog.deleteMany({
-            where: { guild_id: GUILD_ID, rule_id: params.ruleId },
+            where: { guild_id: GUILD_ID, rule_id: ruleId },
         });
 
         // Delete the rule
         await prismaBot.voiceAutomationRule.delete({
-            where: { id: params.ruleId },
+            where: { id: ruleId },
         });
 
         return NextResponse.json({ success: true });
