@@ -277,7 +277,7 @@ export default function RuleDetailsPage() {
                                             <div className="relative w-full h-2 bg-[rgb(var(--color-bg-primary))] rounded-full overflow-hidden mb-2 shadow-inner">
                                                 <div 
                                                     className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-1000 ease-out"
-                                                    style={{ width: \`\${user.progress_percentage}%\` }}
+                                                    style={{ width: `${user.progress_percentage}%` }}
                                                 />
                                             </div>
                                             
