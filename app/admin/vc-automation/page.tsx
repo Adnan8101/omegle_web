@@ -653,6 +653,13 @@ export default function VCAutomationPage() {
 
                                             <div className="flex items-center gap-2 flex-shrink-0">
                                                 <button
+                                                    onClick={() => router.push(`/admin/vc-automation/${rule.id}`)}
+                                                    className="p-2 rounded-lg bg-[rgb(var(--color-bg-tertiary))] hover:bg-green-500/20 hover:text-green-400 text-[rgb(var(--color-text-secondary))] transition-colors"
+                                                    title="View rule details and progress"
+                                                >
+                                                    <FiInfo className="w-4 h-4" />
+                                                </button>
+                                                <button
                                                     onClick={() => { setEditingRule(rule); setShowModal(true); }}
                                                     className="p-2 rounded-lg bg-[rgb(var(--color-bg-tertiary))] hover:bg-blue-500/20 hover:text-blue-400 text-[rgb(var(--color-text-secondary))] transition-colors"
                                                     title="Edit rule"
