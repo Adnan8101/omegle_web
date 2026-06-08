@@ -252,31 +252,7 @@ export default function DonatorAdminPage() {
   const fetchRoleOptions = useCallback(async (query: string): Promise<EntityDropdownOption[]> => {
     if (!guildId) return [];
 
-    try {
-      const response = await fetch(`/api/deadhand/search?guildId=${guildId}&type=role&query=${encodeURIComponent(query)}`);
-      const data = await response.json().catch(() => ({}));
-      const results: RoleSearchResult[] = Array.isArray(data?.results) ? data.results : [];
-
-      const mapped = results.map((role) => ({
-        id: role.id,
-        name: role.name,
-        color: role.color,
-      }));
-
-      if (mapped.length > 0) {
-        setRoleLookup((prev) => {
-          const next = { ...prev };
-          for (const item of mapped) {
-            next[item.id] = item;
-          }
-          return next;
-        });
-      }
-
-      return mapped;
-    } catch {
-      return [];
-    }
+    return [{ id: query.trim(), name: query.trim() }];
   }, [guildId]);
 
   const resetFlashMessage = () => {

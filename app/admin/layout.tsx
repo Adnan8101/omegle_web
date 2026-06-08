@@ -158,14 +158,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresModeratorAccess: true,
             requiresCasinoAccess: false,
         },
-        {
-            name: 'Dead Hand',
-            href: '/admin/deadhand',
-            icon: <FiAlertOctagon className="w-5 h-5" />,
-            requiresFullAccess: true,
-            requiresModeratorAccess: false,
-            requiresCasinoAccess: false,
-        },
+
         {
             name: 'Donator Plans',
             href: '/admin/donator',
