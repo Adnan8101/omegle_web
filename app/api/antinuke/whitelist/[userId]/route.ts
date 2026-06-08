@@ -7,13 +7,13 @@ const MAIN_OWNER_ID = '929297205796417597';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const userId = params.userId;
+    const { userId } = await params;
     if (userId === MAIN_OWNER_ID) {
       return NextResponse.json({ error: 'Main Owner cannot be modified.' }, { status: 400 });
     }
