@@ -157,6 +157,10 @@ export default function AntiNukePage() {
     Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false]))
   );
   const [savingAdd, setSavingAdd]             = useState(false);
+  const [searchResults, setSearchResults]     = useState<GuildUser[]>([]);
+  const [searchLoading, setSearchLoading]     = useState(false);
+  const [selectedSearchUser, setSelectedSearchUser] = useState<GuildUser | null>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   
   const [logEventFilter, setLogEventFilter]   = useState('');
