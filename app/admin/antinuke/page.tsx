@@ -583,6 +583,8 @@ export default function AntiNukePage() {
                       setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false])));
                       setAddUserId('');
                       setAddUserSearch('');
+                      setSearchResults([]);
+                      setSelectedSearchUser(null);
                       setModalStep('user');
                       setShowAddModal(true);
                     }}
@@ -935,57 +937,81 @@ export default function AntiNukePage() {
             {/* ── STEP 1: User Select ── */}
             {modalStep === 'user' && (
               <>
+                {/* Search bar */}
                 <div className="p-4 border-b border-[rgb(var(--color-border))] flex-shrink-0">
                   <div className="relative">
                     <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
+                    {searchLoading && (
+                      <FiRefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--color-text-tertiary))] animate-spin" />
+                    )}
                     <input
                       autoFocus
                       type="text"
-                      placeholder="Search by name or username..."
+                      placeholder="Search by name, username or ID..."
                       value={addUserSearch}
                       onChange={e => {
-                        setAddUserSearch(e.target.value);
-                        if (/^\d{17,20}$/.test(e.target.value.trim())) {
-                          setAddUserId(e.target.value.trim());
-                        } else if (addUserId && !/^\d{17,20}$/.test(addUserId)) {
-                          setAddUserId('');
-                        }
+                        const val = e.target.value;
+                        setAddUserSearch(val);
+                        setSelectedSearchUser(null);
+                        setAddUserId('');
+                        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+                        searchDebounceRef.current = setTimeout(() => {
+                          searchMembers(val);
+                        }, 350);
                       }}
-                      className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]
+                      className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]
                                  text-sm focus:outline-none focus:border-red-500/50 transition-colors"
                     />
                   </div>
-                  {guildUsers.length > 0 && (
-                    <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2 ml-1">
-                      {addUserSearch.trim()
-                        ? `${filteredUsers.length} result${filteredUsers.length !== 1 ? 's' : ''}`
-                        : `${filteredUsers.length} of ${guildUsers.length} members shown`}
-                    </p>
-                  )}
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2 ml-1">
+                    {!addUserSearch.trim()
+                      ? 'Start typing to search all server members & bots'
+                      : searchLoading
+                        ? 'Searching...'
+                        : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''}`}
+                  </p>
                 </div>
 
-                {/* User list */}
+                {/* Selected user chip */}
+                {selectedSearchUser && (
+                  <div className="mx-4 mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 flex-shrink-0">
+                    <Image src={selectedSearchUser.avatar} alt={selectedSearchUser.name} width={24} height={24} className="rounded-full" />
+                    <span className="text-sm font-medium text-red-300 flex-1 truncate">{selectedSearchUser.name}</span>
+                    <span className="text-xs font-mono text-red-400/70">{selectedSearchUser.id}</span>
+                    <button onClick={() => { setSelectedSearchUser(null); setAddUserId(''); setAddUserSearch(''); setSearchResults([]); }}
+                      className="ml-1 text-red-400 hover:text-red-300 transition-colors">
+                      <FiX className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Results list */}
                 <div className="overflow-y-auto flex-1">
-                  {loadingData ? (
-                    <div className="flex items-center justify-center gap-2 py-8 text-sm text-[rgb(var(--color-text-tertiary))]">
-                      <FiRefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Loading members...</span>
+                  {!addUserSearch.trim() ? (
+                    <div className="flex flex-col items-center justify-center py-12 gap-3 text-[rgb(var(--color-text-tertiary))]">
+                      <FiSearch className="w-8 h-8 opacity-20" />
+                      <p className="text-sm">Type a name to search members</p>
                     </div>
-                  ) : filteredUsers.length === 0 ? (
+                  ) : searchLoading ? (
+                    <div className="flex items-center justify-center gap-2 py-10 text-sm text-[rgb(var(--color-text-tertiary))]">
+                      <FiRefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Searching members...</span>
+                    </div>
+                  ) : searchResults.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 gap-2 text-[rgb(var(--color-text-tertiary))]">
-                      <FiUser className="w-8 h-8 opacity-30" />
-                      <p className="text-sm">
-                        {guildUsers.length === 0 ? 'Select a server first.' : 'No users match your search.'}
-                      </p>
+                      <FiUser className="w-7 h-7 opacity-20" />
+                      <p className="text-sm">No members found for &quot;{addUserSearch}&quot;</p>
                     </div>
                   ) : (
                     <div className="py-1">
-                      {filteredUsers.map(u => (
+                      {searchResults.map(u => (
                         <button
                           key={u.id}
                           onClick={() => {
+                            setSelectedSearchUser(u);
                             setAddUserId(u.id);
                             setAddUserSearch('');
+                            setSearchResults([]);
                           }}
                           className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors text-left
                                       ${addUserId === u.id ? 'bg-red-500/10 border-l-2 border-red-500' : ''}`}
@@ -993,7 +1019,9 @@ export default function AntiNukePage() {
                           <Image src={u.avatar} alt={u.name} width={32} height={32} className="rounded-full flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{u.name}</p>
-                            <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-mono truncate">@{u.username} · {u.id}</p>
+                            <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-mono truncate">
+                              @{u.username} · {u.id}{(u as any).isBot ? ' · 🤖 Bot' : ''}
+                            </p>
                           </div>
                           {addUserId === u.id && <FiCheck className="w-4 h-4 text-red-400 flex-shrink-0" />}
                         </button>
@@ -1007,10 +1035,11 @@ export default function AntiNukePage() {
                   <input
                     type="text"
                     placeholder="Or paste User ID manually (e.g. 929297205796417597)"
-                    value={/^\d{17,20}$/.test(addUserId) && !userMap.has(addUserId) ? addUserId : ''}
+                    value={!selectedSearchUser && /^\d{17,20}$/.test(addUserId) ? addUserId : ''}
                     onChange={e => {
                       const val = e.target.value.trim();
                       setAddUserId(val);
+                      setSelectedSearchUser(null);
                     }}
                     className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]
                                text-xs font-mono focus:outline-none focus:border-red-500/50 transition-colors
@@ -1040,6 +1069,7 @@ export default function AntiNukePage() {
                 </div>
               </>
             )}
+
 
             {/* ── STEP 2: Permissions ── */}
             {modalStep === 'permissions' && (
