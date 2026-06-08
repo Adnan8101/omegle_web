@@ -254,6 +254,25 @@ export default function AntiNukePage() {
 
   
 
+  const searchMembers = useCallback(async (query: string) => {
+    if (!selectedGuild) return;
+    const q = query.trim();
+    if (!q) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const res = await fetch(`/api/antinuke/search-users?guildId=${selectedGuild.id}&q=${encodeURIComponent(q)}`);
+      const d = await res.json();
+      setSearchResults(Array.isArray(d.users) ? d.users : []);
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, [selectedGuild]);
+
   const handleAddUser = async () => {
     if (!selectedGuild) return;
     const userId = addUserId.trim();
@@ -274,6 +293,8 @@ export default function AntiNukePage() {
       setShowAddModal(false);
       setAddUserId('');
       setAddUserSearch('');
+      setSearchResults([]);
+      setSelectedSearchUser(null);
       setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false])));
       showSuccess(`User ${userId} added to whitelist.`);
     } catch (err: any) {
