@@ -1783,3 +1783,14 @@ model AntiNukeLog {
   @@index([guild_id, executor_id])
   @@map("antinuke_logs")
 }
+
+model AntiNukeConfig {
+  id         String   @id @default(uuid())
+  guild_id   String   @unique
+  channel_id String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("antinuke_config")
+}
+
