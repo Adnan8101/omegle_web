@@ -13,7 +13,6 @@ import {
 const MAIN_OWNER_ID = '929297205796417597';
 
 const ALL_PERMISSIONS: { key: string; label: string; group: string }[] = [
-  { key: 'ADD_BOT',            label: 'Add Bot',              group: 'Members'     },
   { key: 'CREATE_ROLE',        label: 'Create Role',          group: 'Roles'       },
   { key: 'DELETE_ROLE',        label: 'Delete Role',          group: 'Roles'       },
   { key: 'EDIT_ROLE',          label: 'Edit Role',            group: 'Roles'       },
