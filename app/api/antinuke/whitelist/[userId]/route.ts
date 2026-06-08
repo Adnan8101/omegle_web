@@ -34,6 +34,10 @@ export async function PATCH(
     const ok = await verifyAccess(session, guildId);
     if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    if (String(session.user.id) !== MAIN_OWNER_ID) {
+      return NextResponse.json({ error: 'Forbidden. Only the main owner can edit the whitelist.' }, { status: 403 });
+    }
+
     if (typeof permissions !== 'object' || permissions === null) {
       return NextResponse.json({ error: 'permissions object is required' }, { status: 400 });
     }

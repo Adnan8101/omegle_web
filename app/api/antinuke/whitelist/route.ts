@@ -122,6 +122,10 @@ export async function POST(request: NextRequest) {
     const ok = await verifyAccess(session, guildId);
     if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    if (String(session.user.id) !== MAIN_OWNER_ID) {
+      return NextResponse.json({ error: 'Forbidden. Only the main owner can edit the whitelist.' }, { status: 403 });
+    }
+
     if (userId === MAIN_OWNER_ID) {
       return NextResponse.json({
         error: 'Main Owner cannot be modified through the whitelist.',
@@ -168,6 +172,10 @@ export async function DELETE(request: NextRequest) {
 
     const ok = await verifyAccess(session, guildId);
     if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    if (String(session.user.id) !== MAIN_OWNER_ID) {
+      return NextResponse.json({ error: 'Forbidden. Only the main owner can edit the whitelist.' }, { status: 403 });
+    }
 
     if (userId === MAIN_OWNER_ID) {
       return NextResponse.json({
