@@ -75,6 +75,7 @@ interface WhitelistEntry {
   permissions: Record<string, boolean>;
   addedBy: string;
   createdAt: string;
+  user?: GuildUser | null;
 }
 
 interface AntiNukeLog {
@@ -615,7 +616,7 @@ export default function AntiNukePage() {
                 ) : (
                   <div className="space-y-3">
                     {whitelist.map(entry => {
-                      const user = userMap.get(entry.userId);
+                      const user = entry.user || userMap.get(entry.userId);
                       const grantedCount = Object.values(entry.permissions).filter(Boolean).length;
                       const isEditing = editingEntry?.userId === entry.userId;
 
@@ -817,7 +818,8 @@ export default function AntiNukePage() {
                         </thead>
                         <tbody className="divide-y divide-[rgb(var(--color-border))]">
                           {filteredLogs.map(log => {
-                            const executor = userMap.get(log.executor_id);
+                            const executor = (log as any).executorUser || userMap.get(log.executor_id);
+                            const target = (log as any).targetUser || (log.target_id ? userMap.get(log.target_id) : null);
                             return (
                               <tr key={log.id} className="hover:bg-[rgb(var(--color-bg-tertiary))]/50 transition-colors">
                                 <td className="px-4 py-3">
@@ -845,7 +847,7 @@ export default function AntiNukePage() {
                                 <td className="px-4 py-3">
                                   <span className="text-sm font-mono text-[rgb(var(--color-text-tertiary))]">
                                     {log.target_id ? (
-                                      userMap.get(log.target_id)?.name || log.target_id
+                                      target?.name || log.target_id
                                     ) : (
                                       <span className="text-[rgb(var(--color-text-tertiary))]">—</span>
                                     )}
@@ -1035,11 +1037,13 @@ export default function AntiNukePage() {
                   <input
                     type="text"
                     placeholder="Or paste User ID manually (e.g. 929297205796417597)"
-                    value={!selectedSearchUser && /^\d{17,20}$/.test(addUserId) ? addUserId : ''}
+                    value={!selectedSearchUser ? addUserId : ''}
                     onChange={e => {
                       const val = e.target.value.trim();
-                      setAddUserId(val);
-                      setSelectedSearchUser(null);
+                      if (/^\d*$/.test(val)) {
+                        setAddUserId(val);
+                        setSelectedSearchUser(null);
+                      }
                     }}
                     className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]
                                text-xs font-mono focus:outline-none focus:border-red-500/50 transition-colors
@@ -1057,7 +1061,7 @@ export default function AntiNukePage() {
                     Cancel
                   </button>
                   <button
-                    disabled={!addUserId}
+                    disabled={!addUserId || !/^\d{17,20}$/.test(addUserId)}
                     onClick={() => setModalStep('permissions')}
                     className="flex items-center gap-2 px-5 py-2 rounded-xl bg-red-500 hover:bg-red-400
                                text-white text-sm font-medium transition-all duration-200
@@ -1076,7 +1080,7 @@ export default function AntiNukePage() {
               <>
                 {/* Selected user summary */}
                 {(() => {
-                  const u = userMap.get(addUserId);
+                  const u = selectedSearchUser || userMap.get(addUserId);
                   return (
                     <div className="flex items-center gap-3 px-5 py-3 bg-red-500/5 border-b border-[rgb(var(--color-border))] flex-shrink-0">
                       {u ? (

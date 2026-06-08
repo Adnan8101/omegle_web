@@ -58,13 +58,33 @@ export async function GET(request: NextRequest) {
 
     const botToken = process.env.DISCORD_BOT_TOKEN!;
 
-    const searchUrl = `https://discord.com/api/v10/guilds/${guildId}/members/search?query=${encodeURIComponent(query)}&limit=25`;
-    const res = await fetch(searchUrl, {
-      headers: { Authorization: `Bot ${botToken}` },
-      cache: 'no-store',
-    });
-
-    const members: any[] = res.ok ? await res.json().catch(() => []) : [];
+    let members: any[] = [];
+    if (/^\d{17,20}$/.test(query)) {
+      const memberRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${query}`, {
+        headers: { Authorization: `Bot ${botToken}` },
+        cache: 'no-store',
+      });
+      if (memberRes.ok) {
+        const m = await memberRes.json().catch(() => null);
+        if (m) members = [m];
+      } else {
+        const userRes = await fetch(`https://discord.com/api/v10/users/${query}`, {
+          headers: { Authorization: `Bot ${botToken}` },
+          cache: 'no-store',
+        });
+        if (userRes.ok) {
+          const u = await userRes.json().catch(() => null);
+          if (u) members = [{ user: u }];
+        }
+      }
+    } else {
+      const searchUrl = `https://discord.com/api/v10/guilds/${guildId}/members/search?query=${encodeURIComponent(query)}&limit=25`;
+      const res = await fetch(searchUrl, {
+        headers: { Authorization: `Bot ${botToken}` },
+        cache: 'no-store',
+      });
+      members = res.ok ? await res.json().catch(() => []) : [];
+    }
 
     const users = (Array.isArray(members) ? members : []).map((m: any) => {
       const user = m.user || {};

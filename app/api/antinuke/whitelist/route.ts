@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 
 const MAIN_OWNER_ID = '929297205796417597';
+const ADMINISTRATOR = 0x0000000000000008n;
+const MANAGE_GUILD  = 0x0000000000000020n;
 
 const ALL_PERMISSIONS = [
   'ADD_BOT', 'CREATE_ROLE', 'DELETE_ROLE', 'EDIT_ROLE',
@@ -18,6 +20,42 @@ function buildDefaultPermissions(): Record<string, boolean> {
   return Object.fromEntries(ALL_PERMISSIONS.map(p => [p, false]));
 }
 
+async function verifyAccess(session: any, guildId: string): Promise<boolean> {
+  const botToken = process.env.DISCORD_BOT_TOKEN;
+  if (!botToken) return false;
+  const userId = String(session?.user?.id || '');
+  if (!userId) return false;
+  if (userId === MAIN_OWNER_ID) return true;
+
+  const [memberRes, rolesRes, guildRes] = await Promise.all([
+    fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${userId}`, {
+      headers: { Authorization: `Bot ${botToken}` }, cache: 'no-store',
+    }),
+    fetch(`https://discord.com/api/v10/guilds/${guildId}/roles`, {
+      headers: { Authorization: `Bot ${botToken}` }, cache: 'no-store',
+    }),
+    fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
+      headers: { Authorization: `Bot ${botToken}` }, cache: 'no-store',
+    }),
+  ]);
+
+  if (!memberRes.ok || !guildRes.ok) return false;
+  const guild  = await guildRes.json().catch(() => null);
+  const member = await memberRes.json().catch(() => null);
+  if (String(guild?.owner_id) === userId) return true;
+
+  const roles  = rolesRes.ok ? await rolesRes.json().catch(() => []) : [];
+  const roleMap = new Map<string, bigint>();
+  for (const r of Array.isArray(roles) ? roles : []) {
+    try { roleMap.set(String(r.id), BigInt(r.permissions || '0')); } catch { }
+  }
+  let effective = 0n;
+  for (const rid of Array.isArray(member?.roles) ? member.roles : []) {
+    effective |= roleMap.get(String(rid)) || 0n;
+  }
+  return (effective & ADMINISTRATOR) !== 0n || (effective & MANAGE_GUILD) !== 0n;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -26,13 +64,59 @@ export async function GET(request: NextRequest) {
     const guildId = request.nextUrl.searchParams.get('guildId') || '';
     if (!guildId) return NextResponse.json({ error: 'guildId is required' }, { status: 400 });
 
+    const ok = await verifyAccess(session, guildId);
+    if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
     const rows = await prismaBot.antiNukeWhitelist.findMany({
       where: { guild_id: guildId },
       orderBy: { created_at: 'asc' },
     });
 
-    return NextResponse.json({
-      whitelist: rows.map(r => ({
+    const botToken = process.env.DISCORD_BOT_TOKEN;
+    const resolvedWhitelist = await Promise.all(rows.map(async r => {
+      let name = r.user_id;
+      let username = '';
+      let avatar = '';
+      let isBot = false;
+
+      if (botToken) {
+        try {
+          const memberRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${r.user_id}`, {
+            headers: { Authorization: `Bot ${botToken}` },
+            cache: 'no-store',
+          });
+          if (memberRes.ok) {
+            const m = await memberRes.json();
+            const u = m.user || {};
+            name = String(m.nick || u.global_name || u.username || r.user_id).trim();
+            username = String(u.username || '').trim();
+            isBot = Boolean(u.bot);
+            const fallbackIndex = Number(BigInt(String(u.id || '0')) % 6n);
+            avatar = u.avatar
+              ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.webp?size=64`
+              : `https://cdn.discordapp.com/embed/avatars/${fallbackIndex}.png`;
+          } else {
+            const userRes = await fetch(`https://discord.com/api/v10/users/${r.user_id}`, {
+              headers: { Authorization: `Bot ${botToken}` },
+              cache: 'no-store',
+            });
+            if (userRes.ok) {
+              const u = await userRes.json();
+              name = String(u.global_name || u.username || r.user_id).trim();
+              username = String(u.username || '').trim();
+              isBot = Boolean(u.bot);
+              const fallbackIndex = Number(BigInt(String(u.id || '0')) % 6n);
+              avatar = u.avatar
+                ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.webp?size=64`
+                : `https://cdn.discordapp.com/embed/avatars/${fallbackIndex}.png`;
+            }
+          }
+        } catch (e) {
+          console.error(`[whitelist/GET] Error resolving ${r.user_id}:`, e);
+        }
+      }
+
+      return {
         id: r.id,
         guildId: r.guild_id,
         userId: r.user_id,
@@ -40,7 +124,18 @@ export async function GET(request: NextRequest) {
         addedBy: r.added_by,
         createdAt: r.created_at,
         updatedAt: r.updated_at,
-      })),
+        user: avatar ? {
+          id: r.user_id,
+          name,
+          username,
+          avatar,
+          isBot,
+        } : null,
+      };
+    }));
+
+    return NextResponse.json({
+      whitelist: resolvedWhitelist,
       mainOwnerId: MAIN_OWNER_ID,
     });
   } catch (error) {
@@ -60,6 +155,9 @@ export async function POST(request: NextRequest) {
     if (!guildId || !userId) {
       return NextResponse.json({ error: 'guildId and userId are required' }, { status: 400 });
     }
+
+    const ok = await verifyAccess(session, guildId);
+    if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     if (userId === MAIN_OWNER_ID) {
       return NextResponse.json({
@@ -104,6 +202,9 @@ export async function DELETE(request: NextRequest) {
     if (!guildId || !userId) {
       return NextResponse.json({ error: 'guildId and userId are required' }, { status: 400 });
     }
+
+    const ok = await verifyAccess(session, guildId);
+    if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     if (userId === MAIN_OWNER_ID) {
       return NextResponse.json({
