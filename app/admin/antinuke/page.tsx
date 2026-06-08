@@ -868,7 +868,7 @@ export default function AntiNukePage() {
             onClick={() => setShowAddModal(false)}
           />
           <div className="relative bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))]
-                          shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                          shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
 
             {}
             <div className="flex items-center justify-between px-6 py-5 border-b border-[rgb(var(--color-border))]">
@@ -891,7 +891,7 @@ export default function AntiNukePage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 overflow-y-auto">
               {}
               <div>
                 <label className="block text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-2">

