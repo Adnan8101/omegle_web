@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fi';
 
 const MAIN_OWNER_ID = '929297205796417597';
+const EDITORS = [MAIN_OWNER_ID, '1066281404821930025', '1058043072522489946'];
 
 const ALL_PERMISSIONS: { key: string; label: string; group: string }[] = [
   { key: 'CREATE_ROLE',        label: 'Create Role',          group: 'Roles'       },
@@ -135,7 +136,7 @@ export default function AntiNukePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const isMainOwner = session?.user?.id === MAIN_OWNER_ID;
+  const canEdit = EDITORS.includes(session?.user?.id || '');
 
   const [guilds, setGuilds]           = useState<GuildInfo[]>([]);
   const [selectedGuild, setSelectedGuild] = useState<GuildInfo | null>(null);
@@ -419,7 +420,7 @@ export default function AntiNukePage() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
 
-        {status === 'authenticated' && !isMainOwner && (
+        {status === 'authenticated' && !canEdit && (
           <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm">
             <FiAlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-400" />
             <div className="flex-1">
@@ -589,7 +590,7 @@ export default function AntiNukePage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-base font-semibold">Whitelisted Users</h2>
-                  {isMainOwner && (
+                  {canEdit && (
                     <button
                       onClick={() => {
                         setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false])));
@@ -660,7 +661,7 @@ export default function AntiNukePage() {
                                 {entry.userId} · {grantedCount} permissions
                               </p>
                             </div>
-                            {isMainOwner && (
+                            {canEdit && (
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => {

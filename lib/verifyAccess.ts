@@ -1,4 +1,5 @@
 export const MAIN_OWNER_ID = '929297205796417597';
+export const EDITORS = [MAIN_OWNER_ID, '1066281404821930025', '1058043072522489946'];
 const ADMINISTRATOR = 0x0000000000000008n;
 const MANAGE_GUILD  = 0x0000000000000020n;
 
@@ -7,7 +8,7 @@ export async function verifyAccess(session: any, guildId: string): Promise<boole
   if (!botToken) return false;
   const userId = String(session?.user?.id || '');
   if (!userId) return false;
-  if (userId === MAIN_OWNER_ID) return true;
+  if (EDITORS.includes(userId)) return true;
 
   const [memberRes, rolesRes, guildRes] = await Promise.all([
     fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${userId}`, {

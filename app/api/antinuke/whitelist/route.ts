@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
-import { verifyAccess, MAIN_OWNER_ID } from '@/lib/verifyAccess';
+import { verifyAccess, MAIN_OWNER_ID, EDITORS } from '@/lib/verifyAccess';
 
 const ALL_PERMISSIONS = [
   'CREATE_ROLE', 'DELETE_ROLE', 'EDIT_ROLE',
@@ -122,8 +122,8 @@ export async function POST(request: NextRequest) {
     const ok = await verifyAccess(session, guildId);
     if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    if (String(session.user.id) !== MAIN_OWNER_ID) {
-      return NextResponse.json({ error: 'Forbidden. Only the main owner can edit the whitelist.' }, { status: 403 });
+    if (!EDITORS.includes(String(session.user.id))) {
+      return NextResponse.json({ error: 'Forbidden. Only whitelisted editors can edit the Anti-Nuke configurations.' }, { status: 403 });
     }
 
     if (userId === MAIN_OWNER_ID) {
@@ -173,8 +173,8 @@ export async function DELETE(request: NextRequest) {
     const ok = await verifyAccess(session, guildId);
     if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    if (String(session.user.id) !== MAIN_OWNER_ID) {
-      return NextResponse.json({ error: 'Forbidden. Only the main owner can edit the whitelist.' }, { status: 403 });
+    if (!EDITORS.includes(String(session.user.id))) {
+      return NextResponse.json({ error: 'Forbidden. Only whitelisted editors can edit the Anti-Nuke configurations.' }, { status: 403 });
     }
 
     if (userId === MAIN_OWNER_ID) {
