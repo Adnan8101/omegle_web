@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { userId, targetUserId } = await params;
-    // Simplified query matching the mutuals logic
+    
     const query = `
       SELECT 
         vl1.id as session_id,

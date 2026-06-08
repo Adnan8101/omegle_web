@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
 
-// GET — list all automation rules for the guild
 export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -21,7 +20,7 @@ export async function GET(request: NextRequest) {
             orderBy: { created_at: 'asc' },
         });
 
-        // Enrich with grant counts
+        
         const enriched = await Promise.all(
             rules.map(async (rule) => {
                 const grantCount = await prismaBot.voiceAutomationGranted.count({
@@ -38,7 +37,6 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// POST — create a new automation rule
 export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -62,7 +60,7 @@ export async function POST(request: NextRequest) {
             count_deafened = false,
         } = body;
 
-        // Validation
+        
         if (!name?.trim()) {
             return NextResponse.json({ error: 'Rule name is required' }, { status: 400 });
         }
@@ -82,7 +80,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'reward_role_id is required' }, { status: 400 });
         }
 
-        // Conflict check 1: Role already used in another rule
+        
         const roleConflict = await prismaBot.voiceAutomationRule.findUnique({
             where: { guild_id_reward_role_id: { guild_id: GUILD_ID, reward_role_id } },
         });
@@ -94,7 +92,7 @@ export async function POST(request: NextRequest) {
             }, { status: 409 });
         }
 
-        // Conflict check 2: Channel already covered by a category rule
+        
         if (target_type === 'channel') {
             const channelInfo = await prismaBot.discordChannelCache.findUnique({
                 where: { channel_id: target_id },
@@ -117,7 +115,7 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Conflict check 3: Category contains channels with existing individual rules
+        
         if (target_type === 'category') {
             const channelsInCategory = await prismaBot.discordChannelCache.findMany({
                 where: {
@@ -162,7 +160,7 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        // Write audit log
+        
         await prismaBot.voiceAutomationAuditLog.create({
             data: {
                 guild_id: GUILD_ID,

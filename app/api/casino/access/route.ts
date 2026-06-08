@@ -4,10 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 
 const GUILD_ID = "1507458872225566811";
-// Hardcoded fallback casino role ID
+
 const HARDCODED_CASINO_ROLES = ["1470329047262167040"];
 
-// GET - Check if user has casino access and return casino role info
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -26,7 +25,7 @@ export async function GET(request: NextRequest) {
       userRoles: perms.roles
     });
     
-    // Admin always has access
+    
     if (perms.hasFullAccess) {
       return NextResponse.json({ 
         hasAccess: true, 
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    // If session already says they have casino access, grant it
+    
     if (perms.hasCasinoAccess) {
       return NextResponse.json({ 
         hasAccess: true, 
@@ -44,13 +43,13 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    // Check if user has casino role from database
+    
     try {
       const casinoRoles = await prismaBot.casinoAdminRole.findMany({
         where: { guild_id: GUILD_ID }
       });
       
-      // Combine DB roles with hardcoded fallback
+      
       const dbRoleIds = casinoRoles.map((r: any) => r.role_id);
       const allCasinoRoleIds = [...new Set([...dbRoleIds, ...HARDCODED_CASINO_ROLES])];
       const userRoles = perms.roles || [];
@@ -83,7 +82,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       console.error('[Casino Access API] Error checking casino roles:', error);
       
-      // Fallback: check hardcoded roles
+      
       const userRoles = perms.roles || [];
       const hasCasinoRole = userRoles.some((roleId: string) => HARDCODED_CASINO_ROLES.includes(roleId));
       

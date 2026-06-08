@@ -11,13 +11,13 @@ export const dynamic = 'force-dynamic';
 async function fetchLiveData() {
   const today = new Date().toISOString().split('T')[0];
   
-  // Get economy config
+  
   const configResult = await queryBotDb(`
     SELECT * FROM economy_config WHERE guild_id = $1
   `, [GUILD_ID]);
   const config = configResult[0] || null;
 
-  // Get active VC sessions
+  
   const activeVcSessions = await queryBotDb(`
     SELECT 
       vt.user_id,
@@ -40,7 +40,7 @@ async function fetchLiveData() {
 
   const activeUserIds = activeVcSessions.map((s: any) => s.user_id);
   
-  // Get member counts per channel
+  
   const channelMemberCounts = await queryBotDb(`
     SELECT channel_id, COUNT(DISTINCT user_id) as member_count
     FROM voice_tracking
@@ -50,7 +50,7 @@ async function fetchLiveData() {
   
   const memberCountMap = new Map(channelMemberCounts.map((c: any) => [c.channel_id, Number(c.member_count)]));
   
-  // Get VC progress
+  
   let vcProgress: any[] = [];
   if (activeUserIds.length > 0) {
     vcProgress = await queryBotDb(`
@@ -60,7 +60,7 @@ async function fetchLiveData() {
     `, [GUILD_ID, activeUserIds]);
   }
 
-  // Get category rewards
+  
   let categoryRewards: any[] = [];
   if (config?.advanced_mode) {
     categoryRewards = await queryBotDb(`
@@ -72,14 +72,14 @@ async function fetchLiveData() {
     `, [GUILD_ID]);
   }
 
-  // Get blacklisted channels
+  
   const blacklistedChannels = await queryBotDb(`
     SELECT channel_id FROM economy_blacklist_channels
     WHERE guild_id = $1 AND channel_type = 'voice'
   `, [GUILD_ID]);
   const blacklistedChannelIds = new Set(blacklistedChannels.map((c: any) => c.channel_id));
 
-  // Recent VC awards (live - last 1 hour for real-time feel)
+  
   const recentVcAwards = await queryBotDb(`
     SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
     FROM economy_point_logs epl
@@ -90,7 +90,7 @@ async function fetchLiveData() {
     LIMIT 50
   `, [GUILD_ID]);
 
-  // Recent message awards (live - last 1 hour)
+  
   const recentMsgAwards = await queryBotDb(`
     SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
     FROM economy_point_logs epl
@@ -101,7 +101,7 @@ async function fetchLiveData() {
     LIMIT 50
   `, [GUILD_ID]);
 
-  // Message progress
+  
   const activeMsgProgress = await queryBotDb(`
     SELECT emp.user_id, emp.category_id, emp.accumulated_msgs,
            duc.username, duc.display_name, duc.avatar_url
@@ -122,13 +122,13 @@ async function fetchLiveData() {
     categoryRewardMap.set(reward.category_id, reward);
   }
 
-  // Get category IDs for active users (to exclude only their active category)
+  
   const activeCategoryMap = new Map<string, string>();
   for (const sess of activeVcSessions) {
     activeCategoryMap.set(sess.user_id, sess.category_id);
   }
 
-  // Staged VC progress - show per-category, exclude only if user is active in THAT category
+  
   const stagedVcProgress = await queryBotDb(`
     SELECT evp.user_id,
            evp.category_id,
@@ -144,13 +144,13 @@ async function fetchLiveData() {
     LIMIT 200
   `, [GUILD_ID]);
 
-  // Filter out entries where user is active in that specific category
+  
   const filteredStaged = stagedVcProgress.filter((row: any) => {
     const activeCategory = activeCategoryMap.get(row.user_id);
     return !activeCategory || activeCategory !== row.category_id;
   });
 
-  // Today's stats - use UTC date for consistency
+  
   const todayStats = await queryBotDb(`
     SELECT 
       COUNT(DISTINCT CASE WHEN source = 'voice' THEN user_id END) as vc_users,
@@ -162,7 +162,7 @@ async function fetchLiveData() {
     WHERE guild_id = $1 AND created_at >= CURRENT_DATE AND amount > 0
   `, [GUILD_ID]);
 
-  // Format VC users
+  
   const vcUsers = activeVcSessions.map((session: any) => {
     const categoryId = session.category_id || 'global';
     const userProg = vcProgressMap.get(`${session.user_id}:${categoryId}`);
@@ -180,22 +180,22 @@ async function fetchLiveData() {
     const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
     const thresholdSeconds = minutesPerPoint * 60;
     
-    // Check member count
+    
     const currentMemberCount = memberCountMap.get(session.channel_id) || 1;
-    // voice_tracking table only has non-bot users, so when countBots is enabled
-    // we avoid false negatives in the dashboard member-count gate.
+    
+    
     const hasEnoughMembers = countBots ? true : currentMemberCount >= minMembers;
     
-    // Calculate real-time cycle progress
-    // Bot syncs every 10s, so estimate elapsed time since last sync
+    
+    
     const dbProgress = userProg?.accumulated_seconds || 0;
     
-    // If currently earning, add estimated time since last sync (max 10s)
-    // This gives smoother real-time updates between bot syncs
+    
+    
     let liveProgress = dbProgress;
     if (hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false)) {
-      // Estimate: add up to 10 seconds (time since last bot sync)
-      // Use modulo to estimate where we are in the 10s cycle
+      
+      
       const estimatedElapsed = Math.min(sessionDuration % 10, 10);
       liveProgress = (dbProgress + estimatedElapsed) % thresholdSeconds;
     }
@@ -217,7 +217,7 @@ async function fetchLiveData() {
       memberCount: currentMemberCount,
       minMembers: minMembers,
       trackingDisabled: !hasEnoughMembers && !countBots,
-      totalProgress: liveProgress, // Real-time cycle progress
+      totalProgress: liveProgress, 
       progress: progressPercent,
       threshold: thresholdSeconds,
       nextIn: thresholdSeconds - liveProgress,
@@ -227,7 +227,7 @@ async function fetchLiveData() {
     };
   });
 
-  // Format message activity
+  
   const msgActivity = activeMsgProgress.map((p: any) => {
     const catReward = categoryRewardMap.get(p.category_id);
     const useCategorySettings = config?.advanced_mode && p.category_id !== 'global' && !!catReward;
@@ -326,7 +326,7 @@ export async function GET(request: NextRequest) {
       return new Response('Forbidden', { status: 403 });
     }
 
-    // Set up SSE headers
+    
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -344,7 +344,7 @@ export async function GET(request: NextRequest) {
           try {
             controller.close();
           } catch {
-            // Ignore close races when stream is already closed.
+            
           }
         };
 
@@ -382,10 +382,10 @@ export async function GET(request: NextRequest) {
           }
         };
 
-        // Send initial data
+        
         await pollOnce();
 
-        // Clean up on connection close
+        
         request.signal.addEventListener('abort', safeClose);
       },
     });

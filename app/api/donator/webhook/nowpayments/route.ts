@@ -4,7 +4,6 @@ import { getDiscordUser, addGuildRole, sendDirectMessage } from '@/lib/discord';
 
 const API_KEY = process.env.NOWPAYMENTS_API_KEY || 'CBD5QR0-ZFD4RNX-JMHZ6CW-60GRKH3';
 
-// To prevent concurrent webhook duplications/race conditions on same IPN
 const processingLocks = new Set<string>();
 
 export async function POST(request: NextRequest) {
@@ -19,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const { payment_id, order_id, payment_status } = body;
 
-    // We only care about statuses that mean we got paid
+    
     if (!payment_id || !order_id) {
       return NextResponse.json({ error: 'Missing payment_id or order_id' }, { status: 400 });
     }
@@ -30,7 +29,7 @@ export async function POST(request: NextRequest) {
     processingLocks.add(payment_id.toString());
 
     try {
-      // 1. Double check the true status directly from NowPayments to prevent IPN spoofing spoofing
+      
       const npCheck = await fetch(`https://api.nowpayments.io/v1/payment/${payment_id}`, {
         headers: { 'x-api-key': API_KEY }
       });
@@ -41,11 +40,11 @@ export async function POST(request: NextRequest) {
       }
 
       const npData = await npCheck.json();
-      const confirmedStatus = npData.payment_status; // "finished", "confirmed", "sending" are success
+      const confirmedStatus = npData.payment_status; 
 
       const isSuccess = ['finished', 'confirmed', 'sending'].includes(confirmedStatus);
 
-      // 2. Lookup our Tracking Record
+      
       let dbPayment = await (prismaBot as any).nowPaymentsPayment.findUnique({
         where: { order_id },
         include: { plan: true }
@@ -55,7 +54,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Payment record not found' }, { status: 404 });
       }
 
-      // Update basic details from webhook anyway
+      
       dbPayment = await (prismaBot as any).nowPaymentsPayment.update({
         where: { order_id },
         data: {
@@ -63,16 +62,16 @@ export async function POST(request: NextRequest) {
           pay_amount: npData.pay_amount,
           pay_currency: npData.pay_currency,
           webhook_data: body,
-          payment_id: payment_id.toString(), // ensure it's recorded
+          payment_id: payment_id.toString(), 
         },
         include: { plan: true }
       });
 
-      // 3. Fulfill Subscription if Success and not already handled
+      
       if (isSuccess && dbPayment.status !== 'finished' && dbPayment.status !== 'confirmed') {
         const { plan, user_id, guild_id } = dbPayment;
         
-        // Find existing sub or create one
+        
         let subscription = await (prismaBot as any).donatorSubscription.findUnique({
           where: { guild_id_user_id_plan_id: { guild_id, user_id, plan_id: plan.id } }
         });
@@ -102,7 +101,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // 4. Grant Discord Role
+        
         if (plan.linked_role_id) {
           const roleGranted = await addGuildRole(guild_id, user_id, plan.linked_role_id);
           if (roleGranted) {

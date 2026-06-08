@@ -20,17 +20,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }
 
-    // Get total items
+    
     const totalItems = await prismaBot.shopItem.count({
       where: { guild_id: GUILD_ID }
     });
 
-    // Get total purchases
+    
     const totalPurchases = await prismaBot.shopPurchase.count({
       where: { guild_id: GUILD_ID }
     });
 
-    // Get pending redemptions
+    
     const pendingRedemptions = await prismaBot.shopPurchase.count({
       where: {
         guild_id: GUILD_ID,
@@ -38,14 +38,14 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Get total revenue
+    
     const purchases = await prismaBot.shopPurchase.findMany({
       where: { guild_id: GUILD_ID },
       select: { price_paid: true }
     });
     const totalRevenue = purchases.reduce((sum, p) => sum + p.price_paid, 0);
 
-    // Get total users who made purchases
+    
     const uniqueUsers = await prismaBot.shopPurchase.findMany({
       where: { guild_id: GUILD_ID },
       select: { user_id: true },
@@ -53,14 +53,14 @@ export async function GET(request: NextRequest) {
     });
     const totalUsers = uniqueUsers.length;
 
-    // Get total points in economy (optional - might be heavy)
+    
     const economyUsers = await prismaBot.economyUser.aggregate({
       where: { guild_id: GUILD_ID },
       _sum: { total_points: true }
     });
     const totalPoints = economyUsers._sum.total_points || 0;
 
-    // Get top selling items
+    
     const topItemsData = await prismaBot.shopPurchase.groupBy({
       by: ['item_id', 'item_name'],
       where: { guild_id: GUILD_ID },
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       take: 5
     });
 
-    // Get item names for top items
+    
     const topItems = await Promise.all(
       topItemsData.map(async (data) => {
         const item = await prismaBot.shopItem.findUnique({
@@ -85,7 +85,6 @@ export async function GET(request: NextRequest) {
         };
       })
     );
-
 
     return NextResponse.json({
       stats: {

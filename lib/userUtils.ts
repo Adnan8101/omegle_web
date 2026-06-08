@@ -1,13 +1,10 @@
-/**
- * Unified User Utilities
- * Handles user data from cache, API, and forms consistently
- */
+
 
 export interface CachedUser {
   user_id: string;
   username: string;
   display_name: string | null;
-  avatar_url: string | null; // Avatar hash (not full URL)
+  avatar_url: string | null; 
   global_name: string | null;
   discriminator: string;
   in_guild?: boolean;
@@ -20,34 +17,30 @@ export interface UserDisplay {
   id: string;
   username: string;
   displayName: string;
-  avatar: string; // Full URL
+  avatar: string; 
   tag: string;
   inGuild: boolean;
 }
 
-/**
- * Build avatar URL from hash
- * Handles both avatar hashes and legacy full URLs that might be stored in the database
- */
 export function buildAvatarUrl(userId: string, avatarHash: string | null, discriminator: string = '0', size: number = 128): string {
   if (avatarHash) {
-    // Check if it's already a full URL (legacy data)
+    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
-      // Replace size parameter if present, otherwise just return
+      
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
       }
       return avatarHash;
     }
     
-    // It's a hash - build the URL
+    
     const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
     return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
   }
   
-  // Default avatar calculation
-  // For new usernames (discriminator = '0'), use user_id >> 22) % 6
-  // For legacy users, use discriminator % 5
+  
+  
+  
   if (discriminator === '0' || !discriminator) {
     if (!/^\d+$/.test(userId)) {
       return 'https://cdn.discordapp.com/embed/avatars/0.png';
@@ -68,9 +61,6 @@ export function buildAvatarUrl(userId: string, avatarHash: string | null, discri
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
 
-/**
- * Convert cached user to display format
- */
 export function cachedUserToDisplay(user: CachedUser, size: number = 128): UserDisplay {
   return {
     id: user.user_id,
@@ -82,15 +72,12 @@ export function cachedUserToDisplay(user: CachedUser, size: number = 128): UserD
   };
 }
 
-/**
- * Get user display from cached user or return fallback
- */
 export function getUserDisplay(cachedUser: CachedUser | null, userId: string, size: number = 128): UserDisplay {
   if (cachedUser) {
     return cachedUserToDisplay(cachedUser, size);
   }
   
-  // Fallback for unknown user
+  
   return {
     id: userId,
     username: 'Unknown User',
@@ -101,16 +88,10 @@ export function getUserDisplay(cachedUser: CachedUser | null, userId: string, si
   };
 }
 
-/**
- * Get display name priority: nickname > display_name > global_name > username
- */
 export function getDisplayName(user: CachedUser): string {
   return user.nickname || user.display_name || user.global_name || user.username;
 }
 
-/**
- * Format user tag
- */
 export function getUserTag(user: CachedUser): string {
   return user.discriminator === '0' ? `@${user.username}` : `${user.username}#${user.discriminator}`;
 }

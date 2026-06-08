@@ -250,7 +250,7 @@ export async function GET(
 
     let y = height - 52;
 
-    // Header
+    
     const titleText = 'OMEGLEE';
     const titleSize = 24;
     const logoSize = 50;
@@ -280,7 +280,7 @@ export async function GET(
           height: logoSize,
         });
       } catch {
-        // Continue with text-only header when logo cannot be embedded
+        
       }
     }
 
@@ -323,7 +323,7 @@ export async function GET(
           });
           page.pushOperators(popGraphicsState());
         } catch {
-          // Skip avatar if unsupported format
+          
         }
       }
 
@@ -375,7 +375,7 @@ export async function GET(
       color: black,
     });
 
-    // Account details in two columns
+    
     y -= 24;
     page.drawText('ACCOUNT DETAILS', {
       x: margin,
@@ -411,7 +411,7 @@ export async function GET(
       page.drawText(row[3], { x: rightValueX, y, size: 10, font: fontRegular, color: black });
     }
 
-    // Summary table
+    
     y -= 26;
     page.drawText('SUBSCRIPTION SUMMARY', {
       x: margin,
@@ -468,7 +468,7 @@ export async function GET(
       });
     }
 
-    // Benefits section
+    
     y = tableBottomY - 26;
     page.drawText('INCLUDED BENEFITS', {
       x: margin,

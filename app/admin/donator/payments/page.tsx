@@ -84,7 +84,7 @@ export default function DonatorPaymentsPage() {
             }
           }
         } catch {
-          // Ignore cache read failures.
+          
         }
 
         setLoadingGuilds(true);
@@ -102,7 +102,7 @@ export default function DonatorPaymentsPage() {
             JSON.stringify({ timestamp: Date.now(), guilds: items })
           );
         } catch {
-          // Ignore cache write failures.
+          
         }
 
         const sessionGuildId = (session?.user as any)?.guild_id as string | undefined;

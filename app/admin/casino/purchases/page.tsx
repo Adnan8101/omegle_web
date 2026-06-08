@@ -35,7 +35,7 @@ export default function PurchasesPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'redeemed'>('all');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  // Function to convert Discord emoji to CDN URL
+  
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -142,7 +142,7 @@ export default function PurchasesPage() {
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
+        {}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 sm:mb-8">
           <Link
             href="/admin/casino"
@@ -167,7 +167,7 @@ export default function PurchasesPage() {
           </button>
         </div>
 
-        {/* Stats */}
+        {}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
           <button
             onClick={() => setStatusFilter('all')}
@@ -206,7 +206,7 @@ export default function PurchasesPage() {
           </button>
         </div>
 
-        {/* Search */}
+        {}
         <div className="mb-6">
           <div className="relative">
             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[rgb(var(--color-text-tertiary))]" />
@@ -220,7 +220,7 @@ export default function PurchasesPage() {
           </div>
         </div>
 
-        {/* Purchases List */}
+        {}
         {filteredPurchases.length === 0 ? (
           <div className="glass-blue rounded-3xl p-12 border border-[rgb(var(--color-border))] text-center">
             <FiPackage className="w-12 h-12 mx-auto text-[rgb(var(--color-text-tertiary))] mb-4" />
@@ -241,7 +241,7 @@ export default function PurchasesPage() {
                 className="glass-blue rounded-2xl p-4 sm:p-5 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/50 apple-transition"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  {/* Item Info */}
+                  {}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
@@ -280,7 +280,7 @@ export default function PurchasesPage() {
                     </div>
                   </div>
 
-                  {/* Code */}
+                  {}
                   <div className="flex items-center gap-3">
                     <div className="px-4 py-2 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
                       <code className="text-sm font-mono font-bold text-[rgb(var(--color-accent))]">
@@ -301,7 +301,7 @@ export default function PurchasesPage() {
                   </div>
                 </div>
 
-                {/* Redemption Info */}
+                {}
                 {purchase.status === 'redeemed' && (
                   <div className="mt-4 pt-4 border-t border-[rgb(var(--color-border))] flex flex-wrap items-center gap-4 text-sm">
                     <span className="text-[rgb(var(--color-text-tertiary))]">

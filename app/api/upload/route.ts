@@ -4,20 +4,18 @@ import { authOptions } from '@/lib/auth';
 import { put, del } from '@vercel/blob';
 import { canAccessCasino } from '@/lib/apiAuth';
 
-// Max file size: 4MB
 const MAX_FILE_SIZE = 4 * 1024 * 1024;
-// Allowed image types
+
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-// Target dimensions for shop images
+
 const MAX_WIDTH = 512;
 const MAX_HEIGHT = 512;
 
-// Get the blob token from environment
 const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if blob token is configured
+    
     if (!BLOB_TOKEN) {
       console.error('[Upload] BLOB_READ_WRITE_TOKEN is not configured in environment');
       console.error('[Upload] Available env vars:', Object.keys(process.env).filter(k => k.includes('BLOB')));
@@ -51,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     console.log('[Upload] File received:', file.name, file.type, file.size, 'bytes');
 
-    // Validate file type
+    
     if (!ALLOWED_TYPES.includes(file.type)) {
       console.error('[Upload] Invalid file type:', file.type);
       return NextResponse.json({ 
@@ -59,7 +57,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate file size
+    
     if (file.size > MAX_FILE_SIZE) {
       console.error('[Upload] File too large:', file.size);
       return NextResponse.json({ 
@@ -67,7 +65,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Generate unique filename
+    
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 8);
     const extension = file.name.split('.').pop() || 'png';
@@ -75,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     console.log('[Upload] Uploading to Vercel Blob:', filename);
 
-    // Upload to Vercel Blob with explicit token
+    
     const blob = await put(filename, file, {
       access: 'public',
       addRandomSuffix: false,
@@ -106,10 +104,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE - Remove an uploaded image
 export async function DELETE(request: NextRequest) {
   try {
-    // Check if blob token is configured
+    
     if (!BLOB_TOKEN) {
       return NextResponse.json({ 
         error: 'Image storage is not configured' 
@@ -133,7 +130,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'No URL provided' }, { status: 400 });
     }
 
-    // Only allow deleting from our blob storage
+    
     if (!url.includes('blob.vercel-storage.com')) {
       return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
     }

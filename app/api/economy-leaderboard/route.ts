@@ -5,11 +5,11 @@ const GUILD_ID = "1507458872225566811";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get top 20 users by total_points
+    
     const topUsers = await prismaBot.economyUser.findMany({
       where: {
         guild_id: GUILD_ID,
-        total_points: { gt: 0 } // Only users with points
+        total_points: { gt: 0 } 
       },
       orderBy: { total_points: 'desc' },
       take: 20,
@@ -20,16 +20,16 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Get economy config
+    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
 
-    // Fetch Discord user data for each entry
+    
     const leaderboard = await Promise.all(
       topUsers.map(async (user, index) => {
         try {
-          // Try to get cached user data from Discord
+          
           const userRes = await fetch(
             `https://discord.com/api/v10/users/${user.user_id}`,
             {

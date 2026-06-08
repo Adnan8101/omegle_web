@@ -132,7 +132,7 @@ export default function DonatorPage() {
         setOzyCurrencyName(String(payload.currency_name || 'Ozy'));
         setOzyCurrencyEmoji(String(payload.currency_emoji || '🪙'));
       } catch {
-        // Ignore balance load errors and keep existing values.
+        
       } finally {
         setLoadingOzyBalance(false);
       }
@@ -317,7 +317,7 @@ export default function DonatorPage() {
         </div>
       </div>
 
-        {/* Alerts */}
+        {}
         {paymentSuccess && (
           <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-5 py-4 text-green-700 dark:text-green-300 flex items-center gap-3">
             <FiCheck className="w-5 h-5 flex-shrink-0" />
@@ -330,7 +330,7 @@ export default function DonatorPage() {
           </div>
         )}
 
-        {/* User details before payment */}
+        {}
         {status === 'authenticated' ? (
           <section className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5 md:p-6 shadow-apple-lg">
             <h2 className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))]">Purchasing As</h2>
@@ -369,7 +369,7 @@ export default function DonatorPage() {
           </section>
         )}
 
-        {/* Server selector */}
+        {}
         <section className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5 md:p-6 shadow-apple-lg">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div>
@@ -438,7 +438,7 @@ export default function DonatorPage() {
           </div>
         </section>
 
-        {/* Plans */}
+        {}
         {loadingPlans ? (
           <section className="rounded-2xl border border-[rgb(var(--color-border))] p-10 bg-[rgb(var(--color-bg-secondary))] text-center">
             <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-600 border-t-transparent mx-auto mb-3" />
@@ -522,7 +522,7 @@ export default function DonatorPage() {
           </section>
         ) : null}
 
-        {/* Feature highlights */}
+        {}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
           {featureIcons.map((f, i) => (
             <div key={i} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5 flex items-start gap-4">

@@ -6,7 +6,6 @@ import { GUILD_ID } from '@/lib/constants';
 
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || process.env.BOT_TOKEN;
 
-// GET — fetch Discord roles and voice channels/categories for rule configuration
 export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -18,12 +17,12 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
 
-        // Load voice channels and categories from channel cache (no API rate limit concern)
+        
         const allChannels = await prismaBot.discordChannelCache.findMany({
             where: {
                 guild_id: GUILD_ID,
                 is_deleted: false,
-                type: { in: [2, 4, 13] }, // 2=voice, 4=category, 13=stage
+                type: { in: [2, 4, 13] }, 
             },
             orderBy: [{ parent_id: 'asc' }, { position: 'asc' }],
         });
@@ -42,7 +41,7 @@ export async function GET(request: NextRequest) {
                 type: 'voice',
             }));
 
-        // Fetch guild roles from Discord API
+        
         let roles: any[] = [];
         if (BOT_TOKEN) {
             try {
@@ -63,7 +62,7 @@ export async function GET(request: NextRequest) {
                         .sort((a: any, b: any) => b.position - a.position);
                 }
             } catch {
-                // Non-fatal — roles will be empty
+                
             }
         }
 

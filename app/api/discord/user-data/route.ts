@@ -20,7 +20,7 @@ interface UserData {
 
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
-    // Check if it's already a full URL (legacy data)
+    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
@@ -44,11 +44,6 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, size: number 
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
 
-/**
- * Centralized user data fetching
- * Strategy: Cache first, Discord API fallback for missing users
- * POST body: { userIds: string[] }
- */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -65,20 +60,20 @@ export async function POST(request: NextRequest) {
       userIds
         .map((id) => (typeof id === 'string' ? id.trim() : String(id ?? '').trim()))
         .filter((id) => /^\d{5,25}$/.test(id))
-    )].slice(0, 500); // Limit to 500 users per request
+    )].slice(0, 500); 
 
     if (limitedIds.length === 0) {
       return NextResponse.json({ users: {} }, { status: 200 });
     }
     const results: Record<string, UserData> = {};
 
-    // Step 1: Try to get users from cache first (fast and reliable)
+    
     try {
       const cachedUsers = await getCachedUsers(limitedIds);
 
       for (const cached of cachedUsers) {
         if (cached && cached.username) {
-          // Parse roles if stored as JSON string
+          
           let roles: string[] = [];
           if (cached.roles) {
             try {
@@ -105,16 +100,16 @@ export async function POST(request: NextRequest) {
       }
     } catch (cacheError) {
       console.error('[user-data] Cache query failed:', getErrorMessage(cacheError));
-      // Continue to API fallback
+      
     }
 
-    // Step 2: Find missing users and fetch from Discord API
+    
     const missingIds = limitedIds.filter(id => !results[id]);
 
     if (missingIds.length > 0) {
       const botToken = process.env.DISCORD_BOT_TOKEN;
       if (botToken) {
-        // Fetch guild members for those who might be in guild
+        
         const guildMembers = new Map<string, any>();
         try {
           const memberPromises = missingIds.slice(0, 100).map(async (userId) => {
@@ -131,7 +126,7 @@ export async function POST(request: NextRequest) {
                 return { userId, member };
               }
             } catch {
-              // Ignore individual failures
+              
             }
             return null;
           });
@@ -143,10 +138,10 @@ export async function POST(request: NextRequest) {
             }
           });
         } catch {
-          // Ignore batch member fetch errors
+          
         }
 
-        // Fetch user profiles from Discord API
+        
         const batchSize = 10;
         for (let i = 0; i < missingIds.length && i < 100; i += batchSize) {
           const batch = missingIds.slice(i, i + batchSize);
@@ -178,7 +173,7 @@ export async function POST(request: NextRequest) {
                 };
               }
             } catch {
-              // Ignore individual fetch errors
+              
             }
             return null;
           });
@@ -190,14 +185,14 @@ export async function POST(request: NextRequest) {
             }
           });
 
-          // Small delay between batches to avoid rate limiting
+          
           if (i + batchSize < missingIds.length) {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
         }
       }
 
-      // Fill in defaults for any remaining missing users
+      
       for (const userId of missingIds) {
         if (!results[userId]) {
           results[userId] = {

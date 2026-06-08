@@ -1,7 +1,4 @@
-/**
- * Discord API Integration
- * Fetch user profiles, avatars, channel info, guild data
- */
+
 
 const GUILD_ID = '1507458872225566811';
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
@@ -37,18 +34,14 @@ export interface DiscordGuildInfo {
   icon: string | null;
 }
 
-// Cache to avoid hitting Discord API repeatedly
 const userCache = new Map<string, { data: DiscordMember | null; timestamp: number }>();
 const channelCache = new Map<string, { data: DiscordChannel | null; timestamp: number }>();
 const guildRoleCache = new Map<string, { data: Map<string, string>; timestamp: number }>();
 const guildRolePromiseCache = new Map<string, Promise<any>>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000; 
 
-/**
- * Get Discord user info - tries guild member first, falls back to user API
- */
 export async function getDiscordUser(userId: string): Promise<DiscordMember | null> {
-  // Check cache
+  
   const cached = userCache.get(userId);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.data;
@@ -60,7 +53,7 @@ export async function getDiscordUser(userId: string): Promise<DiscordMember | nu
   }
 
   try {
-    // Try guild member first
+    
     const memberResponse = await fetch(
       `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${userId}`,
       {
@@ -76,7 +69,7 @@ export async function getDiscordUser(userId: string): Promise<DiscordMember | nu
       return member;
     }
 
-    // Fallback: fetch user directly (works for non-guild users)
+    
     const userResponse = await fetch(
       `https://discord.com/api/v10/users/${userId}`,
       {
@@ -87,7 +80,7 @@ export async function getDiscordUser(userId: string): Promise<DiscordMember | nu
 
     if (userResponse.ok) {
       const user: DiscordUser = await userResponse.json();
-      // Wrap in a DiscordMember-like shape
+      
       const fakeMember: DiscordMember = {
         user,
         nick: null,
@@ -99,7 +92,7 @@ export async function getDiscordUser(userId: string): Promise<DiscordMember | nu
       return fakeMember;
     }
 
-    // Both failed - cache null
+    
     userCache.set(userId, { data: null, timestamp: Date.now() });
     return null;
   } catch (error: any) {
@@ -108,9 +101,6 @@ export async function getDiscordUser(userId: string): Promise<DiscordMember | nu
   }
 }
 
-/**
- * Get multiple Discord users in parallel
- */
 export async function getDiscordUsers(userIds: string[]): Promise<Map<string, DiscordMember | null>> {
   if (!userIds || userIds.length === 0) return new Map();
 
@@ -180,11 +170,8 @@ export async function getDiscordUsers(userIds: string[]): Promise<Map<string, Di
   return results;
 }
 
-/**
- * Get Discord channel info
- */
 export async function getDiscordChannel(channelId: string): Promise<DiscordChannel | null> {
-  // Check cache
+  
   const cached = channelCache.get(channelId);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.data;
@@ -223,9 +210,6 @@ export async function getDiscordChannel(channelId: string): Promise<DiscordChann
   }
 }
 
-/**
- * Get multiple Discord channels in parallel
- */
 export async function getDiscordChannels(channelIds: string[]): Promise<Map<string, DiscordChannel | null>> {
   const results = await Promise.all(
     channelIds.map(async (id) => ({ id, channel: await getDiscordChannel(id) }))
@@ -233,37 +217,25 @@ export async function getDiscordChannels(channelIds: string[]): Promise<Map<stri
   return new Map(results.map(({ id, channel }) => [id, channel]));
 }
 
-/**
- * Get Discord avatar URL
- */
 export function getAvatarUrl(user: DiscordUser, size = 128): string {
   if (user.avatar) {
     const extension = user.avatar.startsWith('a_') ? 'gif' : 'png';
     return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${extension}?size=${size}`;
   }
-  // Default avatar based on discriminator
+  
   const defaultAvatar = parseInt(user.discriminator) % 5;
   return `https://cdn.discordapp.com/embed/avatars/${defaultAvatar}.png`;
 }
 
-/**
- * Get Discord user avatar URL (wrapper for getAvatarUrl)
- */
 export function getDiscordUserAvatar(user: DiscordUser | undefined | null, size = 128): string | null {
   if (!user) return null;
   return getAvatarUrl(user, size);
 }
 
-/**
- * Get display name (nickname > global_name > username)
- */
 export function getDisplayName(member: DiscordMember): string {
   return member.nick || member.user.global_name || member.user.username;
 }
 
-/**
- * Format user tag (username#discriminator or @username)
- */
 export function getUserTag(user: DiscordUser): string {
   if (user.discriminator === '0') {
     return `@${user.username}`;
@@ -271,13 +243,6 @@ export function getUserTag(user: DiscordUser): string {
   return `${user.username}#${user.discriminator}`;
 }
 
-/**
- * Send a DM to a user via the bot
- * @param userId The Discord user ID
- * @param content Text content to send
- * @param embed Optional embed to send
- * @returns true if sent successfully, false otherwise
- */
 export async function sendDM(
   userId: string,
   options: {
@@ -299,7 +264,7 @@ export async function sendDM(
   }
 
   try {
-    // Step 1: Create DM channel
+    
     const channelResponse = await fetch(`https://discord.com/api/v10/users/@me/channels`, {
       method: 'POST',
       headers: {
@@ -317,7 +282,7 @@ export async function sendDM(
 
     const channel = await channelResponse.json();
 
-    // Step 2: Send message in the DM channel
+    
     const messagePayload: any = {};
     if (options.content) {
       messagePayload.content = options.content;

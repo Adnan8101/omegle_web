@@ -9,7 +9,6 @@ function hasAdminAccess(session: any): boolean {
   return Boolean(perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasAnyAccess);
 }
 
-// GET all donator plans or specific plan
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -50,7 +49,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST create new donator plan
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -84,7 +82,7 @@ export async function POST(request: NextRequest) {
         guild_id,
         title,
         description: description || '',
-        price: Math.floor(price), // Ensure integer
+        price: Math.floor(price), 
         perks: Array.isArray(perks) ? perks : [],
         linked_role_id,
         crypto_enabled: crypto_enabled ?? true,
@@ -105,7 +103,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT update donator plan
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -162,7 +159,6 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE donator plan
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

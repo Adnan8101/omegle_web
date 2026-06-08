@@ -9,7 +9,6 @@ import {
     FiChevronDown, FiMic, FiTag, FiList, FiRefreshCw, FiInfo
 } from 'react-icons/fi';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface AutomationRule {
     id: string;
     name: string;
@@ -65,7 +64,6 @@ interface Stats {
     ruleStats: (AutomationRule & { grant_count: number })[];
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function roleColor(color: number): string {
     if (!color) return '#99aab5';
     return `#${color.toString(16).padStart(6, '0')}`;
@@ -88,7 +86,6 @@ function actionBadge(action: string) {
     );
 }
 
-// ─── Rule Modal ───────────────────────────────────────────────────────────────
 interface RuleModalProps {
     rule?: AutomationRule | null;
     roles: DiscordRole[];
@@ -127,7 +124,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
         }));
     };
 
-    // Channels under the selected category
+    
     const channelsInSelectedCategory = form.target_type === 'category'
         ? voiceChannels.filter(c => c.parent_id === form.target_id)
         : [];
@@ -182,7 +179,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                {/* Header */}
+                {}
                 <div className="flex items-center justify-between p-6 border-b border-[rgb(var(--color-border))]">
                     <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">
                         {isEdit ? 'Edit Automation Rule' : 'New Automation Rule'}
@@ -193,7 +190,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                 </div>
 
                 <div className="p-6 space-y-5">
-                    {/* Rule Name */}
+                    {}
                     <div>
                         <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-2">Rule Name</label>
                         <input
@@ -205,7 +202,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                         />
                     </div>
 
-                    {/* Target Type */}
+                    {}
                     <div>
                         <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-2">Target Type</label>
                         <div className="flex gap-3">
@@ -224,7 +221,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                         </div>
                     </div>
 
-                    {/* Target picker */}
+                    {}
                     {form.target_type === 'category' ? (
                         <div>
                             <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-2">Category</label>
@@ -239,7 +236,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                                 ))}
                             </select>
 
-                            {/* Excluded channels */}
+                            {}
                             {form.target_id && channelsInSelectedCategory.length > 0 && (
                                 <div className="mt-3">
                                     <label className="block text-xs font-semibold text-[rgb(var(--color-text-tertiary))] mb-2">
@@ -279,7 +276,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                         </div>
                     )}
 
-                    {/* Rolling Period & Required Hours */}
+                    {}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-2">Rolling Period (Days)</label>
@@ -304,7 +301,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                         </div>
                     </div>
 
-                    {/* Reward Role */}
+                    {}
                     <div>
                         <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-2">Reward Role</label>
                         <select
@@ -330,7 +327,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                         )}
                     </div>
 
-                    {/* Count Deafened */}
+                    {}
                     <div className="flex items-center justify-between p-4 bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-xl">
                         <div>
                             <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Count Deafened Time</p>
@@ -348,7 +345,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                         </button>
                     </div>
 
-                    {/* Enabled Toggle (edit only) */}
+                    {}
                     {isEdit && (
                         <div className="flex items-center justify-between p-4 bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-xl">
                             <div>
@@ -364,7 +361,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                         </div>
                     )}
 
-                    {/* Conflict Alert */}
+                    {}
                     {conflictRule && (
                         <div className="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
                             <FiAlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
@@ -377,7 +374,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                         </div>
                     )}
 
-                    {/* Error */}
+                    {}
                     {error && !conflictRule && (
                         <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
                             <FiAlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
@@ -386,7 +383,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                     )}
                 </div>
 
-                {/* Footer */}
+                {}
                 <div className="flex items-center justify-end gap-3 p-6 border-t border-[rgb(var(--color-border))]">
                     <button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-bg-primary))] transition-colors font-medium">
                         Cancel
@@ -404,7 +401,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
     );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function VCAutomationPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -512,7 +508,7 @@ export default function VCAutomationPage() {
         <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
 
-                {/* Header */}
+                {}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2.5 bg-blue-500/10 rounded-xl">
@@ -527,7 +523,7 @@ export default function VCAutomationPage() {
                     </div>
                 </div>
 
-                {/* Stats Cards */}
+                {}
                 {stats && (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
                         {[
@@ -547,7 +543,7 @@ export default function VCAutomationPage() {
                     </div>
                 )}
 
-                {/* Tabs */}
+                {}
                 <div className="flex items-center gap-1 mb-6 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl p-1 w-fit">
                     {(['rules', 'audit'] as const).map(tab => (
                         <button
@@ -563,7 +559,7 @@ export default function VCAutomationPage() {
                     ))}
                 </div>
 
-                {/* Rules Tab */}
+                {}
                 {activeTab === 'rules' && (
                     <div>
                         <div className="flex items-center justify-between mb-4">
@@ -683,7 +679,7 @@ export default function VCAutomationPage() {
                     </div>
                 )}
 
-                {/* Audit Log Tab */}
+                {}
                 {activeTab === 'audit' && (
                     <div>
                         <div className="flex items-center justify-between mb-4">
@@ -739,7 +735,7 @@ export default function VCAutomationPage() {
                                     </div>
                                 </div>
 
-                                {/* Pagination */}
+                                {}
                                 {auditTotal > 20 && (
                                     <div className="flex items-center justify-between mt-4">
                                         <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
@@ -769,7 +765,7 @@ export default function VCAutomationPage() {
                 )}
             </div>
 
-            {/* Rule Modal */}
+            {}
             {showModal && (
                 <RuleModal
                     rule={editingRule}

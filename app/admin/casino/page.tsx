@@ -51,7 +51,7 @@ export default function CasinoDashboard() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Function to convert Discord emoji to CDN URL
+  
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -88,12 +88,12 @@ export default function CasinoDashboard() {
     
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
-      // Casino accessible to: Full Access or Casino Role only
+      
       const canAccess = perms?.hasFullAccess || perms?.hasCasinoAccess;
       
       if (!canAccess) {
         setHasPermission(false);
-        // Redirect to appropriate page based on permissions
+        
         if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
           setIsRedirecting(true);
           router.push('/admin/vctranscript');
@@ -216,7 +216,7 @@ export default function CasinoDashboard() {
     );
   }
 
-  // Show access denied if no permission
+  
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -270,7 +270,7 @@ export default function CasinoDashboard() {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
-      {/* Header */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[rgb(var(--color-text-primary))] mb-2 tracking-tight">
@@ -298,7 +298,7 @@ export default function CasinoDashboard() {
         </div>
       </div>
 
-      {/* Error Banner */}
+      {}
       {error && (
         <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
           <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -306,7 +306,7 @@ export default function CasinoDashboard() {
         </div>
       )}
 
-      {/* Stats Grid */}
+      {}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         {statCards.map((card, index) => (
           <div
@@ -331,7 +331,7 @@ export default function CasinoDashboard() {
         ))}
       </div>
 
-      {/* Quick Links */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 sm:mb-8">
         <Link
           href="/admin/casino/economy"
@@ -351,7 +351,7 @@ export default function CasinoDashboard() {
           <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-yellow-500 group-hover:translate-x-1 apple-transition" />
         </Link>
 
-        {/* Invite System - Admin Only */}
+        {}
         {session?.user?.permissions?.hasFullAccess && (
           <Link
             href="/admin/casino/economy/invites"
@@ -408,7 +408,7 @@ export default function CasinoDashboard() {
         </Link>
       </div>
 
-      {/* Top Selling Items */}
+      {}
       {topItems.length > 0 && (
         <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8">
           <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
@@ -441,7 +441,7 @@ export default function CasinoDashboard() {
         </div>
       )}
 
-      {/* Shop Items */}
+      {}
       <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))]">
@@ -485,7 +485,7 @@ export default function CasinoDashboard() {
                 key={item.id}
                 className="bg-[rgb(var(--color-bg-tertiary))] rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/50 apple-transition group hover:shadow-lg"
               >
-                {/* Thumbnail */}
+                {}
                 <div className="aspect-[4/3] bg-[rgb(var(--color-bg-secondary))] relative overflow-hidden">
                   {item.thumbnail ? (
                     <img
@@ -514,7 +514,7 @@ export default function CasinoDashboard() {
                   )}
                 </div>
 
-                {/* Content */}
+                {}
                 <div className="p-4">
                   <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-1 truncate">
                     {item.name}
@@ -551,7 +551,7 @@ export default function CasinoDashboard() {
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="glass-blue rounded-3xl p-6 max-w-sm w-full border border-[rgb(var(--color-border))] shadow-[var(--shadow-xl)]">

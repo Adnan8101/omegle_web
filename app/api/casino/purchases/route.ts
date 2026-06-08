@@ -19,13 +19,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }
 
-    // Get all purchases with user info
+    
     const purchases = await prismaBot.shopPurchase.findMany({
       where: { guild_id: GUILD_ID },
       orderBy: { created_at: 'desc' }
     });
 
-    // Get economy config
+    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });

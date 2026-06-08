@@ -48,18 +48,17 @@ function parseRoleIds(roleRef: string | null | undefined): string[] {
   return Array.from(unique);
 }
 
-// GET - Get public shop items and user balance (if logged in)
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
 
-    // Get economy config first to check if shop is enabled
+    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
 
-    // Check if shop is disabled
+    
     if (config?.shop_enabled === false) {
       return NextResponse.json({
         shopDisabled: true,
@@ -72,7 +71,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get all shop items (both enabled and disabled, including out of stock items)
+    
     const now = new Date();
     const items = await prismaBot.shopItem.findMany({
       where: {
@@ -114,7 +113,7 @@ export async function GET(request: NextRequest) {
       return names;
     };
 
-    // If user is logged in, get their balance and purchases
+    
     if (userId) {
       const [economyUser, member, pendingPurchases] = await Promise.all([
         prismaBot.economyUser.findUnique({
@@ -193,7 +192,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Purchase an item
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -213,7 +211,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Item ID is required' }, { status: 400 });
     }
 
-    // Get economy config first to check if shop is enabled
+    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
@@ -223,7 +221,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await prismaBot.$transaction(async (tx) => {
-      // Get the item
+      
       const item = await tx.shopItem.findFirst({
         where: { id: itemId, guild_id: GUILD_ID }
       });
@@ -232,12 +230,12 @@ export async function POST(request: NextRequest) {
         throw new Error('ITEM_NOT_FOUND');
       }
 
-      // Check if item is enabled
+      
       if (!item.enabled) {
         throw new Error('ITEM_DISABLED');
       }
 
-      // Check if item is expired
+      
       if (item.expires_at && new Date() > item.expires_at) {
         throw new Error('ITEM_EXPIRED');
       }
@@ -247,34 +245,34 @@ export async function POST(request: NextRequest) {
         throw new Error(`MISSING_REQUIRED_ROLE:${requiredRoleIds.join(',')}`);
       }
 
-      // Check stock
+      
       if (item.stock !== null && item.stock !== -1 && item.stock <= 0) {
         throw new Error('OUT_OF_STOCK');
       }
 
-      // Get user's economy data
+      
       const economyUser = await tx.economyUser.findUnique({
         where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
       });
 
-      // Use already fetched config for currency name
+      
       const currencyName = config?.currency_name || 'Ozy';
 
       if (!economyUser) {
         throw new Error(`NO_ECONOMY_ACCOUNT:${currencyName}`);
       }
 
-      // Check balance
+      
       if (economyUser.total_points < item.price) {
         throw new Error(`INSUFFICIENT_BALANCE:${item.price}:${economyUser.total_points}:${currencyName}`);
       }
 
-      // Check minimum balance requirement
+      
       if (item.required_balance && economyUser.total_points < item.required_balance) {
         throw new Error(`MIN_BALANCE:${item.required_balance}:${currencyName}`);
       }
 
-      // Generate unique redeem code
+      
       let code = generateCode();
       let attempts = 0;
       while (attempts < 10) {
@@ -284,7 +282,7 @@ export async function POST(request: NextRequest) {
         attempts++;
       }
 
-      // Decrement stock if applicable (atomic guard to avoid race/oversell)
+      
       if (item.stock !== null && item.stock !== -1) {
         const stockUpdate = await tx.shopItem.updateMany({
           where: { id: item.id, guild_id: GUILD_ID, stock: { gt: 0 } },
@@ -296,10 +294,10 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Use config for leaderboard sync setting
+      
       const leaderboardSync = config?.leaderboard_sync ?? true;
 
-      // Deduct points with atomic guard against concurrent balance changes.
+      
       const pointsUpdate = await tx.economyUser.updateMany({
         where: {
           guild_id: GUILD_ID,
@@ -316,7 +314,7 @@ export async function POST(request: NextRequest) {
         throw new Error(`INSUFFICIENT_BALANCE:${item.price}:${economyUser.total_points}:${currencyName}`);
       }
 
-      // Create purchase record
+      
       const purchaseExpiresAt = calculatePurchaseExpiry(new Date());
       const purchase = await tx.shopPurchase.create({
         data: {
@@ -330,7 +328,7 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      // Create point log
+      
       await tx.economyPointLog.create({
         data: {
           guild_id: GUILD_ID,
@@ -346,18 +344,18 @@ export async function POST(request: NextRequest) {
 
     const { item, purchase, economyUser, purchaseExpiresAt } = result;
 
-    // Get currency emoji for the DM
+    
     const currencyEmoji = config?.currency_emoji || 'OZY';
     const formatNumber = (n: number) => n.toLocaleString();
 
-    // Send DM notification to user with purchase receipt
+    
     let dmSent = false;
     try {
       const dmResult = await sendDM(userId, {
         embed: {
           title: 'Purchase Successful',
           description: `Thank you for your purchase from **Omeglee Community Shop**!`,
-          color: 0x57F287, // Green color
+          color: 0x57F287, 
           thumbnail: item.thumbnail ? { url: item.thumbnail } : undefined,
           fields: [
             { name: 'Item', value: item.name, inline: true },

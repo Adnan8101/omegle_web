@@ -133,10 +133,10 @@ export default function ModDetailPage() {
     
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
-      // Mods stats requires full access (admin/manage server)
+      
       if (!perms?.hasFullAccess) {
         setHasPermission(false);
-        // Redirect to appropriate page based on permissions
+        
         if (perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
           setIsRedirecting(true);
           router.replace('/admin/casino');
@@ -224,7 +224,7 @@ export default function ModDetailPage() {
     }
   };
 
-  // Show loading state while checking auth/permissions
+  
   if (status === 'loading' || hasPermission === null || isRedirecting) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -238,7 +238,7 @@ export default function ModDetailPage() {
     );
   }
 
-  // Show access denied if no permission
+  
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -292,7 +292,7 @@ export default function ModDetailPage() {
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto">
-      {/* Header */}
+      {}
       <div className="mb-6 sm:mb-8">
         <Link 
           href="/admin/mods-stats"
@@ -330,7 +330,7 @@ export default function ModDetailPage() {
         </div>
       </div>
 
-      {/* Stats Overview */}
+      {}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4 mb-8">
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
           <div className="flex items-center gap-2 mb-2">
@@ -383,7 +383,7 @@ export default function ModDetailPage() {
         </div>
       </div>
 
-      {/* Activity Charts */}
+      {}
       {activity.by_day.length > 0 && (
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-5 border border-[rgb(var(--color-border))] mb-8">
           <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-4">Activity (Last 30 Days)</h3>
@@ -411,7 +411,7 @@ export default function ModDetailPage() {
         </div>
       )}
 
-      {/* Tabs */}
+      {}
       <div className="flex border-b border-[rgb(var(--color-border))] mb-6 gap-1">
         <button
           onClick={() => setActiveTab('cases')}
@@ -451,7 +451,7 @@ export default function ModDetailPage() {
         </button>
       </div>
 
-      {/* Cases Tab */}
+      {}
       {activeTab === 'cases' && (
         <div className="space-y-3">
           {cases.length === 0 ? (
@@ -466,7 +466,7 @@ export default function ModDetailPage() {
                 className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-4 sm:p-5 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-hover))] transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                  {/* Target User */}
+                  {}
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <img
                       src={c.target_avatar}
@@ -483,7 +483,7 @@ export default function ModDetailPage() {
                     </div>
                   </div>
 
-                  {/* Case Info */}
+                  {}
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <span className="px-2 py-1 bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] rounded font-mono text-xs">
                       #{c.case_number}
@@ -497,7 +497,7 @@ export default function ModDetailPage() {
                   </div>
                 </div>
 
-                {/* Reason & Details */}
+                {}
                 <div className="mt-3 pt-3 border-t border-[rgb(var(--color-border))]">
                   {c.reason && (
                     <p className="text-[rgb(var(--color-text-secondary))] text-sm mb-2">
@@ -523,10 +523,10 @@ export default function ModDetailPage() {
         </div>
       )}
 
-      {/* Manuals Tab */}
+      {}
       {activeTab === 'manuals' && (
         <div className="space-y-6">
-          {/* Created Manuals */}
+          {}
           <div>
             <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               Created by {mod.display_name}
@@ -588,7 +588,7 @@ export default function ModDetailPage() {
             )}
           </div>
 
-          {/* Reviewed Manuals */}
+          {}
           {manuals.reviewed.length > 0 && (
             <div>
               <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
@@ -630,10 +630,10 @@ export default function ModDetailPage() {
         </div>
       )}
 
-      {/* Activity Tab */}
+      {}
       {activeTab === 'activity' && (
         <div className="space-y-6">
-          {/* VC Stats */}
+          {}
           <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-5 border border-[rgb(var(--color-border))]">
             <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
               <FiMic className="w-5 h-5 text-blue-500" />
@@ -666,7 +666,7 @@ export default function ModDetailPage() {
               </div>
             </div>
 
-            {/* Recent VC Sessions */}
+            {}
             {activity.vc_sessions.length > 0 && (
               <div className="border-t border-[rgb(var(--color-border))] pt-4 mt-4">
                 <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3">Recent Sessions</p>
@@ -689,7 +689,7 @@ export default function ModDetailPage() {
             )}
           </div>
 
-          {/* Chat Stats */}
+          {}
           <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-5 border border-[rgb(var(--color-border))]">
             <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
               <FiMessageSquare className="w-5 h-5 text-green-500" />
@@ -723,7 +723,7 @@ export default function ModDetailPage() {
             </div>
           </div>
 
-          {/* Activity by Hour */}
+          {}
           {activity.by_hour.length > 0 && (
             <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-5 border border-[rgb(var(--color-border))]">
               <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-4">Activity by Hour</h3>

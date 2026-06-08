@@ -6,7 +6,6 @@ import { canAccessCasino } from '@/lib/apiAuth';
 
 const GUILD_ID = "1507458872225566811";
 
-// GET - Get purchase by code
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ code: string }> }
@@ -32,12 +31,12 @@ export async function GET(
       return NextResponse.json({ error: 'Purchase not found' }, { status: 404 });
     }
     
-    // Get the item details
+    
     const item = await prismaBot.shopItem.findUnique({
       where: { id: purchase.item_id }
     });
     
-    // Get economy config for currency
+    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
@@ -60,7 +59,6 @@ export async function GET(
   }
 }
 
-// PUT - Redeem a purchase code
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ code: string }> }

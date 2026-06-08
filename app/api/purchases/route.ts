@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     const userId = session.user.id;
 
-    // Get user's purchases
+    
     const purchases = await prismaBot.shopPurchase.findMany({
       where: {
         guild_id: GUILD_ID,
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       existingItemIds = new Set(existingItems.map((item: any) => item.id));
     }
 
-    // Get economy config for currency
+    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });

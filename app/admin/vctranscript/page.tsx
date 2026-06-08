@@ -8,10 +8,9 @@ import Image from 'next/image';
 import { FiUsers, FiClock, FiActivity, FiSearch, FiArrowUp, FiChevronRight } from 'react-icons/fi';
 import DateRangeFilter from '@/components/DateRangeFilter';
 
-// Build avatar URL from hash (handles both hash and legacy full URLs)
 function buildAvatarUrl(userId: string, avatarHash: string | null, discriminator: string = '0', size: number = 128): string {
   if (avatarHash) {
-    // Check if it's already a full URL (legacy data)
+    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
@@ -21,7 +20,7 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, discriminator
     const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
     return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
   }
-  // Default avatar
+  
   if (discriminator === '0' || !discriminator) {
     if (!/^\d+$/.test(userId)) {
       return 'https://cdn.discordapp.com/embed/avatars/0.png';
@@ -46,7 +45,7 @@ interface User {
   session_count: number;
   total_duration: number;
   last_active: string;
-  // From cache join
+  
   username?: string;
   display_name?: string;
   avatar_url?: string;
@@ -92,11 +91,11 @@ export default function VCTranscriptPage() {
         const userList: User[] = data.users || [];
         setUsers(userList);
 
-        // Get all user IDs
+        
         const userIds = userList.map((u: User) => u.user_id);
         
         if (userIds.length > 0) {
-          // Use new centralized user-data API - no caching, fetch on demand
+          
           const batchRes = await fetch('/api/discord/user-data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -129,7 +128,7 @@ export default function VCTranscriptPage() {
     }
   }, [dateRange]);
 
-  // Check authentication and permissions
+  
   useEffect(() => {
     if (status === 'loading') return;
     
@@ -141,12 +140,12 @@ export default function VCTranscriptPage() {
     
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
-      // VC Transcript accessible to: Full Access, Moderator, Trail Mod/View Only
+      
       const canAccess = perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasViewOnlyAccess;
       
       if (!canAccess) {
         setHasPermission(false);
-        // Redirect to appropriate page based on permissions
+        
         if (perms?.hasCasinoAccess) {
           setIsRedirecting(true);
           router.replace('/admin/casino');
@@ -162,7 +161,7 @@ export default function VCTranscriptPage() {
     }
   }, [status, session, router, fetchUsers]);
 
-  // Show loading state while checking auth/permissions
+  
   if (status === 'loading' || hasPermission === null || isRedirecting) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -176,7 +175,7 @@ export default function VCTranscriptPage() {
     );
   }
 
-  // Show access denied if no permission
+  
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -257,7 +256,7 @@ export default function VCTranscriptPage() {
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-[rgb(var(--color-text-primary))] mb-2">
             VC Transcript Dashboard
@@ -280,7 +279,7 @@ export default function VCTranscriptPage() {
           </div>
         )}
 
-        {/* Search */}
+        {}
         <div className="mb-6">
           <div className="relative">
             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[rgb(var(--color-text-tertiary))]" />
@@ -452,7 +451,7 @@ export default function VCTranscriptPage() {
                   </table>
                 </div>
 
-                {/* Footer with count */}
+                {}
                 <div className="px-6 py-3 bg-[rgb(var(--color-bg-tertiary))] border-t border-[rgb(var(--color-border))]">
                   <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
                     Showing {filteredUsers.length} of {users.length} users

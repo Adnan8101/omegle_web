@@ -37,14 +37,14 @@ export async function POST(request: NextRequest) {
     
     const userId = normalizedBody.discordUserId;
     
-    // Fetch user data from bot database
+    
     let userProfile = null;
     let userStats = null;
     let modLogs = null;
     
     if (userId) {
       try {
-        // Fetch user data from Discord API using centralized endpoint
+        
         const botToken = process.env.DISCORD_BOT_TOKEN;
         if (botToken) {
           try {
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
           }
         }
         
-        // Fetch user VC and chat stats
+        
         const statsResult = await queryBotDb(`
           SELECT 
             (SELECT COALESCE(SUM(duration_seconds), 0) FROM voice_logs WHERE user_id = $1 AND guild_id = $2 AND left_at IS NOT NULL) as vc_duration,
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         
         userStats = statsResult[0] || null;
         
-        // Fetch moderation logs (modlogs, manual actions, warnings) from moderation_cases table
+        
         const modLogsResult = await queryBotDb(`
           SELECT 
             case_number,

@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
 
-// GET — get single rule with stats
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ ruleId: string }> }
@@ -44,7 +43,6 @@ export async function GET(
     }
 }
 
-// PATCH — update existing rule
 export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ ruleId: string }> }
@@ -80,7 +78,7 @@ export async function PATCH(
             enabled,
         } = body;
 
-        // Conflict check: Role uniqueness (allow same rule to keep its own role)
+        
         if (reward_role_id && reward_role_id !== existing.reward_role_id) {
             const roleConflict = await prismaBot.voiceAutomationRule.findUnique({
                 where: { guild_id_reward_role_id: { guild_id: GUILD_ID, reward_role_id } },
@@ -98,7 +96,7 @@ export async function PATCH(
         const newTargetId = target_id ?? existing.target_id;
         const newExcluded = excluded_channel_ids ?? existing.excluded_channel_ids;
 
-        // Conflict check: Channel already covered by category rule
+        
         if (newTargetType === 'channel' && newTargetId !== existing.target_id) {
             const channelInfo = await prismaBot.discordChannelCache.findUnique({
                 where: { channel_id: newTargetId },
@@ -154,7 +152,6 @@ export async function PATCH(
     }
 }
 
-// DELETE — remove a rule and its associated data
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ ruleId: string }> }
@@ -177,7 +174,7 @@ export async function DELETE(
             return NextResponse.json({ error: 'Rule not found' }, { status: 404 });
         }
 
-        // Log deletion before cascade removes audit log FK
+        
         await prismaBot.voiceAutomationAuditLog.create({
             data: {
                 guild_id: GUILD_ID,
@@ -189,17 +186,17 @@ export async function DELETE(
             },
         });
 
-        // Delete granted records first
+        
         await prismaBot.voiceAutomationGranted.deleteMany({
             where: { guild_id: GUILD_ID, rule_id: ruleId },
         });
 
-        // Delete audit logs
+        
         await prismaBot.voiceAutomationAuditLog.deleteMany({
             where: { guild_id: GUILD_ID, rule_id: ruleId },
         });
 
-        // Delete the rule
+        
         await prismaBot.voiceAutomationRule.delete({
             where: { id: ruleId },
         });

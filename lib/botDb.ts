@@ -2,7 +2,6 @@ import { Pool } from 'pg';
 import { GUILD_ID, getErrorMessage } from './constants';
 import { cachedUserToDisplay, getUserDisplay as getUserDisplayFromCache, type CachedUser, type UserDisplay } from './userUtils';
 
-// Connection pool for bot database (read-only queries)
 let pool: Pool | null = null;
 
 function getBotDatabaseConnectionString() {
@@ -23,11 +22,11 @@ function getPool() {
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
       statement_timeout: 10000,
-      // Always use SSL for remote connections
+      
       ssl: { rejectUnauthorized: false },
     });
     
-    // Handle pool errors gracefully
+    
     pool.on('error', (err) => {
       console.error('Bot DB pool error:', err.message);
     });
@@ -50,9 +49,6 @@ export async function queryBotDb(query: string, params?: unknown[]) {
   }
 }
 
-// ============================================
-// Helper: build date filter clause
-// ============================================
 interface DateFilter {
   startDate?: string | null;
   endDate?: string | null;
@@ -80,10 +76,6 @@ function buildDateClause(
   };
 }
 
-// ============================================
-// VOICE LOG QUERIES
-// ============================================
-
 export async function getUserVCStats(userId: string, guildId: string = GUILD_ID, dateFilter: DateFilter = {}) {
   const df = buildDateClause('joined_at', dateFilter, 3);
   const query = `
@@ -110,7 +102,6 @@ export async function getUserVCStats(userId: string, guildId: string = GUILD_ID,
   return result[0] || {};
 }
 
-// Get voice activity stats (speaking/muted/deafened time)
 export async function getUserVoiceUserStats(userId: string, guildId: string = GUILD_ID) {
   const query = `
     SELECT 
@@ -209,10 +200,6 @@ export async function getAllUsersWithVCActivityAndProfiles(guildId: string = GUI
   return await queryBotDb(query, [guildId, ...df.params]);
 }
 
-// ============================================
-// CHAT LOG QUERIES
-// ============================================
-
 export async function getUserChatStats(userId: string, guildId: string = GUILD_ID, dateFilter: DateFilter = {}) {
   const df = buildDateClause('created_at', dateFilter, 3);
   const query = `
@@ -295,10 +282,6 @@ export async function getAllChatMessages(
   return result;
 }
 
-// ============================================
-// DISCORD USER CACHE FUNCTIONS
-// ============================================
-
 export async function getCachedUser(userId: string) {
   const query = `
     SELECT user_id, username, display_name, avatar_url, global_name, 
@@ -332,21 +315,11 @@ export async function getAllCachedUsers() {
   return await queryBotDb(query);
 }
 
-// ============================================
-// USER DISPLAY HELPERS
-// ============================================
-
-/**
- * Get user display info (with full avatar URL) from cache
- */
 export async function getUserDisplay(userId: string, size: number = 128): Promise<UserDisplay> {
   const cachedUser = await getCachedUser(userId);
   return getUserDisplayFromCache(cachedUser as CachedUser | null, userId, size);
 }
 
-/**
- * Get multiple users display info in one query
- */
 export async function getUsersDisplay(userIds: string[], size: number = 128): Promise<Map<string, UserDisplay>> {
   const cachedUsers = await getCachedUsers(userIds);
   const userMap = new Map<string, CachedUser>();
@@ -360,10 +333,6 @@ export async function getUsersDisplay(userIds: string[], size: number = 128): Pr
   
   return result;
 }
-
-// ============================================
-// DISCORD CHANNEL CACHE FUNCTIONS
-// ============================================
 
 export async function getCachedChannel(channelId: string) {
   const query = `

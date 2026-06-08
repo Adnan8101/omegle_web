@@ -1,7 +1,5 @@
-/**
- * Prisma client for the bot database - for Node.js scripts
- * (Not edge runtime)
- */
+
+
 import { PrismaClient } from '@prisma/client';
 
 export const prismaBotScript = new PrismaClient({

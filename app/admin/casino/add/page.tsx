@@ -58,7 +58,7 @@ export default function AddItemPage() {
   const [roles, setRoles] = useState<GuildRole[]>([]);
   const [selectedRequiredRoles, setSelectedRequiredRoles] = useState<string[]>([]);
 
-  // Function to convert Discord emoji to CDN URL
+  
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -107,7 +107,7 @@ export default function AddItemPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Compress image before upload
+  
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
@@ -115,7 +115,7 @@ export default function AddItemPage() {
       const img = new Image();
       
       img.onload = () => {
-        // Calculate new dimensions (max 512x512)
+        
         let { width, height } = img;
         const maxSize = 512;
         
@@ -132,12 +132,12 @@ export default function AddItemPage() {
         canvas.width = width;
         canvas.height = height;
         
-        // Draw with high quality
+        
         ctx!.imageSmoothingEnabled = true;
         ctx!.imageSmoothingQuality = 'high';
         ctx!.drawImage(img, 0, 0, width, height);
         
-        // Convert to blob with compression
+        
         canvas.toBlob(
           (blob) => {
             if (blob) {
@@ -151,7 +151,7 @@ export default function AddItemPage() {
             }
           },
           'image/webp',
-          0.85 // Quality 85%
+          0.85 
         );
       };
       
@@ -164,14 +164,14 @@ export default function AddItemPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
+    
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       setError('Invalid file type. Please upload JPEG, PNG, GIF, or WebP.');
       return;
     }
 
-    // Validate file size (max 10MB before compression)
+    
     if (file.size > 10 * 1024 * 1024) {
       setError('File too large. Maximum size: 10MB');
       return;
@@ -181,11 +181,11 @@ export default function AddItemPage() {
     setError(null);
 
     try {
-      // Compress the image
+      
       const compressedFile = await compressImage(file);
       console.log(`Original: ${(file.size / 1024).toFixed(1)}KB, Compressed: ${(compressedFile.size / 1024).toFixed(1)}KB`);
 
-      // Upload to Vercel Blob
+      
       const formData = new FormData();
       formData.append('file', compressedFile);
 
@@ -200,14 +200,14 @@ export default function AddItemPage() {
         throw new Error(data.error || 'Failed to upload image');
       }
 
-      // Set the thumbnail URL
+      
       setFormData(prev => ({ ...prev, thumbnail: data.url }));
     } catch (err: any) {
       console.error('Upload error:', err);
       setError(err.message || 'Failed to upload image');
     } finally {
       setUploading(false);
-      // Reset file input
+      
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -217,7 +217,7 @@ export default function AddItemPage() {
   const removeImage = async () => {
     if (!formData.thumbnail) return;
     
-    // If it's a blob URL, try to delete it
+    
     if (formData.thumbnail.includes('blob.vercel-storage.com')) {
       try {
         await fetch('/api/upload', {
@@ -281,7 +281,7 @@ export default function AddItemPage() {
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
+        {}
         <div className="flex items-center gap-4 mb-6 sm:mb-8">
           <Link
             href="/admin/casino"
@@ -299,7 +299,7 @@ export default function AddItemPage() {
           </div>
         </div>
 
-        {/* Success Message */}
+        {}
         {success && (
           <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-2xl flex items-center gap-3">
             <FiCheck className="w-5 h-5 text-green-500" />
@@ -307,7 +307,7 @@ export default function AddItemPage() {
           </div>
         )}
 
-        {/* Error Message */}
+        {}
         {error && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
             <FiAlertCircle className="w-5 h-5 text-red-500" />
@@ -316,7 +316,7 @@ export default function AddItemPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
+          {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
               <FiPackage className="w-5 h-5 text-[rgb(var(--color-accent))]" />
@@ -385,14 +385,14 @@ export default function AddItemPage() {
             </div>
           </div>
 
-          {/* Thumbnail */}
+          {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
               <FiImage className="w-5 h-5 text-[rgb(var(--color-accent))]" />
               Thumbnail
             </h2>
             <div className="space-y-4">
-              {/* Upload Section */}
+              {}
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Upload Image
@@ -428,14 +428,14 @@ export default function AddItemPage() {
                 </p>
               </div>
 
-              {/* OR Divider */}
+              {}
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]"></div>
                 <span className="text-xs text-[rgb(var(--color-text-tertiary))]">OR</span>
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]"></div>
               </div>
 
-              {/* URL Input */}
+              {}
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Image URL
@@ -450,7 +450,7 @@ export default function AddItemPage() {
                 />
               </div>
 
-              {/* Preview */}
+              {}
               {formData.thumbnail && (
                 <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
                   <div className="flex items-start justify-between mb-2">
@@ -486,7 +486,7 @@ export default function AddItemPage() {
             </div>
           </div>
 
-          {/* Income Settings */}
+          {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               Income Settings
@@ -523,7 +523,7 @@ export default function AddItemPage() {
             </div>
           </div>
 
-          {/* Role Settings */}
+          {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               Role Settings
@@ -571,7 +571,7 @@ export default function AddItemPage() {
             </div>
           </div>
 
-          {/* Advanced Settings */}
+          {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               Advanced Settings
@@ -621,7 +621,7 @@ export default function AddItemPage() {
             </div>
           </div>
 
-          {/* Submit Button */}
+          {}
           <div className="flex gap-4">
             <Link
               href="/admin/casino"

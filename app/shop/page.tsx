@@ -66,20 +66,20 @@ export default function ShopPage() {
   const [shopDisabled, setShopDisabled] = useState(false);
   const purchaseInFlightRef = useRef(false);
 
-  // Authentication check
+  
   useEffect(() => {
-    // Shop is accessible to all authenticated Discord users
-    // Only redirect if there's an error fetching shop data
+    
+    
   }, [status, router]);
 
-  // Fetch shop data when session is available
+  
   useEffect(() => {
     if (session) {
       fetchShop();
     }
   }, [session]);
 
-  // Show login page if not authenticated
+  
   if (status === 'unauthenticated') {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6">
@@ -111,7 +111,7 @@ export default function ShopPage() {
     );
   }
 
-  // Show loading state
+  
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -123,9 +123,9 @@ export default function ShopPage() {
     );
   }
 
-  // Convert Discord emoji format to CDN URL
+  
   const getEmojiDisplay = (emoji: string, size: string = 'w-6 h-6') => {
-    // Check if it's a Discord custom emoji like <a:name:id> or <:name:id>
+    
     const emojiMatch = emoji.match(/<a?:([\w_]+):(\d+)>/);
     if (emojiMatch) {
       const [, name, id] = emojiMatch;
@@ -140,7 +140,7 @@ export default function ShopPage() {
         />
       );
     }
-    // Return regular emoji
+    
     return <span className="text-xl">{emoji}</span>;
   };
 
@@ -193,7 +193,7 @@ export default function ShopPage() {
       return;
     }
 
-    // Show confirmation modal
+    
     setConfirmItem(item);
   };
 
@@ -226,7 +226,7 @@ export default function ShopPage() {
       });
       setUserBalance(data.newBalance);
       
-      // Refresh shop to update stock
+      
       fetchShop();
 
     } catch (err: any) {
@@ -260,7 +260,7 @@ export default function ShopPage() {
     );
   }
 
-  // Shop disabled view
+  
   if (shopDisabled) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6">
@@ -347,7 +347,7 @@ export default function ShopPage() {
         </div>
       </section>
 
-      {/* Confirmation Modal */}
+      {}
       {confirmItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 max-w-md w-full border border-[rgb(var(--color-border))] shadow-xl">
@@ -360,7 +360,7 @@ export default function ShopPage() {
                 You are about to buy:
               </p>
 
-              {/* Item Preview */}
+              {}
               <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl mb-4 flex items-center gap-4">
                 {confirmItem.thumbnail ? (
                   <img
@@ -382,7 +382,7 @@ export default function ShopPage() {
                 </div>
               </div>
 
-              {/* Balance Summary */}
+              {}
               <div className="space-y-2 mb-6 text-left">
                 <div className="flex justify-between items-center p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-lg">
                   <span className="text-[rgb(var(--color-text-secondary))]">Your Balance</span>
@@ -408,7 +408,7 @@ export default function ShopPage() {
                 </div>
               </div>
 
-              {/* Buttons */}
+              {}
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmItem(null)}
@@ -430,7 +430,7 @@ export default function ShopPage() {
         </div>
       )}
 
-      {/* Purchase Result Modal */}
+      {}
       {purchaseResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 max-w-md w-full border border-green-500/30 shadow-xl">
@@ -445,7 +445,7 @@ export default function ShopPage() {
                 <strong>{formatNumber(purchaseResult.pricePaid)}</strong>
               </p>
 
-              {/* Redeem Code */}
+              {}
               <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl mb-4">
                 <p className="text-xs text-[rgb(var(--color-text-tertiary))] mb-2">Your Redeem Code</p>
                 <div className="flex items-center justify-center gap-2">
@@ -482,7 +482,7 @@ export default function ShopPage() {
                 </p>
               )}
 
-              {/* DM Status */}
+              {}
               {purchaseResult.dmSent ? (
                 <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl mb-4 flex items-center gap-2">
                   <FiCheck className="w-4 h-4 text-green-500" />
@@ -495,7 +495,7 @@ export default function ShopPage() {
                 </div>
               )}
 
-              {/* Redeem Instructions */}
+              {}
               <div className="p-4 bg-[#5865F2]/10 border border-[#5865F2]/30 rounded-xl mb-4 text-left">
                 <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] mb-2 flex items-center gap-2">
                   <FiMessageCircle className="w-4 h-4 text-[#5865F2]" />
@@ -518,7 +518,7 @@ export default function ShopPage() {
         </div>
       )}
 
-      {/* Pending Purchases Dropdown */}
+      {}
       {showPurchases && pendingPurchases.length > 0 && (
         <div className="fixed top-20 right-4 z-40 w-80 bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))] shadow-xl">
           <div className="p-4 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
@@ -561,7 +561,7 @@ export default function ShopPage() {
         </div>
       )}
 
-      {/* Error Toast */}
+      {}
       {error && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3 shadow-xl">
           <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -572,9 +572,9 @@ export default function ShopPage() {
         </div>
       )}
 
-      {/* Main Content */}
+      {}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Info Banner */}
+        {}
         {!session && (
           <div className="mb-8 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center gap-3">
             <FiLock className="w-5 h-5 text-blue-500" />
@@ -584,7 +584,7 @@ export default function ShopPage() {
           </div>
         )}
 
-        {/* Items Grid */}
+        {}
         {items.length === 0 ? (
           <div className="text-center py-20">
             <FiPackage className="w-16 h-16 mx-auto text-[rgb(var(--color-text-tertiary))] mb-4" />
@@ -612,7 +612,7 @@ export default function ShopPage() {
                       : 'border-[rgb(var(--color-border))] hover:border-yellow-500/30 hover:shadow-yellow-500/10'
                   }`}
                 >
-                  {/* Thumbnail */}
+                  {}
                   <div className="aspect-[4/3] bg-[rgb(var(--color-bg-tertiary))] relative overflow-hidden">
                     {item.thumbnail ? (
                       <img
@@ -627,7 +627,7 @@ export default function ShopPage() {
                       </div>
                     )}
 
-                    {/* Out of Stock Overlay */}
+                    {}
                     {isOutOfStock && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <div className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-lg transform -rotate-12 shadow-lg">
@@ -636,7 +636,7 @@ export default function ShopPage() {
                       </div>
                     )}
 
-                    {/* Disabled/Unavailable Overlay */}
+                    {}
                     {isDisabled && !isOutOfStock && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <div className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold text-lg transform -rotate-12 shadow-lg">
@@ -645,7 +645,7 @@ export default function ShopPage() {
                       </div>
                     )}
 
-                    {/* Stock Badge */}
+                    {}
                     {!isOutOfStock && item.stock !== null && item.stock !== -1 && (
                       <div className={`absolute top-3 right-3 px-2 py-1 rounded-lg text-xs font-semibold ${
                         item.stock <= 5 ? 'bg-orange-500/90 text-white' : 
@@ -655,7 +655,7 @@ export default function ShopPage() {
                       </div>
                     )}
 
-                    {/* Expiry Badge */}
+                    {}
                     {daysLeft !== null && daysLeft <= 7 && (
                       <div className="absolute top-3 left-3 px-2 py-1 bg-red-500/90 rounded-lg text-xs font-semibold text-white flex items-center gap-1">
                         <FiClock className="w-3 h-3" />
@@ -664,14 +664,14 @@ export default function ShopPage() {
                     )}
                   </div>
 
-                  {/* Content */}
+                  {}
                   <div className="p-4">
                     <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-1">{item.name}</h3>
                     {item.description && (
                       <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-3 line-clamp-2">{item.description}</p>
                     )}
 
-                    {/* Income Info */}
+                    {}
                     {item.income_amount && item.time_hours && (
                       <div className="text-xs text-green-500 mb-3 flex items-center gap-1.5">
                         <FiDollarSign className="w-3 h-3" />
@@ -680,7 +680,7 @@ export default function ShopPage() {
                       </div>
                     )}
 
-                    {/* Price & Buy */}
+                    {}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         {getEmojiDisplay(currencyEmoji)}
@@ -722,7 +722,7 @@ export default function ShopPage() {
                       </button>
                     </div>
 
-                    {/* Min Balance Warning */}
+                    {}
                     {session && item.required_balance && userBalance < item.required_balance && (
                       <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
                         <FiAlertCircle className="w-3 h-3" />
@@ -742,7 +742,7 @@ export default function ShopPage() {
             })}
           </div>
         )}
-        {/* Info Banner at the bottom */}
+        {}
         <div className="mt-10 text-center text-sm text-[rgb(var(--color-text-tertiary))] bg-[rgb(var(--color-bg-secondary))]/50 border border-[rgb(var(--color-border))] rounded-2xl p-4 backdrop-blur-sm">
           <p className="font-semibold text-[rgb(var(--color-text-primary))]">Omeglee Community Casino Economy</p>
           <p className="mt-1">Use redeem codes in Discord to claim your purchases</p>

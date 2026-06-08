@@ -1749,3 +1749,37 @@ model VoiceAutomationAuditLog {
   @@index([guild_id, user_id])
   @@map("vc_automation_audit_logs")
 }
+
+// =====================================
+// ANTI-NUKE SYSTEM MODELS
+// =====================================
+
+model AntiNukeWhitelist {
+  id          String   @id @default(uuid())
+  guild_id    String
+  user_id     String
+  permissions Json     @default("{}")
+  added_by    String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@unique([guild_id, user_id])
+  @@index([guild_id])
+  @@map("antinuke_whitelist")
+}
+
+model AntiNukeLog {
+  id           String   @id @default(uuid())
+  guild_id     String
+  executor_id  String
+  target_id    String?
+  event_type   String
+  action_taken String
+  extra_data   Json?
+  timestamp    DateTime @default(now())
+
+  @@index([guild_id, timestamp])
+  @@index([guild_id, event_type])
+  @@index([guild_id, executor_id])
+  @@map("antinuke_logs")
+}

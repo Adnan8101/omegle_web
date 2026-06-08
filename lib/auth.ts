@@ -66,14 +66,14 @@ export const authOptions: NextAuthOptions = {
             token.refreshToken = tokens.refresh_token ?? token.refreshToken;
           }
         } catch (error) {
-          // Token refresh failed, user will need to re-authenticate
+          
         }
       }
 
       const nowMs = Date.now();
       if (!token.accessCheckedAt || nowMs - token.accessCheckedAt > ACCESS_CHECK_INTERVAL) {
         try {
-          // Fetch casino roles from database (with error handling)
+          
           let casinoRoleIds: string[] = [];
           const shouldSkipDbFetch = casinoRoleDbFailedAt > 0 && (nowMs - casinoRoleDbFailedAt < CASINO_ROLE_DB_RETRY_MS);
           try {
@@ -88,10 +88,10 @@ export const authOptions: NextAuthOptions = {
               casinoRoleIds = ["1470329047262167040"];
             }
           } catch (dbError) {
-            // Database error should not break authentication
+            
             casinoRoleDbFailedAt = nowMs;
             console.error('[Auth] Failed to fetch casino roles from DB (non-fatal):', dbError);
-            // Use hardcoded fallback
+            
             casinoRoleIds = ["1470329047262167040"];
           }
           
@@ -120,7 +120,7 @@ export const authOptions: NextAuthOptions = {
           token.accessCheckedAt = nowMs;
         } catch (error) {
           console.error('[Auth] Permission check failed:', error);
-          // Keep existing permissions if we have them, otherwise use defaults
+          
           if (!token.permissions || !token.accessCheckedAt) {
             token.permissions = {
               hasFullAccess: false,
@@ -135,7 +135,7 @@ export const authOptions: NextAuthOptions = {
             };
             token.hasAccess = false;
           }
-          // Still update the timestamp to avoid infinite retries
+          
           token.accessCheckedAt = nowMs;
         }
       }
@@ -148,7 +148,7 @@ export const authOptions: NextAuthOptions = {
       }
       session.user.id = token.discordId;
       session.accessToken = token.accessToken;
-      session.user.hasAccess = token.hasAccess ?? false; // For backward compatibility
+      session.user.hasAccess = token.hasAccess ?? false; 
       session.user.permissions = token.permissions || {
         hasFullAccess: false,
         hasModeratorAccess: false,

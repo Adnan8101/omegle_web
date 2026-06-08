@@ -25,7 +25,6 @@ function buildProfile(member: any, fallbackUserId: string, snapshot?: any) {
   };
 }
 
-// GET subscriptions - admin can see all, users can see their own
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -43,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     const isAdmin = hasAdminAccess(session);
 
-    // Non-admins can only see their own subscriptions.
+    
     const effectiveUserId = !isAdmin ? (userId || session.user.id) : userId;
     if (!isAdmin && effectiveUserId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -174,7 +173,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST to revoke/cancel subscription (admin only) — removes role and DMs user with reason
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -214,7 +212,7 @@ export async function POST(request: NextRequest) {
       include: { plan: true }
     });
 
-    // Remove Discord role & send DM using linked_role_id and guild_id
+    
     const roleId = subscription?.plan?.linked_role_id;
     const userId = subscription?.user_id;
     const guildId = subscription?.guild_id;
@@ -256,7 +254,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PATCH to manually update subscription status or expiry (admin only)
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

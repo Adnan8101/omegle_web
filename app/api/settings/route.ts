@@ -67,7 +67,7 @@ export async function GET() {
     
     let settings = await ApplicationSettings.findOne();
     
-    // Create default settings if none exist
+    
     if (!settings) {
       settings = await ApplicationSettings.create({
         isOpen: true,

@@ -75,7 +75,7 @@ export default function EditItemPage() {
     return Array.from(unique);
   };
 
-  // Function to convert Discord emoji to CDN URL
+  
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -163,7 +163,7 @@ export default function EditItemPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Compress image before upload
+  
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
@@ -321,7 +321,7 @@ export default function EditItemPage() {
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
+        {}
         <div className="flex items-center gap-4 mb-6 sm:mb-8">
           <Link
             href="/admin/casino"
@@ -339,7 +339,7 @@ export default function EditItemPage() {
           </div>
         </div>
 
-        {/* Success Message */}
+        {}
         {success && (
           <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-2xl flex items-center gap-3">
             <FiCheck className="w-5 h-5 text-green-500" />
@@ -347,7 +347,7 @@ export default function EditItemPage() {
           </div>
         )}
 
-        {/* Error Message */}
+        {}
         {error && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
             <FiAlertCircle className="w-5 h-5 text-red-500" />
@@ -356,7 +356,7 @@ export default function EditItemPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
+          {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
               <FiPackage className="w-5 h-5 text-[rgb(var(--color-accent))]" />
@@ -422,14 +422,14 @@ export default function EditItemPage() {
             </div>
           </div>
 
-          {/* Thumbnail */}
+          {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
               <FiImage className="w-5 h-5 text-[rgb(var(--color-accent))]" />
               Thumbnail
             </h2>
             <div className="space-y-4">
-              {/* Upload Section */}
+              {}
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Upload Image
@@ -465,14 +465,14 @@ export default function EditItemPage() {
                 </p>
               </div>
 
-              {/* OR Divider */}
+              {}
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]"></div>
                 <span className="text-xs text-[rgb(var(--color-text-tertiary))]">OR</span>
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]"></div>
               </div>
 
-              {/* URL Input */}
+              {}
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Image URL
@@ -487,7 +487,7 @@ export default function EditItemPage() {
                 />
               </div>
 
-              {/* Preview */}
+              {}
               {formData.thumbnail && (
                 <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
                   <div className="flex items-start justify-between mb-2">
@@ -520,7 +520,7 @@ export default function EditItemPage() {
             </div>
           </div>
 
-          {/* Income Settings */}
+          {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               💰 Income Settings
@@ -560,7 +560,7 @@ export default function EditItemPage() {
             </div>
           </div>
 
-          {/* Role Settings */}
+          {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               🎭 Role Settings
@@ -608,7 +608,7 @@ export default function EditItemPage() {
             </div>
           </div>
 
-          {/* Advanced */}
+          {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               ⚙️ Advanced Settings
@@ -658,7 +658,7 @@ export default function EditItemPage() {
             </div>
           </div>
 
-          {/* Submit */}
+          {}
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
               href="/admin/casino"

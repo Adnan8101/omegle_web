@@ -90,21 +90,21 @@ export default function InvitesPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
-  // Search state
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [searching, setSearching] = useState(false);
   
-  // Filter state
+  
   const [sortBy, setSortBy] = useState('coins_earned');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'left'>('all');
   
-  // Settings panel
+  
   const [showSettings, setShowSettings] = useState(false);
 
-  // Check permissions
+  
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin/signin');
@@ -117,7 +117,7 @@ export default function InvitesPage() {
     }
   }, [status, session, router]);
 
-  // Fetch invites data
+  
   const fetchInvites = useCallback(async () => {
     try {
       const params = new URLSearchParams({
@@ -151,7 +151,7 @@ export default function InvitesPage() {
     }
   }, [status, fetchInvites]);
 
-  // Search users
+  
   useEffect(() => {
     const searchUsers = async () => {
       if (searchQuery.length < 2) {
@@ -229,7 +229,7 @@ export default function InvitesPage() {
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[rgb(var(--color-text-primary))] mb-2 tracking-tight flex items-center gap-3">
@@ -260,7 +260,7 @@ export default function InvitesPage() {
           </div>
         </div>
 
-        {/* Message Alert */}
+        {}
         {message && (
           <div
             className={`mb-6 p-4 rounded-2xl flex items-center gap-3 ${
@@ -278,7 +278,7 @@ export default function InvitesPage() {
           </div>
         )}
 
-        {/* Settings Panel */}
+        {}
         {showSettings && (
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-[var(--shadow-md)]">
             <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-6 flex items-center gap-2">
@@ -337,7 +337,7 @@ export default function InvitesPage() {
           </div>
         )}
 
-        {/* Search Bar */}
+        {}
         <div className="relative mb-6">
           <div className="relative">
             <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[rgb(var(--color-text-tertiary))]" />
@@ -356,7 +356,7 @@ export default function InvitesPage() {
             )}
           </div>
           
-          {/* Search Results Dropdown */}
+          {}
           {showSearch && searchResults.length > 0 && (
             <div className="absolute z-50 w-full mt-2 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl shadow-xl overflow-hidden">
               {searchResults.map((result) => (
@@ -395,7 +395,7 @@ export default function InvitesPage() {
           )}
         </div>
 
-        {/* Overview Stats */}
+        {}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="glass-blue rounded-2xl p-4 sm:p-5 border border-[rgb(var(--color-border))] hover:border-blue-500/50 apple-transition">
             <div className="flex items-center gap-3 mb-3">
@@ -448,7 +448,7 @@ export default function InvitesPage() {
           </div>
         </div>
 
-        {/* Leaderboard */}
+        {}
         <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-[var(--shadow-md)]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
@@ -483,7 +483,7 @@ export default function InvitesPage() {
                   href={`/admin/casino/economy/invites/${inviter.user_id}`}
                   className="flex items-center gap-4 p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-2xl hover:bg-[rgb(var(--color-hover))] apple-transition group"
                 >
-                  {/* Rank */}
+                  {}
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
                     idx === 0 ? 'bg-yellow-500/20 text-yellow-500' :
                     idx === 1 ? 'bg-gray-400/20 text-gray-400' :
@@ -493,7 +493,7 @@ export default function InvitesPage() {
                     {idx + 1 + (pagination.page - 1) * pagination.limit}
                   </div>
                   
-                  {/* Avatar */}
+                  {}
                   {inviter.avatar ? (
                     <Image
                       src={inviter.avatar}
@@ -508,7 +508,7 @@ export default function InvitesPage() {
                     </div>
                   )}
                   
-                  {/* User Info */}
+                  {}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-[rgb(var(--color-text-primary))] truncate">{inviter.username}</p>
                     <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
@@ -516,13 +516,13 @@ export default function InvitesPage() {
                     </p>
                   </div>
                   
-                  {/* Stats */}
+                  {}
                   <div className="text-right">
                     <p className="font-bold text-[rgb(var(--color-text-primary))]">{inviter.coins_earned.toLocaleString()} 🪙</p>
                     <p className="text-xs text-[rgb(var(--color-text-tertiary))]">earned</p>
                   </div>
                   
-                  {/* Arrow */}
+                  {}
                   <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-purple-500 apple-transition" />
                 </Link>
               ))
@@ -534,7 +534,7 @@ export default function InvitesPage() {
             )}
           </div>
           
-          {/* Pagination */}
+          {}
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between mt-6 pt-6 border-t border-[rgb(var(--color-border))]">
               <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
@@ -560,7 +560,7 @@ export default function InvitesPage() {
           )}
         </div>
 
-        {/* Recent Activity */}
+        {}
         <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] shadow-[var(--shadow-md)]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
@@ -609,7 +609,7 @@ export default function InvitesPage() {
                   key={invite.id}
                   className="flex items-center gap-4 p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-2xl"
                 >
-                  {/* Invited User Avatar */}
+                  {}
                   <div className="relative">
                     {invite.invited_avatar ? (
                       <Image
@@ -629,7 +629,7 @@ export default function InvitesPage() {
                     }`}></div>
                   </div>
                   
-                  {/* Info */}
+                  {}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-[rgb(var(--color-text-primary))] truncate">
                       {invite.invited_username}
@@ -639,7 +639,7 @@ export default function InvitesPage() {
                     </p>
                   </div>
                   
-                  {/* Code & Status */}
+                  {}
                   <div className="text-right">
                     <code className="text-xs bg-[rgb(var(--color-bg-secondary))] px-2 py-1 rounded">{invite.invite_code}</code>
                     <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1 flex items-center justify-end gap-1">
@@ -648,7 +648,7 @@ export default function InvitesPage() {
                     </p>
                   </div>
                   
-                  {/* Status Badge */}
+                  {}
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
                       invite.active

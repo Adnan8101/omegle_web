@@ -28,17 +28,17 @@ export async function GET(
       );
     }
 
-    // Try cached user first (faster, includes proper avatar URL)
+    
     const cachedUser = await getUserDisplay(userId, 256);
     if (cachedUser && cachedUser.inGuild) {
       return NextResponse.json(cachedUser);
     }
 
-    // Fallback to Discord API for non-cached or non-guild members
+    
     const member = await getDiscordUser(userId);
 
     if (!member) {
-      // Return cached data if available, even if not in guild
+      
       return NextResponse.json(cachedUser);
     }
 

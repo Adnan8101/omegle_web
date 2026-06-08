@@ -20,7 +20,7 @@ export default function EconomyLeaderboardPage() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // Function to convert Discord emoji to CDN URL
+  
   const getEmojiDisplay = (emoji: string, size: string = 'w-6 h-6') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -48,10 +48,10 @@ export default function EconomyLeaderboardPage() {
   useEffect(() => {
     fetchLeaderboard();
 
-    // Auto-refresh every 30 minutes
+    
     const interval = setInterval(() => {
       fetchLeaderboard();
-    }, 30 * 60 * 1000); // 30 minutes in milliseconds
+    }, 30 * 60 * 1000); 
 
     return () => clearInterval(interval);
   }, []);
@@ -113,7 +113,7 @@ export default function EconomyLeaderboardPage() {
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <Link
@@ -143,7 +143,7 @@ export default function EconomyLeaderboardPage() {
           </button>
         </div>
 
-        {/* Leaderboard */}
+        {}
         {loading && entries.length === 0 ? (
           <div className="space-y-3">
             {[...Array(20)].map((_, i) => (
@@ -174,12 +174,12 @@ export default function EconomyLeaderboardPage() {
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  {/* Rank Badge */}
+                  {}
                   <div className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br ${getRankColor(entry.rank)} flex items-center justify-center font-bold text-white shadow-lg`}>
                     <span className="text-lg sm:text-xl">{getRankBadge(entry.rank)}</span>
                   </div>
 
-                  {/* Avatar */}
+                  {}
                   <div className="flex-shrink-0">
                     <img
                       src={entry.avatar || `https://cdn.discordapp.com/embed/avatars/${Math.floor(Math.random() * 6)}.png`}
@@ -188,7 +188,7 @@ export default function EconomyLeaderboardPage() {
                     />
                   </div>
 
-                  {/* User Info */}
+                  {}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-base sm:text-lg text-[rgb(var(--color-text-primary))] truncate">
                       {entry.username}
@@ -198,7 +198,7 @@ export default function EconomyLeaderboardPage() {
                     </p>
                   </div>
 
-                  {/* Points */}
+                  {}
                   <div className="flex-shrink-0 text-right">
                     <div className="flex items-center gap-2 justify-end mb-1">
                       {getEmojiDisplay(currencyEmoji, 'w-5 h-5')}
@@ -216,7 +216,7 @@ export default function EconomyLeaderboardPage() {
           </div>
         )}
 
-        {/* Footer Note */}
+        {}
         <div className="mt-8 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
           <p className="text-sm text-[rgb(var(--color-text-secondary))] text-center">
             💡 Leaderboard automatically refreshes every 30 minutes to show the latest rankings

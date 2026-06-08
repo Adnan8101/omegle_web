@@ -6,7 +6,6 @@ import { getDiscordUser, getDiscordUserAvatar } from '@/lib/discord';
 
 const GUILD_ID = "1507458872225566811";
 
-// GET - Search inviters by username or ID
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check permissions - Full Access only (Server Admin/Owner)
+    
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess) {
       return NextResponse.json({ error: 'Insufficient permissions - Admin only' }, { status: 403 });
@@ -28,14 +27,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ results: [] });
     }
 
-    // Get all inviters (users with invite stats)
+    
     const stats = await prismaBot.economyInviteStats.findMany({
       where: { guild_id: GUILD_ID },
       orderBy: { total_invites: 'desc' },
-      take: 100 // Limit for performance
+      take: 100 
     });
 
-    // Search by ID first (if query looks like a user ID)
+    
     const isIdSearch = /^\d{17,19}$/.test(query);
     
     if (isIdSearch) {
@@ -54,7 +53,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Fetch Discord info and filter by username
+    
     const searchResults = await Promise.all(
       stats.map(async (stat) => {
         const discordUser = await getDiscordUser(stat.user_id);
@@ -71,14 +70,14 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    // Filter and sort by relevance
+    
     const filteredResults = searchResults
       .filter(r => r.match)
       .sort((a, b) => {
-        // Exact match first
+        
         if (a.username.toLowerCase() === query.toLowerCase()) return -1;
         if (b.username.toLowerCase() === query.toLowerCase()) return 1;
-        // Then by invites
+        
         return b.total_invites - a.total_invites;
       })
       .slice(0, 10);

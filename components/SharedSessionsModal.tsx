@@ -100,7 +100,7 @@ export default function SharedSessionsModal({
           onClick={(e) => e.stopPropagation()}
         >
         
-        {/* Header - Compact */}
+        {}
         <div className="p-5 border-b border-[rgb(var(--color-border))] flex-shrink-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -123,7 +123,7 @@ export default function SharedSessionsModal({
           </div>
         </div>
 
-        {/* Content - Scrollable */}
+        {}
         <div className="flex-1 overflow-y-auto p-5">
           {sessions.length > 0 ? (
             <div className="space-y-3">
@@ -133,7 +133,7 @@ export default function SharedSessionsModal({
                   onClick={() => onSessionClick(session.session_id)}
                   className="bg-[rgb(var(--color-bg-tertiary))] rounded-xl p-4 border border-[rgb(var(--color-border))] hover:border-blue-500/50 transition-all cursor-pointer group"
                 >
-                  {/* Channel Header */}
+                  {}
                   <div className="flex items-center justify-between mb-3 pb-3 border-b border-[rgb(var(--color-border))]">
                     <div className="flex items-center gap-2">
                       <Hash className="w-4 h-4 text-blue-400" />
@@ -147,9 +147,9 @@ export default function SharedSessionsModal({
                     </div>
                   </div>
 
-                  {/* Time Breakdown - Horizontal Layout */}
+                  {}
                   <div className="grid grid-cols-3 gap-3">
-                    {/* Overlap Duration - Highlighted */}
+                    {}
                     <div className="bg-gradient-to-br from-blue-500/15 to-blue-600/10 border border-blue-500/30 rounded-lg p-3">
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <Clock className="w-3.5 h-3.5 text-blue-400" />
@@ -169,7 +169,7 @@ export default function SharedSessionsModal({
                       </div>
                     </div>
 
-                    {/* Your Duration */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-lg p-3">
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <Clock className="w-3.5 h-3.5 text-green-400" />
@@ -184,7 +184,7 @@ export default function SharedSessionsModal({
                       </div>
                     </div>
 
-                    {/* Their Duration */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-lg p-3">
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <Clock className="w-3.5 h-3.5 text-purple-400" />
@@ -200,7 +200,7 @@ export default function SharedSessionsModal({
                     </div>
                   </div>
 
-                  {/* Footer hint */}
+                  {}
                   <div className="mt-3 pt-2 border-t border-[rgb(var(--color-border))] flex items-center justify-center text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                     <span>Click for full session details</span>
                     <ArrowRight className="w-3.5 h-3.5 ml-1" />

@@ -5,7 +5,6 @@ import { prismaBot } from '@/lib/prismaBot';
 
 const GUILD_ID = "1507458872225566811";
 
-// GET - Fetch blacklisted items
 export async function GET(request: NextRequest) {
   console.log('=== BLACKLIST API START ===');
   
@@ -29,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     console.log('Fetching Discord channels and roles...');
 
-    // Fetch channels from Discord
+    
     const channelsResponse = await fetch(
       `https://discord.com/api/v10/guilds/${GUILD_ID}/channels`,
       {
@@ -41,7 +40,7 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // Fetch roles from Discord
+    
     const rolesResponse = await fetch(
       `https://discord.com/api/v10/guilds/${GUILD_ID}/roles`,
       {
@@ -62,7 +61,7 @@ export async function GET(request: NextRequest) {
     console.log('Channels fetched:', channels.length);
     console.log('Roles fetched:', roles.length);
 
-    // Get blacklisted items from database
+    
     const [blacklistedChannels, blacklistedCategories, blacklistedRoles, blacklistedMembers] = await Promise.all([
       prismaBot.economyBlacklistChannel.findMany({ where: { guild_id: GUILD_ID } }),
       prismaBot.economyBlacklistCategory.findMany({ where: { guild_id: GUILD_ID } }),
@@ -75,7 +74,7 @@ export async function GET(request: NextRequest) {
     console.log('Blacklisted roles:', blacklistedRoles.length);
     console.log('Blacklisted members:', blacklistedMembers.length);
 
-    // Map to include names
+    
     const categories = channels
       .filter((ch: any) => ch.type === 4)
       .map((ch: any) => ({ id: ch.id, name: ch.name, position: ch.position }))
@@ -116,7 +115,7 @@ export async function GET(request: NextRequest) {
     console.log('Available voice channels:', voiceChannels.length);
     console.log('Available roles:', formattedRoles.length);
 
-    // Map blacklisted items with names
+    
     const mappedBlacklistedCategories = blacklistedCategories.map(c => {
       const cat = categories.find((cat: any) => cat.id === c.category_id);
       console.log(`Category ${c.category_id} -> ${cat?.name || 'NOT FOUND'}`);
@@ -148,7 +147,7 @@ export async function GET(request: NextRequest) {
 
     const mappedBlacklistedMembers = await Promise.all(
       blacklistedMembers.map(async (m) => {
-        // Try to fetch member data from Discord
+        
         try {
           const memberRes = await fetch(
             `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${m.user_id}`,
@@ -176,7 +175,7 @@ export async function GET(request: NextRequest) {
           console.log(`Could not fetch member ${m.user_id}:`, err);
         }
 
-        // Fallback to stored name
+        
         return {
           id: m.user_id,
           name: m.user_name || `User ${m.user_id}`,
@@ -209,7 +208,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Add item to blacklist
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -311,7 +309,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE - Remove item from blacklist
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

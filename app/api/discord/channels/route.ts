@@ -4,10 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { getDiscordChannel } from '@/lib/discord';
 import { getErrorMessage } from '@/lib/constants';
 
-/**
- * Batch resolve Discord channels
- * POST body: { channelIds: string[] }
- */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

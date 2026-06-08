@@ -18,10 +18,10 @@ export async function GET(
 
     const guildId = GUILD_ID;
 
-    // =============================================
-    // VC Mutuals - computed directly from voice_logs
-    // Find users who overlapped in the same voice channel
-    // =============================================
+    
+    
+    
+    
     const vcMutuals = await queryBotDb(`
       SELECT 
         vl2.user_id as target_user_id,
@@ -60,11 +60,11 @@ export async function GET(
       LIMIT 50
     `, [userId, guildId]).catch(() => []);
 
-    // =============================================
-    // Chat Mutuals - computed from chat_logs
-    // Find users who this person replied to, mentioned (@),
-    // and who chatted in the same channel around the same time
-    // =============================================
+    
+    
+    
+    
+    
     const chatMutuals = await queryBotDb(`
       WITH direct_replies AS (
         SELECT 
@@ -118,9 +118,9 @@ export async function GET(
       LIMIT 50
     `, [userId, guildId]).catch(() => []);
 
-    // =============================================
-    // Shared Channels - with channel cache JOIN
-    // =============================================
+    
+    
+    
     const sharedChannels = await queryBotDb(`
       SELECT 
         vl2.user_id as other_user_id,
@@ -160,15 +160,15 @@ export async function GET(
       LIMIT 100
     `, [userId, guildId]).catch(() => []);
 
-    // =============================================
-    // Resolve all user IDs from cache (server-side)
-    // =============================================
+    
+    
+    
     const allUserIds = new Set<string>();
     (vcMutuals || []).forEach((m: any) => allUserIds.add(m.target_user_id));
     (chatMutuals || []).forEach((m: any) => allUserIds.add(m.target_user_id));
     (sharedChannels || []).forEach((m: any) => allUserIds.add(m.other_user_id));
 
-    // Use getUsersDisplay for proper avatar URLs
+    
     const resolvedUsers = allUserIds.size > 0 
       ? await getUsersDisplay([...allUserIds], 128)
       : {};

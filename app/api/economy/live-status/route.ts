@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const searchUserId = searchParams.get('userId');
 
-    // Get economy config
+    
     const configResult = await queryBotDb(`
       SELECT * FROM economy_config WHERE guild_id = $1
     `, [GUILD_ID]);
@@ -29,12 +29,12 @@ export async function GET(request: NextRequest) {
 
     const today = new Date().toISOString().split('T')[0];
 
-    // If searching for specific user
+    
     if (searchUserId) {
       return await getUserHistory(searchUserId, config, today);
     }
 
-    // Get active VC sessions with user details
+    
     const activeVcSessions = await queryBotDb(`
       SELECT 
         vt.user_id,
@@ -55,10 +55,10 @@ export async function GET(request: NextRequest) {
       ORDER BY vt.joined_at ASC
     `, [GUILD_ID]);
 
-    // Get VC progress for active users
+    
     const activeUserIds = activeVcSessions.map((s: any) => s.user_id);
     
-    // Get member counts per channel
+    
     const channelMemberCounts = await queryBotDb(`
       SELECT channel_id, COUNT(DISTINCT user_id) as member_count
       FROM voice_tracking
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       `, [GUILD_ID, activeUserIds]);
     }
 
-    // Get category rewards for advanced mode
+    
     let categoryRewards: any[] = [];
     if (config?.advanced_mode) {
       categoryRewards = await queryBotDb(`
@@ -89,14 +89,14 @@ export async function GET(request: NextRequest) {
       `, [GUILD_ID]);
     }
 
-    // Get blacklisted channels
+    
     const blacklistedChannels = await queryBotDb(`
       SELECT channel_id FROM economy_blacklist_channels
       WHERE guild_id = $1 AND channel_type = 'voice'
     `, [GUILD_ID]);
     const blacklistedChannelIds = new Set(blacklistedChannels.map((c: any) => c.channel_id));
 
-    // Get recent VC awards (live - last 1 hour)
+    
     const recentVcAwards = await queryBotDb(`
       SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
       FROM economy_point_logs epl
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
       LIMIT 50
     `, [GUILD_ID]);
 
-    // Get recent message awards (live - last 1 hour)
+    
     const recentMsgAwards = await queryBotDb(`
       SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
       FROM economy_point_logs epl
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
       LIMIT 50
     `, [GUILD_ID]);
 
-    // Get message progress for users actively earning
+    
     const activeMsgProgress = await queryBotDb(`
       SELECT emp.user_id, emp.category_id, emp.accumulated_msgs,
              duc.username, duc.display_name, duc.avatar_url
@@ -139,13 +139,13 @@ export async function GET(request: NextRequest) {
       categoryRewardMap.set(reward.category_id, reward);
     }
 
-    // Get category IDs for active users (to exclude only their active category)
+    
     const activeCategoryMap = new Map<string, string>();
     for (const sess of activeVcSessions) {
       activeCategoryMap.set(sess.user_id, sess.category_id);
     }
 
-    // Staged VC progress - show per-category, exclude only if user is active in THAT category
+    
     const stagedVcProgress = await queryBotDb(`
       SELECT evp.user_id,
              evp.category_id,
@@ -161,13 +161,13 @@ export async function GET(request: NextRequest) {
       LIMIT 200
     `, [GUILD_ID]);
 
-    // Filter out entries where user is active in that specific category
+    
     const filteredStaged = stagedVcProgress.filter((row: any) => {
       const activeCategory = activeCategoryMap.get(row.user_id);
       return !activeCategory || activeCategory !== row.category_id;
     });
 
-    // Get today's stats
+    
     const todayStats = await queryBotDb(`
       SELECT 
         COUNT(DISTINCT CASE WHEN source = 'voice' THEN user_id END) as vc_users,
@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
       WHERE guild_id = $1 AND created_at >= CURRENT_DATE AND amount > 0
     `, [GUILD_ID]);
 
-    // Format VC users with detailed earning info
+    
     const vcUsers = activeVcSessions.map((session: any) => {
       const categoryId = session.category_id || 'global';
       const userProg = vcProgressMap.get(`${session.user_id}:${categoryId}`);
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
       const catReward = categoryRewardMap.get(categoryId);
       const isBlacklisted = blacklistedChannelIds.has(session.channel_id);
       
-      // Get settings based on mode
+      
       const isAdvanced = config?.advanced_mode && catReward;
       const minutesPerPoint = isAdvanced ? catReward.vc_minutes_per_point : (config?.minutes_per_point || 5);
       const ozyAmount = isAdvanced ? (catReward.vc_ozy_amount || 1) : (config?.vc_ozy_amount || 1);
@@ -198,15 +198,15 @@ export async function GET(request: NextRequest) {
       const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
       const thresholdSeconds = minutesPerPoint * 60;
       
-      // Check member count
+      
       const currentMemberCount = memberCountMap.get(session.channel_id) || 1;
-      // voice_tracking table stores non-bot users; avoid false disabled status when bots are counted
+      
       const hasEnoughMembers = countBots ? true : currentMemberCount >= minMembers;
       
-      // Calculate real-time cycle progress
+      
       const dbProgress = userProg?.accumulated_seconds || 0;
       
-      // If currently earning, add estimated time since last sync (max 10s)
+      
       let liveProgress = dbProgress;
       if (hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false)) {
         const estimatedElapsed = Math.min(sessionDuration % 10, 10);
@@ -225,13 +225,13 @@ export async function GET(request: NextRequest) {
         duration: sessionDuration,
         muted: session.was_muted,
         deafened: session.was_deafened,
-        // Earning details
+        
         isEarning: !isBlacklisted && vcEnabled && (config?.enabled ?? false) && hasEnoughMembers,
         isBlacklisted,
         memberCount: currentMemberCount,
         minMembers: minMembers,
         trackingDisabled: !hasEnoughMembers && !countBots,
-        totalProgress: liveProgress, // Real-time cycle progress
+        totalProgress: liveProgress, 
         progress: progressPercent,
         threshold: thresholdSeconds,
         nextIn: thresholdSeconds - liveProgress,
@@ -241,7 +241,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Format message activity
+    
     const msgActivity = activeMsgProgress.map((p: any) => {
       const catReward = categoryRewardMap.get(p.category_id);
       const useCategorySettings = config?.advanced_mode && p.category_id !== 'global' && !!catReward;
@@ -337,33 +337,32 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Get user history
 async function getUserHistory(userId: string, config: any, today: string) {
-  // Get user info
+  
   const userInfo = await queryBotDb(`
     SELECT user_id, username, display_name, avatar_url, in_guild
     FROM discord_user_cache WHERE user_id = $1
   `, [userId]);
 
-  // Get user economy data
+  
   const economyUser = await queryBotDb(`
     SELECT total_points, total_vc_minutes, total_messages
     FROM economy_users WHERE guild_id = $1 AND user_id = $2
   `, [GUILD_ID, userId]);
 
-  // Get VC progress
+  
   const vcProgress = await queryBotDb(`
     SELECT category_id, accumulated_seconds
     FROM economy_vc_progress WHERE guild_id = $1 AND user_id = $2
   `, [GUILD_ID, userId]);
 
-  // Get message progress
+  
   const msgProgress = await queryBotDb(`
     SELECT accumulated_msgs
     FROM economy_message_progress WHERE guild_id = $1 AND user_id = $2
   `, [GUILD_ID, userId]);
 
-  // Get recent earnings history
+  
   const recentHistory = await queryBotDb(`
     SELECT amount, reason, source, created_at
     FROM economy_point_logs
@@ -372,7 +371,7 @@ async function getUserHistory(userId: string, config: any, today: string) {
     LIMIT 100
   `, [GUILD_ID, userId]);
 
-  // Check if user is currently in VC
+  
   const activeVc = await queryBotDb(`
     SELECT vt.channel_id, vt.joined_at, dcc.name as channel_name
     FROM voice_tracking vt

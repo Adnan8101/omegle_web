@@ -24,7 +24,6 @@ async function assertAdminAccess() {
   return null;
 }
 
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -48,14 +47,14 @@ export async function GET(
 
     const userId = application.discordUserId;
     
-    // Fetch fresh user data from bot database
+    
     let userProfile: any = application.userProfile;
     let userStats = application.userStats;
     let modLogs = application.modLogs;
     
     if (userId) {
       try {
-        // Fetch Discord user from cache first
+        
         const usersMap = await getUsersDisplay([userId], 128);
         const userDisplay = usersMap.get(userId);
         
@@ -68,7 +67,7 @@ export async function GET(
             tag: `@${userDisplay.username}`,
           };
         } else {
-          // Fallback to default if not in cache
+          
           userProfile = {
             username: 'Unknown User',
             display_name: 'Unknown User',
@@ -78,7 +77,7 @@ export async function GET(
           };
         }
         
-        // Fetch user VC and chat stats
+        
         const statsResult = await queryBotDb(`
           SELECT 
             (SELECT COALESCE(SUM(duration_seconds), 0) FROM voice_logs WHERE user_id = $1 AND guild_id = $2 AND left_at IS NOT NULL) as vc_duration,
@@ -90,7 +89,7 @@ export async function GET(
           userStats = statsResult[0];
         }
         
-        // Fetch moderation logs with moderator names and avatars
+        
         const modLogsResult = await queryBotDb(`
           SELECT 
             mc.case_number,
@@ -106,17 +105,17 @@ export async function GET(
           LIMIT 50
         `, [userId, GUILD_ID]);
         
-        // Collect moderator IDs and fetch from cache
+        
         const modIds = [...new Set(
           (modLogsResult || [])
             .filter((log: any) => log.moderator_id)
             .map((log: any) => log.moderator_id)
         )].slice(0, 20) as string[];
 
-        // Fetch moderators from cache
+        
         const modsMap = await getUsersDisplay(modIds, 64);
         
-        // Build modlogs with fetched moderator data
+        
         modLogs = (modLogsResult || []).map((log: any) => {
           const modUser = modsMap.get(log.moderator_id);
           
@@ -129,11 +128,11 @@ export async function GET(
         });
       } catch (err) {
         console.error('Error fetching user data:', err);
-        // Keep existing data if fetch fails
+        
       }
     }
     
-    // Return application with fresh data
+    
     const appData = application.toObject();
     appData.userProfile = userProfile;
     appData.userStats = userStats;

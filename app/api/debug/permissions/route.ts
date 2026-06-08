@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Try to fetch guild member data
+    
     const GUILD_ID = "1507458872225566811";
     const response = await fetch(
       `https://discord.com/api/v10/users/@me/guilds/${GUILD_ID}/member`,

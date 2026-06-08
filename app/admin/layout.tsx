@@ -35,7 +35,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         } else if (status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess) {
             router.replace('/admin');
         } else if (status === 'authenticated' && session?.user?.permissions?.hasAnyAccess) {
-            // If user only has casino access, redirect from non-casino pages to casino
+            
             const perms = session?.user?.permissions;
             const hasCasinoOnly = perms?.hasCasinoAccess && !perms?.hasFullAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess;
             
@@ -51,11 +51,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     const handleLogout = async () => {
         try { localStorage.clear(); sessionStorage.clear(); } catch (e) { }
-        // Use redirect: true to ensure proper signout flow
+        
         await signOut({ callbackUrl: '/admin', redirect: true });
     };
 
-    // Single smooth loading state
+    
     if (!mounted || status === 'loading') {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -70,7 +70,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         );
     }
 
-    // Don't wrap the signin page with the sidebar
+    
     if (pathname === '/admin' || pathname === '/admin/signin') {
         return <>{children}</>;
     }
@@ -140,13 +140,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             icon: <FiDollarSign className="w-5 h-5" />,
             requiresFullAccess: false,
             requiresModeratorAccess: false,
-            requiresCasinoAccess: true, // Casino role or full access
+            requiresCasinoAccess: true, 
         },
         {
             name: 'Invite System',
             href: '/admin/casino/economy/invites',
             icon: <FiUserPlus className="w-5 h-5" />,
-            requiresFullAccess: true, // Admin only
+            requiresFullAccess: true, 
             requiresModeratorAccess: false,
             requiresCasinoAccess: false,
         },
@@ -187,7 +187,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             name: 'Mod Stats',
             href: '/admin/mods-stats',
             icon: <FiUsers className="w-5 h-5" />,
-            requiresFullAccess: true, // Admin only
+            requiresFullAccess: true, 
             requiresModeratorAccess: false,
             requiresCasinoAccess: false,
         },
@@ -196,7 +196,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             href: '/admin/vctranscript',
             icon: <FiMic className="w-5 h-5" />,
             requiresFullAccess: false,
-            requiresModeratorAccess: false, // Trail Mod can access
+            requiresModeratorAccess: false, 
             requiresCasinoAccess: false,
         },
         {
@@ -208,11 +208,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresCasinoAccess: false,
         },
         {
+            name: 'Anti-Nuke',
+            href: '/admin/antinuke',
+            icon: <FiAlertOctagon className="w-5 h-5" />,
+            requiresFullAccess: true,
+            requiresModeratorAccess: false,
+            requiresCasinoAccess: false,
+        },
+        {
             name: 'Chat Stats',
             href: '/admin/vctranscript/chatlogs',
             icon: <FiMessageSquare className="w-5 h-5" />,
             requiresFullAccess: false,
-            requiresModeratorAccess: false, // Trail Mod can access
+            requiresModeratorAccess: false, 
             requiresCasinoAccess: false,
         },
         {
@@ -220,35 +228,35 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             href: '/admin/server-stats',
             icon: <FiBarChart2 className="w-5 h-5" />,
             requiresFullAccess: false,
-            requiresModeratorAccess: true, // Moderator+ only (NOT Trail Mod)
+            requiresModeratorAccess: true, 
             requiresCasinoAccess: false,
         },
     ].filter(item => {
-        // Filter based on permissions
+        
         const perms = session?.user?.permissions;
         
-        // Full access sees everything
+        
         if (perms?.hasFullAccess) {
             return true;
         }
         
-        // Casino-only users should ONLY see casino section
+        
         const hasCasinoOnly = perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess;
         if (hasCasinoOnly) {
             return item.requiresCasinoAccess;
         }
         
-        // Casino access users can see casino items
+        
         if (item.requiresCasinoAccess && perms?.hasCasinoAccess) {
             return true;
         }
         
-        // Full access required items
+        
         if (item.requiresFullAccess) {
             return perms?.hasFullAccess;
         }
         
-        // Moderator access required items
+        
         if (item.requiresModeratorAccess) {
             return perms?.hasModeratorAccess || perms?.hasFullAccess;
         }
@@ -289,12 +297,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         if (href === '/admin/vc-automation') {
             return pathname.startsWith('/admin/vc-automation');
         }
+        if (href === '/admin/antinuke') {
+            return pathname.startsWith('/admin/antinuke');
+        }
         return pathname.startsWith(href);
     };
 
     return (
         <div className="min-h-screen w-full overflow-x-clip flex flex-col md:flex-row bg-[rgb(var(--color-bg-primary))] apple-transition">
-            {/* Mobile Header */}
+            {}
             <div className="md:hidden sticky top-0 z-50 bg-[rgb(var(--color-bg-secondary))]/80 backdrop-blur-xl border-b border-[rgb(var(--color-border))] px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className="relative w-8 h-8">
@@ -322,7 +333,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </button>
             </div>
 
-            {/* Sidebar */}
+            {}
             <aside className={`
         fixed md:static inset-0 z-40 md:z-auto
         w-full md:w-72 
@@ -333,7 +344,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         transform transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-                {/* Logo - Desktop Only */}
+                {}
                 <div className="hidden md:block p-6 lg:p-8 border-b border-[rgb(var(--color-border))]">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="relative w-10 h-10">
@@ -353,7 +364,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     </p>
                 </div>
 
-                {/* Mobile Logo */}
+                {}
                 <div className="md:hidden p-6 border-b border-[rgb(var(--color-border))]">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -383,7 +394,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     </div>
                 </div>
 
-                {/* Navigation */}
+                {}
                 <nav className="flex-1 p-4 md:p-6 space-y-2 overflow-y-auto">
                     {navItems.map((item) => (
                         <Link
@@ -401,7 +412,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     ))}
                 </nav>
 
-                {/* User Info & Bottom Actions */}
+                {}
                 <div className="p-4 md:p-6 border-t border-[rgb(var(--color-border))] space-y-2">
                     {session?.user?.name && (
                         <div className="px-4 py-3 mb-2 flex items-center justify-between">
@@ -440,7 +451,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </div>
             </aside>
 
-            {/* Overlay for mobile menu */}
+            {}
             {isMobileMenuOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 md:hidden transition-opacity duration-300"
@@ -448,7 +459,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 />
             )}
 
-            {/* Main Content */}
+            {}
             <main className="flex-1 min-w-0 w-full overflow-x-hidden overflow-y-auto bg-[rgb(var(--color-bg-primary))]">
                 {children}
             </main>

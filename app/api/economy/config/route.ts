@@ -5,7 +5,6 @@ import { prismaBot } from '@/lib/prismaBot';
 
 const GUILD_ID = "1507458872225566811";
 
-// GET - Fetch economy config
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,7 +13,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check permissions - require full access or casino access
+    
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest) {
       where: { guild_id: GUILD_ID }
     });
 
-    // Get category rewards if advanced mode
+    
     const categoryRewards = config?.advanced_mode 
       ? await prismaBot.economyCategoryReward.findMany({
           where: { guild_id: GUILD_ID },
@@ -58,7 +57,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PATCH - Update economy config
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -67,7 +65,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check permissions - require full access or casino access
+    
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });

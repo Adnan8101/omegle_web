@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
 
-// GET — stats overview for voice automation
 export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -27,7 +26,7 @@ export async function GET(request: NextRequest) {
             }),
         ]);
 
-        // Per-rule grant counts
+        
         const rules = await prismaBot.voiceAutomationRule.findMany({
             where: { guild_id: GUILD_ID },
             select: { id: true, name: true, reward_role_id: true, enabled: true, rolling_days: true, required_hours: true },

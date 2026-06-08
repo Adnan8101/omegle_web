@@ -6,7 +6,6 @@ import { getDiscordUser, getDiscordUserAvatar } from '@/lib/discord';
 
 const GUILD_ID = "1507458872225566811";
 
-// GET - Fetch all invites with stats and user info
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check permissions - Full Access only (Server Admin/Owner)
+    
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess) {
       return NextResponse.json({ error: 'Insufficient permissions - Admin only' }, { status: 403 });
@@ -26,20 +25,20 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const sortBy = searchParams.get('sortBy') || 'coins_earned';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
-    const status = searchParams.get('status'); // 'active', 'left', 'all'
+    const status = searchParams.get('status'); 
     const search = searchParams.get('search') || '';
 
-    // Get config
+    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
 
-    // Build invite filter
+    
     const inviteWhere: any = { guild_id: GUILD_ID };
     if (status === 'active') inviteWhere.active = true;
     if (status === 'left') inviteWhere.active = false;
 
-    // Get total counts
+    
     const totalInvites = await prismaBot.economyInvite.count({
       where: { guild_id: GUILD_ID }
     });
@@ -50,14 +49,14 @@ export async function GET(request: NextRequest) {
       where: { guild_id: GUILD_ID, active: false }
     });
 
-    // Get all invites (recent)
+    
     const invites = await prismaBot.economyInvite.findMany({
       where: inviteWhere,
       orderBy: { created_at: 'desc' },
       take: 50
     });
 
-    // Get all invite stats with sorting and pagination
+    
     const statsOrderBy: any = {};
     if (sortBy === 'total_invites') statsOrderBy.total_invites = sortOrder;
     else if (sortBy === 'active_invites') statsOrderBy.active_invites = sortOrder;
@@ -74,13 +73,13 @@ export async function GET(request: NextRequest) {
       take: limit
     });
 
-    // Fetch Discord user info for stats
+    
     const statsWithUsers = await Promise.all(
       stats.map(async (stat) => {
         const discordUser = await getDiscordUser(stat.user_id);
         const avatar = discordUser ? getDiscordUserAvatar(discordUser.user) : null;
         
-        // Get left count for this inviter
+        
         const leftCount = await prismaBot.economyInvite.count({
           where: {
             guild_id: GUILD_ID,
@@ -96,14 +95,14 @@ export async function GET(request: NextRequest) {
           total_invites: stat.total_invites,
           active_invites: stat.active_invites,
           left_invites: leftCount,
-          bonus_invites: 0, // Could be calculated from point logs
-          fake_invites: 0, // Not tracked in current schema
+          bonus_invites: 0, 
+          fake_invites: 0, 
           coins_earned: stat.coins_earned,
         };
       })
     );
 
-    // Fetch Discord user info for recent invites
+    
     const invitesWithUsers = await Promise.all(
       invites.slice(0, 20).map(async (invite) => {
         const inviterUser = await getDiscordUser(invite.inviter_id);
@@ -126,7 +125,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    // Calculate total coins distributed
+    
     const totalCoinsDistributed = stats.reduce((sum, s) => sum + s.coins_earned, 0);
 
     return NextResponse.json({
@@ -156,7 +155,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Update invite config
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -165,7 +163,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check permissions - Full Access only (Server Admin/Owner)
+    
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess) {
       return NextResponse.json({ error: 'Insufficient permissions - Admin only' }, { status: 403 });
@@ -174,12 +172,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { coins_per_invite, invites_enabled } = body;
 
-    // Validate input
+    
     if (coins_per_invite !== undefined && (typeof coins_per_invite !== 'number' || coins_per_invite < 0)) {
       return NextResponse.json({ error: 'Invalid coins_per_invite' }, { status: 400 });
     }
 
-    // Update config
+    
     const config = await prismaBot.economyConfig.upsert({
       where: { guild_id: GUILD_ID },
       create: {

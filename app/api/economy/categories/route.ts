@@ -5,13 +5,12 @@ import { prismaBot } from '@/lib/prismaBot';
 
 const GUILD_ID = "1507458872225566811";
 
-// GET - Fetch all categories from Discord
 export async function GET(request: NextRequest) {
   console.log('=== CATEGORIES API START ===');
   console.log('Timestamp:', new Date().toISOString());
   
   try {
-    // Step 1: Check session
+    
     console.log('Step 1: Getting session...');
     const session = await getServerSession(authOptions);
     console.log('Session user ID:', session?.user?.id || 'NO SESSION');
@@ -21,7 +20,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Step 2: Check permissions
+    
     console.log('Step 2: Checking permissions...');
     const perms = session.user.permissions;
     console.log('Permissions:', JSON.stringify(perms));
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    // Step 3: Check BOT_TOKEN
+    
     console.log('Step 3: Checking DISCORD_BOT_TOKEN...');
     const botToken = process.env.DISCORD_BOT_TOKEN;
     console.log('BOT_TOKEN exists:', !!botToken);
@@ -46,7 +45,7 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Step 4: Fetch channels from Discord
+    
     console.log('Step 4: Fetching Discord channels...');
     console.log('Guild ID:', GUILD_ID);
     
@@ -107,7 +106,7 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Step 5: Process channels
+    
     console.log('Step 5: Processing channels...');
     const categories = channels
       .filter((ch: any) => ch.type === 4)
@@ -143,7 +142,7 @@ export async function GET(request: NextRequest) {
     console.log('Text channels:', textChannels.length);
     console.log('Voice channels:', voiceChannels.length);
 
-    // Step 6: Fetch database records
+    
     console.log('Step 6: Fetching database records...');
     let categoryRewards: any[] = [];
     let blacklistedChannels: any[] = [];
@@ -172,10 +171,10 @@ export async function GET(request: NextRequest) {
     } catch (dbError: any) {
       console.log('Database EXCEPTION:', dbError.message);
       console.log('Database stack:', dbError.stack);
-      // Continue with empty arrays - at least show Discord categories
+      
     }
 
-    // Step 7: Build response
+    
     console.log('Step 7: Building response...');
     const responseData = {
       categories,
@@ -220,7 +219,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create/Update category reward
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -304,7 +302,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE - Remove category reward
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     const now = new Date();
     
-    // Pre-fetch read-only data OUTSIDE transaction to reduce TX duration
+    
     const [plan, config, economyUser] = await Promise.all([
       (prismaBot as any).donatorPlan.findFirst({
         where: { id: planId, guild_id: guildId },
@@ -190,8 +190,8 @@ export async function POST(request: NextRequest) {
         balanceAfter: economyUser.total_points - ozyPrice,
       };
     }, {
-      // Since reads happen outside TX, this only does writes (quick).
-      // Still increased timeout for connection pool saturation scenarios.
+      
+      
       maxWait: 15_000,
       timeout: 40_000,
       isolationLevel: 'Serializable',
@@ -206,10 +206,10 @@ export async function POST(request: NextRequest) {
         break;
       } catch (txError: any) {
         retryCount++;
-        // Retry for transient transaction close errors
+        
         if (txError?.code === 'P2028' && retryCount < maxRetries) {
           console.warn(`[Ozy TX] P2028 error on attempt ${retryCount}, retrying...`, txError.message);
-          await new Promise(r => setTimeout(r, 100 * retryCount)); // Exponential backoff
+          await new Promise(r => setTimeout(r, 100 * retryCount)); 
           continue;
         }
         throw txError;

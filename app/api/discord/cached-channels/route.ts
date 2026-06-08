@@ -4,11 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { getCachedChannels, getAllCachedChannels } from '@/lib/botDb';
 import { getErrorMessage } from '@/lib/constants';
 
-/**
- * Batch resolve channels from the bot's discord_channel_cache table.
- * POST body: { channelIds: string[] } → returns specific channels
- * GET → returns all cached channels
- */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

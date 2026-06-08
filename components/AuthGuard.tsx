@@ -47,15 +47,6 @@ const AccessDenied = ({ onGoBack }: { onGoBack: () => void }) => (
   </div>
 );
 
-/**
- * AuthGuard component for protecting pages based on user permissions
- * 
- * Usage examples:
- * - <AuthGuard requireFullAccess>{children}</AuthGuard>
- * - <AuthGuard requireModeratorAccess>{children}</AuthGuard>
- * - <AuthGuard requireViewAccess>{children}</AuthGuard>
- * - <AuthGuard requireCasinoAccess>{children}</AuthGuard>
- */
 export function AuthGuard({
   children,
   requireFullAccess = false,
@@ -77,7 +68,7 @@ export function AuthGuard({
       const perms = session?.user?.permissions;
       let hasAccess = false;
 
-      // Check specific access requirements
+      
       if (requireFullAccess) {
         hasAccess = perms?.hasFullAccess ?? false;
       } else if (requireModeratorAccess) {
@@ -87,7 +78,7 @@ export function AuthGuard({
       } else if (requireCasinoAccess) {
         hasAccess = perms?.hasFullAccess || perms?.hasCasinoAccess ?? false;
       } else {
-        // Default: require any access
+        
         hasAccess = perms?.hasAnyAccess ?? false;
       }
 
@@ -98,12 +89,12 @@ export function AuthGuard({
     }
   }, [status, session, router, requireFullAccess, requireModeratorAccess, requireViewAccess, requireCasinoAccess, fallbackUrl]);
 
-  // Show loading state
+  
   if (status === 'loading') {
     return <LoadingSpinner />;
   }
 
-  // Show access denied if no access after authentication
+  
   if (status === 'authenticated') {
     const perms = session?.user?.permissions;
     let hasAccess = false;

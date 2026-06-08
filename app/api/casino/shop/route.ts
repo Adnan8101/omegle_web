@@ -82,7 +82,6 @@ async function fetchGuildRoles() {
   }
 }
 
-// GET - Get all shop items for admin
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -97,7 +96,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }
 
-    // Get all shop items (including expired)
+    
     const [items, roles] = await Promise.all([
       prismaBot.shopItem.findMany({
       where: { guild_id: GUILD_ID },
@@ -106,7 +105,7 @@ export async function GET(request: NextRequest) {
       fetchGuildRoles()
     ]);
 
-    // Get economy config
+    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
@@ -132,7 +131,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create new shop item
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -182,7 +180,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Stock must be 0 or greater' }, { status: 400 });
     }
 
-    // Calculate expiration date if specified
+    
     let expiresAt = null;
     if (expiresInDays && expiresInDays > 0) {
       expiresAt = new Date();

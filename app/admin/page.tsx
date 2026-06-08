@@ -16,13 +16,13 @@ export default function AdminLogin() {
     if (status === 'authenticated' && session?.user?.permissions?.hasAnyAccess) {
       setIsRedirecting(true);
       const perms = session?.user?.permissions;
-      // Redirect casino-only users to casino page, others to dashboard
+      
       if (perms?.hasCasinoAccess && !perms?.hasFullAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
         router.push('/admin/casino');
       } else if (perms?.hasFullAccess) {
         router.push('/admin/dashboard');
       } else {
-        // Moderators and view-only users go to VC transcript
+        
         router.push('/admin/vctranscript');
       }
     }
@@ -43,7 +43,7 @@ export default function AdminLogin() {
 
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6 apple-transition relative overflow-hidden">
-      {/* Animated Blue Background */}
+      {}
       <div className="fixed inset-0 -z-10">
         <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float"></div>
         <div className="absolute top-0 -right-4 w-96 h-96 bg-blue-600/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '2s' }}></div>
@@ -51,7 +51,7 @@ export default function AdminLogin() {
       </div>
 
       <div className="w-full max-w-md">
-        {/* Logo & Header */}
+        {}
         <div className="text-center mb-12 animate-fade-in space-y-6">
           <div className="flex justify-center">
             <div className="relative w-24 h-24">
@@ -74,7 +74,7 @@ export default function AdminLogin() {
           </div>
         </div>
 
-        {/* Login Card */}
+        {}
         <div className="glass-blue rounded-3xl p-10 border border-blue-500/20 shadow-blue-glow animate-scale-in">
           <div className="flex items-center justify-center mb-8">
             <div className="p-5 bg-blue-500/10 rounded-full border border-blue-500/30">
@@ -112,7 +112,7 @@ export default function AdminLogin() {
                   You do not have the required permissions to access this area.
                 </p>
 
-                {/* Show user's info */}
+                {}
                 <div className="bg-black/20 rounded-lg p-3 text-xs space-y-2">
                   <div>
                     <p className="text-gray-400 font-semibold mb-1">Your Discord ID:</p>
@@ -179,7 +179,7 @@ export default function AdminLogin() {
           </div>
         </div>
 
-        {/* Back Link */}
+        {}
         <div className="text-center mt-8">
           <a
             href="/"

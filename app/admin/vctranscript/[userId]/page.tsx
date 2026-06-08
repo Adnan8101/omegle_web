@@ -14,10 +14,9 @@ import {
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import DateRangeFilter from '@/components/DateRangeFilter';
 
-// Build avatar URL from hash (handles both hash and legacy full URLs)
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
-    // Check if it's already a full URL (legacy data)
+    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
@@ -163,20 +162,20 @@ export default function UserTranscriptPage() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Mutuals state
+  
   const [mutualsData, setMutualsData] = useState<MutualsData | null>(null);
   const [mutualsUsers, setMutualsUsers] = useState<Map<string, DiscordUser>>(new Map());
   const [mutualsLoading, setMutualsLoading] = useState(false);
   const [mutualsSubTab, setMutualsSubTab] = useState<'vc' | 'chat' | 'channels'>('vc');
 
-  // Chat channel breakdown state
+  
   const [chatChannelData, setChatChannelData] = useState<any[]>([]);
 
-  // Manual refresh state
+  
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Shared sessions modal state
+  
   const [sharedSessionsUserId, setSharedSessionsUserId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<{ startDate: string | null; endDate: string | null }>({ startDate: null, endDate: null });
 
@@ -186,7 +185,7 @@ export default function UserTranscriptPage() {
     try {
       await fetchData(false);
       if (mutualsData) {
-        setMutualsData(null); // Force re-fetch on next tab switch
+        setMutualsData(null); 
       }
     } finally {
       setIsRefreshing(false);
@@ -205,12 +204,12 @@ export default function UserTranscriptPage() {
     
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
-      // User transcript accessible to: Full Access, Moderator, or Trail Mod/View Only
+      
       const canAccess = perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasViewOnlyAccess;
       
       if (!canAccess) {
         setHasPermission(false);
-        // Redirect to appropriate page based on permissions
+        
         if (perms?.hasCasinoAccess) {
           setIsRedirecting(true);
           router.replace('/admin/casino');
@@ -266,7 +265,7 @@ export default function UserTranscriptPage() {
 
       const result = await response.json();
 
-      // Try cached user first
+      
       let userData: any = null;
       try {
         const cachedData = await cachedUserRes.json();
@@ -275,7 +274,7 @@ export default function UserTranscriptPage() {
         }
       } catch { }
 
-      // Fallback to Discord API
+      
       if (!userData) {
         const userResponse = await fetch(`/api/discord/user/${requestUserId}`);
         if (userResponse.ok) {
@@ -285,7 +284,7 @@ export default function UserTranscriptPage() {
 
       setDiscordUser(userData);
 
-      // Parse chat channel breakdown
+      
       try {
         const chatChData = await chatChRes.json();
         if (chatChData.channels) {
@@ -295,7 +294,7 @@ export default function UserTranscriptPage() {
 
       if (result._error) setHasDbError(true);
 
-      // Calculate duration for active sessions (left_at is null)
+      
       const processedSessions = (result.vcSessions || []).map((session: VCSession) => {
         if (!session.left_at && session.joined_at) {
           const now = new Date();
@@ -316,7 +315,7 @@ export default function UserTranscriptPage() {
       };
       setData(transcriptData);
 
-      // Resolve channel names for all unique channel IDs
+      
       if (transcriptData.vcSessions.length > 0) {
         const uniqueChannelIds = [...new Set(transcriptData.vcSessions.map(s => s.channel_id))];
 
@@ -327,7 +326,7 @@ export default function UserTranscriptPage() {
           }
         });
 
-        // Fetch ALL channel names from bot's channel cache (persistent DB, not Discord API)
+        
         const unknownIds = uniqueChannelIds.filter(id => !knownNames.has(id));
         if (unknownIds.length > 0) {
           try {
@@ -344,7 +343,7 @@ export default function UserTranscriptPage() {
             }
           } catch { }
 
-          // Fallback: try Discord API for any still-unresolved channels
+          
           const stillUnknown = unknownIds.filter(id => !knownNames.has(id));
           if (stillUnknown.length > 0) {
             try {
@@ -403,11 +402,11 @@ export default function UserTranscriptPage() {
       const result = await res.json();
       setMutualsData(result);
 
-      // Use server-side resolved users first (returned by the mutuals API)
+      
       if (result.resolvedUsers && Object.keys(result.resolvedUsers).length > 0) {
         setMutualsUsers(new Map(Object.entries(result.resolvedUsers)));
       } else {
-        // Fallback: collect all user IDs and resolve client-side
+        
         const userIds = new Set<string>();
         (result.vcMutuals || []).forEach((m: any) => userIds.add(m.target_user_id));
         (result.chatMutuals || []).forEach((m: any) => userIds.add(m.target_user_id));
@@ -476,7 +475,7 @@ export default function UserTranscriptPage() {
 
   const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#f97316'];
 
-  // Show loading state while checking auth/permissions
+  
   if (status === 'loading' || hasPermission === null || isRedirecting) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -490,7 +489,7 @@ export default function UserTranscriptPage() {
     );
   }
 
-  // Show access denied if no permission
+  
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -586,7 +585,7 @@ export default function UserTranscriptPage() {
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {}
         <div className="mb-8">
           <Link href="/admin/vctranscript" className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-600 mb-4 transition-colors">
             <FiChevronLeft className="w-5 h-5" />
@@ -618,7 +617,7 @@ export default function UserTranscriptPage() {
               </p>
               <p className="text-[rgb(var(--color-text-tertiary))] text-sm mt-1">User ID: {userId}</p>
             </div>
-            {/* Manual refresh button */}
+            {}
             <div className="ml-auto flex items-center gap-3 self-center">
               {lastRefreshed && (
                 <div className="flex items-center gap-2 text-xs text-[rgb(var(--color-text-tertiary))]">
@@ -659,7 +658,7 @@ export default function UserTranscriptPage() {
           </div>
         ) : (
           <>
-            {/* Primary Stat Cards */}
+            {}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <TopStatCard title="Total Sessions" value={Number(data?.vcStats.total_sessions)?.toString() || '0'} icon={<FiMic className="w-6 h-6 text-blue-500" />} />
               <TopStatCard title="Total Time" value={formatDuration(Number(data?.vcStats.total_duration) || 0)} icon={<FiClock className="w-6 h-6 text-purple-500" />} />
@@ -667,7 +666,7 @@ export default function UserTranscriptPage() {
               <TopStatCard title="Messages" value={Number(data?.chatStats?.total_messages)?.toLocaleString() || '0'} icon={<FiMessageSquare className="w-6 h-6 text-orange-500" />} />
             </div>
 
-            {/* Voice Activity Stats */}
+            {}
             {data?.voiceUserStats && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {(() => {
@@ -719,7 +718,7 @@ export default function UserTranscriptPage() {
               </div>
             )}
 
-            {/* Tab Navigation */}
+            {}
             <div className="flex border-b border-[rgb(var(--color-border))] mb-8 overflow-x-auto">
               {([
                 { key: 'overview' as const, label: 'Overview', desc: 'Stats & Charts', icon: <FiTrendingUp className="w-4 h-4" /> },
@@ -744,16 +743,16 @@ export default function UserTranscriptPage() {
               ))}
             </div>
 
-            {/* ===== OVERVIEW TAB ===== */}
+            {}
             {activeTab === 'overview' && (
               <>
-                {/* Voice Activity Stats with Pie Chart */}
+                {}
                 {data?.voiceUserStats && (
                   <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))] mb-8">
                     <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-6">Voice Activity Breakdown</h2>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                      {/* Pie Chart */}
+                      {}
                       <div className="flex flex-col items-center justify-center">
                         <ResponsiveContainer width="100%" height={300}>
                           <PieChart>
@@ -805,7 +804,7 @@ export default function UserTranscriptPage() {
                         </ResponsiveContainer>
                       </div>
 
-                      {/* Stats Cards */}
+                      {}
                       <div className="grid grid-cols-2 gap-4">
                         {(() => {
                           const stats = data.voiceUserStats;
@@ -973,7 +972,7 @@ export default function UserTranscriptPage() {
                   </div>
                 )}
 
-                {/* Chat/Message Channel Breakdown */}
+                {}
                 {chatChannelData.length > 0 && (
                   <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))] mb-8">
                     <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-6 flex items-center gap-2">
@@ -1015,7 +1014,7 @@ export default function UserTranscriptPage() {
               </>
             )}
 
-            {/* ===== SESSIONS TAB ===== */}
+            {}
             {activeTab === 'sessions' && (
               <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                 <div className="mb-6">
@@ -1073,7 +1072,7 @@ export default function UserTranscriptPage() {
               </div>
             )}
 
-            {/* ===== MUTUALS RELATION TAB ===== */}
+            {}
             {activeTab === 'mutuals' && (
               <div className="space-y-6">
                 {mutualsLoading ? (
@@ -1102,7 +1101,7 @@ export default function UserTranscriptPage() {
                       ))}
                     </div>
 
-                    {/* VC Mutuals */}
+                    {}
                     {mutualsSubTab === 'vc' && (
                       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                         <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2 flex items-center gap-2">
@@ -1169,7 +1168,7 @@ export default function UserTranscriptPage() {
                       </div>
                     )}
 
-                    {/* Chat Mutuals */}
+                    {}
                     {mutualsSubTab === 'chat' && (
                       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                         <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2 flex items-center gap-2">
@@ -1224,7 +1223,7 @@ export default function UserTranscriptPage() {
                       </div>
                     )}
 
-                    {/* Shared Channels */}
+                    {}
                     {mutualsSubTab === 'channels' && (
                       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                         <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2 flex items-center gap-2">

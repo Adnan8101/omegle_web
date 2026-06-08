@@ -63,7 +63,7 @@ export default function SiteFooter() {
     <footer className="w-full border-t border-black/10 dark:border-white/10 bg-[rgba(245,245,247,0.4)] dark:bg-[rgba(22,22,23,0.4)] backdrop-blur-md pt-12 pb-8 mt-auto">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10">
-          {/* Brand Info */}
+          {}
           <div className="space-y-4 md:col-span-2">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="relative w-8 h-8 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300">
@@ -83,7 +83,7 @@ export default function SiteFooter() {
               Where connections become conversations. Join the Omeglee Community - A vibrant space with thousands of active members.
             </p>
             
-            {/* Social Icons Row */}
+            {}
             <div className="flex flex-wrap gap-2 pt-2">
               {socials.map((social) => (
                 <a
@@ -100,7 +100,7 @@ export default function SiteFooter() {
             </div>
           </div>
 
-          {/* Links Column 1 */}
+          {}
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">
               Navigation
@@ -129,7 +129,7 @@ export default function SiteFooter() {
             </ul>
           </div>
 
-          {/* Links Column 2 */}
+          {}
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">
               Community
@@ -154,7 +154,7 @@ export default function SiteFooter() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
+        {}
         <div className="border-t border-black/5 dark:border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[rgb(var(--color-text-tertiary))] font-light">
           <p>© 2026 Omeglee. All rights reserved.</p>
           <div className="flex items-center gap-1">

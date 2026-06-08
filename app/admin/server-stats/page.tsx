@@ -11,10 +11,9 @@ import {
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DateRangeFilter from '@/components/DateRangeFilter';
 
-// Build avatar URL from hash (handles both hash and legacy full URLs)
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
-    // Check if it's already a full URL (legacy data)
+    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
@@ -101,12 +100,12 @@ export default function ServerStatsPage() {
         
         if (status === 'authenticated') {
           const perms = session?.user?.permissions;
-          // Server stats accessible to: Full Access or Moderator (NOT Trail Mod/Staff)
+          
           const canAccess = perms?.hasFullAccess || perms?.hasModeratorAccess;
           
           if (!canAccess) {
             setHasPermission(false);
-            // Redirect to appropriate page based on permissions
+            
             if (perms?.hasCasinoAccess && !perms?.hasViewOnlyAccess) {
               setIsRedirecting(true);
               router.replace('/admin/casino');
@@ -140,7 +139,7 @@ export default function ServerStatsPage() {
             const res = await fetch(`/api/vctranscript/server-stats?${params}`);
             const data = await res.json();
 
-            // Collect all unique user IDs that are missing data
+            
             const allUsers = [
                 ...(data.userRankings || []),
                 ...Object.values(data.vcContributorsByChannel || {}).flat(),
@@ -153,7 +152,7 @@ export default function ServerStatsPage() {
                     .map((u: UserRanking | Contributor) => u.user_id)
             )].slice(0, 100);
 
-            // Fetch missing users from Discord API
+            
             let userMap: Record<string, { displayName: string; avatar: string; username: string }> = {};
             if (missingUserIds.length > 0) {
                 try {
@@ -171,7 +170,7 @@ export default function ServerStatsPage() {
                 }
             }
 
-            // Merge fetched user data into rankings
+            
             const enrichedRankings = (data.userRankings || []).map((user: UserRanking) => {
                 if (userMap[user.user_id]) {
                     const fetched = userMap[user.user_id];
@@ -185,7 +184,7 @@ export default function ServerStatsPage() {
                 return user;
             });
 
-            // Merge fetched user data into contributors
+            
             const enrichContributors = (contribs: Record<string, Contributor[]>) => {
                 const result: Record<string, Contributor[]> = {};
                 for (const [channelId, list] of Object.entries(contribs)) {
@@ -265,7 +264,7 @@ export default function ServerStatsPage() {
         return <span className="text-sm font-bold text-[rgb(var(--color-text-tertiary))]">#{idx + 1}</span>;
     };
 
-    // Show loading state while checking auth/permissions
+    
     if (status === 'loading' || hasPermission === null || isRedirecting) {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -279,7 +278,7 @@ export default function ServerStatsPage() {
         );
     }
 
-    // Show access denied if no permission
+    
     if (hasPermission === false) {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -336,7 +335,7 @@ export default function ServerStatsPage() {
 
     const totalVcTime = userRankings.reduce((sum, u) => sum + u.vc_duration, 0);
     const totalMessages = userRankings.reduce((sum, u) => sum + u.message_count, 0);
-    const totalUsers = totalMembers || userRankings.length; // Use totalMembers from API
+    const totalUsers = totalMembers || userRankings.length; 
     const totalSessions = userRankings.reduce((sum, u) => sum + (u.vc_sessions || 0), 0);
     const totalCharacters = userRankings.reduce((sum, u) => sum + (u.total_characters || 0), 0);
     const avgVcTime = totalUsers > 0 ? totalVcTime / totalUsers : 0;
@@ -361,16 +360,16 @@ export default function ServerStatsPage() {
         });
     };
 
-    // Chart data preparation
+    
     const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#f97316', '#ef4444', '#84cc16'];
 
-    // Activity Distribution (VC time vs Messages - weighted for fair comparison)
+    
     const activityDistribution = [
-        { name: 'Voice Chat', value: Math.round(totalVcTime / 60), color: '#8b5cf6' }, // Convert to minutes
+        { name: 'Voice Chat', value: Math.round(totalVcTime / 60), color: '#8b5cf6' }, 
         { name: 'Messages', value: totalMessages, color: '#10b981' },
     ];
 
-    // Top 10 Users by VC hours for bar chart
+    
     const top10VcUsers = [...userRankings]
         .sort((a, b) => b.vc_duration - a.vc_duration)
         .slice(0, 10)
@@ -380,7 +379,7 @@ export default function ServerStatsPage() {
             fullName: getUserDisplay(u).name,
         }));
 
-    // Top 10 Users by messages for bar chart
+    
     const top10ChatUsers = [...userRankings]
         .sort((a, b) => b.message_count - a.message_count)
         .slice(0, 10)
@@ -390,7 +389,7 @@ export default function ServerStatsPage() {
             fullName: getUserDisplay(u).name,
         }));
 
-    // Top channels by sessions for chart
+    
     const channelActivityData = topVoiceChannels.slice(0, 8).map((ch, idx) => ({
         name: (ch.channel_name || 'Unknown').slice(0, 10) + ((ch.channel_name || '').length > 10 ? '...' : ''),
         sessions: ch.total_sessions || 0,
@@ -398,7 +397,7 @@ export default function ServerStatsPage() {
         fill: COLORS[idx % COLORS.length],
     }));
 
-    // Top message channels for chart
+    
     const messageChannelData = topMessageChannels.slice(0, 8).map((ch, idx) => ({
         name: (ch.channel_name || 'Unknown').slice(0, 10) + ((ch.channel_name || '').length > 10 ? '...' : ''),
         messages: Number(ch.message_count) || 0,
@@ -409,7 +408,7 @@ export default function ServerStatsPage() {
     return (
         <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
-                {/* Header */}
+                {}
                 <div className="mb-8">
                     <h1 className="text-2xl sm:text-4xl font-bold text-[rgb(var(--color-text-primary))] mb-2 flex items-center gap-3">
                         <FiTrendingUp className="w-7 h-7 sm:w-9 sm:h-9 text-blue-500" />
@@ -421,7 +420,7 @@ export default function ServerStatsPage() {
                     <DateRangeFilter onChange={handleDateChange} initialRange={dateRange} />
                 </div>
 
-                {/* Overview Cards - 2 rows of 4 */}
+                {}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-4 sm:p-5 border border-[rgb(var(--color-border))] hover:border-blue-500/50 transition-colors">
                         <div className="flex items-center gap-2 mb-1">
@@ -453,7 +452,7 @@ export default function ServerStatsPage() {
                     </div>
                 </div>
 
-                {/* Average Stats Row */}
+                {}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-3 sm:p-5 border border-[rgb(var(--color-border))]">
                         <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
@@ -485,9 +484,9 @@ export default function ServerStatsPage() {
                     </div>
                 </div>
 
-                {/* Charts Section - 2x2 Grid */}
+                {}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    {/* Activity Distribution Pie Chart */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                         <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
                             <FiTrendingUp className="w-5 h-5 text-purple-500" />
@@ -528,7 +527,7 @@ export default function ServerStatsPage() {
                         </ResponsiveContainer>
                     </div>
 
-                    {/* Top 10 VC Users Bar Chart */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                         <h3 className="text-sm sm:text-lg font-bold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
                             <FiMic className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
@@ -551,7 +550,7 @@ export default function ServerStatsPage() {
                         </div>
                     </div>
 
-                    {/* Top 10 Chat Users Bar Chart */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                         <h3 className="text-sm sm:text-lg font-bold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
                             <FiMessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
@@ -574,7 +573,7 @@ export default function ServerStatsPage() {
                         </div>
                     </div>
 
-                    {/* Top Message Channels Bar Chart */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                         <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
                             <FiHash className="w-5 h-5 text-pink-500" />
@@ -594,7 +593,7 @@ export default function ServerStatsPage() {
                     </div>
                 </div>
 
-                {/* Channel Activity Bar Chart - Full Width */}
+                {}
                 {channelActivityData.length > 0 && (
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))] mb-8">
                         <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
@@ -624,7 +623,7 @@ export default function ServerStatsPage() {
                     </div>
                 )}
 
-                {/* Tab Navigation */}
+                {}
                 <div className="flex border-b border-[rgb(var(--color-border))] mb-8 overflow-x-auto no-scrollbar gap-1 touch-pan-x snap-x pb-1">
                     {([
                         { key: 'users' as const, label: 'Users', icon: <FiUsers className="w-4 h-4" />, count: totalUsers },
@@ -649,10 +648,10 @@ export default function ServerStatsPage() {
                     ))}
                 </div>
 
-                {/* ===== USERS TAB ===== */}
+                {}
                 {activeTab === 'users' && (
                     <div className="space-y-4">
-                        {/* Sort Buttons */}
+                        {}
                         <div className="flex flex-wrap gap-2 mb-4">
                             {([
                                 { key: 'combined' as const, label: 'VC + Text' },
@@ -672,7 +671,7 @@ export default function ServerStatsPage() {
                             ))}
                         </div>
 
-                        {/* User Ranking Table */}
+                        {}
                         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))] overflow-hidden -mx-4 sm:mx-0 shadow-apple-md">
                             <div className="overflow-x-auto w-full touch-pan-x">
                                 <table className="w-full min-w-[500px]">
@@ -735,7 +734,7 @@ export default function ServerStatsPage() {
                     </div>
                 )}
 
-                {/* ===== VOICE CHANNELS TAB ===== */}
+                {}
                 {activeTab === 'voice' && (
                     <div className="space-y-4">
                         {topVoiceChannels.length > 0 ? (
@@ -776,7 +775,7 @@ export default function ServerStatsPage() {
                                         </div>
                                     </div>
 
-                                    {/* Contributors Expandable */}
+                                    {}
                                     {expandedChannels.has(channel.channel_id) && vcContributors[channel.channel_id] && (() => {
                                         const contributors = vcContributors[channel.channel_id];
                                         const isExpanded = expandedVcContributors.has(channel.channel_id);
@@ -837,7 +836,7 @@ export default function ServerStatsPage() {
                     </div>
                 )}
 
-                {/* ===== MESSAGE CHANNELS TAB ===== */}
+                {}
                 {activeTab === 'messages' && (
                     <div className="space-y-4">
                         {topMessageChannels.length > 0 ? (
@@ -877,7 +876,7 @@ export default function ServerStatsPage() {
                                         </div>
                                     </div>
 
-                                    {/* Contributors Expandable */}
+                                    {}
                                     {expandedChannels.has(`msg-${channel.channel_id}`) && msgContributors[channel.channel_id] && (() => {
                                         const contributors = msgContributors[channel.channel_id];
                                         const isExpanded = expandedMsgContributors.has(channel.channel_id);

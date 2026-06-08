@@ -4,29 +4,25 @@ import { authOptions } from '@/lib/auth';
 import { queryBotDb, getUsersDisplay } from '@/lib/botDb';
 import { getErrorMessage, GUILD_ID } from '@/lib/constants';
 
-// Role IDs for staff and moderators
 const STAFF_ROLE_IDS = [
-  '1470334572557369384', // Staff/Mod role 1
-  '1470334506337828874', // Staff/Mod role 2
+  '1470334572557369384', 
+  '1470334506337828874', 
 ];
 
 const MOD_ROLE_IDS = [
-  '1470334572557369384', // Mod role 1
-  '1470334506337828874', // Mod role 2
+  '1470334572557369384', 
+  '1470334506337828874', 
 ];
 
-/**
- * GET - Fetch all mods/staff with their stats
- */
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    // Mods stats requires full access (admin/manage server)
+    
     if (!session || !session.user?.permissions?.hasFullAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get all cached users with staff/mod roles
+    
     const staffUsers = await queryBotDb(`
       SELECT 
         user_id,
@@ -36,7 +32,7 @@ export async function GET(request: NextRequest) {
       ORDER BY user_id ASC
     `);
 
-    // Filter users who have staff or mod roles
+    
     const staffMembers = staffUsers.filter((user: any) => {
       if (!user.roles) return false;
       try {
@@ -47,7 +43,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Get moderation stats for all staff members
+    
     const staffIds = staffMembers.map((u: any) => u.user_id);
     
     if (staffIds.length === 0) {
@@ -58,12 +54,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Fetch user data from cache (fast and reliable)
+    
     const usersDisplayMap = await getUsersDisplay(staffIds, 128);
     
     const userDataMap = new Map<string, any>();
     
-    // Convert to the format expected by the rest of the code
+    
     for (const userId of staffIds) {
       const userDisplay = usersDisplayMap.get(userId);
       if (userDisplay) {
@@ -72,7 +68,7 @@ export async function GET(request: NextRequest) {
           displayName: userDisplay.displayName,
           avatarUrl: userDisplay.avatar,
           inGuild: userDisplay.inGuild,
-          nickname: null, // Cache doesn't store this separately
+          nickname: null, 
           joinedAt: null,
         });
       } else {
@@ -87,10 +83,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build placeholders for IN clause
+    
     const placeholders = staffIds.map((_: string, i: number) => `$${i + 2}`).join(', ');
 
-    // Get ALL moderation stats (not filtered by staff) for the overview
+    
     const allModStats = await queryBotDb(`
       SELECT 
         COUNT(*) as total_cases,
@@ -110,7 +106,7 @@ export async function GET(request: NextRequest) {
       WHERE guild_id = $1
     `, [GUILD_ID]);
 
-    // Get moderator stats from moderation_cases (for individual mods)
+    
     const modStats = await queryBotDb(`
       SELECT 
         moderator_id,
@@ -127,7 +123,7 @@ export async function GET(request: NextRequest) {
       GROUP BY moderator_id
     `, [GUILD_ID, ...staffIds]);
 
-    // Get manual cases count
+    
     const manualStats = await queryBotDb(`
       SELECT 
         moderator_id,
@@ -137,7 +133,7 @@ export async function GET(request: NextRequest) {
       GROUP BY moderator_id
     `, [GUILD_ID, ...staffIds]);
 
-    // Get VC stats for mods
+    
     const vcStats = await queryBotDb(`
       SELECT 
         user_id,
@@ -148,7 +144,7 @@ export async function GET(request: NextRequest) {
       GROUP BY user_id
     `, [GUILD_ID, ...staffIds]);
 
-    // Get chat stats for mods
+    
     const chatStats = await queryBotDb(`
       SELECT 
         user_id,
@@ -158,20 +154,20 @@ export async function GET(request: NextRequest) {
       GROUP BY user_id
     `, [GUILD_ID, ...staffIds]);
 
-    // Build stats maps
+    
     const modStatsMap = new Map(modStats.map((s: any) => [s.moderator_id, s]));
     const manualStatsMap = new Map(manualStats.map((s: any) => [s.moderator_id, s]));
     const vcStatsMap = new Map(vcStats.map((s: any) => [s.user_id, s]));
     const chatStatsMap = new Map(chatStats.map((s: any) => [s.user_id, s]));
 
-    // Combine all data
+    
     const modsWithStats = staffMembers.map((user: any) => {
       const ms = modStatsMap.get(user.user_id) || {};
       const manuals = manualStatsMap.get(user.user_id) || {};
       const vc = vcStatsMap.get(user.user_id) || {};
       const chat = chatStatsMap.get(user.user_id) || {};
 
-      // Parse roles to determine role type
+      
       let userRoles: string[] = [];
       try {
         userRoles = JSON.parse(user.roles || '[]');
@@ -179,7 +175,7 @@ export async function GET(request: NextRequest) {
 
       const isMod = userRoles.some(r => MOD_ROLE_IDS.includes(r));
 
-      // Get user data from our fetched map
+      
       const userData = userDataMap.get(user.user_id) || {
         username: 'Unknown User',
         displayName: 'Unknown User',
@@ -217,7 +213,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Sort by total cases (most active mods first)
+    
     modsWithStats.sort((a: any, b: any) => b.stats.total_cases - a.stats.total_cases);
 
     return NextResponse.json({

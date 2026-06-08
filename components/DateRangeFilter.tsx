@@ -24,14 +24,14 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
     const [showCustom, setShowCustom] = useState(false);
     const [hasInitialized, setHasInitialized] = useState(false);
 
-    // Sync with initialRange if provided
+    
     useEffect(() => {
         if (initialRange && !hasInitialized) {
             setHasInitialized(true);
             if (!initialRange.startDate && !initialRange.endDate) {
                 setActivePreset('All Time');
             } else {
-                // Try to match to a preset
+                
                 const now = new Date();
                 const start = initialRange.startDate ? new Date(initialRange.startDate) : null;
                 if (start) {
@@ -97,7 +97,7 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
 
     return (
         <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-            {/* Preset buttons */}
+            {}
             {PRESETS.map((preset) => (
                 <button
                     key={preset.label}
@@ -111,7 +111,7 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
                 </button>
             ))}
 
-            {/* Custom date toggle */}
+            {}
             <button
                 onClick={() => setShowCustom(!showCustom)}
                 className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 ${showCustom || (!activePreset && (customStart || customEnd))
@@ -123,7 +123,7 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
                 Custom
             </button>
 
-            {/* Custom date inputs */}
+            {}
             {showCustom && (
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                     <input
@@ -159,7 +159,7 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
                 </div>
             )}
 
-            {/* Active filter indicator */}
+            {}
             {(activePreset && activePreset !== 'All Time') && (
                 <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/10 rounded-lg text-xs text-blue-400">
                     <span>Filtering: {activePreset}</span>

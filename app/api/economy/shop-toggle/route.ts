@@ -8,7 +8,6 @@ const GUILD_ID = "1507458872225566811";
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// GET - Fetch shop items with their toggle states
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -22,7 +21,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    // Get shop config and items
+    
     const [config, items] = await Promise.all([
       prismaBot.economyConfig.findUnique({ where: { guild_id: GUILD_ID } }),
       prismaBot.shopItem.findMany({ 
@@ -53,7 +52,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PATCH - Toggle shop or individual item
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -75,7 +73,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (type === 'shop') {
-      // Toggle entire shop
+      
       await prismaBot.economyConfig.upsert({
         where: { guild_id: GUILD_ID },
         create: { guild_id: GUILD_ID, shop_enabled: enabled },
@@ -83,7 +81,7 @@ export async function PATCH(request: NextRequest) {
       });
       return NextResponse.json({ success: true, shopEnabled: enabled });
     } else if (type === 'item' && itemId) {
-      // Toggle individual item
+      
       const updated = await prismaBot.shopItem.updateMany({
         where: { id: itemId, guild_id: GUILD_ID },
         data: { enabled },

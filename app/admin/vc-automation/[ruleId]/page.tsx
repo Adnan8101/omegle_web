@@ -120,7 +120,7 @@ export default function RuleDetailsPage() {
 
     const getAvatar = (user: any) => {
         if (user.avatar_url) return user.avatar_url;
-        // fallback avatar based on user id logic if needed, or simple placeholder
+        
         return `https://cdn.discordapp.com/embed/avatars/${parseInt(user.user_id) % 5}.png`;
     };
 
@@ -128,7 +128,7 @@ export default function RuleDetailsPage() {
         <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
             <div className="max-w-6xl mx-auto space-y-8">
 
-                {/* Header */}
+                {}
                 <div className="flex items-center gap-4 border-b border-[rgb(var(--color-border))] pb-6">
                     <button
                         onClick={() => router.push('/admin/vc-automation')}
@@ -151,7 +151,7 @@ export default function RuleDetailsPage() {
                     </div>
                 </div>
 
-                {/* Overview Cards */}
+                {}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] p-5 rounded-2xl shadow-sm hover:border-blue-500/30 transition-all">
                         <div className="flex items-center gap-2 mb-2 text-blue-400">
@@ -191,7 +191,7 @@ export default function RuleDetailsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Role Holders List */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px]">
                         <div className="p-5 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-tertiary))]/50 flex justify-between items-center">
                             <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export default function RuleDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Grinding Users List (The Race) */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px]">
                         <div className="p-5 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-tertiary))]/50 flex justify-between items-center">
                             <div className="flex items-center gap-2">
@@ -273,7 +273,7 @@ export default function RuleDetailsPage() {
                                                 </div>
                                             </div>
                                             
-                                            {/* Progress Bar */}
+                                            {}
                                             <div className="relative w-full h-2 bg-[rgb(var(--color-bg-primary))] rounded-full overflow-hidden mb-2 shadow-inner">
                                                 <div 
                                                     className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-1000 ease-out"
@@ -281,7 +281,7 @@ export default function RuleDetailsPage() {
                                                 />
                                             </div>
                                             
-                                            {/* Meta info */}
+                                            {}
                                             <div className="flex items-center gap-4 mt-2">
                                                 <div className="flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-secondary))]">
                                                     <FiMic className="w-3 h-3 opacity-70" />

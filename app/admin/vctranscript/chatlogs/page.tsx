@@ -60,12 +60,12 @@ export default function ChatLogsPage() {
     
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
-      // Chat logs accessible to: Full Access, Moderator, or Trail Mod/View Only
+      
       const canAccess = perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasViewOnlyAccess;
       
       if (!canAccess) {
         setHasPermission(false);
-        // Redirect to appropriate page based on permissions
+        
         if (perms?.hasCasinoAccess) {
           setIsRedirecting(true);
           router.replace('/admin/casino');
@@ -96,7 +96,7 @@ export default function ChatLogsPage() {
       const uniqueUserIds = Array.from(new Set((messagesData.messages || []).map((m: ChatMessage) => m.user_id))) as string[];
       const uniqueChannelIds = Array.from(new Set((messagesData.messages || []).map((m: ChatMessage) => m.channel_id))) as string[];
 
-      // Use new centralized user-data API - no caching, fetch on demand
+      
       if (uniqueUserIds.length > 0) {
         const userRes = await fetch('/api/discord/user-data', {
           method: 'POST',
@@ -119,7 +119,7 @@ export default function ChatLogsPage() {
         setUsers(userMap);
       }
 
-      // Batch resolve channels
+      
       if (uniqueChannelIds.length > 0) {
         const chRes = await fetch('/api/discord/cached-channels', {
           method: 'POST',
@@ -153,13 +153,13 @@ export default function ChatLogsPage() {
     return matchesSearch && matchesFilter;
   });
 
-  // Calculate statistics
+  
   const totalMessages = messages.length;
   const vcMessages = messages.filter(m => m.in_voice_chat).length;
   const uniqueUsers = new Set(messages.map(m => m.user_id)).size;
   const uniqueChannels = new Set(messages.map(m => m.channel_id)).size;
 
-  // Top users by message count
+  
   const userStats = Array.from(
     messages.reduce((acc, msg) => {
       const count = acc.get(msg.user_id) || 0;
@@ -175,7 +175,7 @@ export default function ChatLogsPage() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
-  // Messages per hour chart
+  
   const messagesByHour = messages.reduce((acc, msg) => {
     const hour = new Date(msg.created_at).getHours();
     acc[hour] = (acc[hour] || 0) + 1;
@@ -187,7 +187,7 @@ export default function ChatLogsPage() {
     messages: messagesByHour[i] || 0
   }));
 
-  // Messages by channel
+  
   const messagesByChannel = Array.from(
     messages.reduce((acc, msg) => {
       const count = acc.get(msg.channel_id) || 0;
@@ -204,7 +204,7 @@ export default function ChatLogsPage() {
 
   const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#f97316'];
 
-  // Show loading state while checking auth/permissions
+  
   if (status === 'loading' || hasPermission === null || isRedirecting) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -218,7 +218,7 @@ export default function ChatLogsPage() {
     );
   }
 
-  // Show access denied if no permission
+  
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -272,7 +272,7 @@ export default function ChatLogsPage() {
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {}
         <div className="mb-8">
           <Link
             href="/admin/vctranscript"
@@ -290,7 +290,7 @@ export default function ChatLogsPage() {
           <DateRangeFilter onChange={(r) => { setDateRange(r); fetchChatData(r); }} initialRange={dateRange} />
         </div>
 
-        {/* Stats Overview */}
+        {}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <StatCard
             icon={<FiMessageSquare className="w-6 h-6 text-blue-500" />}
@@ -318,9 +318,9 @@ export default function ChatLogsPage() {
           />
         </div>
 
-        {/* Charts Section */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Hourly Activity */}
+          {}
           <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h3 className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">
               Messages by Hour
@@ -350,7 +350,7 @@ export default function ChatLogsPage() {
             </div>
           </div>
 
-          {/* Channel Distribution */}
+          {}
           <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h3 className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">
               Messages by Channel
@@ -386,7 +386,7 @@ export default function ChatLogsPage() {
           </div>
         </div>
 
-        {/* Top Users */}
+        {}
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))] mb-8">
           <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">
             Top Chatters
@@ -421,14 +421,14 @@ export default function ChatLogsPage() {
           </div>
         </div>
 
-        {/* Message List */}
+        {}
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
             <h3 className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))]">
               Recent Messages ({filteredMessages.length})
             </h3>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {/* Filter Buttons */}
+              {}
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setFilter('all')}
@@ -459,7 +459,7 @@ export default function ChatLogsPage() {
                 </button>
               </div>
 
-              {/* Search */}
+              {}
               <div className="relative w-full sm:w-auto mt-2 sm:mt-0">
                 <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[rgb(var(--color-text-tertiary))]" />
                 <input

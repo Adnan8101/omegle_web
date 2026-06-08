@@ -24,7 +24,7 @@ export async function GET(
       return NextResponse.json({
         id: channelId,
         name: 'Deleted Channel',
-        type: 2, // Voice channel
+        type: 2, 
         exists: false,
       });
     }

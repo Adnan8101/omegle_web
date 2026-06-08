@@ -1,8 +1,5 @@
-/**
- * @deprecated This endpoint is deprecated. Use /api/discord/user-data instead.
- * This endpoint fetches from cache first which can return stale data.
- * The new /api/discord/user-data endpoint fetches fresh data directly from Discord API.
- */
+
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -20,7 +17,7 @@ interface UserDisplay {
 
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
-    // Check if it's already a full URL (legacy data)
+    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
@@ -34,10 +31,6 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, size: number 
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
 
-/**
- * Batch fetch users - first from cache, then from Discord API for missing users
- * POST body: { userIds: string[] }
- */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -50,11 +43,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userIds array required' }, { status: 400 });
     }
 
-    const limitedIds = userIds.slice(0, 100); // Limit to 100 users
+    const limitedIds = userIds.slice(0, 100); 
     const results: Record<string, UserDisplay> = {};
     const missingIds: string[] = [];
 
-    // First, try to get from cache
+    
     try {
       const cachedUsers = await getCachedUsers(limitedIds);
       const cachedMap = new Map(cachedUsers.map((u: any) => [u.user_id, u]));
@@ -79,11 +72,11 @@ export async function POST(request: NextRequest) {
       missingIds.push(...limitedIds);
     }
 
-    // Fetch missing users from Discord API
+    
     if (missingIds.length > 0) {
       const botToken = process.env.DISCORD_BOT_TOKEN;
       if (botToken) {
-        // Fetch in parallel (but limit concurrent requests)
+        
         const batchSize = 10;
         for (let i = 0; i < missingIds.length; i += batchSize) {
           const batch = missingIds.slice(i, i + batchSize);
@@ -105,9 +98,9 @@ export async function POST(request: NextRequest) {
                 };
               }
             } catch {
-              // Ignore errors
+              
             }
-            // Return default for failed fetches
+            
             return {
               id: userId,
               username: 'Unknown User',
@@ -126,7 +119,7 @@ export async function POST(request: NextRequest) {
           }
         }
       } else {
-        // No bot token, return defaults
+        
         for (const userId of missingIds) {
           results[userId] = {
             id: userId,

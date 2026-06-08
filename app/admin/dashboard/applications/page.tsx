@@ -25,14 +25,14 @@ interface Application {
   roleAnswers?: Record<string, string>;
   formVersion?: number;
 
-  // Discord & Personal Info
+  
   discordUsername?: string;
   discordUserId: string;
   country?: string;
   timezone?: string;
   age?: string;
 
-  // General Questions
+  
   aboutYourself?: string;
   whyJoin?: string;
   hoursPerWeek?: string;
@@ -40,24 +40,24 @@ interface Application {
   vcAvailability?: string;
   vcFrequency?: string;
 
-  // Moderation Questions
+  
   moderationExperience?: string;
   moderatorDefinition?: string;
   leadershipExperience?: string;
 
-  // Bot Experience
+  
   discordBotExperience?: string;
   automodKnowledge?: string;
   moderationBotsFamiliarity?: string;
   modCommandsKnowledge?: string;
 
-  // Status & Metadata
+  
   status: 'pending' | 'considered' | 'denied';
   createdAt: string;
   updatedAt: string;
   notes?: string;
   
-  // Fetched user data
+  
   userProfile?: {
     username?: string;
     display_name?: string;
@@ -73,7 +73,7 @@ interface Application {
   modLogs?: Array<{
     case_number?: number;
     action?: string;
-    action_type?: string; // fallback for old data
+    action_type?: string; 
     reason?: string;
     moderator_id?: string;
     moderator_username?: string;
@@ -107,7 +107,7 @@ export default function ApplicationsPage() {
     if (status === 'unauthenticated') {
       router.push('/admin');
     } else if (status === 'authenticated' && !session?.user?.permissions?.hasFullAccess) {
-      // Applications require full access (admin/manage server)
+      
       router.push('/admin');
     }
   }, [status, session, router]);
@@ -233,7 +233,7 @@ export default function ApplicationsPage() {
 
   useEffect(() => {
     fetchApplications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [activeTab, searchTerm]);
 
   const updateApplicationStatus = async (
@@ -270,10 +270,10 @@ export default function ApplicationsPage() {
       const result = await response.json();
       if (result.success) {
         alert('Notes updated successfully!');
-        // Update selected app with new notes
+        
         setSelectedApp(result.data);
         setNotes(result.data.notes || '');
-        // Refresh applications list
+        
         await fetchApplications();
       }
     } catch (error) {
@@ -308,7 +308,7 @@ export default function ApplicationsPage() {
     setModalTab('details');
     setShowModal(true);
     
-    // Scroll modal content to top
+    
     setTimeout(() => {
       const modalContent = document.querySelector('.modal-content-scroll');
       if (modalContent) {
@@ -316,7 +316,7 @@ export default function ApplicationsPage() {
       }
     }, 100);
     
-    // Fetch fresh application data including user stats and modlogs
+    
     try {
       const response = await fetch(`/api/applications/${app._id}`);
       const result = await response.json();
@@ -381,7 +381,7 @@ export default function ApplicationsPage() {
 
   return (
     <div className="p-4 sm:p-8">
-      {/* Header */}
+      {}
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -389,7 +389,7 @@ export default function ApplicationsPage() {
             <p className="text-xs sm:text-base text-gray-400">Review and manage all staff applications</p>
           </div>
 
-          {/* Global Application Status Toggle */}
+          {}
           <div className="bg-discord-light/50 rounded-xl p-3 sm:p-4 border border-gray-700 w-full sm:w-auto">
             <div className="flex items-center justify-between sm:justify-start gap-4">
               <div>
@@ -416,7 +416,7 @@ export default function ApplicationsPage() {
           </div>
         </div>
 
-        {/* Per-Role Application Status */}
+        {}
         <div className="mt-4 bg-discord-light/50 rounded-xl p-4 sm:p-5 border border-gray-700">
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <div>
@@ -477,7 +477,7 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="flex overflow-x-auto no-scrollbar gap-2 mb-6 pb-2 snap-x touch-pan-x">
         {tabs.map((tab) => (
           <button
@@ -499,7 +499,7 @@ export default function ApplicationsPage() {
         ))}
       </div>
 
-      {/* Role Filter Tabs */}
+      {}
       <div className="flex overflow-x-auto no-scrollbar gap-2 mb-6 pb-2 snap-x touch-pan-x">
         {roleTabs.map((tab) => (
           <button
@@ -523,7 +523,7 @@ export default function ApplicationsPage() {
         ))}
       </div>
 
-      {/* Search */}
+      {}
       <div className="mb-6">
         <div className="relative">
           <input
@@ -549,7 +549,7 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-      {/* Applications List */}
+      {}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-discord-blurple"></div>
@@ -700,12 +700,12 @@ export default function ApplicationsPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {}
       {showModal && selectedApp && (
         <div className="fixed inset-0 bg-black/80 sm:bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
             <div className="glass-effect rounded-[2rem] sm:rounded-apple-xl max-w-5xl w-full max-h-[85vh] overflow-hidden border border-[rgb(var(--color-border))] shadow-apple-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
 
-              {/* Modal Header */}
+              {}
               <div className="glass-effect border-b border-[rgb(var(--color-border))] p-5 sm:p-8 flex items-start justify-between flex-shrink-0 backdrop-blur-xl">
                 <div className="flex-1 pr-4">
                   <div className="flex items-center gap-4 mb-2">
@@ -738,7 +738,7 @@ export default function ApplicationsPage() {
                       alt={selectedApp.userProfile.username || selectedApp.discordUsername}
                       className="w-16 h-16 rounded-full border-2 border-blue-500 shadow-lg"
                       onError={(e) => {
-                        // Fallback to default avatar
+                        
                         const defaultIndex = Number(BigInt(selectedApp.discordUserId) >> 22n) % 6;
                         e.currentTarget.src = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
                       }}
@@ -771,7 +771,7 @@ export default function ApplicationsPage() {
                 </div>
               </div>
 
-              {/* Tab Navigation */}
+              {}
               <div className="flex border-b border-[rgb(var(--color-border))] px-6 sm:px-8 gap-2">
                 <button
                   onClick={() => setModalTab('details')}
@@ -802,7 +802,7 @@ export default function ApplicationsPage() {
               <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 modal-content-scroll">
                 {modalTab === 'details' ? (
                   <>
-                {/* Status Management */}
+                {}
                 <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                   <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
                     Application Status
@@ -832,7 +832,7 @@ export default function ApplicationsPage() {
                   </div>
                 </div>
 
-                {/* Basic Information */}
+                {}
                 <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                   <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
                     Discord & Personal Information
@@ -891,7 +891,7 @@ export default function ApplicationsPage() {
                   </div>
                 ) : (
                   <>
-                    {/* General Questions (Legacy) */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                       <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
                         General Questions
@@ -926,7 +926,7 @@ export default function ApplicationsPage() {
                       </div>
                     </div>
 
-                    {/* Moderation Experience (Legacy) */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                       <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
                         Moderation Experience
@@ -955,7 +955,7 @@ export default function ApplicationsPage() {
                       </div>
                     </div>
 
-                    {/* VC Availability (Legacy) */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                       <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
                         VC Availability
@@ -982,7 +982,7 @@ export default function ApplicationsPage() {
                       </div>
                     </div>
 
-                    {/* Discord Bot Experience (Legacy) */}
+                    {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                       <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
                         Discord Bot Experience
@@ -1025,13 +1025,13 @@ export default function ApplicationsPage() {
                   </>
                 )}
 
-                {/* Admin Notes */}
+                {}
                 <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                   <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
                     Admin Notes
                   </h3>
                   
-                  {/* Display existing notes if they exist */}
+                  {}
                   {selectedApp.notes && (
                     <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-apple">
                       <p className="text-sm text-blue-500 font-semibold mb-2">Saved Notes:</p>
@@ -1054,7 +1054,7 @@ export default function ApplicationsPage() {
                   </button>
                 </div>
 
-                {/* Actions */}
+                {}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
                   <button
                     onClick={() => deleteApplication(selectedApp._id)}
@@ -1073,10 +1073,10 @@ export default function ApplicationsPage() {
                 </>
                 ) : (
                   <>
-                {/* User Data Tab */}
+                {}
                 {selectedApp.userProfile || selectedApp.userStats || selectedApp.modLogs ? (
                   <>
-                    {/* User Stats */}
+                    {}
                     {selectedApp.userStats && (
                       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                         <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
@@ -1107,7 +1107,7 @@ export default function ApplicationsPage() {
                       </div>
                     )}
 
-                    {/* Moderation Logs */}
+                    {}
                     {selectedApp.modLogs && selectedApp.modLogs.length > 0 ? (
                       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                         <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
@@ -1131,7 +1131,7 @@ export default function ApplicationsPage() {
                                                   action === 'UNBAN' ? 'bg-green-500/20 text-green-500' :
                                                   action === 'UNMUTE' ? 'bg-blue-500/20 text-blue-500' : 'bg-gray-500/20 text-gray-400';
                             
-                            // Format duration properly - show "Muted" if duration is 0 or very short for mutes
+                            
                             const formatDuration = (seconds: number | undefined | null) => {
                               if (!seconds || seconds <= 0) return null;
                               const days = Math.floor(seconds / 86400);
@@ -1255,7 +1255,7 @@ export default function ApplicationsPage() {
       </div>
       )}
 
-      {/* Role Form Toggles */}
+      {}
       <div className="mb-6 bg-discord-light/50 rounded-xl p-4 sm:p-5 border border-gray-700">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base sm:text-lg font-semibold text-white">Dedicated Role Forms</h2>

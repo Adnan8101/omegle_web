@@ -36,16 +36,16 @@ export default function Home() {
             
             <div className="flex justify-center animate-slide-down mb-8">
               <div className="relative group cursor-pointer">
-                {/* Premium Pulsing Backlight Glow */}
+                {}
                 <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-full blur-2xl opacity-60 group-hover:opacity-85 transition-opacity duration-500 animate-pulse"></div>
                 
-                {/* Rotating Border Ring */}
+                {}
                 <div 
                   className="absolute -inset-1.5 bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 rounded-full opacity-95 group-hover:scale-105 transition-all duration-500 shadow-blue-glow"
                   style={{ animation: 'spin 12s linear infinite' }}
                 ></div>
                 
-                {/* Premium Circle Container */}
+                {}
                 <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 bg-black dark:bg-[rgb(var(--color-bg-secondary))] rounded-full overflow-hidden border-[3px] border-white/90 dark:border-white/15 flex items-center justify-center shadow-inner group-hover:scale-[1.02] transition-transform duration-500">
                   <Image
                     src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"

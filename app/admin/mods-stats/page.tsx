@@ -59,10 +59,10 @@ export default function ModsStatsPage() {
     
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
-      // Mods stats requires full access (admin/manage server)
+      
       if (!perms?.hasFullAccess) {
         setHasPermission(false);
-        // Redirect to appropriate page based on permissions
+        
         if (perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
           setIsRedirecting(true);
           router.replace('/admin/casino');
@@ -102,7 +102,7 @@ export default function ModsStatsPage() {
     }
   }, [status, hasPermission, fetchMods]);
 
-  // Show loading state while checking auth/permissions
+  
   if (status === 'loading' || hasPermission === null || isRedirecting) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -116,7 +116,7 @@ export default function ModsStatsPage() {
     );
   }
 
-  // Show access denied if no permission
+  
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -167,7 +167,7 @@ export default function ModsStatsPage() {
     });
   };
 
-  // Filter and sort mods
+  
   const filteredMods = mods
     .filter(mod => {
       const searchLower = searchTerm.toLowerCase();
@@ -196,7 +196,7 @@ export default function ModsStatsPage() {
       return sortDir === 'desc' ? -comparison : comparison;
     });
 
-  // Use overview stats from API if available, otherwise calculate from mods
+  
   const totalStats = overview || mods.reduce(
     (acc, mod) => ({
       cases: acc.cases + mod.stats.total_cases,
@@ -209,7 +209,7 @@ export default function ModsStatsPage() {
     { cases: 0, mutes: 0, bans: 0, kicks: 0, warns: 0, manuals: 0 }
   );
 
-  // Map overview keys to match totalStats structure
+  
   const displayStats = overview ? {
     cases: overview.total_cases || 0,
     mutes: overview.mutes || 0,
@@ -235,7 +235,7 @@ export default function ModsStatsPage() {
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto">
-      {/* Header */}
+      {}
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-4xl font-bold text-[rgb(var(--color-text-primary))] mb-1 sm:mb-2">
           Moderator Stats
@@ -245,7 +245,7 @@ export default function ModsStatsPage() {
         </p>
       </div>
 
-      {/* Overview Stats */}
+      {}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-8">
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
           <div className="flex items-center gap-2 mb-2">
@@ -291,7 +291,7 @@ export default function ModsStatsPage() {
         </div>
       </div>
 
-      {/* Action Distribution Chart */}
+      {}
       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-6 border border-[rgb(var(--color-border))] mb-8">
         <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-6">Action Distribution</h2>
         <div className="space-y-4">
@@ -327,7 +327,7 @@ export default function ModsStatsPage() {
         </div>
       </div>
 
-      {/* Search and Sort */}
+      {}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
         <div className="relative flex-1">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[rgb(var(--color-text-tertiary))]" />
@@ -359,7 +359,7 @@ export default function ModsStatsPage() {
         </div>
       </div>
 
-      {/* Mods Grid */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredMods.map((mod) => (
           <button
@@ -367,7 +367,7 @@ export default function ModsStatsPage() {
             onClick={() => router.push(`/admin/mods-stats/${mod.user_id}`)}
             className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-5 border border-[rgb(var(--color-border))] hover:border-blue-500/50 hover:shadow-lg transition-all text-left group"
           >
-            {/* Header */}
+            {}
             <div className="flex items-center gap-4 mb-4">
               <div className="relative">
                 <img
@@ -392,7 +392,7 @@ export default function ModsStatsPage() {
               <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
             </div>
 
-            {/* Stats Grid */}
+            {}
             <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="text-center">
                 <p className="text-xl font-bold text-purple-500">{mod.stats.total_cases}</p>
@@ -408,7 +408,7 @@ export default function ModsStatsPage() {
               </div>
             </div>
 
-            {/* Activity */}
+            {}
             <div className="flex items-center justify-between text-sm border-t border-[rgb(var(--color-border))] pt-4">
               <div className="flex items-center gap-1 text-[rgb(var(--color-text-secondary))]">
                 <FiMic className="w-4 h-4" />

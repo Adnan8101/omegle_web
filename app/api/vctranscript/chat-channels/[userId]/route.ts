@@ -20,7 +20,7 @@ export async function GET(
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    // Build date filter
+    
     const dateParts: string[] = [];
     const dateParams: unknown[] = [userId, GUILD_ID];
     let paramIdx = 3;

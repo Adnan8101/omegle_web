@@ -17,7 +17,7 @@ const RAZORPAY_KEY_SECRET = isProduction
 const USD_TO_INR_FALLBACK = 83;
 
 let rateCache: { value: number; fetchedAt: number } | null = null;
-const RATE_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const RATE_CACHE_TTL_MS = 30 * 60 * 1000; 
 
 async function getUsdToInrRate(): Promise<number> {
   if (rateCache && Date.now() - rateCache.fetchedAt < RATE_CACHE_TTL_MS) {
@@ -69,7 +69,6 @@ function buildProfile(member: any, fallbackUserId: string, fallbackName?: string
   };
 }
 
-// GET payments - admin can see all, users can see their own
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -84,7 +83,7 @@ export async function GET(request: NextRequest) {
 
     const isAdmin = hasAdminAccess(session);
 
-    // Non-admins can only see their own payments
+    
     if (!isAdmin && userId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -142,7 +141,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST to create Razorpay order
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -171,7 +169,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Guild ID and Plan ID required' }, { status: 400 });
     }
 
-    // Fetch the plan to get price
+    
     const plan = await (prismaBot as any).donatorPlan.findUnique({
       where: { id: plan_id }
     });
@@ -184,15 +182,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Plan is not available' }, { status: 400 });
     }
 
-    // plan.price is stored in cents (e.g. 100 = $1.00).
-    // To convert USD cents to INR paise: paise = usdCents * usdInrRate.
+    
+    
     const usdToInrRate = await getUsdToInrRate();
     const amountInINR = Math.max(100, Math.round(plan.price * usdToInrRate));
 
-    // Create Razorpay order
+    
     try {
       const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64');
-      // Razorpay receipt max length is 40 characters.
+      
       const receipt = `ord_${Date.now().toString(36)}_${guild_id.slice(-8)}_${session.user.id.slice(-8)}`.slice(0, 40);
       const razorpayResponse = await fetch('https://api.razorpay.com/v1/orders', {
         method: 'POST',
@@ -220,7 +218,7 @@ export async function POST(request: NextRequest) {
 
       const razorpayOrder = await razorpayResponse.json();
 
-      // Store payment record in database
+      
       const payment = await (prismaBot as any).razorpayPayment.create({
         data: {
           razorpay_order_id: razorpayOrder.id,
@@ -268,7 +266,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PATCH to update payment status (called by webhook)
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();

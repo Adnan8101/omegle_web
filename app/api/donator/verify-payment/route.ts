@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Razorpay keys are not configured' }, { status: 503 });
     }
 
-    // Find the payment record
+    
     const payment = await (prismaBot as any).razorpayPayment.findUnique({
       where: { razorpay_order_id },
       include: { plan: true }
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Verify signature by fetching payment details from Razorpay
+    
     try {
       const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64');
       const razorpayResponse = await fetch(
@@ -80,18 +80,18 @@ export async function POST(request: NextRequest) {
 
       const razorpayPayment = await razorpayResponse.json();
 
-      // Verify order ID
+      
       if (razorpayPayment.order_id !== razorpay_order_id) {
         return NextResponse.json({ error: 'Order ID mismatch' }, { status: 400 });
       }
 
-      // Verify amount
+      
       if (razorpayPayment.amount !== Number(payment.amount)) {
         return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 });
       }
 
       if (razorpayPayment.status === 'captured' || razorpayPayment.status === 'authorized') {
-        // Update payment status
+        
         await (prismaBot as any).razorpayPayment.update({
           where: { razorpay_order_id },
           data: {
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
           }
         });
 
-        // Create or update subscription with 30-day default expiry
+        
         const now = new Date();
         const expiryDate = new Date(now);
         expiryDate.setDate(expiryDate.getDate() + DEFAULT_SUBSCRIPTION_DAYS);
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (existingSub) {
-          // Extend subscription on renewal
+          
           const baseDate = existingSub.status === 'active' && existingSub.expiry_date
             ? new Date(existingSub.expiry_date)
             : now;
@@ -151,13 +151,13 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Grant Discord role
+        
         const roleId = payment.plan?.linked_role_id;
         if (payment.user_id && roleId && payment.guild_id) {
           await addGuildMemberRole(payment.user_id, roleId, payment.guild_id);
         }
 
-        // DM user confirming subscription
+        
         const planTitle = payment.plan?.title || 'Donator';
         const roleName = payment.plan?.linked_role_id
           ? await getGuildRoleName(payment.guild_id, payment.plan.linked_role_id)

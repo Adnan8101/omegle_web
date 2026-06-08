@@ -1,0 +1,1033 @@
+'use client';
+
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import {
+  FiShield, FiPlus, FiTrash2, FiSave, FiX, FiCheck,
+  FiAlertTriangle, FiUser, FiSearch, FiRefreshCw, FiLock,
+  FiEye, FiChevronDown,
+} from 'react-icons/fi';
+
+const MAIN_OWNER_ID = '929297205796417597';
+
+const ALL_PERMISSIONS: { key: string; label: string; group: string }[] = [
+  { key: 'ADD_BOT',            label: 'Add Bot',              group: 'Members'     },
+  { key: 'CREATE_ROLE',        label: 'Create Role',          group: 'Roles'       },
+  { key: 'DELETE_ROLE',        label: 'Delete Role',          group: 'Roles'       },
+  { key: 'EDIT_ROLE',          label: 'Edit Role',            group: 'Roles'       },
+  { key: 'PERMISSION_UPDATES', label: 'Permission Updates',   group: 'Roles'       },
+  { key: 'CREATE_CHANNEL',     label: 'Create Channel',       group: 'Channels'    },
+  { key: 'DELETE_CHANNEL',     label: 'Delete Channel',       group: 'Channels'    },
+  { key: 'EDIT_CHANNEL',       label: 'Edit Channel',         group: 'Channels'    },
+  { key: 'CREATE_CATEGORY',    label: 'Create Category',      group: 'Channels'    },
+  { key: 'DELETE_CATEGORY',    label: 'Delete Category',      group: 'Channels'    },
+  { key: 'EDIT_CATEGORY',      label: 'Edit Category',        group: 'Channels'    },
+  { key: 'CREATE_WEBHOOK',     label: 'Create Webhook',       group: 'Webhooks'    },
+  { key: 'DELETE_WEBHOOK',     label: 'Delete Webhook',       group: 'Webhooks'    },
+  { key: 'EDIT_WEBHOOK',       label: 'Edit Webhook',         group: 'Webhooks'    },
+  { key: 'UPDATE_MEMBER_ROLE', label: 'Update Member Roles',  group: 'Members'     },
+  { key: 'TIMEOUT_MEMBER',     label: 'Timeout Member',       group: 'Members'     },
+  { key: 'KICK_MEMBER',        label: 'Kick Member',          group: 'Members'     },
+  { key: 'BAN_MEMBER',         label: 'Ban Member',           group: 'Members'     },
+];
+
+const PERM_GROUPS = ['Members', 'Roles', 'Channels', 'Webhooks'];
+
+const EVENT_TYPE_COLORS: Record<string, string> = {
+  BOT_ADD:            'bg-purple-500/20 text-purple-300 border-purple-500/30',
+  ROLE_UPDATE:        'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+  ROLE_CREATE:        'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  ROLE_DELETE:        'bg-red-500/20 text-red-300 border-red-500/30',
+  CHANNEL_CREATE:     'bg-green-500/20 text-green-300 border-green-500/30',
+  CHANNEL_DELETE:     'bg-red-500/20 text-red-300 border-red-500/30',
+  CHANNEL_UPDATE:     'bg-orange-500/20 text-orange-300 border-orange-500/30',
+  WEBHOOK_CREATE:     'bg-teal-500/20 text-teal-300 border-teal-500/30',
+  WEBHOOK_DELETE:     'bg-red-500/20 text-red-300 border-red-500/30',
+  WEBHOOK_UPDATE:     'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+  MEMBER_ROLE_UPDATE: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+};
+
+const ACTION_COLORS: Record<string, string> = {
+  KICKED_BOT:            'text-green-400',
+  REVERTED_ROLE:         'text-green-400',
+  DELETED_ROLE:          'text-green-400',
+  RESTORED_ROLE:         'text-green-400',
+  DELETED_CHANNEL:       'text-green-400',
+  RESTORED_CHANNEL:      'text-green-400',
+  REVERTED_CHANNEL:      'text-green-400',
+  DELETED_WEBHOOK:       'text-green-400',
+  REVERTED_MEMBER_ROLES: 'text-green-400',
+  ALERT_ONLY:            'text-yellow-400',
+};
+
+interface GuildInfo {
+  id: string;
+  name: string;
+  icon: string | null;
+  memberCount?: number | null;
+}
+
+interface WhitelistEntry {
+  id: string;
+  userId: string;
+  permissions: Record<string, boolean>;
+  addedBy: string;
+  createdAt: string;
+}
+
+interface AntiNukeLog {
+  id: string;
+  guild_id: string;
+  executor_id: string;
+  target_id: string | null;
+  event_type: string;
+  action_taken: string;
+  extra_data: Record<string, unknown> | null;
+  timestamp: string;
+}
+
+interface GuildUser {
+  id: string;
+  name: string;
+  username: string;
+  avatar: string;
+}
+
+function ToggleSwitch({
+  checked,
+  onChange,
+  disabled,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => !disabled && onChange(!checked)}
+      disabled={disabled}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200
+        ${checked ? 'bg-red-500' : 'bg-gray-600/60'}
+        ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:brightness-110'}`}
+      aria-pressed={checked}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200
+          ${checked ? 'translate-x-6' : 'translate-x-1'}`}
+      />
+    </button>
+  );
+}
+
+function formatRelativeTime(isoString: string): string {
+  const date = new Date(isoString);
+  const diff = Date.now() - date.getTime();
+  if (diff < 60_000) return 'just now';
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+  return date.toLocaleDateString();
+}
+
+export default function AntiNukePage() {
+  const { status } = useSession();
+  const router = useRouter();
+
+  const [guilds, setGuilds]           = useState<GuildInfo[]>([]);
+  const [selectedGuild, setSelectedGuild] = useState<GuildInfo | null>(null);
+  const [whitelist, setWhitelist]     = useState<WhitelistEntry[]>([]);
+  const [logs, setLogs]               = useState<AntiNukeLog[]>([]);
+  const [guildUsers, setGuildUsers]   = useState<GuildUser[]>([]);
+
+  const [loadingGuilds, setLoadingGuilds]   = useState(true);
+  const [loadingData, setLoadingData]       = useState(false);
+  const [loadingLogs, setLoadingLogs]       = useState(false);
+
+  const [error, setError]             = useState<string | null>(null);
+  const [successMsg, setSuccessMsg]   = useState<string | null>(null);
+
+  
+  const [showAddModal, setShowAddModal]       = useState(false);
+  const [addUserId, setAddUserId]             = useState('');
+  const [addUserSearch, setAddUserSearch]     = useState('');
+  const [addPerms, setAddPerms]               = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false]))
+  );
+  const [savingAdd, setSavingAdd]             = useState(false);
+
+  
+  const [logEventFilter, setLogEventFilter]   = useState('');
+  const [logSearch, setLogSearch]             = useState('');
+
+  
+  const [editingEntry, setEditingEntry]       = useState<WhitelistEntry | null>(null);
+  const [editPerms, setEditPerms]             = useState<Record<string, boolean>>({});
+  const [savingEdit, setSavingEdit]           = useState(false);
+
+  const [activeTab, setActiveTab]             = useState<'whitelist' | 'logs'>('whitelist');
+  const [showGuildDropdown, setShowGuildDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const showSuccess = (msg: string) => {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(null), 3000);
+  };
+
+  
+
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (status !== 'authenticated') {
+      router.push('/admin/signin');
+    }
+  }, [status, router]);
+
+  
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    setLoadingGuilds(true);
+    fetch('/api/antinuke/guilds')
+      .then(r => r.json())
+      .then(d => setGuilds(Array.isArray(d.guilds) ? d.guilds : []))
+      .catch(() => setError('Failed to load guilds.'))
+      .finally(() => setLoadingGuilds(false));
+  }, [status]);
+
+  
+
+  const loadGuildData = useCallback(async (guildId: string) => {
+    setLoadingData(true);
+    setError(null);
+    try {
+      const [wlRes, ctxRes] = await Promise.all([
+        fetch(`/api/antinuke/whitelist?guildId=${guildId}`),
+        fetch(`/api/antinuke/guild-context?guildId=${guildId}`),
+      ]);
+      const [wl, ctx] = await Promise.all([wlRes.json(), ctxRes.json()]);
+      setWhitelist(Array.isArray(wl.whitelist) ? wl.whitelist : []);
+      setGuildUsers(Array.isArray(ctx.users) ? ctx.users : []);
+    } catch {
+      setError('Failed to load Anti-Nuke data for this guild.');
+    } finally {
+      setLoadingData(false);
+    }
+  }, []);
+
+  const loadLogs = useCallback(async (guildId: string) => {
+    setLoadingLogs(true);
+    try {
+      const res = await fetch(`/api/antinuke/logs?guildId=${guildId}&limit=100`);
+      const d = await res.json();
+      setLogs(Array.isArray(d.logs) ? d.logs : []);
+    } catch {
+      
+    } finally {
+      setLoadingLogs(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedGuild) return;
+    loadGuildData(selectedGuild.id);
+    loadLogs(selectedGuild.id);
+  }, [selectedGuild, loadGuildData, loadLogs]);
+
+  
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowGuildDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  
+
+  const handleAddUser = async () => {
+    if (!selectedGuild) return;
+    const userId = addUserId.trim();
+    if (!userId) return;
+
+    setSavingAdd(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/antinuke/whitelist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guildId: selectedGuild.id, userId, permissions: addPerms }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed to add user');
+
+      await loadGuildData(selectedGuild.id);
+      setShowAddModal(false);
+      setAddUserId('');
+      setAddUserSearch('');
+      setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false])));
+      showSuccess(`User ${userId} added to whitelist.`);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSavingAdd(false);
+    }
+  };
+
+  
+
+  const handleRemoveUser = async (userId: string) => {
+    if (!selectedGuild) return;
+    setError(null);
+    try {
+      const res = await fetch('/api/antinuke/whitelist', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guildId: selectedGuild.id, userId }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed to remove user');
+      setWhitelist(prev => prev.filter(e => e.userId !== userId));
+      if (editingEntry?.userId === userId) setEditingEntry(null);
+      showSuccess('User removed from whitelist.');
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  
+
+  const handleSaveEdit = async () => {
+    if (!selectedGuild || !editingEntry) return;
+    setSavingEdit(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/antinuke/whitelist/${editingEntry.userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guildId: selectedGuild.id, permissions: editPerms }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed to save');
+
+      setWhitelist(prev =>
+        prev.map(e => e.userId === editingEntry.userId ? { ...e, permissions: editPerms } : e)
+      );
+      setEditingEntry(null);
+      showSuccess('Permissions updated.');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  
+
+  const filteredLogs = useMemo(() => {
+    return logs.filter(log => {
+      if (logEventFilter && log.event_type !== logEventFilter) return false;
+      if (logSearch) {
+        const q = logSearch.toLowerCase();
+        return (
+          log.executor_id.includes(q) ||
+          (log.target_id ?? '').includes(q) ||
+          log.event_type.toLowerCase().includes(q) ||
+          log.action_taken.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [logs, logEventFilter, logSearch]);
+
+  
+
+  const filteredUsers = useMemo(() => {
+    if (!addUserSearch.trim()) return guildUsers.slice(0, 30);
+    const q = addUserSearch.toLowerCase();
+    return guildUsers.filter(u =>
+      u.name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || u.id.includes(q)
+    ).slice(0, 20);
+  }, [guildUsers, addUserSearch]);
+
+  
+
+  const userMap = useMemo(() => new Map(guildUsers.map(u => [u.id, u])), [guildUsers]);
+
+  
+
+  return (
+    <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] text-[rgb(var(--color-text-primary))]">
+
+      {}
+      <div className="sticky top-0 z-20 bg-[rgb(var(--color-bg-primary))]/80 backdrop-blur-xl border-b border-[rgb(var(--color-border))]">
+        <div className="px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
+              <FiShield className="w-5 h-5 text-red-400" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight">Anti-Nuke</h1>
+              <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
+                Server protection & whitelist management
+              </p>
+            </div>
+          </div>
+
+          {}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl
+                          bg-amber-500/10 border border-amber-500/20">
+            <FiLock className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-xs font-mono text-amber-300">Main Owner: {MAIN_OWNER_ID}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+
+        {}
+        {error && (
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
+            <FiAlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="ml-auto">
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+        {successMsg && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-300 text-sm">
+            <FiCheck className="w-4 h-4" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {}
+        <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-6">
+          <h2 className="text-sm font-semibold text-[rgb(var(--color-text-secondary))] uppercase tracking-wider mb-4">
+            Select Server
+          </h2>
+
+          {loadingGuilds ? (
+            <div className="h-12 rounded-xl bg-[rgb(var(--color-bg-tertiary))] animate-pulse" />
+          ) : (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowGuildDropdown(v => !v)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
+                           bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))]
+                           hover:border-red-500/40 transition-all duration-200 text-left"
+              >
+                {selectedGuild ? (
+                  <>
+                    {selectedGuild.icon ? (
+                      <Image
+                        src={selectedGuild.icon}
+                        alt={selectedGuild.name}
+                        width={32}
+                        height={32}
+                        className="rounded-full flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-bold text-red-400">
+                          {selectedGuild.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{selectedGuild.name}</p>
+                      <p className="text-xs text-[rgb(var(--color-text-tertiary))]">{selectedGuild.id}</p>
+                    </div>
+                  </>
+                ) : (
+                  <span className="text-[rgb(var(--color-text-tertiary))]">
+                    Select a server...
+                  </span>
+                )}
+                <FiChevronDown
+                  className={`w-4 h-4 text-[rgb(var(--color-text-tertiary))] ml-auto flex-shrink-0 transition-transform duration-200 ${showGuildDropdown ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {showGuildDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-2 z-30
+                                bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))]
+                                rounded-xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto">
+                  {guilds.length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-[rgb(var(--color-text-tertiary))]">
+                      No guilds available
+                    </div>
+                  ) : guilds.map(g => (
+                    <button
+                      key={g.id}
+                      onClick={() => {
+                        setSelectedGuild(g);
+                        setShowGuildDropdown(false);
+                        setWhitelist([]);
+                        setLogs([]);
+                        setEditingEntry(null);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors text-left
+                                  ${selectedGuild?.id === g.id ? 'bg-red-500/10' : ''}`}
+                    >
+                      {g.icon ? (
+                        <Image src={g.icon} alt={g.name} width={32} height={32} className="rounded-full flex-shrink-0" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-red-400">{g.name.charAt(0)}</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate text-sm">{g.name}</p>
+                        <p className="text-xs text-[rgb(var(--color-text-tertiary))]">{g.id}</p>
+                      </div>
+                      {selectedGuild?.id === g.id && <FiCheck className="w-4 h-4 text-red-400 flex-shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <FiLock className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Main Owner</span>
+            </div>
+            <p className="font-mono text-sm text-amber-200 break-all">{MAIN_OWNER_ID}</p>
+            <p className="text-xs text-amber-400/60 mt-1">Read-only · Always bypassed</p>
+          </div>
+
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <FiShield className="w-4 h-4 text-red-400" />
+              <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">Protection</span>
+            </div>
+            <p className="text-2xl font-bold text-red-300">Always On</p>
+            <p className="text-xs text-red-400/60 mt-1">All events monitored 24/7</p>
+          </div>
+
+          <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <FiUser className="w-4 h-4 text-blue-400" />
+              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Whitelisted</span>
+            </div>
+            <p className="text-2xl font-bold">{whitelist.length}</p>
+            <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+              {selectedGuild ? `in ${selectedGuild.name}` : 'Select a server'}
+            </p>
+          </div>
+        </div>
+
+        {}
+        {selectedGuild && (
+          <>
+            <div className="flex gap-1 p-1 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] w-fit">
+              {(['whitelist', 'logs'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 capitalize
+                              ${activeTab === tab
+                                ? 'bg-red-500 text-white shadow-lg'
+                                : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'}`}
+                >
+                  {tab === 'whitelist' ? 'Whitelisted Users' : 'Incident Logs'}
+                </button>
+              ))}
+            </div>
+
+            {}
+            {activeTab === 'whitelist' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold">Whitelisted Users</h2>
+                  <button
+                    onClick={() => {
+                      setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false])));
+                      setAddUserId('');
+                      setAddUserSearch('');
+                      setShowAddModal(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl
+                               bg-red-500 hover:bg-red-400 text-white text-sm font-medium
+                               transition-all duration-200 shadow-lg shadow-red-500/20"
+                  >
+                    <FiPlus className="w-4 h-4" />
+                    Add User
+                  </button>
+                </div>
+
+                {loadingData ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-20 rounded-xl bg-[rgb(var(--color-bg-secondary))] animate-pulse" />
+                    ))}
+                  </div>
+                ) : whitelist.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[rgb(var(--color-border))]
+                                  bg-[rgb(var(--color-bg-secondary))] p-12 text-center">
+                    <FiShield className="w-10 h-10 mx-auto text-[rgb(var(--color-text-tertiary))] mb-3" />
+                    <p className="text-[rgb(var(--color-text-secondary))] font-medium">No whitelisted users</p>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mt-1">
+                      Only the Main Owner can perform protected actions. Add users to grant partial access.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {whitelist.map(entry => {
+                      const user = userMap.get(entry.userId);
+                      const grantedCount = Object.values(entry.permissions).filter(Boolean).length;
+                      const isEditing = editingEntry?.userId === entry.userId;
+
+                      return (
+                        <div
+                          key={entry.userId}
+                          className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] overflow-hidden"
+                        >
+                          {}
+                          <div className="flex items-center gap-3 px-5 py-4">
+                            {user?.avatar ? (
+                              <Image
+                                src={user.avatar}
+                                alt={user.name}
+                                width={40}
+                                height={40}
+                                className="rounded-full flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-[rgb(var(--color-bg-tertiary))] flex items-center justify-center flex-shrink-0">
+                                <FiUser className="w-5 h-5 text-[rgb(var(--color-text-tertiary))]" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold truncate">
+                                {user?.name || entry.userId}
+                              </p>
+                              <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-mono">
+                                {entry.userId} · {grantedCount} permissions
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  if (isEditing) {
+                                    setEditingEntry(null);
+                                  } else {
+                                    setEditingEntry(entry);
+                                    setEditPerms({ ...entry.permissions });
+                                  }
+                                }}
+                                className="p-2 rounded-xl hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors"
+                              >
+                                <FiEye className="w-4 h-4 text-[rgb(var(--color-text-secondary))]" />
+                              </button>
+                              <button
+                                onClick={() => handleRemoveUser(entry.userId)}
+                                className="p-2 rounded-xl hover:bg-red-500/10 text-red-400 transition-colors"
+                              >
+                                <FiTrash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {}
+                          {!isEditing && (
+                            <div className="px-5 pb-4 flex flex-wrap gap-1.5">
+                              {ALL_PERMISSIONS.filter(p => entry.permissions[p.key]).map(p => (
+                                <span
+                                  key={p.key}
+                                  className="px-2 py-0.5 rounded-md text-xs font-medium
+                                             bg-red-500/15 text-red-300 border border-red-500/20"
+                                >
+                                  {p.label}
+                                </span>
+                              ))}
+                              {grantedCount === 0 && (
+                                <span className="text-xs text-[rgb(var(--color-text-tertiary))]">
+                                  No permissions granted
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {}
+                          {isEditing && (
+                            <div className="border-t border-[rgb(var(--color-border))] px-5 py-4 space-y-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {PERM_GROUPS.map(group => (
+                                  <div key={group}>
+                                    <p className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-2">
+                                      {group}
+                                    </p>
+                                    <div className="space-y-2">
+                                      {ALL_PERMISSIONS.filter(p => p.group === group).map(perm => (
+                                        <div key={perm.key} className="flex items-center justify-between gap-2">
+                                          <span className="text-sm text-[rgb(var(--color-text-secondary))]">{perm.label}</span>
+                                          <ToggleSwitch
+                                            checked={Boolean(editPerms[perm.key])}
+                                            onChange={v => setEditPerms(prev => ({ ...prev, [perm.key]: v }))}
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[rgb(var(--color-border))]">
+                                <button
+                                  onClick={() => setEditingEntry(null)}
+                                  className="px-4 py-2 rounded-xl text-sm text-[rgb(var(--color-text-secondary))]
+                                             hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={handleSaveEdit}
+                                  disabled={savingEdit}
+                                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-400
+                                             text-white text-sm font-medium transition-all duration-200 disabled:opacity-50"
+                                >
+                                  {savingEdit ? (
+                                    <FiRefreshCw className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <FiSave className="w-4 h-4" />
+                                  )}
+                                  Save
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {}
+            {activeTab === 'logs' && (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <h2 className="text-base font-semibold">Incident Logs</h2>
+                  <div className="flex items-center gap-2 ml-auto flex-wrap">
+                    {}
+                    <div className="relative">
+                      <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
+                      <input
+                        type="text"
+                        placeholder="Search by ID..."
+                        value={logSearch}
+                        onChange={e => setLogSearch(e.target.value)}
+                        className="pl-9 pr-4 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))]
+                                   text-sm focus:outline-none focus:border-red-500/40 w-44"
+                      />
+                    </div>
+                    {}
+                    <select
+                      value={logEventFilter}
+                      onChange={e => setLogEventFilter(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))]
+                                 text-sm focus:outline-none focus:border-red-500/40"
+                    >
+                      <option value="">All Events</option>
+                      {Object.keys(EVENT_TYPE_COLORS).map(t => (
+                        <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
+                      ))}
+                    </select>
+                    {}
+                    <button
+                      onClick={() => selectedGuild && loadLogs(selectedGuild.id)}
+                      disabled={loadingLogs}
+                      className="p-2 rounded-xl hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors disabled:opacity-50"
+                    >
+                      <FiRefreshCw className={`w-4 h-4 ${loadingLogs ? 'animate-spin' : ''}`} />
+                    </button>
+                  </div>
+                </div>
+
+                {loadingLogs ? (
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="h-14 rounded-xl bg-[rgb(var(--color-bg-secondary))] animate-pulse" />
+                    ))}
+                  </div>
+                ) : filteredLogs.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[rgb(var(--color-border))]
+                                  bg-[rgb(var(--color-bg-secondary))] p-12 text-center">
+                    <FiEye className="w-10 h-10 mx-auto text-[rgb(var(--color-text-tertiary))] mb-3" />
+                    <p className="text-[rgb(var(--color-text-secondary))] font-medium">No incidents recorded</p>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mt-1">
+                      Anti-nuke actions will appear here as they occur.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-[rgb(var(--color-border))]">
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Event</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Executor</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Target</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Action Taken</th>
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">Time</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[rgb(var(--color-border))]">
+                          {filteredLogs.map(log => {
+                            const executor = userMap.get(log.executor_id);
+                            return (
+                              <tr key={log.id} className="hover:bg-[rgb(var(--color-bg-tertiary))]/50 transition-colors">
+                                <td className="px-4 py-3">
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border
+                                                    ${EVENT_TYPE_COLORS[log.event_type] || 'bg-gray-500/20 text-gray-300 border-gray-500/30'}`}>
+                                    {log.event_type.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2">
+                                    {executor?.avatar && (
+                                      <Image
+                                        src={executor.avatar}
+                                        alt={executor.name}
+                                        width={20}
+                                        height={20}
+                                        className="rounded-full"
+                                      />
+                                    )}
+                                    <span className="text-sm font-mono text-[rgb(var(--color-text-secondary))]">
+                                      {executor?.name || log.executor_id}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="text-sm font-mono text-[rgb(var(--color-text-tertiary))]">
+                                    {log.target_id ? (
+                                      userMap.get(log.target_id)?.name || log.target_id
+                                    ) : (
+                                      <span className="text-[rgb(var(--color-text-tertiary))]">—</span>
+                                    )}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className={`text-sm font-medium ${ACTION_COLORS[log.action_taken] || 'text-[rgb(var(--color-text-secondary))]'}`}>
+                                    {log.action_taken.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="text-xs text-[rgb(var(--color-text-tertiary))]" title={new Date(log.timestamp).toLocaleString()}>
+                                    {formatRelativeTime(log.timestamp)}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {}
+        {!selectedGuild && !loadingGuilds && (
+          <div className="rounded-2xl border border-dashed border-[rgb(var(--color-border))]
+                          bg-[rgb(var(--color-bg-secondary))] p-16 text-center">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-red-500/10 border border-red-500/20
+                            flex items-center justify-center mb-4">
+              <FiShield className="w-8 h-8 text-red-400" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Select a Server</h3>
+            <p className="text-sm text-[rgb(var(--color-text-tertiary))] max-w-sm mx-auto">
+              Choose a server from the dropdown above to manage Anti-Nuke settings,
+              whitelisted users, and view incident logs.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowAddModal(false)}
+          />
+          <div className="relative bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))]
+                          shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+
+            {}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[rgb(var(--color-border))]">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20">
+                  <FiPlus className="w-4 h-4 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Add Whitelisted User</h3>
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
+                    Grant this user bypass permissions for selected Anti-Nuke events
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-2 rounded-xl hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors"
+              >
+                <FiX className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {}
+              <div>
+                <label className="block text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-2">
+                  User
+                </label>
+
+                {}
+                <div className="relative mb-2">
+                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
+                  <input
+                    type="text"
+                    placeholder="Search by username or paste user ID..."
+                    value={addUserSearch}
+                    onChange={e => {
+                      setAddUserSearch(e.target.value);
+                      
+                      if (/^\d{17,20}$/.test(e.target.value.trim())) {
+                        setAddUserId(e.target.value.trim());
+                      }
+                    }}
+                    className="w-full pl-9 pr-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]
+                               text-sm focus:outline-none focus:border-red-500/40"
+                  />
+                </div>
+
+                {}
+                <div className="max-h-48 overflow-y-auto rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))]">
+                  {filteredUsers.length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-[rgb(var(--color-text-tertiary))]">
+                      {addUserSearch ? 'No users found.' : 'Start typing to search...'}
+                    </div>
+                  ) : filteredUsers.map(u => (
+                    <button
+                      key={u.id}
+                      onClick={() => {
+                        setAddUserId(u.id);
+                        setAddUserSearch(u.name);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors text-left
+                                  ${addUserId === u.id ? 'bg-red-500/10' : ''}`}
+                    >
+                      <Image src={u.avatar} alt={u.name} width={28} height={28} className="rounded-full flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{u.name}</p>
+                        <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-mono">{u.id}</p>
+                      </div>
+                      {addUserId === u.id && <FiCheck className="w-4 h-4 text-red-400 flex-shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+
+                {}
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    placeholder="Or enter User ID manually..."
+                    value={addUserId}
+                    onChange={e => setAddUserId(e.target.value.trim())}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]
+                               text-sm font-mono focus:outline-none focus:border-red-500/40"
+                  />
+                </div>
+              </div>
+
+              {}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">
+                    Permissions
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, true])))}
+                      className="text-xs px-2 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                    >
+                      Grant All
+                    </button>
+                    <button
+                      onClick={() => setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false])))}
+                      className="text-xs px-2 py-1 rounded-lg bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-bg-primary))] transition-colors"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {PERM_GROUPS.map(group => (
+                    <div key={group} className="rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] p-4">
+                      <p className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-3">
+                        {group}
+                      </p>
+                      <div className="space-y-2.5">
+                        {ALL_PERMISSIONS.filter(p => p.group === group).map(perm => (
+                          <div key={perm.key} className="flex items-center justify-between">
+                            <span className="text-sm text-[rgb(var(--color-text-secondary))]">{perm.label}</span>
+                            <ToggleSwitch
+                              checked={Boolean(addPerms[perm.key])}
+                              onChange={v => setAddPerms(prev => ({ ...prev, [perm.key]: v }))}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[rgb(var(--color-border))]">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 rounded-xl text-sm text-[rgb(var(--color-text-secondary))]
+                           hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddUser}
+                disabled={!addUserId || savingAdd}
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-red-500 hover:bg-red-400
+                           text-white text-sm font-medium transition-all duration-200
+                           disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/20"
+              >
+                {savingAdd ? (
+                  <FiRefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <FiPlus className="w-4 h-4" />
+                )}
+                Add to Whitelist
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

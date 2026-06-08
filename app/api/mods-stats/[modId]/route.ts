@@ -31,9 +31,6 @@ function buildDateClause(
   };
 }
 
-/**
- * GET - Fetch detailed stats for a specific moderator
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ modId: string }> }
@@ -41,7 +38,7 @@ export async function GET(
   try {
     const { modId } = await params;
     const session = await getServerSession(authOptions);
-    // Mods stats requires full access (admin/manage server)
+    
     if (!session || !session.user?.permissions?.hasFullAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -51,10 +48,10 @@ export async function GET(
     const endDate = searchParams.get('endDate');
     const dateFilter: DateFilter = { startDate, endDate };
 
-    // Get moderator profile - try cache first, then Discord API
+    
     let modProfile = await getUserDisplay(modId, 256);
     
-    // If profile shows Unknown User, try Discord API directly
+    
     if (modProfile.username === 'Unknown User') {
       const botToken = process.env.DISCORD_BOT_TOKEN;
       if (botToken) {
@@ -80,12 +77,12 @@ export async function GET(
             };
           }
         } catch {
-          // Keep cached fallback
+          
         }
       }
     }
 
-    // Get moderator stats from moderation_cases with date filter
+    
     const df = buildDateClause('created_at', dateFilter, 3);
     const modStats = await queryBotDb(`
       SELECT 
@@ -102,7 +99,7 @@ export async function GET(
       WHERE guild_id = $1 AND moderator_id = $2${df.clause}
     `, [GUILD_ID, modId, ...df.params]);
 
-    // Get all moderation cases by this mod (with target user info)
+    
     const casesDf = buildDateClause('mc.created_at', dateFilter, 3);
     const modCases = await queryBotDb(`
       SELECT 
@@ -125,14 +122,14 @@ export async function GET(
       LIMIT 200
     `, [GUILD_ID, modId, ...casesDf.params]);
 
-    // Collect target IDs missing from cache
+    
     const missingTargetIds = [...new Set(
       modCases
         .filter((c: any) => !c.target_username)
         .map((c: any) => c.target_id)
     )].slice(0, 30);
 
-    // Fetch missing target users from Discord API
+    
     const fetchedTargets: Record<string, { username: string; displayName: string; avatar: string }> = {};
     const botToken = process.env.DISCORD_BOT_TOKEN;
     if (botToken && missingTargetIds.length > 0) {
@@ -159,16 +156,16 @@ export async function GET(
               };
             }
           } catch {
-            // Ignore errors
+            
           }
         });
         await Promise.all(promises);
       }
     }
 
-    // Build avatar URLs for targets
+    
     const casesWithAvatars = modCases.map((c: any) => {
-      // Check if we fetched this target from Discord API
+      
       const fetched = fetchedTargets[c.target_id];
       
       let targetAvatar = null;
@@ -190,7 +187,7 @@ export async function GET(
       };
     });
 
-    // Get manual cases by this mod
+    
     const manualsDf = buildDateClause('m.created_at', dateFilter, 3);
     const manualCases = await queryBotDb(`
       SELECT 
@@ -214,7 +211,7 @@ export async function GET(
       LIMIT 100
     `, [GUILD_ID, modId, ...manualsDf.params]);
 
-    // Build avatar URLs for manual targets (reuse fetchedTargets from above)
+    
     const manualsWithAvatars = manualCases.map((m: any) => {
       const fetched = fetchedTargets[m.target_id];
       
@@ -236,7 +233,7 @@ export async function GET(
       };
     });
 
-    // Get manuals where this mod is mentioned in reviewed_by
+    
     const reviewedManuals = await queryBotDb(`
       SELECT 
         m.id,
@@ -260,7 +257,7 @@ export async function GET(
       LIMIT 50
     `, [GUILD_ID, modId]);
 
-    // Get VC stats for mod
+    
     const vcDf = buildDateClause('joined_at', dateFilter, 3);
     const vcStats = await queryBotDb(`
       SELECT 
@@ -273,7 +270,7 @@ export async function GET(
       WHERE guild_id = $1 AND user_id = $2 AND left_at IS NOT NULL${vcDf.clause}
     `, [GUILD_ID, modId, ...vcDf.params]);
 
-    // Get VC sessions for mod (for chart/timeline)
+    
     const vcSessions = await queryBotDb(`
       SELECT 
         id,
@@ -288,7 +285,7 @@ export async function GET(
       LIMIT 100
     `, [GUILD_ID, modId, ...vcDf.params]);
 
-    // Get chat stats for mod
+    
     const chatDf = buildDateClause('created_at', dateFilter, 3);
     const chatStats = await queryBotDb(`
       SELECT 
@@ -300,7 +297,7 @@ export async function GET(
       WHERE guild_id = $1 AND user_id = $2${chatDf.clause}
     `, [GUILD_ID, modId, ...chatDf.params]);
 
-    // Get activity by day for charts (last 30 days)
+    
     const activityByDay = await queryBotDb(`
       SELECT 
         DATE(created_at) as date,
@@ -315,7 +312,7 @@ export async function GET(
       ORDER BY date DESC
     `, [GUILD_ID, modId]);
 
-    // Get activity by hour for charts
+    
     const activityByHour = await queryBotDb(`
       SELECT 
         EXTRACT(HOUR FROM created_at) as hour,

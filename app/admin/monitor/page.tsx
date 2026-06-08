@@ -26,7 +26,7 @@ export default function LiveMonitorPage() {
   const [connected, setConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   
-  // Search
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<any>(null);
@@ -65,7 +65,7 @@ export default function LiveMonitorPage() {
       try {
         sessionStorage.setItem(MONITOR_CACHE_KEY, JSON.stringify(result));
       } catch {
-        // Ignore storage failures.
+        
       }
     } catch (err) {
       console.error('Error fetching live status:', err);
@@ -117,7 +117,7 @@ export default function LiveMonitorPage() {
         try {
           sessionStorage.setItem(MONITOR_CACHE_KEY, JSON.stringify(result));
         } catch {
-          // Ignore storage failures.
+          
         }
       } catch (err) {
         console.error('Error parsing SSE data:', err);
@@ -166,7 +166,7 @@ export default function LiveMonitorPage() {
           }
         }
       } catch {
-        // Ignore cache read failures.
+        
       }
 
       void fetchData();
@@ -240,7 +240,7 @@ export default function LiveMonitorPage() {
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
+        {}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link href="/admin/dashboard" className="p-2 rounded-lg bg-[rgb(var(--color-bg-secondary))] hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors">
@@ -278,7 +278,7 @@ export default function LiveMonitorPage() {
           </div>
         </div>
 
-        {/* Search Bar */}
+        {}
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))] p-4">
           <div className="flex gap-2">
             <div className="flex-1 relative">
@@ -307,7 +307,7 @@ export default function LiveMonitorPage() {
           </div>
         </div>
 
-        {/* Stats */}
+        {}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <StatCard icon={<FiUsers />} label="In VC Now" value={vcActive.length} color="blue" />
           <StatCard icon={<FiZap />} label="Earning (VC)" value={vcEarning.length} color="green" />
@@ -316,23 +316,23 @@ export default function LiveMonitorPage() {
           <StatCard icon={getEmojiDisplay(currency)} label="Msg Today" value={data?.stats?.msgEarned || 0} color="orange" />
         </div>
 
-        {/* Tabs */}
+        {}
         <div className="flex gap-2 border-b border-[rgb(var(--color-border))]">
           <TabButton active={activeTab === 'vc'} onClick={() => setActiveTab('vc')} icon={<FiMic />} label="Voice Channels" count={vcActive.length} />
           <TabButton active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} icon={<FiMessageSquare />} label="Chat Messages" count={msgActive.length} />
           {searchResult && <TabButton active={activeTab === 'search'} onClick={() => setActiveTab('search')} icon={<FiSearch />} label="Search Result" />}
         </div>
 
-        {/* Content */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
+          {}
           <div className="lg:col-span-2">
             {activeTab === 'vc' && <VoiceTab data={data} formatDuration={formatDuration} buildAvatarUrl={buildAvatarUrl} currency={currency} getEmojiDisplay={getEmojiDisplay} />}
             {activeTab === 'messages' && <MessagesTab data={data} buildAvatarUrl={buildAvatarUrl} currency={currency} getEmojiDisplay={getEmojiDisplay} />}
             {activeTab === 'search' && searchResult && <SearchTab result={searchResult} formatDuration={formatDuration} formatTimeAgo={formatTimeAgo} buildAvatarUrl={buildAvatarUrl} currency={searchResult?.config?.emoji || '🪙'} getEmojiDisplay={getEmojiDisplay} />}
           </div>
 
-          {/* Sidebar */}
+          {}
           <div className="space-y-4">
             <RecentAwardsPanel title="Recent VC Rewards" awards={data?.vc?.recentAwards || []} formatTimeAgo={formatTimeAgo} buildAvatarUrl={buildAvatarUrl} getEmojiDisplay={getEmojiDisplay} currency={currency} />
             <RecentAwardsPanel title="Recent Message Rewards" awards={data?.messages?.recentAwards || []} formatTimeAgo={formatTimeAgo} buildAvatarUrl={buildAvatarUrl} getEmojiDisplay={getEmojiDisplay} currency={currency} />
@@ -539,7 +539,7 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
   
   return (
     <div className="space-y-4">
-      {/* User Info */}
+      {}
       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))] p-6">
         <div className="flex items-center gap-4 mb-4">
           <img src={buildAvatarUrl(result.user.id, result.user.avatar, '0', 80)} alt={result.user.name} className="w-20 h-20 rounded-full" />
@@ -568,7 +568,7 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
         </div>
       </div>
 
-      {/* Current Activity */}
+      {}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))] p-4">
           <h4 className="font-semibold text-[rgb(var(--color-text-primary))] mb-3 flex items-center gap-2">
@@ -599,7 +599,7 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
         </div>
       </div>
 
-      {/* History */}
+      {}
       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))]">
         <div className="px-4 py-3 border-b border-[rgb(var(--color-border))]">
           <h4 className="font-semibold text-[rgb(var(--color-text-primary))]">Recent History</h4>
@@ -631,12 +631,12 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
 }
 
 function RecentAwardsPanel({ title, awards, formatTimeAgo, buildAvatarUrl, getEmojiDisplay, currency }: any) {
-  // Aggregate awards by user
+  
   const aggregated = awards.reduce((acc: any, award: any) => {
     const existing = acc.find((a: any) => a.id === award.id);
     if (existing) {
       existing.amount += award.amount;
-      // Keep the most recent time
+      
       if (new Date(award.time) > new Date(existing.time)) {
         existing.time = award.time;
       }
@@ -646,7 +646,7 @@ function RecentAwardsPanel({ title, awards, formatTimeAgo, buildAvatarUrl, getEm
     return acc;
   }, []);
 
-  // Sort by total amount descending
+  
   aggregated.sort((a: any, b: any) => b.amount - a.amount);
 
   return (

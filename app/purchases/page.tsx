@@ -33,7 +33,7 @@ export default function PurchasesPage() {
   const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  // Function to convert Discord emoji to CDN URL
+  
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -121,7 +121,7 @@ export default function PurchasesPage() {
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
+        {}
         <div className="flex items-center gap-4 mb-8">
           <Link
             href="/shop"
@@ -139,7 +139,7 @@ export default function PurchasesPage() {
           </div>
         </div>
 
-        {/* Purchases List */}
+        {}
         {purchases.length === 0 ? (
           <div className="glass-blue rounded-3xl p-12 text-center border border-[rgb(var(--color-border))]">
             <FiPackage className="w-16 h-16 mx-auto text-[rgb(var(--color-text-tertiary))] mb-4" />
@@ -164,7 +164,7 @@ export default function PurchasesPage() {
                 className="glass-blue rounded-2xl p-4 sm:p-6 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/50 apple-transition"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  {/* Item Info */}
+                  {}
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-semibold text-lg text-[rgb(var(--color-text-primary))]">
@@ -261,7 +261,7 @@ export default function PurchasesPage() {
                     )}
                   </div>
 
-                  {/* Redeem Code */}
+                  {}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <div className="px-4 py-2 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
                       <p className="text-xs text-[rgb(var(--color-text-tertiary))] mb-1">Redeem Code</p>

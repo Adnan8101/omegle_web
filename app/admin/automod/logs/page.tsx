@@ -43,7 +43,7 @@ export default function AutoModLogsPage() {
   const [filters, setFilters] = useState({ userId: '', ruleName: '' });
   const [showFilters, setShowFilters] = useState(false);
 
-  // Load user's guilds
+  
   useEffect(() => {
     if (!session?.user?.id) return;
 
@@ -63,7 +63,7 @@ export default function AutoModLogsPage() {
     loadGuilds();
   }, [session]);
 
-  // Load logs
+  
   useEffect(() => {
     if (!selectedGuild) return;
 
@@ -124,7 +124,7 @@ export default function AutoModLogsPage() {
         <h1 className="text-3xl font-bold text-white">AutoMod Logs</h1>
       </div>
 
-      {/* Guild selector and controls */}
+      {}
       <div className="bg-gray-800 rounded-lg p-4 mb-6">
         <div className="flex items-center gap-4 mb-4">
           <div className="flex-1">
@@ -161,7 +161,7 @@ export default function AutoModLogsPage() {
           </div>
         </div>
 
-        {/* Filters */}
+        {}
         {showFilters && (
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-700">
             <div>
@@ -205,7 +205,7 @@ export default function AutoModLogsPage() {
         )}
       </div>
 
-      {/* Stats */}
+      {}
       {!loading && logs.length > 0 && (
         <div className="bg-gray-800 rounded-lg p-4 mb-6">
           <p className="text-gray-300 text-sm">
@@ -214,14 +214,14 @@ export default function AutoModLogsPage() {
         </div>
       )}
 
-      {/* Error message */}
+      {}
       {error && (
         <div className="bg-red-900 text-red-200 p-4 rounded-lg mb-6">
           {error}
         </div>
       )}
 
-      {/* Loading state */}
+      {}
       {loading ? (
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -232,7 +232,7 @@ export default function AutoModLogsPage() {
         </div>
       ) : (
         <>
-          {/* Logs table */}
+          {}
           <div className="overflow-x-auto bg-gray-800 rounded-lg">
             <table className="w-full text-sm">
               <thead className="bg-gray-900 border-b border-gray-700">
@@ -283,7 +283,7 @@ export default function AutoModLogsPage() {
             </table>
           </div>
 
-          {/* Pagination */}
+          {}
           <div className="flex items-center justify-between mt-6">
             <div className="flex items-center gap-2">
               <label className="text-gray-300 text-sm">per page:</label>

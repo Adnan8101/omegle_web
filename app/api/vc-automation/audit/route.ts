@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
 
-// GET — paginated audit log with filters
 export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);

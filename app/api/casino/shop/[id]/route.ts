@@ -54,7 +54,6 @@ function serializeRoleIds(roleIds: string[]): string | null {
   return roleIds.length > 0 ? roleIds.join(',') : null;
 }
 
-// GET - Get single shop item
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -89,7 +88,7 @@ export async function GET(
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
-    // Get economy config
+    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
@@ -114,7 +113,6 @@ export async function GET(
   }
 }
 
-// PUT - Update shop item
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -168,7 +166,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Stock must be 0 or greater' }, { status: 400 });
     }
 
-    // Calculate expiration date if specified
+    
     let expiresAt = null;
     if (expiresInDays && expiresInDays > 0) {
       expiresAt = new Date();
@@ -215,7 +213,6 @@ export async function PUT(
   }
 }
 
-// DELETE - Delete shop item
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

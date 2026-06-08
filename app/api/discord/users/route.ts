@@ -4,10 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { getUsersDisplay } from '@/lib/botDb';
 import { getErrorMessage } from '@/lib/constants';
 
-/**
- * Batch resolve Discord users from cache
- * POST body: { userIds: string[] }
- */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,10 +16,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userIds array required' }, { status: 400 });
     }
 
-    // Limit to 100 users per batch
+    
     const limitedIds = userIds.slice(0, 100);
 
-    // Use cached user data with proper avatar URLs
+    
     const usersMap = await getUsersDisplay(limitedIds, 128);
     
     return NextResponse.json({ users: usersMap });

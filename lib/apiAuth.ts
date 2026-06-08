@@ -1,6 +1,5 @@
 import { UserPermissions } from './permissions';
 
-
 export function hasFullAccess(permissions?: UserPermissions): boolean {
   return permissions?.hasFullAccess ?? false;
 }

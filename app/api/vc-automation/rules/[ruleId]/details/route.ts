@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
 
-// GET — get rule details: role holders and grinding users
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ ruleId: string }> }
@@ -27,7 +26,7 @@ export async function GET(
             return NextResponse.json({ error: 'Rule not found' }, { status: 404 });
         }
 
-        // 1. Get role holders
+        
         const allUsers = await prismaBot.discordUserCache.findMany({
             select: { user_id: true, username: true, display_name: true, avatar_url: true, roles: true },
         });
@@ -50,7 +49,7 @@ export async function GET(
 
         const roleHolderIds = new Set(roleHolders.map(u => u.user_id));
 
-        // 2. Get eligible channels
+        
         let eligibleChannelIds: string[] = [];
         if (rule.target_type === 'category') {
             const channels = await prismaBot.discordChannelCache.findMany({
@@ -62,7 +61,7 @@ export async function GET(
         }
         eligibleChannelIds = eligibleChannelIds.filter(id => !rule.excluded_channel_ids.includes(id));
 
-        // 3. Get VoiceTracking records for last rolling_days
+        
         const cutoffDate = new Date(Date.now() - rule.rolling_days * 24 * 60 * 60 * 1000);
         
         const voiceTracks = await prismaBot.voiceTracking.findMany({
@@ -81,11 +80,11 @@ export async function GET(
             }
         });
 
-        // 4. Aggregate progress
+        
         const userStats = new Map<string, { total_time: number, channel_times: Map<string, number> }>();
         
         for (const track of voiceTracks) {
-            // Ignore users who already have the role
+            
             if (roleHolderIds.has(track.user_id)) continue;
 
             const time = track.time_speaking + track.time_listening + track.time_muted + (rule.count_deafened ? track.time_deafened : 0);
@@ -102,20 +101,20 @@ export async function GET(
             stats.channel_times.set(track.channel_id, currentChannelTime + time);
         }
 
-        // Get channel names
+        
         const channelCache = await prismaBot.discordChannelCache.findMany({
             where: { channel_id: { in: eligibleChannelIds } },
             select: { channel_id: true, name: true }
         });
         const channelMap = new Map(channelCache.map(c => [c.channel_id, c.name]));
 
-        // Get user details for grinding users
+        
         const grindingUserIds = Array.from(userStats.keys());
         const grindingUsersCache = allUsers.filter(u => grindingUserIds.includes(u.user_id));
         const grindingUserMap = new Map(grindingUsersCache.map(u => [u.user_id, u]));
 
         const grindingUsers = Array.from(userStats.entries()).map(([user_id, stats]) => {
-            // Find top channel
+            
             let topChannelId = '';
             let maxTime = -1;
             for (const [chId, time] of stats.channel_times.entries()) {
@@ -138,7 +137,7 @@ export async function GET(
             };
         });
 
-        // Sort descending by progress
+        
         grindingUsers.sort((a, b) => b.total_time_seconds - a.total_time_seconds);
 
         return NextResponse.json({

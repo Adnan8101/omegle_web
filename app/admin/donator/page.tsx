@@ -119,7 +119,7 @@ export default function DonatorAdminPage() {
             }
           }
         } catch {
-          // Ignore client cache read failures.
+          
         }
 
         setLoadingGuilds(true);
@@ -137,7 +137,7 @@ export default function DonatorAdminPage() {
             JSON.stringify({ timestamp: Date.now(), guilds: items })
           );
         } catch {
-          // Ignore client cache write failures.
+          
         }
 
         const sessionGuildId = (session?.user as any)?.guild_id as string | undefined;
@@ -178,7 +178,7 @@ export default function DonatorAdminPage() {
           }
         }
       } catch {
-        // Ignore cache parse failures.
+        
       }
 
       setLoadingPlans(true);
@@ -198,7 +198,7 @@ export default function DonatorAdminPage() {
           JSON.stringify({ timestamp: Date.now(), plans: nextPlans })
         );
       } catch {
-        // Ignore storage failures.
+        
       }
     } catch (fetchError: any) {
       setError(fetchError?.message || 'Failed to load plans');

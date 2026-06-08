@@ -68,7 +68,7 @@ export default function UserInviteDetailPage() {
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'left'>('all');
 
-  // Check permissions
+  
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin/signin');
@@ -81,7 +81,7 @@ export default function UserInviteDetailPage() {
     }
   }, [status, session, router]);
 
-  // Fetch user's invites
+  
   const fetchUserInvites = useCallback(async () => {
     try {
       const params = new URLSearchParams({
@@ -149,7 +149,7 @@ export default function UserInviteDetailPage() {
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-6xl mx-auto">
-        {/* Back Navigation */}
+        {}
         <Link
           href="/admin/casino/economy/invites"
           className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 mb-6 apple-transition"
@@ -158,10 +158,10 @@ export default function UserInviteDetailPage() {
           Back to Invite Dashboard
         </Link>
 
-        {/* User Header */}
+        {}
         <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-[var(--shadow-md)]">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            {/* Avatar */}
+            {}
             {user?.avatar ? (
               <Image
                 src={user.avatar}
@@ -176,7 +176,7 @@ export default function UserInviteDetailPage() {
               </div>
             )}
             
-            {/* User Info */}
+            {}
             <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] mb-2">
                 {user?.username || 'Unknown User'}
@@ -185,7 +185,7 @@ export default function UserInviteDetailPage() {
                 ID: {userId}
               </p>
               
-              {/* Quick Stats */}
+              {}
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgb(var(--color-bg-tertiary))] rounded-lg">
                   <FiUserPlus className="w-4 h-4 text-blue-500" />
@@ -198,7 +198,7 @@ export default function UserInviteDetailPage() {
               </div>
             </div>
             
-            {/* Refresh Button */}
+            {}
             <button
               onClick={fetchUserInvites}
               className="flex items-center gap-2 px-4 py-2.5 glass-blue rounded-xl border border-[rgb(var(--color-border))] hover:border-purple-500/50 apple-transition"
@@ -209,7 +209,7 @@ export default function UserInviteDetailPage() {
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="glass-blue rounded-2xl p-4 border border-[rgb(var(--color-border))]">
             <div className="flex items-center gap-2 mb-2">
@@ -260,7 +260,7 @@ export default function UserInviteDetailPage() {
           </div>
         </div>
 
-        {/* Reward Info */}
+        {}
         <div className="glass-blue rounded-2xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8">
           <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
             <FiAward className="w-5 h-5 text-yellow-500" />
@@ -282,7 +282,7 @@ export default function UserInviteDetailPage() {
           </div>
         </div>
 
-        {/* Invited Members List */}
+        {}
         <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] shadow-[var(--shadow-md)]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
@@ -290,7 +290,7 @@ export default function UserInviteDetailPage() {
               Invited Members
             </h2>
             
-            {/* Filter Buttons */}
+            {}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
@@ -334,7 +334,7 @@ export default function UserInviteDetailPage() {
             </div>
           </div>
           
-          {/* Invites Table */}
+          {}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -433,7 +433,7 @@ export default function UserInviteDetailPage() {
             </table>
           </div>
           
-          {/* Pagination */}
+          {}
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between mt-6 pt-6 border-t border-[rgb(var(--color-border))]">
               <p className="text-sm text-[rgb(var(--color-text-tertiary))]">

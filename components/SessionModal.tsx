@@ -4,10 +4,9 @@ import { useEffect, useState } from 'react';
 import { X, Users, Clock, MessageSquare, Mic, MicOff, Video, VideoOff, Monitor, TrendingUp, Calendar, Hash, ArrowRight, LogIn, LogOut } from 'lucide-react';
 import Image from 'next/image';
 
-// Build avatar URL from hash (handles both hash and legacy full URLs)
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
-    // Check if it's already a full URL (legacy data)
+    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
@@ -83,7 +82,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
 
   useEffect(() => {
     fetchSessionDetails();
-    // Close on Escape key
+    
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -100,7 +99,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
       setTimeline(sessionData.timeline || []);
       setOverlappingUsers(sessionData.overlappingUsers || []);
 
-      // Fetch channel info (try cached first, fallback to Discord API)
+      
       let channelData = null;
       try {
         const cachedChRes = await fetch('/api/discord/cached-channels', {
@@ -121,14 +120,14 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
       }
       setChannel(channelData);
 
-      // Collect all unique user IDs
+      
       const uniqueUserIds = [...new Set([
         sessionData.session.user_id,
         ...(sessionData.overlappingUsers || []).map((u: any) => u.user_id),
         ...(sessionData.timeline || []).map((e: any) => e.userId),
       ])];
 
-      // Batch fetch all Discord users (try cached first, fallback to API)
+      
       if (uniqueUserIds.length > 0) {
         try {
           const cachedRes = await fetch('/api/discord/cached-users', {
@@ -264,7 +263,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-3xl max-w-6xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-[rgb(var(--color-border))] flex flex-col" onClick={(e) => e.stopPropagation()}>
         
-        {/* Header - Compact */}
+        {}
         <div className="p-4 sm:p-5 border-b border-[rgb(var(--color-border))] flex-shrink-0">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
@@ -304,7 +303,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
           </div>
         </div>
 
-        {/* Tabs */}
+        {}
         <div className="flex border-b border-[rgb(var(--color-border))] px-4 sm:px-6 flex-shrink-0">
           {(['overview', 'participants', 'timeline'] as const).map((tab) => (
             <button
@@ -326,13 +325,13 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
           ))}
         </div>
 
-        {/* Content */}
+        {}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5">
           
-          {/* Overview Tab */}
+          {}
           {activeTab === 'overview' && (
             <div className="space-y-4">
-              {/* Channel Info */}
+              {}
               <div className="bg-[rgb(var(--color-bg-tertiary))] rounded-xl p-3 sm:p-4 border border-[rgb(var(--color-border))]">
                 <h3 className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-2">Channel Information</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -358,7 +357,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
                 </div>
               </div>
 
-              {/* Stats Grid */}
+              {}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard icon={<Clock className="w-5 h-5 text-blue-400" />} label="Duration" value={formatDuration(session.duration_seconds || 0)} />
                 <StatCard icon={<Users className="w-5 h-5 text-green-400" />} label="Peak Members" value={(session.peak_member_count || 0).toString()} />
@@ -366,7 +365,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
                 <StatCard icon={<TrendingUp className="w-5 h-5 text-orange-400" />} label="Rejoins" value={(session.rejoin_count || 0).toString()} />
               </div>
 
-              {/* Session Time Details */}
+              {}
               <div className="bg-[rgb(var(--color-bg-tertiary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
                 <h3 className="text-sm font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-3">Session Timing</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -393,7 +392,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
                 </div>
               </div>
 
-              {/* Activity Stats */}
+              {}
               <div className="bg-[rgb(var(--color-bg-tertiary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
                 <h3 className="text-sm font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-3">Activity During Session</h3>
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
@@ -408,10 +407,10 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
             </div>
           )}
 
-          {/* Participants Tab */}
+          {}
           {activeTab === 'participants' && (
             <div className="space-y-4">
-              {/* Session Owner (the user whose session this is) */}
+              {}
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                 <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-3">
                   Session Owner — Joined #{session.join_order || '?'}
@@ -432,7 +431,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
                 />
               </div>
 
-              {/* Other Participants - sorted by join time */}
+              {}
               {otherParticipants.length > 0 ? (
                 <div>
                   <p className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-3">
@@ -473,7 +472,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
             </div>
           )}
 
-          {/* Timeline Tab */}
+          {}
           {activeTab === 'timeline' && (
             <div className="space-y-2">
               {timeline.length > 0 ? (
@@ -482,7 +481,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
                     Chronological Events
                   </p>
                   <div className="relative">
-                    {/* Timeline line */}
+                    {}
                     <div className="absolute left-[19px] top-4 bottom-4 w-0.5 bg-[rgb(var(--color-border))]" />
                     
                     <div className="space-y-1">
@@ -610,7 +609,7 @@ function ParticipantCard({
             {leftAt ? formatTime(leftAt) : <span className="flex items-center gap-1 text-red-400"><span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Still here</span>}
           </span>
         </div>
-        {/* Media activity badges */}
+        {}
         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
           {(videoOnCount || 0) > 0 && (
             <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-400">

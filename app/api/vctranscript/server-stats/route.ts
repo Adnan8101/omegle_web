@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    // Build date filter clauses for VC (voice_logs)
+    
     const vcDateParts: string[] = [];
     const vcParams: unknown[] = [GUILD_ID];
     let vcIdx = 2;
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
     const vcDateClause = vcDateParts.length ? ' AND ' + vcDateParts.join(' AND ') : '';
 
-    // Build date filter clauses for chat (chat_logs)
+    
     const chatDateParts: string[] = [];
     const chatParams: unknown[] = [GUILD_ID];
     let chatIdx = 2;
@@ -48,12 +48,12 @@ export async function GET(request: NextRequest) {
     }
     const chatDateClause = chatDateParts.length ? ' AND ' + chatDateParts.join(' AND ') : '';
 
-    // Combined params for the FULL OUTER JOIN query
-    // For the combined query, we need: guildId, [startDate], [endDate] - same for both subqueries
+    
+    
     const combinedParams: unknown[] = [GUILD_ID];
     let paramIdx = 2;
     
-    // Build unified date clause parts (these params are shared)
+    
     const vcSubqueryDateParts: string[] = [];
     const chatSubqueryDateParts: string[] = [];
     
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     const vcSubqueryDateClause = vcSubqueryDateParts.length ? ' AND ' + vcSubqueryDateParts.join(' AND ') : '';
     const chatSubqueryDateClause = chatSubqueryDateParts.length ? ' AND ' + chatSubqueryDateParts.join(' AND ') : '';
 
-    // 1. Get total unique member count
+    
     const totalMembersResult = await queryBotDb(`
       SELECT COUNT(DISTINCT COALESCE(vc.user_id, cl.user_id))::int as total_members
       FROM (
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     
     const totalMembers = totalMembersResult[0]?.total_members || 0;
 
-    // 2. User Rankings — top 500 by VC + text combined
+    
     const userRankings = await queryBotDb(`
       SELECT 
         COALESCE(vc.user_id, cl.user_id) as user_id,
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
       LIMIT 500
     `, combinedParams).catch((err) => { console.error('userRankings error:', err); return []; });
 
-    // 2. Top Voice Channels - build proper clause with vl. prefix
+    
     const vcDatePartsWithAlias = vcDateParts.map(p => p.replace('joined_at', 'vl.joined_at'));
     const vcDateClauseWithAlias = vcDatePartsWithAlias.length ? ' AND ' + vcDatePartsWithAlias.join(' AND ') : '';
     
@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
       LIMIT 50
     `, vcParams).catch((err) => { console.error('topVoiceChannels error:', err); return []; });
 
-    // 3. Top contributors per voice channel (top 100 per channel)
+    
     const topChannelIds = (topVoiceChannels || []).slice(0, 30).map((ch: Record<string, unknown>) => ch.channel_id as string);
     let vcContributors: Record<string, unknown>[] = [];
     if (topChannelIds.length > 0) {
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
       `, [...vcParams, ...topChannelIds]).catch((err) => { console.error('vcContributors error:', err); return []; });
     }
 
-    // 4. Top Message Channels - build proper clause with cl. prefix
+    
     const chatDatePartsWithAlias = chatDateParts.map(p => p.replace('created_at', 'cl.created_at'));
     const chatDateClauseWithAlias = chatDatePartsWithAlias.length ? ' AND ' + chatDatePartsWithAlias.join(' AND ') : '';
     
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
       LIMIT 50
     `, chatParams).catch((err) => { console.error('topMessageChannels error:', err); return []; });
 
-    // 5. Top contributors per message channel (top 100 per channel)
+    
     const topMsgChannelIds = (topMessageChannels || []).slice(0, 30).map((ch: Record<string, unknown>) => ch.channel_id as string);
     let msgContributors: Record<string, unknown>[] = [];
     if (topMsgChannelIds.length > 0) {
@@ -213,7 +213,7 @@ export async function GET(request: NextRequest) {
       `, [...chatParams, ...topMsgChannelIds]).catch((err) => { console.error('msgContributors error:', err); return []; });
     }
 
-    // Group contributors by channel (top 100 each)
+    
     const vcContributorsByChannel: Record<string, Record<string, unknown>[]> = {};
     for (const c of vcContributors) {
       const chId = c.channel_id as string;

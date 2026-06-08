@@ -6,7 +6,6 @@ import { getDiscordUser, getDiscordUserAvatar } from '@/lib/discord';
 
 const GUILD_ID = "1507458872225566811";
 
-// GET - Fetch invites for a specific user with full details
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
@@ -19,7 +18,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check permissions - Full Access only (Server Admin/Owner)
+    
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess) {
       return NextResponse.json({ error: 'Insufficient permissions - Admin only' }, { status: 403 });
@@ -28,9 +27,9 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
-    const status = searchParams.get('status'); // 'active', 'left', 'all'
+    const status = searchParams.get('status'); 
 
-    // Get user's Discord info
+    
     const discordUser = await getDiscordUser(userId);
     const userInfo = {
       user_id: userId,
@@ -39,12 +38,12 @@ export async function GET(
       joined_at: discordUser?.joined_at || null,
     };
 
-    // Get config for coins per invite
+    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
 
-    // Build invite filter
+    
     const inviteWhere: any = {
       guild_id: GUILD_ID,
       inviter_id: userId,
@@ -52,7 +51,7 @@ export async function GET(
     if (status === 'active') inviteWhere.active = true;
     if (status === 'left') inviteWhere.active = false;
 
-    // Get total counts for this user
+    
     const totalInvites = await prismaBot.economyInvite.count({
       where: { guild_id: GUILD_ID, inviter_id: userId }
     });
@@ -63,7 +62,7 @@ export async function GET(
       where: { guild_id: GUILD_ID, inviter_id: userId, active: false }
     });
 
-    // Get all invites created by this user with pagination
+    
     const invites = await prismaBot.economyInvite.findMany({
       where: inviteWhere,
       orderBy: { created_at: 'desc' },
@@ -71,7 +70,7 @@ export async function GET(
       take: limit,
     });
 
-    // Get stats for this user
+    
     const stats = await prismaBot.economyInviteStats.findUnique({
       where: {
         guild_id_user_id: {
@@ -81,7 +80,7 @@ export async function GET(
       },
     });
 
-    // Get bonus invites from point logs
+    
     const bonusLogs = await prismaBot.economyPointLog.findMany({
       where: {
         guild_id: GUILD_ID,
@@ -93,7 +92,7 @@ export async function GET(
     const coinsPerInvite = config?.coins_per_invite || 100;
     const bonusInvites = Math.floor(bonusCoins / coinsPerInvite);
 
-    // Fetch Discord user info for invited users
+    
     const invitesWithUsers = await Promise.all(
       invites.map(async (invite) => {
         const invitedUser = await getDiscordUser(invite.invited_user_id);
@@ -119,7 +118,7 @@ export async function GET(
         active_invites: activeInvites,
         left_invites: leftInvites,
         bonus_invites: bonusInvites,
-        fake_invites: 0, // Not tracked
+        fake_invites: 0, 
         coins_earned: stats?.coins_earned || 0,
         coins_per_invite: coinsPerInvite,
       },

@@ -110,10 +110,10 @@ export default function EconomyManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Config state
+  
   const [config, setConfig] = useState<EconomyConfig | null>(null);
 
-  // Categories & rewards state
+  
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryRewards, setCategoryRewards] = useState<CategoryReward[]>([]);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
@@ -121,7 +121,7 @@ export default function EconomyManagementPage() {
   const [textChannels, setTextChannels] = useState<Channel[]>([]);
   const [voiceChannels, setVoiceChannels] = useState<Channel[]>([]);
 
-  // Blacklist state
+  
   const [blacklistSearch, setBlacklistSearch] = useState('');
   const [blacklistTab, setBlacklistTab] = useState<'channels' | 'categories' | 'roles' | 'members'>('channels');
   const [availableChannels, setAvailableChannels] = useState<Channel[]>([]);
@@ -135,18 +135,18 @@ export default function EconomyManagementPage() {
   const [memberSearchResults, setMemberSearchResults] = useState<Member[]>([]);
   const [searchingMembers, setSearchingMembers] = useState(false);
 
-  // Shop state
+  
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopEnabled, setShopEnabled] = useState(true);
   
-  // Blacklist modal state
+  
   const [blacklistModal, setBlacklistModal] = useState<{ type: 'channels' | 'categories' | 'roles' } | null>(null);
 
-  // Permission state
+  
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Permission check - use real-time API check for casino access
+  
   useEffect(() => {
     if (status === 'loading') return;
 
@@ -157,7 +157,7 @@ export default function EconomyManagementPage() {
     }
     
     if (status === 'authenticated') {
-      // Use real-time API check instead of cached session permissions
+      
       const checkAccess = async () => {
         try {
           const res = await fetch('/api/casino/access');
@@ -179,7 +179,7 @@ export default function EconomyManagementPage() {
           }
         } catch (err) {
           console.error('[Casino] Access check failed:', err);
-          // Fallback to session permissions
+          
           const perms = session?.user?.permissions;
           const canAccess = perms?.hasFullAccess || perms?.hasCasinoAccess;
           setHasPermission(canAccess ?? false);
@@ -418,7 +418,7 @@ export default function EconomyManagementPage() {
     role.name.toLowerCase().includes(blacklistSearch.toLowerCase())
   );
 
-  // Show loading spinner during auth check
+  
   if (status === 'loading' || hasPermission === null || isRedirecting) {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen flex items-center justify-center">
@@ -432,7 +432,7 @@ export default function EconomyManagementPage() {
     );
   }
 
-  // Show access denied if no permission
+  
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -466,7 +466,7 @@ export default function EconomyManagementPage() {
     );
   }
 
-  // Show loading for data fetch
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -483,7 +483,7 @@ export default function EconomyManagementPage() {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
-      {/* Header */}
+      {}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center gap-3 mb-4">
           <Link
@@ -508,7 +508,7 @@ export default function EconomyManagementPage() {
           </Link>
         </div>
 
-        {/* Success/Error messages */}
+        {}
         {success && (
           <div className="mb-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-500 flex items-center gap-2">
             <FiCheck className="w-5 h-5" />
@@ -523,7 +523,7 @@ export default function EconomyManagementPage() {
         )}
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="flex flex-wrap gap-2 mb-6 p-1 bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))]">
         {[
           { id: 'basic', label: 'Basic Settings', icon: <FiSettings className="w-4 h-4" /> },
@@ -546,10 +546,10 @@ export default function EconomyManagementPage() {
         ))}
       </div>
 
-      {/* Basic Settings Tab */}
+      {}
       {activeTab === 'basic' && config && (
         <div className="space-y-6">
-          {/* Economy Toggle */}
+          {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -569,7 +569,7 @@ export default function EconomyManagementPage() {
             </div>
           </div>
 
-          {/* Voice Settings */}
+          {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-purple-500/20 rounded-xl">
@@ -720,7 +720,7 @@ export default function EconomyManagementPage() {
             </div>
           </div>
 
-          {/* Message Settings */}
+          {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-blue-500/20 rounded-xl">
@@ -805,7 +805,7 @@ export default function EconomyManagementPage() {
             </div>
           </div>
 
-          {/* Advanced Mode Toggle */}
+          {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -837,7 +837,7 @@ export default function EconomyManagementPage() {
             )}
           </div>
 
-          {/* Save Button */}
+          {}
           <div className="flex justify-end">
             <button
               onClick={saveConfig}
@@ -855,7 +855,7 @@ export default function EconomyManagementPage() {
         </div>
       )}
 
-      {/* Advanced/Category Tab */}
+      {}
       {activeTab === 'advanced' && (
         <div className="space-y-6">
           {!config?.advanced_mode ? (
@@ -880,7 +880,7 @@ export default function EconomyManagementPage() {
             </div>
           ) : (
             <>
-              {/* Category Rewards List */}
+              {}
               <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Category Rewards</h2>
@@ -893,7 +893,7 @@ export default function EconomyManagementPage() {
                   </button>
                 </div>
 
-                {/* New/Edit Category Form */}
+                {}
                 {newCategoryReward && (
                   <div className="mb-6 p-6 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-green-500/30">
                     <div className="flex items-center justify-between mb-6">
@@ -911,7 +911,7 @@ export default function EconomyManagementPage() {
                       </button>
                     </div>
 
-                    {/* Category Selector */}
+                    {}
                     <div className="mb-6">
                       <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                         Select Category
@@ -951,7 +951,7 @@ export default function EconomyManagementPage() {
 
                     {newCategoryReward.categoryId && (
                       <>
-                        {/* Channels in this Category (Read-only) */}
+                        {}
                         <div className="mb-6 p-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]">
                           <div className="flex items-center gap-2 mb-4">
                             <FiLayers className="w-5 h-5 text-green-500" />
@@ -962,7 +962,7 @@ export default function EconomyManagementPage() {
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Voice Channels */}
+                            {}
                             <div>
                               <div className="flex items-center gap-2 mb-2">
                                 <FiMic className="w-4 h-4 text-purple-500" />
@@ -986,7 +986,7 @@ export default function EconomyManagementPage() {
                               </div>
                             </div>
                             
-                            {/* Text Channels */}
+                            {}
                             <div>
                               <div className="flex items-center gap-2 mb-2">
                                 <FiMessageSquare className="w-4 h-4 text-blue-500" />
@@ -1012,7 +1012,7 @@ export default function EconomyManagementPage() {
                           </div>
                         </div>
 
-                        {/* Voice Chat Rewards */}
+                        {}
                         <div className="mb-6 p-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]">
                           <div className="flex items-center gap-2 mb-4">
                             <FiMic className="w-5 h-5 text-purple-500" />
@@ -1084,7 +1084,7 @@ export default function EconomyManagementPage() {
                             </div>
                           </div>
                           
-                          {/* Additional VC Toggles */}
+                          {}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             <div>
                               <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
@@ -1137,7 +1137,7 @@ export default function EconomyManagementPage() {
                           </p>
                         </div>
 
-                        {/* Message Rewards */}
+                        {}
                         <div className="p-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]">
                           <div className="flex items-center gap-2 mb-4">
                             <FiMessageSquare className="w-5 h-5 text-blue-500" />
@@ -1234,7 +1234,7 @@ export default function EconomyManagementPage() {
                   </div>
                 )}
 
-                {/* Existing Category Rewards */}
+                {}
                 <div className="space-y-3">
                   {categoryRewards.length === 0 ? (
                     <div className="text-center py-12">
@@ -1314,7 +1314,7 @@ export default function EconomyManagementPage() {
                           </div>
                         </div>
                         
-                        {/* VC Settings Badges */}
+                        {}
                         <div className="mt-3 flex flex-wrap gap-2">
                           <span className="px-2 py-1 text-xs rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
                             Min {reward.vcMinMembers || 1} members
@@ -1330,7 +1330,7 @@ export default function EconomyManagementPage() {
                           </span>
                         </div>
                         
-                        {/* Channels in this category */}
+                        {}
                         <div className="mt-3 pt-3 border-t border-[rgb(var(--color-border))]">
                           <div className="flex flex-wrap gap-2">
                             <span className="text-xs text-[rgb(var(--color-text-tertiary))]">
@@ -1352,13 +1352,13 @@ export default function EconomyManagementPage() {
         </div>
       )}
 
-      {/* Blacklist Tab */}
+      {}
       {activeTab === 'blacklist' && (
         <div className="space-y-6">
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">Blacklist Management</h2>
 
-            {/* Blacklist Sub-tabs */}
+            {}
             <div className="flex gap-2 mb-6 p-1 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
               {[
                 { id: 'channels', label: 'Channels', count: blacklistedChannels.length },
@@ -1381,7 +1381,7 @@ export default function EconomyManagementPage() {
               ))}
             </div>
 
-            {/* Search */}
+            {}
             <div className="relative mb-6">
               <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-tertiary))]" />
               <input
@@ -1393,7 +1393,7 @@ export default function EconomyManagementPage() {
               />
             </div>
 
-            {/* Blacklisted Items */}
+            {}
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-3">Blacklisted</h3>
               <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -1471,7 +1471,7 @@ export default function EconomyManagementPage() {
               </div>
             </div>
 
-            {/* Available Items */}
+            {}
             <div>
               <h3 className="text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-3">Add to Blacklist</h3>
               <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -1529,7 +1529,7 @@ export default function EconomyManagementPage() {
                       Search by username or paste Discord User ID
                     </p>
                     
-                    {/* Search Input */}
+                    {}
                     <div className="relative max-w-2xl mx-auto">
                       <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-tertiary))]" />
                       <input
@@ -1566,7 +1566,7 @@ export default function EconomyManagementPage() {
                       )}
                     </div>
 
-                    {/* Search Results */}
+                    {}
                     {memberSearchResults.length > 0 && (
                       <div className="max-w-2xl mx-auto space-y-2 max-h-96 overflow-y-auto">
                         {memberSearchResults.map(member => {
@@ -1612,7 +1612,7 @@ export default function EconomyManagementPage() {
                       </div>
                     )}
 
-                    {/* Direct ID Input */}
+                    {}
                     {/^\d{17,19}$/.test(memberSearchQuery.trim()) && memberSearchResults.length === 0 && (
                       <div className="max-w-2xl mx-auto">
                         <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30 text-center">
@@ -1641,10 +1641,10 @@ export default function EconomyManagementPage() {
         </div>
       )}
 
-      {/* Shop Tab */}
+      {}
       {activeTab === 'shop' && (
         <div className="space-y-6">
-          {/* Shop Toggle */}
+          {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1671,7 +1671,7 @@ export default function EconomyManagementPage() {
             </div>
           </div>
 
-          {/* Shop Items */}
+          {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">Individual Item Toggles</h2>
             <div className="space-y-3">

@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 
 const GUILD_ID = "1507458872225566811";
 
-// GET - Search guild members
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -27,7 +26,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
     }
 
-    // Search members in the guild
+    
     const response = await fetch(
       `https://discord.com/api/v10/guilds/${GUILD_ID}/members/search?query=${encodeURIComponent(query)}&limit=${limit}`,
       {
@@ -47,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     const members = await response.json();
 
-    // Format the response
+    
     const formattedMembers = members.map((member: any) => ({
       id: member.user.id,
       username: member.user.username,
