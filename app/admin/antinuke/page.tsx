@@ -150,6 +150,7 @@ export default function AntiNukePage() {
 
   
   const [showAddModal, setShowAddModal]       = useState(false);
+  const [modalStep, setModalStep]             = useState<'user' | 'permissions'>('user');
   const [addUserId, setAddUserId]             = useState('');
   const [addUserSearch, setAddUserSearch]     = useState('');
   const [addPerms, setAddPerms]               = useState<Record<string, boolean>>(() =>
@@ -557,6 +558,7 @@ export default function AntiNukePage() {
                       setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false])));
                       setAddUserId('');
                       setAddUserSearch('');
+                      setModalStep('user');
                       setShowAddModal(true);
                     }}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl
@@ -862,7 +864,7 @@ export default function AntiNukePage() {
         )}
       </div>
 
-      {}
+      {/* ── Add Whitelist Modal ── */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
@@ -870,175 +872,253 @@ export default function AntiNukePage() {
             onClick={() => setShowAddModal(false)}
           />
           <div className="relative bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))]
-                          shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                          shadow-2xl w-full max-w-xl flex flex-col"
+               style={{ maxHeight: '85vh' }}>
 
-            {}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-[rgb(var(--color-border))]">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[rgb(var(--color-border))] flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20">
                   <FiPlus className="w-4 h-4 text-red-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Add Whitelisted User</h3>
+                  <h3 className="font-semibold text-sm">
+                    {modalStep === 'user' ? 'Step 1 — Select User' : 'Step 2 — Set Permissions'}
+                  </h3>
                   <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
-                    Grant this user bypass permissions for selected Anti-Nuke events
+                    {modalStep === 'user'
+                      ? 'Search or enter a user ID to whitelist'
+                      : `Granting bypass permissions to ${userMap.get(addUserId)?.name ?? addUserId}`}
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="p-2 rounded-xl hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors"
-              >
-                <FiX className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Step indicator */}
+                <div className="flex items-center gap-1 mr-2">
+                  <div className={`w-2 h-2 rounded-full ${modalStep === 'user' ? 'bg-red-400' : 'bg-[rgb(var(--color-text-tertiary))]'}`} />
+                  <div className={`w-2 h-2 rounded-full ${modalStep === 'permissions' ? 'bg-red-400' : 'bg-[rgb(var(--color-text-tertiary))]'}`} />
+                </div>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="p-2 rounded-xl hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors"
+                >
+                  <FiX className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            <div className="p-6 space-y-6 overflow-y-auto">
-              {}
-              <div>
-                <label className="block text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-2">
-                  User
-                </label>
-
-                {}
-                <div className="relative mb-2">
-                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
-                  <input
-                    type="text"
-                    placeholder="Search by username or paste user ID..."
-                    value={addUserSearch}
-                    onChange={e => {
-                      setAddUserSearch(e.target.value);
-                      
-                      if (/^\d{17,20}$/.test(e.target.value.trim())) {
-                        setAddUserId(e.target.value.trim());
-                      }
-                    }}
-                    className="w-full pl-9 pr-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]
-                               text-sm focus:outline-none focus:border-red-500/40"
-                  />
+            {/* ── STEP 1: User Select ── */}
+            {modalStep === 'user' && (
+              <>
+                <div className="p-4 border-b border-[rgb(var(--color-border))] flex-shrink-0">
+                  <div className="relative">
+                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="Search by name or username..."
+                      value={addUserSearch}
+                      onChange={e => {
+                        setAddUserSearch(e.target.value);
+                        if (/^\d{17,20}$/.test(e.target.value.trim())) {
+                          setAddUserId(e.target.value.trim());
+                        } else if (addUserId && !/^\d{17,20}$/.test(addUserId)) {
+                          setAddUserId('');
+                        }
+                      }}
+                      className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]
+                                 text-sm focus:outline-none focus:border-red-500/50 transition-colors"
+                    />
+                  </div>
+                  {guildUsers.length > 0 && (
+                    <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2 ml-1">
+                      {addUserSearch.trim()
+                        ? `${filteredUsers.length} result${filteredUsers.length !== 1 ? 's' : ''}`
+                        : `${filteredUsers.length} of ${guildUsers.length} members shown`}
+                    </p>
+                  )}
                 </div>
 
-                {}
-                <div className="max-h-48 overflow-y-auto rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))]">
+                {/* User list */}
+                <div className="overflow-y-auto flex-1">
                   {loadingData ? (
-                    <div className="flex items-center justify-center gap-2 px-4 py-3 text-sm text-[rgb(var(--color-text-tertiary))]">
-                      <FiRefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <div className="flex items-center justify-center gap-2 py-8 text-sm text-[rgb(var(--color-text-tertiary))]">
+                      <FiRefreshCw className="w-4 h-4 animate-spin" />
                       <span>Loading members...</span>
                     </div>
                   ) : filteredUsers.length === 0 ? (
-                    <div className="px-4 py-3 text-sm text-[rgb(var(--color-text-tertiary))]">
-                      {guildUsers.length === 0
-                        ? 'No members found — select a server first.'
-                        : addUserSearch
-                          ? 'No users match your search.'
-                          : 'No members in this server.'}
+                    <div className="flex flex-col items-center justify-center py-10 gap-2 text-[rgb(var(--color-text-tertiary))]">
+                      <FiUser className="w-8 h-8 opacity-30" />
+                      <p className="text-sm">
+                        {guildUsers.length === 0 ? 'Select a server first.' : 'No users match your search.'}
+                      </p>
                     </div>
-                  ) : filteredUsers.map(u => (
-                    <button
-                      key={u.id}
-                      onClick={() => {
-                        setAddUserId(u.id);
-                        setAddUserSearch(u.name);
-                      }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors text-left
-                                  ${addUserId === u.id ? 'bg-red-500/10' : ''}`}
-                    >
-                      <Image src={u.avatar} alt={u.name} width={28} height={28} className="rounded-full flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{u.name}</p>
-                        <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-mono">{u.id}</p>
-                      </div>
-                      {addUserId === u.id && <FiCheck className="w-4 h-4 text-red-400 flex-shrink-0" />}
-                    </button>
-                  ))}
+                  ) : (
+                    <div className="py-1">
+                      {filteredUsers.map(u => (
+                        <button
+                          key={u.id}
+                          onClick={() => {
+                            setAddUserId(u.id);
+                            setAddUserSearch('');
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors text-left
+                                      ${addUserId === u.id ? 'bg-red-500/10 border-l-2 border-red-500' : ''}`}
+                        >
+                          <Image src={u.avatar} alt={u.name} width={32} height={32} className="rounded-full flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{u.name}</p>
+                            <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-mono truncate">@{u.username} · {u.id}</p>
+                          </div>
+                          {addUserId === u.id && <FiCheck className="w-4 h-4 text-red-400 flex-shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {}
-                <div className="mt-2">
+                {/* Manual ID entry */}
+                <div className="px-4 py-3 border-t border-[rgb(var(--color-border))] flex-shrink-0">
                   <input
                     type="text"
-                    placeholder="Or enter User ID manually..."
-                    value={addUserId}
-                    onChange={e => setAddUserId(e.target.value.trim())}
-                    className="w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]
-                               text-sm font-mono focus:outline-none focus:border-red-500/40"
+                    placeholder="Or paste User ID manually (e.g. 929297205796417597)"
+                    value={/^\d{17,20}$/.test(addUserId) && !userMap.has(addUserId) ? addUserId : ''}
+                    onChange={e => {
+                      const val = e.target.value.trim();
+                      setAddUserId(val);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]
+                               text-xs font-mono focus:outline-none focus:border-red-500/50 transition-colors
+                               placeholder:text-[rgb(var(--color-text-tertiary))]"
                   />
                 </div>
-              </div>
 
-              {}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">
-                    Permissions
-                  </label>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, true])))}
-                      className="text-xs px-2 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
-                    >
-                      Grant All
-                    </button>
-                    <button
-                      onClick={() => setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false])))}
-                      className="text-xs px-2 py-1 rounded-lg bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-bg-primary))] transition-colors"
-                    >
-                      Clear All
-                    </button>
+                {/* Footer */}
+                <div className="flex items-center justify-between px-4 py-3 border-t border-[rgb(var(--color-border))] flex-shrink-0">
+                  <button
+                    onClick={() => setShowAddModal(false)}
+                    className="px-4 py-2 rounded-xl text-sm text-[rgb(var(--color-text-secondary))]
+                               hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    disabled={!addUserId}
+                    onClick={() => setModalStep('permissions')}
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl bg-red-500 hover:bg-red-400
+                               text-white text-sm font-medium transition-all duration-200
+                               disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-red-500/20"
+                  >
+                    Next — Set Permissions
+                    <FiCheck className="w-4 h-4" />
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* ── STEP 2: Permissions ── */}
+            {modalStep === 'permissions' && (
+              <>
+                {/* Selected user summary */}
+                {(() => {
+                  const u = userMap.get(addUserId);
+                  return (
+                    <div className="flex items-center gap-3 px-5 py-3 bg-red-500/5 border-b border-[rgb(var(--color-border))] flex-shrink-0">
+                      {u ? (
+                        <Image src={u.avatar} alt={u.name} width={36} height={36} className="rounded-full flex-shrink-0" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-[rgb(var(--color-bg-tertiary))] flex items-center justify-center flex-shrink-0">
+                          <FiUser className="w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate">{u?.name ?? 'Unknown User'}</p>
+                        <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-mono">{addUserId}</p>
+                      </div>
+                      <button
+                        onClick={() => setModalStep('user')}
+                        className="text-xs px-2 py-1 rounded-lg bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))]
+                                   hover:bg-[rgb(var(--color-bg-primary))] transition-colors flex-shrink-0"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  );
+                })()}
+
+                {/* Permissions scroll area */}
+                <div className="overflow-y-auto flex-1 p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">
+                      Permissions
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, true])))}
+                        className="text-xs px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                      >
+                        Grant All
+                      </button>
+                      <button
+                        onClick={() => setAddPerms(Object.fromEntries(ALL_PERMISSIONS.map(p => [p.key, false])))}
+                        className="text-xs px-2.5 py-1 rounded-lg bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))]
+                                   hover:bg-[rgb(var(--color-bg-primary))] transition-colors"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {PERM_GROUPS.map(group => (
+                      <div key={group} className="rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] p-3.5">
+                        <p className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-3">{group}</p>
+                        <div className="space-y-2.5">
+                          {ALL_PERMISSIONS.filter(p => p.group === group).map(perm => (
+                            <div key={perm.key} className="flex items-center justify-between gap-2">
+                              <span className="text-sm text-[rgb(var(--color-text-secondary))]">{perm.label}</span>
+                              <ToggleSwitch
+                                checked={Boolean(addPerms[perm.key])}
+                                onChange={v => setAddPerms(prev => ({ ...prev, [perm.key]: v }))}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {PERM_GROUPS.map(group => (
-                    <div key={group} className="rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] p-4">
-                      <p className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-3">
-                        {group}
-                      </p>
-                      <div className="space-y-2.5">
-                        {ALL_PERMISSIONS.filter(p => p.group === group).map(perm => (
-                          <div key={perm.key} className="flex items-center justify-between">
-                            <span className="text-sm text-[rgb(var(--color-text-secondary))]">{perm.label}</span>
-                            <ToggleSwitch
-                              checked={Boolean(addPerms[perm.key])}
-                              onChange={v => setAddPerms(prev => ({ ...prev, [perm.key]: v }))}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                {/* Footer */}
+                <div className="flex items-center justify-between px-5 py-3 border-t border-[rgb(var(--color-border))] flex-shrink-0">
+                  <button
+                    onClick={() => setModalStep('user')}
+                    className="px-4 py-2 rounded-xl text-sm text-[rgb(var(--color-text-secondary))]
+                               hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors flex items-center gap-2"
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    onClick={handleAddUser}
+                    disabled={!addUserId || savingAdd}
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl bg-red-500 hover:bg-red-400
+                               text-white text-sm font-medium transition-all duration-200
+                               disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/20"
+                  >
+                    {savingAdd ? (
+                      <FiRefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FiPlus className="w-4 h-4" />
+                    )}
+                    Add to Whitelist
+                  </button>
                 </div>
-              </div>
-            </div>
-
-            {}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[rgb(var(--color-border))]">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 rounded-xl text-sm text-[rgb(var(--color-text-secondary))]
-                           hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddUser}
-                disabled={!addUserId || savingAdd}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-red-500 hover:bg-red-400
-                           text-white text-sm font-medium transition-all duration-200
-                           disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/20"
-              >
-                {savingAdd ? (
-                  <FiRefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <FiPlus className="w-4 h-4" />
-                )}
-                Add to Whitelist
-              </button>
-            </div>
+              </>
+            )}
           </div>
         </div>
       )}
     </div>
   );
 }
+
