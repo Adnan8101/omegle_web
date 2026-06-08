@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { GUILD_ID } from '@/lib/constants';
 
 const ADMINISTRATOR = 0x0000000000000008n;
 const MANAGE_GUILD = 0x0000000000000020n;
@@ -23,34 +24,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ guilds: cached.value });
     }
 
-    const token = (session as any)?.accessToken;
-    if (!token) {
-      return NextResponse.json({
-        guilds: [],
-        error: 'Discord session token missing. Please sign out and sign in again.',
-      });
-    }
-
-    const res = await fetch('https://discord.com/api/v10/users/@me/guilds', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    });
-
-    if (!res.ok) return NextResponse.json({ guilds: [] });
-
-    const guilds = await res.json();
-    const manageableGuilds = (Array.isArray(guilds) ? guilds : []).filter((g: any) => {
-      try {
-        const bits = BigInt(g.permissions || '0');
-        return (bits & ADMINISTRATOR) !== 0n || (bits & MANAGE_GUILD) !== 0n || Boolean(g.owner);
-      } catch {
-        return Boolean(g.owner);
-      }
-    });
-
     const botToken = process.env.DISCORD_BOT_TOKEN;
     if (!botToken) return NextResponse.json({ guilds: [], error: 'Bot token missing.' });
 
@@ -71,6 +44,30 @@ export async function GET(request: Request) {
       }
     }
 
+    const token = (session as any)?.accessToken;
+    let manageableGuilds: any[] = [];
+    if (token) {
+      const res = await fetch('https://discord.com/api/v10/users/@me/guilds', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      }).catch(() => null);
+
+      if (res && res.ok) {
+        const guilds = await res.json();
+        manageableGuilds = (Array.isArray(guilds) ? guilds : []).filter((g: any) => {
+          try {
+            const bits = BigInt(g.permissions || '0');
+            return (bits & ADMINISTRATOR) !== 0n || (bits & MANAGE_GUILD) !== 0n || Boolean(g.owner) || String(g.id) === GUILD_ID;
+          } catch {
+            return Boolean(g.owner) || String(g.id) === GUILD_ID;
+          }
+        });
+      }
+    }
+
     const filtered = manageableGuilds
       .filter((g: any) => botGuildIds!.has(String(g.id)))
       .map((g: any) => ({
@@ -78,8 +75,29 @@ export async function GET(request: Request) {
         name: String(g.name),
         icon: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=256` : null,
         memberCount: null, 
-      }))
-      .sort((a: any, b: any) => a.name.localeCompare(b.name));
+      }));
+
+    if (botGuildIds.has(GUILD_ID) && !filtered.some((g: any) => g.id === GUILD_ID)) {
+      try {
+        const primaryGuildRes = await fetch(`https://discord.com/api/v10/guilds/${GUILD_ID}`, {
+          headers: { Authorization: `Bot ${botToken}`, 'Content-Type': 'application/json' },
+          cache: 'no-store',
+        });
+        if (primaryGuildRes.ok) {
+          const pg = await primaryGuildRes.json();
+          filtered.push({
+            id: String(pg.id),
+            name: String(pg.name),
+            icon: pg.icon ? `https://cdn.discordapp.com/icons/${pg.id}/${pg.icon}.png?size=256` : null,
+            memberCount: null,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch primary guild details:', err);
+      }
+    }
+
+    filtered.sort((a: any, b: any) => a.name.localeCompare(b.name));
 
     guildCache.set(cacheKey, { value: filtered, expiresAt: Date.now() + CACHE_TTL_MS });
 
