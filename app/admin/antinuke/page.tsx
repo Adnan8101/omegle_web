@@ -347,11 +347,13 @@ export default function AntiNukePage() {
   
 
   const filteredUsers = useMemo(() => {
-    if (!addUserSearch.trim()) return guildUsers.slice(0, 30);
-    const q = addUserSearch.toLowerCase();
+    const q = addUserSearch.trim().toLowerCase();
+    if (!q) return guildUsers.slice(0, 50);
     return guildUsers.filter(u =>
-      u.name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || u.id.includes(q)
-    ).slice(0, 20);
+      u.name.toLowerCase().includes(q) ||
+      u.username.toLowerCase().includes(q) ||
+      u.id.includes(q)
+    ).slice(0, 30);
   }, [guildUsers, addUserSearch]);
 
   
@@ -919,9 +921,18 @@ export default function AntiNukePage() {
 
                 {}
                 <div className="max-h-48 overflow-y-auto rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))]">
-                  {filteredUsers.length === 0 ? (
+                  {loadingData ? (
+                    <div className="flex items-center justify-center gap-2 px-4 py-3 text-sm text-[rgb(var(--color-text-tertiary))]">
+                      <FiRefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Loading members...</span>
+                    </div>
+                  ) : filteredUsers.length === 0 ? (
                     <div className="px-4 py-3 text-sm text-[rgb(var(--color-text-tertiary))]">
-                      {addUserSearch ? 'No users found.' : 'Start typing to search...'}
+                      {guildUsers.length === 0
+                        ? 'No members found — select a server first.'
+                        : addUserSearch
+                          ? 'No users match your search.'
+                          : 'No members in this server.'}
                     </div>
                   ) : filteredUsers.map(u => (
                     <button
