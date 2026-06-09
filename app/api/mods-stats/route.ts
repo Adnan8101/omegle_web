@@ -3,14 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { queryBotDb, getUsersDisplay } from '@/lib/botDb';
 import { getErrorMessage, GUILD_ID } from '@/lib/constants';
-const STAFF_ROLE_IDS = [
-  '1470334572557369384',
-  '1470334506337828874',
-];
-const MOD_ROLE_IDS = [
-  '1470334572557369384',
-  '1470334506337828874',
-];
+import { prismaBot } from '@/lib/prismaBot';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,6 +11,16 @@ export async function GET(request: NextRequest) {
     if (!session || (!perms?.hasFullAccess && !perms?.hasSrModAccess)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const [staffRoles, modRoles, srModRoles] = await Promise.all([
+      prismaBot.staffRole.findMany({ where: { guild_id: GUILD_ID } }),
+      prismaBot.modRole.findMany({ where: { guild_id: GUILD_ID } }),
+      prismaBot.srModRole.findMany({ where: { guild_id: GUILD_ID } })
+    ]);
+    const staffRoleIds = staffRoles.map((r: any) => r.role_id);
+    const modRoleIds = modRoles.map((r: any) => r.role_id);
+    const srModRoleIds = srModRoles.map((r: any) => r.role_id);
+    const allStaffRoleIds = [...new Set([...staffRoleIds, ...modRoleIds, ...srModRoleIds])];
+
     const staffUsers = await queryBotDb(`
       SELECT
         user_id,
@@ -30,7 +33,7 @@ export async function GET(request: NextRequest) {
       if (!user.roles) return false;
       try {
         const roles = JSON.parse(user.roles);
-        return roles.some((roleId: string) => STAFF_ROLE_IDS.includes(roleId));
+        return roles.some((roleId: string) => allStaffRoleIds.includes(roleId));
       } catch {
         return false;
       }
@@ -138,7 +141,7 @@ export async function GET(request: NextRequest) {
       try {
         userRoles = JSON.parse(user.roles || '[]');
       } catch {}
-      const isMod = userRoles.some(r => MOD_ROLE_IDS.includes(r));
+      const isMod = userRoles.some(r => modRoleIds.includes(r) || srModRoleIds.includes(r));
       const userData = userDataMap.get(user.user_id) || {
         username: 'Unknown User',
         displayName: 'Unknown User',

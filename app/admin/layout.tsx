@@ -19,6 +19,10 @@ function isPathnameAllowed(pathname: string, perms: any): boolean {
     if (!perms) return false;
     if (perms.hasFullAccess) return true;
     
+    if (pathname === '/admin/dashboard') {
+        return perms.hasAnyAccess;
+    }
+    
     // Casino Admin
     if (perms.hasCasinoAccess && pathname.startsWith('/admin/casino')) {
         if (pathname.startsWith('/admin/casino/economy/invites')) {
@@ -140,7 +144,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             name: 'Dashboard',
             href: '/admin/dashboard',
             icon: <FiHome className="w-5 h-5" />,
-            requiresFullAccess: true,
+            requiresAnyAccess: true,
         },
         {
             name: 'Live Monitor',
@@ -238,6 +242,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             return true;
         }
         if (perms?.hasModeratorAccess && (item as any).requiresModeratorAccess) {
+            return true;
+        }
+        if (perms?.hasAnyAccess && (item as any).requiresAnyAccess) {
             return true;
         }
         return false;

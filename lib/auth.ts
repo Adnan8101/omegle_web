@@ -68,33 +68,38 @@ export const authOptions: NextAuthOptions = {
           let casinoRoleIds: string[] = [];
           let srModRoleIds: string[] = [];
           let modRoleIds: string[] = [];
+          let staffRoleIds: string[] = [];
           const shouldSkipDbFetch = casinoRoleDbFailedAt > 0 && (nowMs - casinoRoleDbFailedAt < CASINO_ROLE_DB_RETRY_MS);
           try {
             if (!shouldSkipDbFetch) {
-              const [casinoRoles, srModRoles, modRoles] = await Promise.all([
+              const [casinoRoles, srModRoles, modRoles, staffRoles] = await Promise.all([
                 prismaBot.casinoAdminRole.findMany({ where: { guild_id: GUILD_ID } }).catch(() => []),
                 prismaBot.srModRole.findMany({ where: { guild_id: GUILD_ID } }).catch(() => []),
-                prismaBot.modRole.findMany({ where: { guild_id: GUILD_ID } }).catch(() => [])
+                prismaBot.modRole.findMany({ where: { guild_id: GUILD_ID } }).catch(() => []),
+                prismaBot.staffRole.findMany({ where: { guild_id: GUILD_ID } }).catch(() => [])
               ]);
               casinoRoleIds = casinoRoles.map((r: any) => r.role_id);
               srModRoleIds = srModRoles.map((r: any) => r.role_id);
               modRoleIds = modRoles.map((r: any) => r.role_id);
+              staffRoleIds = staffRoles.map((r: any) => r.role_id);
               casinoRoleDbFailedAt = 0;
-              console.log('[Auth] Fetched roles from DB:', { casinoRoleIds, srModRoleIds, modRoleIds });
+              console.log('[Auth] Fetched roles from DB:', { casinoRoleIds, srModRoleIds, modRoleIds, staffRoleIds });
             } else {
-              casinoRoleIds = ["1470329047262167040"];
-              modRoleIds = ["1470334572557369384"];
+              casinoRoleIds = [];
+              srModRoleIds = [];
+              modRoleIds = [];
+              staffRoleIds = [];
             }
           } catch (dbError) {
             casinoRoleDbFailedAt = nowMs;
             console.error('[Auth] Failed to fetch roles from DB (non-fatal):', dbError);
-            casinoRoleIds = ["1470329047262167040"];
-            modRoleIds = ["1470334572557369384"];
+            casinoRoleIds = [];
+            srModRoleIds = [];
+            modRoleIds = [];
+            staffRoleIds = [];
           }
-          if (casinoRoleIds.length === 0) casinoRoleIds = ["1470329047262167040"];
-          if (modRoleIds.length === 0) modRoleIds = ["1470334572557369384"];
           const previousPermissions = token.permissions as UserPermissions | undefined;
-          const permissions = await checkUserPermissions(token.accessToken, casinoRoleIds, srModRoleIds, modRoleIds);
+          const permissions = await checkUserPermissions(token.accessToken, casinoRoleIds, srModRoleIds, modRoleIds, staffRoleIds);
           const lostAccessTransiently =
             Boolean(previousPermissions?.hasAnyAccess) &&
             !permissions.hasAnyAccess &&

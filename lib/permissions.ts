@@ -1,24 +1,4 @@
 const GUILD_ID = "1507458872225566811";
-const TRAIL_MOD_ROLE_IDS = [
-  "1470799621927338298"
-];
-const MODERATOR_ROLE_IDS = [
-  "1470334572557369384"
-];
-const VIEW_ONLY_ROLE_IDS = [
-  "1470799621927338298",
-  "1470334506337828874",
-  "1474416428772888739"
-];
-const CASINO_ADMIN_ROLE_IDS: string[] = [
-  "1470329047262167040"
-];
-const ADMIN_ROLE_IDS: string[] = [
-  "910086064109133844",
-  "910922901107146823",
-  "1469439337635643504",
-  "1475568654560006165",
-];
 const MODERATOR_ACCESSIBLE_SECTIONS = [
   "vc_stats",
   "chat_stats",
@@ -44,7 +24,8 @@ export async function checkUserPermissions(
   accessToken: string,
   casinoRoleIds: string[] = [],
   srModRoleIds: string[] = [],
-  modRoleIds: string[] = []
+  modRoleIds: string[] = [],
+  staffRoleIds: string[] = []
 ): Promise<UserPermissions> {
   const defaultPerms: UserPermissions = {
     hasFullAccess: false,
@@ -136,8 +117,10 @@ export async function checkUserPermissions(
       roles: roles,
       permissions: permissions.toString(),
       permissionsHex: '0x' + permissions.toString(16),
-      casinoRoleIds: CASINO_ADMIN_ROLE_IDS,
-      adminRoleIds: ADMIN_ROLE_IDS,
+      casinoRoleIds,
+      srModRoleIds,
+      modRoleIds,
+      staffRoleIds,
     });
     const isAdmin = (permissions & PERMISSIONS.ADMINISTRATOR) !== 0n;
     const hasManageServer = (permissions & PERMISSIONS.MANAGE_GUILD) !== 0n;
@@ -160,29 +143,21 @@ export async function checkUserPermissions(
         console.error('Failed to check guild ownership:', guildError);
       }
     }
-    const hasAdminRole = roles.some((roleId) => {
-      const isAdmin = ADMIN_ROLE_IDS.includes(roleId);
-      if (isAdmin) {
-        console.log(`✅ User has admin role: ${roleId}`);
-      }
-      return isAdmin;
-    });
-    const hasFullAccess = isAdmin || hasManageServer || isOwner || hasAdminRole;
+    const hasFullAccess = isAdmin || hasManageServer || isOwner;
     console.log("🔐 Permission results:", {
       isAdmin,
       hasManageServer,
       isOwner,
-      hasAdminRole,
       hasFullAccess,
     });
-    const allModRoles = [...MODERATOR_ROLE_IDS, ...modRoleIds];
+    const allModRoles = [...modRoleIds];
     const hasModeratorRole = !hasFullAccess && roles.some((roleId) =>
       allModRoles.includes(roleId)
     );
     const hasViewOnlyRole = !hasFullAccess && !hasModeratorRole && roles.some((roleId) =>
-      VIEW_ONLY_ROLE_IDS.includes(roleId)
+      staffRoleIds.includes(roleId)
     );
-    const allCasinoRoles = [...CASINO_ADMIN_ROLE_IDS, ...casinoRoleIds];
+    const allCasinoRoles = [...casinoRoleIds];
     const hasCasinoRole = roles.some((roleId) =>
       allCasinoRoles.includes(roleId)
     );
@@ -194,7 +169,6 @@ export async function checkUserPermissions(
       isOwner,
       isAdmin,
       hasManageServer,
-      hasAdminRole,
       hasFullAccess,
       hasModeratorRole,
       hasViewOnlyRole,
@@ -202,8 +176,7 @@ export async function checkUserPermissions(
       hasCasinoAccess,
       hasSrModRole,
       matchedCasinoRole: roles.find(r => allCasinoRoles.includes(r)),
-      matchedViewOnlyRole: roles.find(r => VIEW_ONLY_ROLE_IDS.includes(r)),
-      matchedAdminRole: roles.find(r => ADMIN_ROLE_IDS.includes(r))
+      matchedViewOnlyRole: roles.find(r => staffRoleIds.includes(r)),
     });
     return {
       hasFullAccess,

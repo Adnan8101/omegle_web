@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
-const GUILD_ID = "1507458872225566811";
-const HARDCODED_CASINO_ROLES = ["1470329047262167040"];
+import { GUILD_ID } from '@/lib/constants';
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
         where: { guild_id: GUILD_ID }
       });
       const dbRoleIds = casinoRoles.map((r: any) => r.role_id);
-      const allCasinoRoleIds = [...new Set([...dbRoleIds, ...HARDCODED_CASINO_ROLES])];
+      const allCasinoRoleIds = [...new Set(dbRoleIds)];
       const userRoles = perms.roles || [];
       console.log('[Casino Access API] Role check:', {
         dbRoleIds,
@@ -63,18 +63,9 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       console.error('[Casino Access API] Error checking casino roles:', error);
-      const userRoles = perms.roles || [];
-      const hasCasinoRole = userRoles.some((roleId: string) => HARDCODED_CASINO_ROLES.includes(roleId));
-      if (hasCasinoRole) {
-        return NextResponse.json({
-          hasAccess: true,
-          reason: 'Has hardcoded casino role (DB error fallback)',
-          isAdmin: false
-        });
-      }
       return NextResponse.json({
         hasAccess: false,
-        reason: 'Database error and no hardcoded role match',
+        reason: 'Database error checking casino roles',
         error: String(error)
       }, { status: 500 });
     }
