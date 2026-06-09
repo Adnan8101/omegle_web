@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
-
 export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -14,7 +13,6 @@ export async function GET(request: NextRequest) {
         if (!perms?.hasFullAccess) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
-
         const { searchParams } = new URL(request.url);
         const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
         const pageSize = Math.min(50, Math.max(5, parseInt(searchParams.get('pageSize') || '20')));
@@ -23,7 +21,6 @@ export async function GET(request: NextRequest) {
         const action = searchParams.get('action') || undefined;
         const startDate = searchParams.get('startDate') || undefined;
         const endDate = searchParams.get('endDate') || undefined;
-
         const where: any = { guild_id: GUILD_ID };
         if (ruleId) where.rule_id = ruleId;
         if (userId) where.user_id = userId;
@@ -33,7 +30,6 @@ export async function GET(request: NextRequest) {
             if (startDate) where.created_at.gte = new Date(startDate);
             if (endDate) where.created_at.lte = new Date(endDate);
         }
-
         const [total, entries] = await Promise.all([
             prismaBot.voiceAutomationAuditLog.count({ where }),
             prismaBot.voiceAutomationAuditLog.findMany({
@@ -46,7 +42,6 @@ export async function GET(request: NextRequest) {
                 },
             }),
         ]);
-
         return NextResponse.json({
             entries,
             total,

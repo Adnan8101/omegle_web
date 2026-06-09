@@ -4,19 +4,16 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { getGuildRoleName, removeGuildMemberRole, sendDM } from '@/lib/discord';
 import { getDiscordUsers } from '@/lib/discord';
-
 function hasAdminAccess(session: any): boolean {
   if (process.env.ADMIN_DEV_BYPASS === 'true') return true;
   const perms = session?.user?.permissions;
   return Boolean(perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasAnyAccess);
 }
-
 function buildProfile(member: any, fallbackUserId: string, snapshot?: any) {
   const user = member?.user;
   const avatar = user?.avatar
     ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${String(user.avatar).startsWith('a_') ? 'gif' : 'png'}?size=128`
     : (snapshot?.avatar || null);
-
   return {
     id: user?.id || fallbackUserId,
     username: user?.username || snapshot?.username || null,
@@ -24,12 +21,10 @@ function buildProfile(member: any, fallbackUserId: string, snapshot?: any) {
     avatar,
   };
 }
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const searchParams = request.nextUrl.searchParams;
     const guildId = searchParams.get('guild_id');
     const subscriptionId = searchParams.get('subscription_id')?.trim();
@@ -39,15 +34,11 @@ export async function GET(request: NextRequest) {
     const userSearch = searchParams.get('user_search')?.trim();
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 500);
     const offset = parseInt(searchParams.get('offset') || '0');
-
     const isAdmin = hasAdminAccess(session);
-
-    
     const effectiveUserId = !isAdmin ? (userId || session.user.id) : userId;
     if (!isAdmin && effectiveUserId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-
     const where: any = {};
     if (subscriptionId) where.id = subscriptionId;
     if (guildId) where.guild_id = guildId;
@@ -67,7 +58,6 @@ export async function GET(request: NextRequest) {
         }
       };
     }
-
     const [subscriptions, total] = await Promise.all([
       (prismaBot as any).donatorSubscription.findMany({
         where,
@@ -80,7 +70,6 @@ export async function GET(request: NextRequest) {
       }),
       (prismaBot as any).donatorSubscription.count({ where })
     ]);
-
     const userIds: string[] = Array.from(
       new Set<string>(
         subscriptions
@@ -88,7 +77,6 @@ export async function GET(request: NextRequest) {
           .filter((id: any): id is string => typeof id === 'string' && id.length > 0)
       )
     );
-
     const paymentIds: string[] = Array.from(
       new Set<string>(
         subscriptions
@@ -96,9 +84,7 @@ export async function GET(request: NextRequest) {
           .filter((id: any): id is string => typeof id === 'string' && id.length > 0)
       )
     );
-
     const discordUsers = await getDiscordUsers(userIds);
-
     const payments = paymentIds.length > 0
       ? await (prismaBot as any).razorpayPayment.findMany({
           where: {
@@ -119,20 +105,17 @@ export async function GET(request: NextRequest) {
           },
         })
       : [];
-
     const paymentById = new Map<string, any>(
       payments
         .filter((p: any) => typeof p.razorpay_id === 'string' && p.razorpay_id.length > 0)
         .map((p: any) => [p.razorpay_id as string, p])
     );
-
     const enrichedSubscriptions = await Promise.all(
       subscriptions.map(async (subscription: any) => {
         const payment = subscription.payment_id ? paymentById.get(subscription.payment_id) : null;
         const snapshot = payment?.webhook_data?.customer_snapshot || payment?.webhook_data?.customerSnapshot || {};
         const roleId = subscription?.plan?.linked_role_id || null;
         const roleName = roleId ? await getGuildRoleName(subscription.guild_id, roleId) : null;
-
         return {
           ...subscription,
           user_profile: buildProfile(discordUsers.get(subscription.user_id), subscription.user_id, snapshot),
@@ -157,7 +140,6 @@ export async function GET(request: NextRequest) {
         };
       })
     );
-
     return NextResponse.json({
       data: enrichedSubscriptions,
       pagination: {
@@ -172,21 +154,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch subscriptions' }, { status: 500 });
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const body = await request.json();
     const { subscription_id, reason } = body;
-
     if (!subscription_id) {
       return NextResponse.json({ error: 'Subscription ID required' }, { status: 400 });
     }
-
     const isAdmin = hasAdminAccess(session);
     if (!isAdmin) {
       const owned = await (prismaBot as any).donatorSubscription.findFirst({
@@ -196,12 +174,10 @@ export async function POST(request: NextRequest) {
         },
         select: { id: true },
       });
-
       if (!owned) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
     }
-
     const subscription = await (prismaBot as any).donatorSubscription.update({
       where: { id: subscription_id },
       data: {
@@ -211,17 +187,13 @@ export async function POST(request: NextRequest) {
       },
       include: { plan: true }
     });
-
-    
     const roleId = subscription?.plan?.linked_role_id;
     const userId = subscription?.user_id;
     const guildId = subscription?.guild_id;
     const planTitle = subscription?.plan?.title || 'Unknown Plan';
-
     if (userId && roleId && guildId) {
       await removeGuildMemberRole(userId, roleId, guildId);
     }
-
     if (userId) {
       await sendDM(userId, {
         embed: {
@@ -243,7 +215,6 @@ export async function POST(request: NextRequest) {
         }
       });
     }
-
     return NextResponse.json({ data: subscription });
   } catch (error: any) {
     console.error('Error cancelling subscription:', error);
@@ -253,21 +224,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to cancel subscription' }, { status: 500 });
   }
 }
-
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id || !hasAdminAccess(session)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
-
     const body = await request.json();
     const { subscription_id, status, expiry_date } = body;
-
     if (!subscription_id) {
       return NextResponse.json({ error: 'Subscription ID required' }, { status: 400 });
     }
-
     const subscription = await (prismaBot as any).donatorSubscription.update({
       where: { id: subscription_id },
       data: {
@@ -276,7 +243,6 @@ export async function PATCH(request: NextRequest) {
       },
       include: { plan: true }
     });
-
     return NextResponse.json({ data: subscription });
   } catch (error: any) {
     console.error('Error updating subscription:', error);

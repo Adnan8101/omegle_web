@@ -1,14 +1,11 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { FiCalendar, FiX } from 'react-icons/fi';
-
 interface DateRangeFilterProps {
     onChange: (range: { startDate: string | null; endDate: string | null }) => void;
     className?: string;
     initialRange?: { startDate: string | null; endDate: string | null };
 }
-
 const PRESETS = [
     { label: 'Today', days: 0 },
     { label: '7 Days', days: 7 },
@@ -16,22 +13,18 @@ const PRESETS = [
     { label: '90 Days', days: 90 },
     { label: 'All Time', days: null },
 ] as const;
-
 export default function DateRangeFilter({ onChange, className = '', initialRange }: DateRangeFilterProps) {
     const [activePreset, setActivePreset] = useState<string>('All Time');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
     const [showCustom, setShowCustom] = useState(false);
     const [hasInitialized, setHasInitialized] = useState(false);
-
-    
     useEffect(() => {
         if (initialRange && !hasInitialized) {
             setHasInitialized(true);
             if (!initialRange.startDate && !initialRange.endDate) {
                 setActivePreset('All Time');
             } else {
-                
                 const now = new Date();
                 const start = initialRange.startDate ? new Date(initialRange.startDate) : null;
                 if (start) {
@@ -49,13 +42,11 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
             }
         }
     }, [initialRange, hasInitialized]);
-
     const handlePreset = (preset: typeof PRESETS[number]) => {
         setActivePreset(preset.label);
         setShowCustom(false);
         setCustomStart('');
         setCustomEnd('');
-
         if (preset.days === null) {
             onChange({ startDate: null, endDate: null });
         } else if (preset.days === 0) {
@@ -76,7 +67,6 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
             });
         }
     };
-
     const handleCustomApply = () => {
         if (!customStart && !customEnd) return;
         setActivePreset('');
@@ -86,7 +76,6 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
             : new Date().toISOString();
         onChange({ startDate, endDate });
     };
-
     const handleClear = () => {
         setActivePreset('All Time');
         setCustomStart('');
@@ -94,7 +83,6 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
         setShowCustom(false);
         onChange({ startDate: null, endDate: null });
     };
-
     return (
         <div className={`flex flex-wrap items-center gap-2 ${className}`}>
             {}
@@ -110,7 +98,6 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
                     {preset.label}
                 </button>
             ))}
-
             {}
             <button
                 onClick={() => setShowCustom(!showCustom)}
@@ -122,7 +109,6 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
                 <FiCalendar className="w-3 h-3" />
                 Custom
             </button>
-
             {}
             {showCustom && (
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
@@ -158,7 +144,6 @@ export default function DateRangeFilter({ onChange, className = '', initialRange
                     )}
                 </div>
             )}
-
             {}
             {(activePreset && activePreset !== 'All Time') && (
                 <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/10 rounded-lg text-xs text-blue-400">

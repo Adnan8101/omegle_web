@@ -10,7 +10,6 @@ import {
 } from '@/lib/botDb';
 import { GUILD_ID, getErrorMessage } from '@/lib/constants';
 import { canAccessVCAndChats } from '@/lib/apiAuth';
-
 const emptyVCStats = {
   total_sessions: 0,
   total_duration: 0,
@@ -28,7 +27,6 @@ const emptyVCStats = {
   total_video_offs: 0,
   total_screen_shares: 0,
 };
-
 const emptyChatStats = {
   total_messages: 0,
   unique_channels: 0,
@@ -36,7 +34,6 @@ const emptyChatStats = {
   messages_in_vc: 0,
   unique_reply_targets: 0,
 };
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
@@ -47,12 +44,10 @@ export async function GET(
     if (!session || !canAccessVCAndChats(session.user?.permissions)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const dateFilter = { startDate, endDate };
-
     const [vcStats, vcSessions, chatStats, interactions, voiceUserStats] = await Promise.all([
       getUserVCStats(userId, GUILD_ID, dateFilter).catch((e: unknown) => {
         console.error('Error fetching VC stats:', getErrorMessage(e));
@@ -75,7 +70,6 @@ export async function GET(
         return null;
       }),
     ]);
-
     return NextResponse.json({
       userId,
       vcStats: vcStats || emptyVCStats,

@@ -17,13 +17,11 @@ import { prismaBot } from '@/lib/prismaBot';
 import { getAvatarUrl, getDiscordGuildInfo, getDiscordUser, getGuildRoleName } from '@/lib/discord';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-
 function hasAdminAccess(session: any): boolean {
   if (process.env.ADMIN_DEV_BYPASS === 'true') return true;
   const perms = session?.user?.permissions;
   return Boolean(perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasAnyAccess);
 }
-
 function stripHtml(value: string): string {
   return String(value || '')
     .replace(/<[^>]*>/g, '')
@@ -31,7 +29,6 @@ function stripHtml(value: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
-
 function sanitizeForPDF(value: string): string {
   return String(value || '')
     .split('')
@@ -44,16 +41,13 @@ function sanitizeForPDF(value: string): string {
     .join('')
     .replace(/[^\x00-\xFF]/g, '?');
 }
-
 function moneyUSD(cents: number): string {
   return `$${(Number(cents || 0) / 100).toFixed(2)}`;
 }
-
 function formatDate(value: Date | string | null | undefined): string {
   if (!value) return 'N/A';
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return 'N/A';
-
   return date.toLocaleString('en-US', {
     month: 'short',
     day: '2-digit',
@@ -63,14 +57,11 @@ function formatDate(value: Date | string | null | undefined): string {
     hour12: true,
   });
 }
-
 function wrapText(text: string, maxChars: number = 65): string[] {
   const words = String(text || '').split(/\s+/).filter(Boolean);
   if (!words.length) return [];
-
   const lines: string[] = [];
   let currentLine = '';
-
   for (const word of words) {
     const next = currentLine ? `${currentLine} ${word}` : word;
     if (next.length > maxChars && currentLine) {
@@ -80,11 +71,9 @@ function wrapText(text: string, maxChars: number = 65): string[] {
       currentLine = next;
     }
   }
-
   if (currentLine) lines.push(currentLine);
   return lines;
 }
-
 function loadPublicImage(fileName: string): Uint8Array | null {
   try {
     const publicPath = join(process.cwd(), 'public', fileName);
@@ -93,7 +82,6 @@ function loadPublicImage(fileName: string): Uint8Array | null {
     return null;
   }
 }
-
 async function tryFetchBytes(url: string | null | undefined): Promise<Uint8Array | null> {
   if (!url) return null;
   try {
@@ -105,7 +93,6 @@ async function tryFetchBytes(url: string | null | undefined): Promise<Uint8Array
     return null;
   }
 }
-
 function drawGradientText(
   page: any,
   text: string,
@@ -118,7 +105,6 @@ function drawGradientText(
 ): number {
   const chars = Array.from(text);
   let cursorX = x;
-
   for (let i = 0; i < chars.length; i++) {
     const t = chars.length <= 1 ? 0 : i / (chars.length - 1);
     const color = rgb(
@@ -136,10 +122,8 @@ function drawGradientText(
     });
     cursorX += font.widthOfTextAtSize(char, size);
   }
-
   return cursorX;
 }
-
 function beginCircleClip(page: any, centerX: number, centerY: number, radius: number, segments: number = 48): void {
   const points: Array<{ x: number; y: number }> = [];
   for (let i = 0; i < segments; i++) {
@@ -149,9 +133,7 @@ function beginCircleClip(page: any, centerX: number, centerY: number, radius: nu
       y: centerY + radius * Math.sin(t),
     });
   }
-
   if (points.length === 0) return;
-
   page.pushOperators(
     pushGraphicsState(),
     moveTo(points[0].x, points[0].y),
@@ -161,7 +143,6 @@ function beginCircleClip(page: any, centerX: number, centerY: number, radius: nu
     endPath()
   );
 }
-
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ subscriptionId: string }> }
@@ -171,26 +152,21 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const { subscriptionId } = await params;
     if (!subscriptionId) {
       return NextResponse.json({ error: 'Subscription ID is required' }, { status: 400 });
     }
-
     const subscription = await (prismaBot as any).donatorSubscription.findUnique({
       where: { id: subscriptionId },
       include: { plan: true },
     });
-
     if (!subscription) {
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     }
-
     const admin = hasAdminAccess(session);
     if (!admin && subscription.user_id !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-
     const payment = subscription.payment_id
       ? await (prismaBot as any).razorpayPayment.findFirst({
           where: {
@@ -201,7 +177,6 @@ export async function GET(
           },
         })
       : null;
-
     const [config, roleName, guildInfo, discordMember] = await Promise.all([
       (prismaBot as any).economyConfig.findUnique({
         where: { guild_id: subscription.guild_id },
@@ -213,20 +188,16 @@ export async function GET(
       getDiscordGuildInfo(subscription.guild_id),
       getDiscordUser(subscription.user_id),
     ]);
-
     const userAvatarUrl = discordMember?.user ? getAvatarUrl(discordMember.user, 256) : null;
-
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595.28, 841.89]);
     const width = page.getWidth();
     const height = page.getHeight();
-
     const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const black = rgb(0, 0, 0);
     const margin = 42;
     const contentWidth = width - margin * 2;
-
     const invoiceNo = sanitizeForPDF(String(subscription.id || '').slice(0, 8).toUpperCase());
     const invoiceDate = sanitizeForPDF(formatDate(new Date()).split(',').slice(0, 2).join(','));
     const userName = sanitizeForPDF(
@@ -247,16 +218,12 @@ export async function GET(
         : `${payment.currency || 'INR'} ${(Number(payment.amount || 0) / 100).toFixed(2)}`
       : 'N/A';
     const txnId = sanitizeForPDF(payment?.razorpay_id || subscription.payment_id || 'N/A').slice(0, 48);
-
     let y = height - 52;
-
-    
     const titleText = 'OMEGLEE';
     const titleSize = 24;
     const logoSize = 50;
     const logoX = margin;
     const titleX = logoX + logoSize + 14;
-
     drawGradientText(
       page,
       titleText,
@@ -267,7 +234,6 @@ export async function GET(
       { r: 0.98, g: 0.56, b: 0.05 },
       { r: 0.05, g: 0.42, b: 0.98 }
     );
-
     const logoBytes = loadPublicImage('omegle_bg_remvoed.png');
     const logoTopY = y + 10;
     if (logoBytes) {
@@ -280,10 +246,8 @@ export async function GET(
           height: logoSize,
         });
       } catch {
-        
       }
     }
-
     page.drawText('Premium Donator Receipt', {
       x: titleX,
       y: y - 20,
@@ -291,7 +255,6 @@ export async function GET(
       font: fontRegular,
       color: black,
     });
-
     const avatarBytes = await tryFetchBytes(userAvatarUrl);
     const avatarSize = 52;
     const avatarX = width - margin - avatarSize;
@@ -300,7 +263,6 @@ export async function GET(
       const centerX = avatarX + avatarSize / 2;
       const centerY = avatarTopY - avatarSize / 2;
       const radius = avatarSize / 2;
-
       try {
         const avatar = await pdfDoc.embedPng(avatarBytes);
         beginCircleClip(page, centerX, centerY, radius);
@@ -323,10 +285,8 @@ export async function GET(
           });
           page.pushOperators(popGraphicsState());
         } catch {
-          
         }
       }
-
       page.drawCircle({
         x: centerX,
         y: centerY,
@@ -336,7 +296,6 @@ export async function GET(
         color: undefined,
       });
     }
-
     const rightX = width - margin - 150;
     page.drawText('INVOICE', {
       x: rightX,
@@ -366,7 +325,6 @@ export async function GET(
       font: fontRegular,
       color: black,
     });
-
     y -= 84;
     page.drawLine({
       start: { x: margin, y },
@@ -374,8 +332,6 @@ export async function GET(
       thickness: 1,
       color: black,
     });
-
-    
     y -= 24;
     page.drawText('ACCOUNT DETAILS', {
       x: margin,
@@ -391,18 +347,15 @@ export async function GET(
       thickness: 0.8,
       color: black,
     });
-
     const leftLabelX = margin;
     const leftValueX = margin + 95;
     const rightLabelX = margin + contentWidth / 2 + 6;
     const rightValueX = rightLabelX + 72;
-
     const accountRows: Array<[string, string, string, string]> = [
       ['Name', userName, 'Server', serverName],
       ['Handle', `@${userHandle}`, 'Guild ID', sanitizeForPDF(subscription.guild_id || 'N/A')],
       ['Discord ID', sanitizeForPDF(subscription.user_id || 'N/A'), 'Payment', sanitizeForPDF(paymentMethodName)],
     ];
-
     for (const row of accountRows) {
       y -= 19;
       page.drawText(`${row[0]}:`, { x: leftLabelX, y, size: 10, font: fontBold, color: black });
@@ -410,8 +363,6 @@ export async function GET(
       page.drawText(`${row[2]}:`, { x: rightLabelX, y, size: 10, font: fontBold, color: black });
       page.drawText(row[3], { x: rightValueX, y, size: 10, font: fontRegular, color: black });
     }
-
-    
     y -= 26;
     page.drawText('SUBSCRIPTION SUMMARY', {
       x: margin,
@@ -420,7 +371,6 @@ export async function GET(
       font: fontBold,
       color: black,
     });
-
     const tableTopY = y - 14;
     const rowHeight = 22;
     const colSplitX = margin + 165;
@@ -435,14 +385,12 @@ export async function GET(
       ['USD Value', moneyUSD(subscription.plan?.price || 0)],
       ['Transaction ID', txnId],
     ];
-
     const tableBottomY = tableTopY - rowHeight * rows.length;
     page.drawLine({ start: { x: margin, y: tableTopY }, end: { x: width - margin, y: tableTopY }, thickness: 1, color: black });
     page.drawLine({ start: { x: margin, y: tableBottomY }, end: { x: width - margin, y: tableBottomY }, thickness: 1, color: black });
     page.drawLine({ start: { x: margin, y: tableTopY }, end: { x: margin, y: tableBottomY }, thickness: 1, color: black });
     page.drawLine({ start: { x: width - margin, y: tableTopY }, end: { x: width - margin, y: tableBottomY }, thickness: 1, color: black });
     page.drawLine({ start: { x: colSplitX, y: tableTopY }, end: { x: colSplitX, y: tableBottomY }, thickness: 1, color: black });
-
     let rowY = tableTopY;
     for (const [label, value] of rows) {
       rowY -= rowHeight;
@@ -467,8 +415,6 @@ export async function GET(
         color: black,
       });
     }
-
-    
     y = tableBottomY - 26;
     page.drawText('INCLUDED BENEFITS', {
       x: margin,
@@ -484,13 +430,11 @@ export async function GET(
       thickness: 0.8,
       color: black,
     });
-
     const perks: string[] = Array.isArray(subscription.plan?.perks)
       ? subscription.plan.perks.map((p: string) => stripHtml(p)).filter(Boolean).slice(0, 10)
       : [];
     const fallbackBenefit = 'Exclusive community access and premium features in our Discord server';
     const benefitItems = perks.length > 0 ? perks : [fallbackBenefit];
-
     let benefitY = y - 16;
     for (const perk of benefitItems) {
       const lines = wrapText(sanitizeForPDF(perk), 78);
@@ -518,7 +462,6 @@ export async function GET(
       }
       benefitY -= 2;
     }
-
     page.drawLine({
       start: { x: margin, y: 46 },
       end: { x: width - margin, y: 46 },
@@ -532,10 +475,8 @@ export async function GET(
       font: fontRegular,
       color: black,
     });
-
     const bytes = await pdfDoc.save();
     const fileName = `omeglee-invoice-${String(subscription.id || '').slice(0, 8)}.pdf`;
-
     return new NextResponse(Buffer.from(bytes), {
       status: 200,
       headers: {

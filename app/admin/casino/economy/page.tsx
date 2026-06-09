@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -10,7 +9,6 @@ import {
   FiChevronLeft, FiSave, FiRefreshCw, FiSearch, FiPlus, FiX,
   FiChevronDown, FiChevronUp, FiEdit2, FiTrash2, FiCheck, FiAlertCircle
 } from 'react-icons/fi';
-
 interface EconomyConfig {
   guild_id: string;
   messages_per_point: number;
@@ -30,7 +28,6 @@ interface EconomyConfig {
   advanced_mode: boolean;
   shop_enabled: boolean;
 }
-
 interface CategoryReward {
   id: string;
   categoryId: string;
@@ -48,13 +45,11 @@ interface CategoryReward {
   msgMinLength?: number;
   msgCooldown?: number;
 }
-
 interface Category {
   id: string;
   name: string;
   position: number;
 }
-
 interface Channel {
   id: string;
   name: string;
@@ -62,14 +57,12 @@ interface Channel {
   parentName?: string;
   type: 'text' | 'voice';
 }
-
 interface Role {
   id: string;
   name: string;
   color: number;
   position: number;
 }
-
 interface Member {
   id: string;
   username: string;
@@ -77,7 +70,6 @@ interface Member {
   avatar: string | null;
   global_name: string | null;
 }
-
 interface BlacklistedItem {
   id: string;
   name: string;
@@ -87,7 +79,6 @@ interface BlacklistedItem {
   discriminator?: string;
   avatar?: string | null;
 }
-
 interface ShopItem {
   id: string;
   name: string;
@@ -97,31 +88,22 @@ interface ShopItem {
   stock: number | null;
   enabled: boolean;
 }
-
 type TabType = 'basic' | 'advanced' | 'blacklist' | 'shop';
-
 export default function EconomyManagementPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
   const [activeTab, setActiveTab] = useState<TabType>('basic');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  
   const [config, setConfig] = useState<EconomyConfig | null>(null);
-
-  
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryRewards, setCategoryRewards] = useState<CategoryReward[]>([]);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [newCategoryReward, setNewCategoryReward] = useState<Partial<CategoryReward> | null>(null);
   const [textChannels, setTextChannels] = useState<Channel[]>([]);
   const [voiceChannels, setVoiceChannels] = useState<Channel[]>([]);
-
-  
   const [blacklistSearch, setBlacklistSearch] = useState('');
   const [blacklistTab, setBlacklistTab] = useState<'channels' | 'categories' | 'roles' | 'members'>('channels');
   const [availableChannels, setAvailableChannels] = useState<Channel[]>([]);
@@ -134,36 +116,24 @@ export default function EconomyManagementPage() {
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [memberSearchResults, setMemberSearchResults] = useState<Member[]>([]);
   const [searchingMembers, setSearchingMembers] = useState(false);
-
-  
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopEnabled, setShopEnabled] = useState(true);
-  
-  
   const [blacklistModal, setBlacklistModal] = useState<{ type: 'channels' | 'categories' | 'roles' } | null>(null);
-
-  
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
-
-  
   useEffect(() => {
     if (status === 'loading') return;
-
     if (status === 'unauthenticated') {
       setIsRedirecting(true);
       router.push('/admin');
       return;
     }
-    
     if (status === 'authenticated') {
-      
       const checkAccess = async () => {
         try {
           const res = await fetch('/api/casino/access');
           const data = await res.json();
           console.log('[Casino] Access check result:', data);
-          
           if (data.hasAccess) {
             setHasPermission(true);
           } else {
@@ -179,7 +149,6 @@ export default function EconomyManagementPage() {
           }
         } catch (err) {
           console.error('[Casino] Access check failed:', err);
-          
           const perms = session?.user?.permissions;
           const canAccess = perms?.hasFullAccess || perms?.hasCasinoAccess;
           setHasPermission(canAccess ?? false);
@@ -188,7 +157,6 @@ export default function EconomyManagementPage() {
       checkAccess();
     }
   }, [status, session, router]);
-
   const fetchConfig = useCallback(async () => {
     try {
       const res = await fetch('/api/economy/config');
@@ -200,7 +168,6 @@ export default function EconomyManagementPage() {
       console.error('Error fetching config:', err);
     }
   }, []);
-
   const fetchCategories = useCallback(async () => {
     try {
       const res = await fetch('/api/economy/categories');
@@ -219,7 +186,6 @@ export default function EconomyManagementPage() {
       console.error('Error fetching categories:', err);
     }
   }, []);
-
   const fetchBlacklist = useCallback(async () => {
     try {
       const res = await fetch('/api/economy/blacklist');
@@ -237,7 +203,6 @@ export default function EconomyManagementPage() {
       console.error('Error fetching blacklist:', err);
     }
   }, []);
-
   const fetchShopItems = useCallback(async () => {
     try {
       const res = await fetch('/api/economy/shop-toggle');
@@ -250,7 +215,6 @@ export default function EconomyManagementPage() {
       console.error('Error fetching shop items:', err);
     }
   }, []);
-
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -262,25 +226,21 @@ export default function EconomyManagementPage() {
       ]);
       setLoading(false);
     };
-    
     if (status === 'authenticated' && hasPermission) {
       loadData();
     }
   }, [status, hasPermission, fetchConfig, fetchCategories, fetchBlacklist, fetchShopItems]);
-
   const saveConfig = async () => {
     if (!config) return;
     setSaving(true);
     setError(null);
     setSuccess(null);
-
     try {
       const res = await fetch('/api/economy/config', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
       });
-
       if (res.ok) {
         setSuccess('Settings saved successfully!');
         setTimeout(() => setSuccess(null), 3000);
@@ -294,7 +254,6 @@ export default function EconomyManagementPage() {
       setSaving(false);
     }
   };
-
   const saveCategoryReward = async (reward: Partial<CategoryReward>) => {
     try {
       const res = await fetch('/api/economy/categories', {
@@ -302,7 +261,6 @@ export default function EconomyManagementPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reward)
       });
-
       if (res.ok) {
         await fetchCategories();
         setEditingCategory(null);
@@ -314,13 +272,11 @@ export default function EconomyManagementPage() {
       setError('Failed to save category reward');
     }
   };
-
   const deleteCategoryReward = async (categoryId: string) => {
     try {
       const res = await fetch(`/api/economy/categories?categoryId=${categoryId}`, {
         method: 'DELETE'
       });
-
       if (res.ok) {
         await fetchCategories();
         setSuccess('Category reward removed!');
@@ -330,7 +286,6 @@ export default function EconomyManagementPage() {
       setError('Failed to remove category reward');
     }
   };
-
   const addToBlacklist = async (type: string, id: string, channelType?: string) => {
     try {
       const res = await fetch('/api/economy/blacklist', {
@@ -338,7 +293,6 @@ export default function EconomyManagementPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type, id, channelType })
       });
-
       if (res.ok) {
         await fetchBlacklist();
         setSuccess('Added to blacklist!');
@@ -348,13 +302,11 @@ export default function EconomyManagementPage() {
       setError('Failed to add to blacklist');
     }
   };
-
   const removeFromBlacklist = async (type: string, id: string) => {
     try {
       const res = await fetch(`/api/economy/blacklist?type=${type}&id=${id}`, {
         method: 'DELETE'
       });
-
       if (res.ok) {
         await fetchBlacklist();
         setSuccess('Removed from blacklist!');
@@ -364,7 +316,6 @@ export default function EconomyManagementPage() {
       setError('Failed to remove from blacklist');
     }
   };
-
   const toggleShop = async (enabled: boolean) => {
     try {
       const res = await fetch('/api/economy/shop-toggle', {
@@ -372,7 +323,6 @@ export default function EconomyManagementPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'shop', enabled })
       });
-
       if (res.ok) {
         setShopEnabled(enabled);
         setSuccess(enabled ? 'Shop enabled!' : 'Shop disabled!');
@@ -382,7 +332,6 @@ export default function EconomyManagementPage() {
       setError('Failed to toggle shop');
     }
   };
-
   const toggleShopItem = async (itemId: string, enabled: boolean) => {
     try {
       const res = await fetch('/api/economy/shop-toggle', {
@@ -390,10 +339,9 @@ export default function EconomyManagementPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'item', itemId, enabled })
       });
-
       if (res.ok) {
-        setShopItems(items => 
-          items.map(item => 
+        setShopItems(items =>
+          items.map(item =>
             item.id === itemId ? { ...item, enabled } : item
           )
         );
@@ -402,23 +350,18 @@ export default function EconomyManagementPage() {
       setError('Failed to toggle item');
     }
   };
-
   const filteredAvailableChannels = availableChannels.filter(ch =>
     !blacklistedChannels.find(b => b.id === ch.id) &&
     ch.name.toLowerCase().includes(blacklistSearch.toLowerCase())
   );
-
   const filteredAvailableCategories = availableCategories.filter(cat =>
     !blacklistedCategories.find(b => b.id === cat.id) &&
     cat.name.toLowerCase().includes(blacklistSearch.toLowerCase())
   );
-
   const filteredAvailableRoles = availableRoles.filter(role =>
     !blacklistedRoles.find(b => b.id === role.id) &&
     role.name.toLowerCase().includes(blacklistSearch.toLowerCase())
   );
-
-  
   if (status === 'loading' || hasPermission === null || isRedirecting) {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen flex items-center justify-center">
@@ -431,8 +374,6 @@ export default function EconomyManagementPage() {
       </div>
     );
   }
-
-  
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -465,8 +406,6 @@ export default function EconomyManagementPage() {
       </div>
     );
   }
-
-  
   if (loading) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -480,7 +419,6 @@ export default function EconomyManagementPage() {
       </div>
     );
   }
-
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       {}
@@ -507,7 +445,6 @@ export default function EconomyManagementPage() {
             🎯 Invites
           </Link>
         </div>
-
         {}
         {success && (
           <div className="mb-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-500 flex items-center gap-2">
@@ -522,7 +459,6 @@ export default function EconomyManagementPage() {
           </div>
         )}
       </div>
-
       {}
       <div className="flex flex-wrap gap-2 mb-6 p-1 bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))]">
         {[
@@ -545,7 +481,6 @@ export default function EconomyManagementPage() {
           </button>
         ))}
       </div>
-
       {}
       {activeTab === 'basic' && config && (
         <div className="space-y-6">
@@ -568,7 +503,6 @@ export default function EconomyManagementPage() {
               </button>
             </div>
           </div>
-
           {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center gap-3 mb-6">
@@ -580,7 +514,6 @@ export default function EconomyManagementPage() {
                 <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Configure VC-based currency earning (accumulates across sessions)</p>
               </div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
@@ -597,7 +530,6 @@ export default function EconomyManagementPage() {
                   <span className="text-[rgb(var(--color-text-tertiary))]">minutes in VC</span>
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   {config.currency_name} Amount
@@ -616,7 +548,6 @@ export default function EconomyManagementPage() {
                   = {config.vc_ozy_amount || 1} {config.currency_name} per {config.minutes_per_point} min
                 </p>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Minimum Members in VC
@@ -633,7 +564,6 @@ export default function EconomyManagementPage() {
                   placeholder="1"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Count Bots in Member Count
@@ -659,7 +589,6 @@ export default function EconomyManagementPage() {
                   {config.count_bots ? 'Bots are included in minimum member requirement' : 'Only real users count toward minimum members'}
                 </p>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Ignore Muted Users
@@ -685,7 +614,6 @@ export default function EconomyManagementPage() {
                   {config.ignore_self_muted ? 'Muted users will NOT earn coins' : 'Muted users will still earn coins'}
                 </p>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Ignore Deafened Users
@@ -712,14 +640,12 @@ export default function EconomyManagementPage() {
                 </p>
               </div>
             </div>
-            
             <div className="mt-4 p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
               <p className="text-sm text-purple-300">
                 <strong>How it works:</strong> Time accumulates across sessions. When a user reaches {config.minutes_per_point} min total (even across multiple joins), they earn {config.vc_ozy_amount || 1} {config.currency_name} and progress continues.
               </p>
             </div>
           </div>
-
           {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center gap-3 mb-6">
@@ -731,7 +657,6 @@ export default function EconomyManagementPage() {
                 <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Configure message-based currency earning (accumulates towards threshold)</p>
               </div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
@@ -748,7 +673,6 @@ export default function EconomyManagementPage() {
                   <span className="text-[rgb(var(--color-text-tertiary))]">messages to earn</span>
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   {config.currency_name} Amount
@@ -767,7 +691,6 @@ export default function EconomyManagementPage() {
                   = {config.msg_ozy_amount || 1} {config.currency_name} per {config.messages_per_point} msgs
                 </p>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Min Message Length
@@ -781,7 +704,6 @@ export default function EconomyManagementPage() {
                   placeholder="5"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Cooldown (seconds)
@@ -795,16 +717,13 @@ export default function EconomyManagementPage() {
                   placeholder="5"
                 />
               </div>
-
             </div>
-            
             <div className="mt-4 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
               <p className="text-sm text-blue-300">
                 <strong>How it works:</strong> Messages accumulate. After {config.messages_per_point} valid messages, user earns {config.msg_ozy_amount || 1} {config.currency_name}. Progress persists until reward is earned.
               </p>
             </div>
           </div>
-
           {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center justify-between">
@@ -836,7 +755,6 @@ export default function EconomyManagementPage() {
               </p>
             )}
           </div>
-
           {}
           <div className="flex justify-end">
             <button
@@ -854,7 +772,6 @@ export default function EconomyManagementPage() {
           </div>
         </div>
       )}
-
       {}
       {activeTab === 'advanced' && (
         <div className="space-y-6">
@@ -892,7 +809,6 @@ export default function EconomyManagementPage() {
                     Add Category
                   </button>
                 </div>
-
                 {}
                 {newCategoryReward && (
                   <div className="mb-6 p-6 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-green-500/30">
@@ -910,7 +826,6 @@ export default function EconomyManagementPage() {
                         <FiX className="w-5 h-5" />
                       </button>
                     </div>
-
                     {}
                     <div className="mb-6">
                       <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
@@ -948,7 +863,6 @@ export default function EconomyManagementPage() {
                         }
                       </select>
                     </div>
-
                     {newCategoryReward.categoryId && (
                       <>
                         {}
@@ -960,7 +874,6 @@ export default function EconomyManagementPage() {
                             </h4>
                             <span className="text-xs text-[rgb(var(--color-text-tertiary))] ml-2">(Read-only - synced from Discord)</span>
                           </div>
-                          
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {}
                             <div>
@@ -985,7 +898,6 @@ export default function EconomyManagementPage() {
                                 )}
                               </div>
                             </div>
-                            
                             {}
                             <div>
                               <div className="flex items-center gap-2 mb-2">
@@ -1011,7 +923,6 @@ export default function EconomyManagementPage() {
                             </div>
                           </div>
                         </div>
-
                         {}
                         <div className="mb-6 p-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]">
                           <div className="flex items-center gap-2 mb-4">
@@ -1083,7 +994,6 @@ export default function EconomyManagementPage() {
                               </button>
                             </div>
                           </div>
-                          
                           {}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             <div>
@@ -1131,12 +1041,10 @@ export default function EconomyManagementPage() {
                               </p>
                             </div>
                           </div>
-                          
                           <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
                             Users earn {newCategoryReward.vcOzyAmount || 1} {config?.currency_name || 'Ozy'} after {newCategoryReward.vcMinutesPerPoint || 5} minutes in VC (accumulates across sessions)
                           </p>
                         </div>
-
                         {}
                         <div className="p-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))]">
                           <div className="flex items-center gap-2 mb-4">
@@ -1209,7 +1117,6 @@ export default function EconomyManagementPage() {
                             Users earn {newCategoryReward.msgOzyAmount || 1} {config?.currency_name || 'Ozy'} after {newCategoryReward.messagesPerPoint || 25} messages (accumulates)
                           </p>
                         </div>
-
                         <div className="flex justify-end mt-6 gap-3">
                           <button
                             onClick={() => setNewCategoryReward(null)}
@@ -1233,7 +1140,6 @@ export default function EconomyManagementPage() {
                     )}
                   </div>
                 )}
-
                 {}
                 <div className="space-y-3">
                   {categoryRewards.length === 0 ? (
@@ -1313,7 +1219,6 @@ export default function EconomyManagementPage() {
                             <span>Msgs: <strong className="text-[rgb(var(--color-text-primary))]">{reward.msgOzyAmount || 1}</strong> {config?.currency_name || 'Ozy'} per <strong>{reward.messagesPerPoint}</strong> msgs</span>
                           </div>
                         </div>
-                        
                         {}
                         <div className="mt-3 flex flex-wrap gap-2">
                           <span className="px-2 py-1 text-xs rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
@@ -1329,7 +1234,6 @@ export default function EconomyManagementPage() {
                             Deafened: {reward.vcIgnoreDeafened ? 'Ignored' : 'Counted'}
                           </span>
                         </div>
-                        
                         {}
                         <div className="mt-3 pt-3 border-t border-[rgb(var(--color-border))]">
                           <div className="flex flex-wrap gap-2">
@@ -1351,13 +1255,11 @@ export default function EconomyManagementPage() {
           )}
         </div>
       )}
-
       {}
       {activeTab === 'blacklist' && (
         <div className="space-y-6">
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">Blacklist Management</h2>
-
             {}
             <div className="flex gap-2 mb-6 p-1 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
               {[
@@ -1380,7 +1282,6 @@ export default function EconomyManagementPage() {
                 </button>
               ))}
             </div>
-
             {}
             <div className="relative mb-6">
               <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-tertiary))]" />
@@ -1392,7 +1293,6 @@ export default function EconomyManagementPage() {
                 className="w-full pl-12 pr-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
               />
             </div>
-
             {}
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-3">Blacklisted</h3>
@@ -1443,10 +1343,9 @@ export default function EconomyManagementPage() {
                   </div>
                 ))}
                 {blacklistTab === 'members' && blacklistedMembers.map(item => {
-                  const avatarUrl = item.avatar 
+                  const avatarUrl = item.avatar
                     ? `https://cdn.discordapp.com/avatars/${item.id}/${item.avatar}.png?size=32`
                     : `https://cdn.discordapp.com/embed/avatars/${parseInt(item.discriminator || '0') % 5}.png`;
-                  
                   return (
                     <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                       <div className="flex items-center gap-2">
@@ -1470,7 +1369,6 @@ export default function EconomyManagementPage() {
                 )}
               </div>
             </div>
-
             {}
             <div>
               <h3 className="text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-3">Add to Blacklist</h3>
@@ -1528,7 +1426,6 @@ export default function EconomyManagementPage() {
                     <p className="text-[rgb(var(--color-text-tertiary))] text-center mb-4">
                       Search by username or paste Discord User ID
                     </p>
-                    
                     {}
                     <div className="relative max-w-2xl mx-auto">
                       <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-tertiary))]" />
@@ -1539,7 +1436,6 @@ export default function EconomyManagementPage() {
                         onChange={async (e) => {
                           const value = e.target.value;
                           setMemberSearchQuery(value);
-                          
                           if (value.length >= 2) {
                             setSearchingMembers(true);
                             try {
@@ -1565,24 +1461,22 @@ export default function EconomyManagementPage() {
                         </div>
                       )}
                     </div>
-
                     {}
                     {memberSearchResults.length > 0 && (
                       <div className="max-w-2xl mx-auto space-y-2 max-h-96 overflow-y-auto">
                         {memberSearchResults.map(member => {
-                          const avatarUrl = member.avatar 
+                          const avatarUrl = member.avatar
                             ? `https://cdn.discordapp.com/avatars/${member.id}/${member.avatar}.png?size=64`
                             : `https://cdn.discordapp.com/embed/avatars/${parseInt(member.discriminator) % 5}.png`;
                           const displayName = member.global_name || member.username;
-                          
                           return (
-                            <div 
-                              key={member.id} 
+                            <div
+                              key={member.id}
                               className="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-all border border-[rgb(var(--color-border))]"
                             >
                               <div className="flex items-center gap-3">
-                                <img 
-                                  src={avatarUrl} 
+                                <img
+                                  src={avatarUrl}
                                   alt={displayName}
                                   className="w-10 h-10 rounded-full"
                                 />
@@ -1611,7 +1505,6 @@ export default function EconomyManagementPage() {
                         })}
                       </div>
                     )}
-
                     {}
                     {/^\d{17,19}$/.test(memberSearchQuery.trim()) && memberSearchResults.length === 0 && (
                       <div className="max-w-2xl mx-auto">
@@ -1629,7 +1522,6 @@ export default function EconomyManagementPage() {
                         </div>
                       </div>
                     )}
-
                     <p className="text-xs text-[rgb(var(--color-text-tertiary))] text-center mt-4">
                       💡 Tip: Enable Developer Mode in Discord to copy User IDs
                     </p>
@@ -1640,7 +1532,6 @@ export default function EconomyManagementPage() {
           </div>
         </div>
       )}
-
       {}
       {activeTab === 'shop' && (
         <div className="space-y-6">
@@ -1670,7 +1561,6 @@ export default function EconomyManagementPage() {
               </button>
             </div>
           </div>
-
           {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">Individual Item Toggles</h2>

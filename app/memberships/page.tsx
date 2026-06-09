@@ -1,23 +1,18 @@
 'use client';
-
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-
 export default function MembershipsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
   const sessionGuildId = (session?.user as any)?.guild_id as string | undefined;
-
   useEffect(() => {
     if (status !== 'authenticated') return;
     if (sessionGuildId) {
       router.replace(`/donator/subscriptions?guild_id=${encodeURIComponent(sessionGuildId)}`);
     }
   }, [status, sessionGuildId, router]);
-
   if (status === 'loading') {
     return (
       <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center pt-16">
@@ -28,7 +23,6 @@ export default function MembershipsPage() {
       </main>
     );
   }
-
   if (status !== 'authenticated') {
     return (
       <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6 pt-16">
@@ -45,7 +39,6 @@ export default function MembershipsPage() {
       </main>
     );
   }
-
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6 pt-16">
       <div className="max-w-2xl w-full rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-8 sm:p-10 text-center">

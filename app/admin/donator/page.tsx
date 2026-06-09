@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -7,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { Bold, Italic, Underline } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import EntityDropdown, { EntityDropdownOption } from '@/components/ui/entity-dropdown';
-
 interface Plan {
   id: string;
   guild_id: string;
@@ -27,18 +25,15 @@ interface Plan {
     subscriptions: number;
   };
 }
-
 interface GuildInfo {
   id: string;
   name: string;
 }
-
 interface RoleSearchResult {
   id: string;
   name: string;
   color?: number;
 }
-
 interface FormData {
   title: string;
   description: string;
@@ -51,7 +46,6 @@ interface FormData {
   ozy_enabled: boolean;
   price_ozy: string;
 }
-
 const initialFormData: FormData = {
   title: '',
   description: '',
@@ -64,25 +58,19 @@ const initialFormData: FormData = {
   ozy_enabled: false,
   price_ozy: '',
 };
-
 const formatUsd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
-
 export default function DonatorAdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
   const GUILDS_CACHE_KEY = 'admin_guilds_cache_v1';
   const GUILDS_CACHE_TTL_MS = 60_000;
   const plansCacheKey = (selectedGuildId: string) => `donator_plans_cache_v1:${selectedGuildId}`;
   const PLANS_CACHE_TTL_MS = 30_000;
-
   const [guilds, setGuilds] = useState<GuildInfo[]>([]);
   const [guildId, setGuildId] = useState('');
   const [loadingGuilds, setLoadingGuilds] = useState(true);
-
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
-
   const [showModal, setShowModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -92,18 +80,14 @@ export default function DonatorAdminPage() {
   const perkEditorRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const [roleLookup, setRoleLookup] = useState<Record<string, EntityDropdownOption>>({});
   const [selectedRoleOption, setSelectedRoleOption] = useState<EntityDropdownOption | null>(null);
-
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.replace('/admin');
       return;
     }
-
     if (status !== 'authenticated') return;
-
     const loadGuilds = async () => {
       try {
         try {
@@ -119,16 +103,13 @@ export default function DonatorAdminPage() {
             }
           }
         } catch {
-          
         }
-
         setLoadingGuilds(true);
         const response = await fetch('/api/automod/guilds');
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
           throw new Error(data?.error || 'Failed to load servers');
         }
-
         const items: GuildInfo[] = Array.isArray(data?.guilds) ? data.guilds : [];
         setGuilds(items);
         try {
@@ -137,9 +118,7 @@ export default function DonatorAdminPage() {
             JSON.stringify({ timestamp: Date.now(), guilds: items })
           );
         } catch {
-          
         }
-
         const sessionGuildId = (session?.user as any)?.guild_id as string | undefined;
         const fallbackGuildId = items.find((g) => g.id === sessionGuildId)?.id || items[0]?.id || '';
         setGuildId((prev) => prev || fallbackGuildId);
@@ -149,23 +128,18 @@ export default function DonatorAdminPage() {
         setLoadingGuilds(false);
       }
     };
-
     loadGuilds();
   }, [status, session, router]);
-
   useEffect(() => {
     if (!guildId) {
       setPlans([]);
       return;
     }
-
     fetchPlans(guildId);
   }, [guildId]);
-
   const activePlans = useMemo(() => plans.filter((p) => p.enabled && !p.paused).length, [plans]);
   const pausedPlans = useMemo(() => plans.filter((p) => p.paused).length, [plans]);
   const totalSubs = useMemo(() => plans.reduce((sum, p) => sum + (p._count?.subscriptions || 0), 0), [plans]);
-
   const fetchPlans = async (selectedGuildId: string) => {
     try {
       try {
@@ -178,18 +152,14 @@ export default function DonatorAdminPage() {
           }
         }
       } catch {
-        
       }
-
       setLoadingPlans(true);
       setError('');
-
       const response = await fetch(`/api/donator/plans?guild_id=${encodeURIComponent(selectedGuildId)}`);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data?.error || 'Failed to fetch plans');
       }
-
       const nextPlans = Array.isArray(data?.data) ? data.data : [];
       setPlans(nextPlans);
       try {
@@ -198,7 +168,6 @@ export default function DonatorAdminPage() {
           JSON.stringify({ timestamp: Date.now(), plans: nextPlans })
         );
       } catch {
-        
       }
     } catch (fetchError: any) {
       setError(fetchError?.message || 'Failed to load plans');
@@ -207,7 +176,6 @@ export default function DonatorAdminPage() {
       setLoadingPlans(false);
     }
   };
-
   const openCreateModal = () => {
     setEditingPlan(null);
     setFormData(initialFormData);
@@ -215,7 +183,6 @@ export default function DonatorAdminPage() {
     setShowModal(true);
     setError('');
   };
-
   const openEditModal = (plan: Plan) => {
     setEditingPlan(plan);
     setFormData({
@@ -239,7 +206,6 @@ export default function DonatorAdminPage() {
     setShowModal(true);
     setError('');
   };
-
   const closeModal = () => {
     if (saving) return;
     setShowModal(false);
@@ -248,38 +214,30 @@ export default function DonatorAdminPage() {
     setActivePerkIndex(0);
     setFontSize('3');
   };
-
   const fetchRoleOptions = useCallback(async (query: string): Promise<EntityDropdownOption[]> => {
     if (!guildId) return [];
-
     return [{ id: query.trim(), name: query.trim() }];
   }, [guildId]);
-
   const resetFlashMessage = () => {
     setTimeout(() => setSuccess(''), 2600);
   };
-
   const handleSave = async () => {
     if (!guildId) {
       setError('Select a server first.');
       return;
     }
-
     const currentPerks = formData.perks.map((perk, index) => {
       const editor = perkEditorRefs.current[index];
       return editor ? editor.innerHTML : perk;
     });
-
     const parsedPrice = Number.parseFloat(formData.price);
     if (!formData.title.trim() || !Number.isFinite(parsedPrice) || parsedPrice <= 0 || !formData.linked_role_id.trim()) {
       setError('Title, valid price, and linked role ID are required.');
       return;
     }
-
     try {
       setSaving(true);
       setError('');
-
       const payload = {
         guild_id: guildId,
         title: formData.title.trim(),
@@ -295,7 +253,6 @@ export default function DonatorAdminPage() {
         ozy_enabled: formData.ozy_enabled,
         price_ozy: formData.price_ozy.trim() ? Math.round(Number.parseFloat(formData.price_ozy)) : null,
       };
-
       const response = editingPlan
         ? await fetch('/api/donator/plans', {
             method: 'PUT',
@@ -307,12 +264,10 @@ export default function DonatorAdminPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           });
-
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data?.error || 'Failed to save plan');
       }
-
       setSuccess(editingPlan ? 'Plan updated successfully.' : 'Plan created successfully.');
       closeModal();
       await fetchPlans(guildId);
@@ -323,11 +278,9 @@ export default function DonatorAdminPage() {
       setSaving(false);
     }
   };
-
   const runPerkCommand = (command: 'bold' | 'italic' | 'underline' | 'fontSize', value?: string) => {
     document.execCommand(command, false, value);
   };
-
   const updatePerk = (index: number) => {
     const editor = perkEditorRefs.current[index];
     if (!editor) return;
@@ -338,12 +291,10 @@ export default function DonatorAdminPage() {
       return { ...prev, perks: nextPerks };
     });
   };
-
   const addPerk = () => {
     setFormData((prev) => ({ ...prev, perks: [...prev.perks, ''] }));
     setActivePerkIndex(formData.perks.length);
   };
-
   const removePerk = (index: number) => {
     setFormData((prev) => {
       const next = prev.perks.filter((_, i) => i !== index);
@@ -355,23 +306,18 @@ export default function DonatorAdminPage() {
       return prev > index ? prev - 1 : prev;
     });
   };
-
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this plan and linked subscriptions?')) return;
-
     try {
       setSaving(true);
       setError('');
-
       const response = await fetch(`/api/donator/plans?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
       });
-
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data?.error || 'Failed to delete plan');
       }
-
       setSuccess('Plan deleted successfully.');
       await fetchPlans(guildId);
       resetFlashMessage();
@@ -381,23 +327,19 @@ export default function DonatorAdminPage() {
       setSaving(false);
     }
   };
-
   const handleTogglePause = async (plan: Plan) => {
     try {
       setSaving(true);
       setError('');
-
       const response = await fetch('/api/donator/plans', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: plan.id, paused: !plan.paused }),
       });
-
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data?.error || 'Failed to update plan');
       }
-
       setSuccess(plan.paused ? 'Plan resumed.' : 'Plan paused.');
       await fetchPlans(guildId);
       resetFlashMessage();
@@ -407,7 +349,6 @@ export default function DonatorAdminPage() {
       setSaving(false);
     }
   };
-
   if (status === 'loading' || loadingGuilds) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
@@ -418,7 +359,6 @@ export default function DonatorAdminPage() {
       </div>
     );
   }
-
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -442,7 +382,6 @@ export default function DonatorAdminPage() {
             </Link>
           </div>
         </div>
-
         <button
           onClick={openCreateModal}
           className="px-5 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white inline-flex items-center gap-2 font-semibold cursor-pointer active:scale-[0.99] transition"
@@ -450,7 +389,6 @@ export default function DonatorAdminPage() {
           Create Plan
         </button>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4 bg-[rgb(var(--color-bg-secondary))]">
           <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Active Plans</p>
@@ -465,7 +403,6 @@ export default function DonatorAdminPage() {
           <p className="text-3xl font-bold text-[rgb(var(--color-text-primary))] mt-2">{totalSubs}</p>
         </div>
       </div>
-
       <div className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5 md:p-6 shadow-apple-lg space-y-3">
         <label className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] block">Select Server</label>
         <EntityDropdown
@@ -480,19 +417,16 @@ export default function DonatorAdminPage() {
           Only mutual servers where your account and bot both exist are shown.
         </p>
       </div>
-
       {success && (
         <div className="p-4 rounded-xl bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30">
           {success}
         </div>
       )}
-
       {error && (
         <div className="p-4 rounded-xl bg-red-500/10 text-red-500 border border-red-500/30">
           {error}
         </div>
       )}
-
       {!guildId ? (
         <div className="rounded-2xl border border-[rgb(var(--color-border))] p-6 bg-[rgb(var(--color-bg-secondary))] text-center text-[rgb(var(--color-text-secondary))]">
           Select a server to view and manage donator plans.
@@ -533,11 +467,9 @@ export default function DonatorAdminPage() {
                     {plan.paused ? 'Paused' : plan.enabled ? 'Active' : 'Disabled'}
                   </span>
                 </div>
-
                 {plan.description && (
                   <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-3">{plan.description}</p>
                 )}
-
                 <div className="mt-4">
                   <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-2">Perks</p>
                   <ul className="space-y-2 text-sm text-[rgb(var(--color-text-secondary))]">
@@ -549,7 +481,6 @@ export default function DonatorAdminPage() {
                     ))}
                   </ul>
                 </div>
-
                 <div className="mt-4 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] px-3 py-2 text-sm text-[rgb(var(--color-text-secondary))]">
                   Active subscriptions: <span className="font-semibold text-[rgb(var(--color-text-primary))]">{plan._count?.subscriptions || 0}</span>
                 </div>
@@ -561,7 +492,6 @@ export default function DonatorAdminPage() {
                     )}
                   </div>
                 )}
-
                 <div className="mt-5 grid grid-cols-3 gap-2">
                   <button
                     onClick={() => openEditModal(plan)}
@@ -588,7 +518,6 @@ export default function DonatorAdminPage() {
           ))}
         </div>
       )}
-
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center" onClick={closeModal}>
             <div
@@ -610,7 +539,6 @@ export default function DonatorAdminPage() {
                 ×
               </button>
             </div>
-
             <div className="p-6 grid grid-cols-1 xl:grid-cols-2 gap-5">
               <div className="space-y-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] p-4">
                 <div>
@@ -623,7 +551,6 @@ export default function DonatorAdminPage() {
                     placeholder="Premium Supporter"
                   />
                 </div>
-
                 <div>
                   <label className="block text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-2">Description</label>
                   <textarea
@@ -634,7 +561,6 @@ export default function DonatorAdminPage() {
                     placeholder="Plan description"
                   />
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-2">Price (USD)</label>
@@ -691,10 +617,8 @@ export default function DonatorAdminPage() {
                   />
                 </div>
               </div>
-
               <div className="space-y-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] p-4">
                 <label className="block text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Perks Editor</label>
-
                 <div className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-3 space-y-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Button variant="outline" size="icon" onClick={() => runPerkCommand('bold')} title="Bold">
@@ -727,7 +651,6 @@ export default function DonatorAdminPage() {
                       />
                     </div>
                   </div>
-
                   <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
                     {formData.perks.map((perk, index) => (
                       <div key={`perk-${index}`} className="flex items-start gap-2">
@@ -750,12 +673,10 @@ export default function DonatorAdminPage() {
                       </div>
                     ))}
                   </div>
-
                   <Button variant="outline" size="sm" onClick={addPerk}>
                     Add Perk
                   </Button>
                 </div>
-
                 <label className="inline-flex items-center gap-3 text-sm text-[rgb(var(--color-text-primary))]">
                   <input
                     type="checkbox"
@@ -804,7 +725,6 @@ export default function DonatorAdminPage() {
                 </p>
               </div>
             </div>
-
             <div className="px-6 py-5 border-t border-[rgb(var(--color-border))] flex flex-col sm:flex-row gap-3 sm:justify-end">
               <button
                 onClick={closeModal}

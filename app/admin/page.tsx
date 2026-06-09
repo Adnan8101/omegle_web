@@ -1,33 +1,27 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { signIn, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import { FiLock } from 'react-icons/fi';
-
 export default function AdminLogin() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isRedirecting, setIsRedirecting] = useState(false);
-
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.permissions?.hasAnyAccess) {
       setIsRedirecting(true);
       const perms = session?.user?.permissions;
-      
       if (perms?.hasCasinoAccess && !perms?.hasFullAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
         router.push('/admin/casino');
       } else if (perms?.hasFullAccess) {
         router.push('/admin/dashboard');
       } else {
-        
         router.push('/admin/vctranscript');
       }
     }
   }, [status, session, router]);
-
   if (status === 'loading' || isRedirecting) {
     return (
       <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -40,7 +34,6 @@ export default function AdminLogin() {
       </main>
     );
   }
-
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6 apple-transition relative overflow-hidden">
       {}
@@ -49,7 +42,6 @@ export default function AdminLogin() {
         <div className="absolute top-0 -right-4 w-96 h-96 bg-blue-600/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '2s' }}></div>
         <div className="absolute -bottom-8 left-20 w-96 h-96 bg-blue-400/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '4s' }}></div>
       </div>
-
       <div className="w-full max-w-md">
         {}
         <div className="text-center mb-12 animate-fade-in space-y-6">
@@ -73,7 +65,6 @@ export default function AdminLogin() {
             </p>
           </div>
         </div>
-
         {}
         <div className="glass-blue rounded-3xl p-10 border border-blue-500/20 shadow-blue-glow animate-scale-in">
           <div className="flex items-center justify-center mb-8">
@@ -81,16 +72,13 @@ export default function AdminLogin() {
               <FiLock className="w-10 h-10 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-
           <h2 className="text-2xl font-semibold text-center mb-8 text-[rgb(var(--color-text-primary))]">
             Discord Authentication
           </h2>
-
           <div className="space-y-6">
             <p className="text-center text-[rgb(var(--color-text-secondary))]">
               Sign in with your Discord account to access the admin dashboard
             </p>
-
             {status === 'unauthenticated' && (
               <button
                 onClick={() => signIn('discord', { callbackUrl: '/admin/dashboard' })}
@@ -102,7 +90,6 @@ export default function AdminLogin() {
                 Sign in with Discord
               </button>
             )}
-
             {status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess && (
               <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 space-y-3">
                 <p className="text-red-500 text-sm font-semibold text-center">
@@ -111,7 +98,6 @@ export default function AdminLogin() {
                 <p className="text-red-400 text-xs text-center">
                   You do not have the required permissions to access this area.
                 </p>
-
                 {}
                 <div className="bg-black/20 rounded-lg p-3 text-xs space-y-2">
                   <div>
@@ -120,7 +106,6 @@ export default function AdminLogin() {
                       {session?.user?.id || 'Unknown'}
                     </div>
                   </div>
-
                   <div>
                     <p className="text-gray-400 font-semibold mb-1">Your Roles:</p>
                     <div className="text-gray-300 font-mono text-[10px] space-y-0.5 max-h-32 overflow-y-auto">
@@ -133,7 +118,6 @@ export default function AdminLogin() {
                       )}
                     </div>
                   </div>
-
                   <div>
                     <p className="text-gray-400 font-semibold mb-1">Required Permissions:</p>
                     <div className="text-green-300 font-mono text-[10px] space-y-0.5">
@@ -142,7 +126,6 @@ export default function AdminLogin() {
                       <div>• Server Owner</div>
                     </div>
                   </div>
-
                   <div>
                     <p className="text-gray-400 font-semibold mb-1">OR Allowed Roles:</p>
                     <div className="text-yellow-300 font-mono text-[10px] space-y-0.5">
@@ -152,7 +135,6 @@ export default function AdminLogin() {
                     </div>
                   </div>
                 </div>
-
                 <div className="flex flex-col gap-2 mt-4">
                   <button
                     onClick={() => {
@@ -172,13 +154,11 @@ export default function AdminLogin() {
                 </div>
               </div>
             )}
-
             <p className="text-xs text-center text-[rgb(var(--color-text-tertiary))] mt-6">
               You must have the required role in Omeglee Community server
             </p>
           </div>
         </div>
-
         {}
         <div className="text-center mt-8">
           <a

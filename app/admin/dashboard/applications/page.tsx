@@ -1,15 +1,12 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getQuestionTitle, getRoleLabel, STAFF_ROLES, StaffRole } from '@/lib/staffApplicationForm';
-
 type RoleFormSetting = {
   isOpen: boolean;
   closedMessage?: string;
 };
-
 const DEFAULT_ROLE_FORM_SETTINGS: Record<StaffRole, RoleFormSetting> = {
   moderation: { isOpen: true, closedMessage: '' },
   event_team: { isOpen: true, closedMessage: '' },
@@ -17,47 +14,34 @@ const DEFAULT_ROLE_FORM_SETTINGS: Record<StaffRole, RoleFormSetting> = {
   media_team: { isOpen: true, closedMessage: '' },
   entertainment_team: { isOpen: true, closedMessage: '' },
 };
-
 interface Application {
   _id: string;
   applicationRole?: StaffRole;
   dailyAvailability?: string;
   roleAnswers?: Record<string, string>;
   formVersion?: number;
-
-  
   discordUsername?: string;
   discordUserId: string;
   country?: string;
   timezone?: string;
   age?: string;
-
-  
   aboutYourself?: string;
   whyJoin?: string;
   hoursPerWeek?: string;
   languages?: string;
   vcAvailability?: string;
   vcFrequency?: string;
-
-  
   moderationExperience?: string;
   moderatorDefinition?: string;
   leadershipExperience?: string;
-
-  
   discordBotExperience?: string;
   automodKnowledge?: string;
   moderationBotsFamiliarity?: string;
   modCommandsKnowledge?: string;
-
-  
   status: 'pending' | 'considered' | 'denied';
   createdAt: string;
   updatedAt: string;
   notes?: string;
-  
-  
   userProfile?: {
     username?: string;
     display_name?: string;
@@ -73,7 +57,7 @@ interface Application {
   modLogs?: Array<{
     case_number?: number;
     action?: string;
-    action_type?: string; 
+    action_type?: string;
     reason?: string;
     moderator_id?: string;
     moderator_username?: string;
@@ -85,7 +69,6 @@ interface Application {
   }>;
   dataFetchedAt?: string;
 }
-
 export default function ApplicationsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -102,16 +85,13 @@ export default function ApplicationsPage() {
   const [roleForms, setRoleForms] = useState<Record<StaffRole, RoleFormSetting>>(DEFAULT_ROLE_FORM_SETTINGS);
   const [modalTab, setModalTab] = useState<'details' | 'userData'>('details');
   const [settingsLoading, setSettingsLoading] = useState(false);
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin');
     } else if (status === 'authenticated' && !session?.user?.permissions?.hasFullAccess) {
-      
       router.push('/admin');
     }
   }, [status, session, router]);
-
   const fetchSettings = async () => {
     try {
       const response = await fetch('/api/settings');
@@ -137,7 +117,6 @@ export default function ApplicationsPage() {
       console.error('Error fetching settings:', error);
     }
   };
-
   const fetchApplications = async () => {
     setLoading(true);
     try {
@@ -148,7 +127,6 @@ export default function ApplicationsPage() {
       if (searchTerm) {
         params.append('search', searchTerm);
       }
-
       const response = await fetch(`/api/applications?${params}`);
       const result = await response.json();
       if (result.success) {
@@ -160,7 +138,6 @@ export default function ApplicationsPage() {
       setLoading(false);
     }
   };
-
   const toggleApplications = async () => {
     setSettingsLoading(true);
     try {
@@ -170,7 +147,6 @@ export default function ApplicationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isOpen: newStatus }),
       });
-
       const result = await response.json();
       if (result.success) {
         setIsApplicationsOpen(newStatus);
@@ -183,7 +159,6 @@ export default function ApplicationsPage() {
       setSettingsLoading(false);
     }
   };
-
   const toggleRoleForm = async (role: StaffRole) => {
     setSettingsLoading(true);
     try {
@@ -200,7 +175,6 @@ export default function ApplicationsPage() {
           },
         }),
       });
-
       const result = await response.json();
       if (result.success) {
         const updated = result.data?.roleForms?.[role];
@@ -219,23 +193,18 @@ export default function ApplicationsPage() {
       setSettingsLoading(false);
     }
   };
-
   useEffect(() => {
     fetchSettings();
   }, []);
-
   useEffect(() => {
     const status = searchParams.get('status');
     if (status) {
       setActiveTab(status);
     }
   }, [searchParams]);
-
   useEffect(() => {
     fetchApplications();
-    
   }, [activeTab, searchTerm]);
-
   const updateApplicationStatus = async (
     id: string,
     status: 'pending' | 'considered' | 'denied'
@@ -246,7 +215,6 @@ export default function ApplicationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
-
       const result = await response.json();
       if (result.success) {
         fetchApplications();
@@ -258,7 +226,6 @@ export default function ApplicationsPage() {
       console.error('Error updating status:', error);
     }
   };
-
   const updateNotes = async (id: string) => {
     try {
       const response = await fetch(`/api/applications/${id}`, {
@@ -266,31 +233,25 @@ export default function ApplicationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes }),
       });
-
       const result = await response.json();
       if (result.success) {
         alert('Notes updated successfully!');
-        
         setSelectedApp(result.data);
         setNotes(result.data.notes || '');
-        
         await fetchApplications();
       }
     } catch (error) {
       console.error('Error updating notes:', error);
     }
   };
-
   const deleteApplication = async (id: string) => {
     if (!confirm('Are you sure you want to delete this application?')) {
       return;
     }
-
     try {
       const response = await fetch(`/api/applications/${id}`, {
         method: 'DELETE',
       });
-
       const result = await response.json();
       if (result.success) {
         fetchApplications();
@@ -301,22 +262,17 @@ export default function ApplicationsPage() {
       console.error('Error deleting application:', error);
     }
   };
-
   const openModal = async (app: Application) => {
     setSelectedApp(app);
     setNotes(app.notes || '');
     setModalTab('details');
     setShowModal(true);
-    
-    
     setTimeout(() => {
       const modalContent = document.querySelector('.modal-content-scroll');
       if (modalContent) {
         modalContent.scrollTop = 0;
       }
     }, 100);
-    
-    
     try {
       const response = await fetch(`/api/applications/${app._id}`);
       const result = await response.json();
@@ -328,7 +284,6 @@ export default function ApplicationsPage() {
       console.error('Error fetching application details:', error);
     }
   };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -341,7 +296,6 @@ export default function ApplicationsPage() {
         return 'bg-gray-500/20 text-gray-500 border-gray-500/30';
     }
   };
-
   const tabs = [
     { id: 'all', label: 'All Applications', count: applications.length },
     {
@@ -360,7 +314,6 @@ export default function ApplicationsPage() {
       count: applications.filter((a) => a.status === 'denied').length,
     },
   ];
-
   const roleTabs: Array<{ id: 'all' | StaffRole; label: string; count: number }> = [
     {
       id: 'all',
@@ -373,12 +326,10 @@ export default function ApplicationsPage() {
       count: applications.filter((application) => (application.applicationRole || 'moderation') === role.id).length,
     })),
   ];
-
   const visibleApplications = applications.filter((application) => {
     if (activeRoleTab === 'all') return true;
     return (application.applicationRole || 'moderation') === activeRoleTab;
   });
-
   return (
     <div className="p-4 sm:p-8">
       {}
@@ -388,7 +339,6 @@ export default function ApplicationsPage() {
             <h1 className="text-2xl sm:text-4xl font-bold text-[rgb(var(--color-text-primary))] mb-1 sm:mb-2">Staff Applications</h1>
             <p className="text-xs sm:text-base text-gray-400">Review and manage all staff applications</p>
           </div>
-
           {}
           <div className="bg-discord-light/50 rounded-xl p-3 sm:p-4 border border-gray-700 w-full sm:w-auto">
             <div className="flex items-center justify-between sm:justify-start gap-4">
@@ -415,7 +365,6 @@ export default function ApplicationsPage() {
             </div>
           </div>
         </div>
-
         {}
         <div className="mt-4 bg-discord-light/50 rounded-xl p-4 sm:p-5 border border-gray-700">
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
@@ -435,7 +384,6 @@ export default function ApplicationsPage() {
               Master: {isApplicationsOpen ? 'ON' : 'OFF'}
             </span>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
             {STAFF_ROLES.map((role) => {
               const roleSetting = roleForms[role.id] || { isOpen: true, closedMessage: '' };
@@ -452,7 +400,6 @@ export default function ApplicationsPage() {
                         {isRoleOpen ? 'OPEN' : 'CLOSED'}
                       </p>
                     </div>
-
                     <button
                       type="button"
                       onClick={() => toggleRoleForm(role.id)}
@@ -476,7 +423,6 @@ export default function ApplicationsPage() {
           </div>
         </div>
       </div>
-
       {}
       <div className="flex overflow-x-auto no-scrollbar gap-2 mb-6 pb-2 snap-x touch-pan-x">
         {tabs.map((tab) => (
@@ -498,7 +444,6 @@ export default function ApplicationsPage() {
           </button>
         ))}
       </div>
-
       {}
       <div className="flex overflow-x-auto no-scrollbar gap-2 mb-6 pb-2 snap-x touch-pan-x">
         {roleTabs.map((tab) => (
@@ -522,7 +467,6 @@ export default function ApplicationsPage() {
           </button>
         ))}
       </div>
-
       {}
       <div className="mb-6">
         <div className="relative">
@@ -548,7 +492,6 @@ export default function ApplicationsPage() {
           </svg>
         </div>
       </div>
-
       {}
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -699,12 +642,10 @@ export default function ApplicationsPage() {
           ))}
         </div>
       )}
-
       {}
       {showModal && selectedApp && (
         <div className="fixed inset-0 bg-black/80 sm:bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
             <div className="glass-effect rounded-[2rem] sm:rounded-apple-xl max-w-5xl w-full max-h-[85vh] overflow-hidden border border-[rgb(var(--color-border))] shadow-apple-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
-
               {}
               <div className="glass-effect border-b border-[rgb(var(--color-border))] p-5 sm:p-8 flex items-start justify-between flex-shrink-0 backdrop-blur-xl">
                 <div className="flex-1 pr-4">
@@ -733,18 +674,17 @@ export default function ApplicationsPage() {
                 </div>
                 <div className="flex items-start gap-3">
                   {selectedApp.userProfile?.avatar_url ? (
-                    <img 
+                    <img
                       src={selectedApp.userProfile.avatar_url}
                       alt={selectedApp.userProfile.username || selectedApp.discordUsername}
                       className="w-16 h-16 rounded-full border-2 border-blue-500 shadow-lg"
                       onError={(e) => {
-                        
                         const defaultIndex = Number(BigInt(selectedApp.discordUserId) >> 22n) % 6;
                         e.currentTarget.src = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
                       }}
                     />
                   ) : (
-                    <img 
+                    <img
                       src={`https://cdn.discordapp.com/embed/avatars/${Number(BigInt(selectedApp.discordUserId) >> 22n) % 6}.png`}
                       alt={selectedApp.userProfile?.username || selectedApp.discordUsername}
                       className="w-16 h-16 rounded-full border-2 border-blue-500 shadow-lg"
@@ -770,7 +710,6 @@ export default function ApplicationsPage() {
                   </button>
                 </div>
               </div>
-
               {}
               <div className="flex border-b border-[rgb(var(--color-border))] px-6 sm:px-8 gap-2">
                 <button
@@ -831,7 +770,6 @@ export default function ApplicationsPage() {
                     ))}
                   </div>
                 </div>
-
                 {}
                 <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                   <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
@@ -868,7 +806,6 @@ export default function ApplicationsPage() {
                     </div>
                   </div>
                 </div>
-
                 {selectedApp.roleAnswers && Object.keys(selectedApp.roleAnswers).length > 0 ? (
                   <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                     <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
@@ -925,7 +862,6 @@ export default function ApplicationsPage() {
                         </div>
                       </div>
                     </div>
-
                     {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                       <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
@@ -954,7 +890,6 @@ export default function ApplicationsPage() {
                         </div>
                       </div>
                     </div>
-
                     {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                       <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
@@ -981,7 +916,6 @@ export default function ApplicationsPage() {
                         )}
                       </div>
                     </div>
-
                     {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                       <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-5">
@@ -1024,13 +958,11 @@ export default function ApplicationsPage() {
                     </div>
                   </>
                 )}
-
                 {}
                 <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
                   <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
                     Admin Notes
                   </h3>
-                  
                   {}
                   {selectedApp.notes && (
                     <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-apple">
@@ -1038,7 +970,6 @@ export default function ApplicationsPage() {
                       <p className="text-[rgb(var(--color-text-primary))] whitespace-pre-wrap">{selectedApp.notes}</p>
                     </div>
                   )}
-                  
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
@@ -1053,7 +984,6 @@ export default function ApplicationsPage() {
                     Save Notes
                   </button>
                 </div>
-
                 {}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
                   <button
@@ -1086,7 +1016,7 @@ export default function ApplicationsPage() {
                           <div className="bg-[rgb(var(--color-bg-tertiary))] p-5 rounded-apple-lg">
                             <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-2 font-medium">Total VC Time</p>
                             <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">
-                              {selectedApp.userStats.vc_duration 
+                              {selectedApp.userStats.vc_duration
                                 ? `${Math.floor(selectedApp.userStats.vc_duration / 3600)}h ${Math.floor((selectedApp.userStats.vc_duration % 3600) / 60)}m`
                                 : 'N/A'}
                             </p>
@@ -1106,7 +1036,6 @@ export default function ApplicationsPage() {
                         </div>
                       </div>
                     )}
-
                     {}
                     {selectedApp.modLogs && selectedApp.modLogs.length > 0 ? (
                       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-apple-lg p-6 border border-[rgb(var(--color-border))] shadow-apple-sm">
@@ -1120,18 +1049,16 @@ export default function ApplicationsPage() {
                           {selectedApp.modLogs.map((log: any, index: number) => {
                             const action = (log.action || log.action_type || 'Unknown').toUpperCase();
                             const isMute = action === 'MUTE';
-                            const borderColor = action === 'BAN' ? 'border-red-500' : 
-                                               action === 'MUTE' ? 'border-orange-500' : 
-                                               action === 'WARN' ? 'border-yellow-500' : 
+                            const borderColor = action === 'BAN' ? 'border-red-500' :
+                                               action === 'MUTE' ? 'border-orange-500' :
+                                               action === 'WARN' ? 'border-yellow-500' :
                                                action === 'KICK' ? 'border-amber-500' : 'border-gray-500';
-                            const actionBgColor = action === 'BAN' ? 'bg-red-500/20 text-red-500' : 
-                                                  action === 'MUTE' ? 'bg-orange-500/20 text-orange-500' : 
-                                                  action === 'WARN' ? 'bg-yellow-500/20 text-yellow-500' : 
+                            const actionBgColor = action === 'BAN' ? 'bg-red-500/20 text-red-500' :
+                                                  action === 'MUTE' ? 'bg-orange-500/20 text-orange-500' :
+                                                  action === 'WARN' ? 'bg-yellow-500/20 text-yellow-500' :
                                                   action === 'KICK' ? 'bg-amber-500/20 text-amber-500' :
                                                   action === 'UNBAN' ? 'bg-green-500/20 text-green-500' :
                                                   action === 'UNMUTE' ? 'bg-blue-500/20 text-blue-500' : 'bg-gray-500/20 text-gray-400';
-                            
-                            
                             const formatDuration = (seconds: number | undefined | null) => {
                               if (!seconds || seconds <= 0) return null;
                               const days = Math.floor(seconds / 86400);
@@ -1142,11 +1069,9 @@ export default function ApplicationsPage() {
                               if (minutes > 0) return `${minutes}m`;
                               return null;
                             };
-                            
                             const durationDisplay = formatDuration(log.duration_seconds);
-
                             return (
-                              <div 
+                              <div
                                 key={index}
                                 className={`bg-[rgb(var(--color-bg-tertiary))] p-5 rounded-apple-lg border-l-4 ${borderColor}`}
                               >
@@ -1177,11 +1102,10 @@ export default function ApplicationsPage() {
                                       </span>
                                     )}
                                   </div>
-                                  
                                   {log.moderator_id && (
                                     <div className="flex items-center gap-3 text-sm">
                                       {log.moderator_avatar_url && (
-                                        <img 
+                                        <img
                                           src={log.moderator_avatar_url}
                                           alt={log.moderator_display_name || 'Moderator'}
                                           className="w-8 h-8 rounded-full border border-[rgb(var(--color-border))]"
@@ -1202,14 +1126,12 @@ export default function ApplicationsPage() {
                                       </div>
                                     </div>
                                   )}
-                                  
                                   {log.reason && (
                                     <div>
                                       <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">Reason: </span>
                                       <span className="text-[rgb(var(--color-text-secondary))]">{log.reason}</span>
                                     </div>
                                   )}
-                                  
                                   {isMute && durationDisplay && (
                                     <div className="text-sm text-[rgb(var(--color-text-tertiary))]">
                                       Duration: {durationDisplay}
@@ -1230,7 +1152,6 @@ export default function ApplicationsPage() {
                         <p className="text-[rgb(var(--color-text-secondary))]">This user has no moderation history</p>
                       </div>
                     )}
-
                     {selectedApp.dataFetchedAt && (
                       <div className="text-center text-sm text-[rgb(var(--color-text-tertiary))]">
                         Data fetched on {new Date(selectedApp.dataFetchedAt).toLocaleString()}
@@ -1254,7 +1175,6 @@ export default function ApplicationsPage() {
         </div>
       </div>
       )}
-
       {}
       <div className="mb-6 bg-discord-light/50 rounded-xl p-4 sm:p-5 border border-gray-700">
         <div className="flex items-center justify-between mb-3">

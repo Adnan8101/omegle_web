@@ -3,25 +3,18 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { verifyAccess } from '@/lib/verifyAccess';
-
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const params = request.nextUrl.searchParams;
     const guildId   = params.get('guildId') || '';
     const limitStr  = params.get('limit') || '50';
     const eventType = params.get('eventType') || '';
-
     if (!guildId) return NextResponse.json({ error: 'guildId is required' }, { status: 400 });
-
     const ok = await verifyAccess(session, guildId);
     if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
     const limit = Math.min(200, Math.max(1, parseInt(limitStr, 10) || 50));
-
     const logs = await prismaBot.antiNukeLog.findMany({
       where: {
         guild_id: guildId,
@@ -30,14 +23,11 @@ export async function GET(request: NextRequest) {
       orderBy: { timestamp: 'desc' },
       take: limit,
     });
-
     const executorIds = logs.map(l => l.executor_id);
     const targetIds = logs.map(l => l.target_id).filter(Boolean) as string[];
     const uniqueIds = Array.from(new Set([...executorIds, ...targetIds]));
-
     const botToken = process.env.DISCORD_BOT_TOKEN;
     const userMap: Record<string, any> = {};
-
     if (botToken && uniqueIds.length > 0) {
       await Promise.all(uniqueIds.map(async id => {
         try {
@@ -84,7 +74,6 @@ export async function GET(request: NextRequest) {
         }
       }));
     }
-
     const resolvedLogs = logs.map(l => ({
       id: l.id,
       guildId: l.guild_id,
@@ -97,7 +86,6 @@ export async function GET(request: NextRequest) {
       executorUser: userMap[l.executor_id] || null,
       targetUser: l.target_id ? (userMap[l.target_id] || null) : null,
     }));
-
     return NextResponse.json({ logs: resolvedLogs });
   } catch (error) {
     console.error('[antinuke/logs] GET error:', error);

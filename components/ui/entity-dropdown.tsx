@@ -1,8 +1,6 @@
 'use client';
-
 import { useEffect, useMemo, useState } from 'react';
 import { FiCheck, FiChevronDown, FiSearch, FiX } from 'react-icons/fi';
-
 export interface EntityDropdownOption {
   id: string;
   name: string;
@@ -10,7 +8,6 @@ export interface EntityDropdownOption {
   avatarUrl?: string | null;
   color?: string | number | null;
 }
-
 interface EntityDropdownProps {
   label?: string;
   options: EntityDropdownOption[];
@@ -25,7 +22,6 @@ interface EntityDropdownProps {
   disabled?: boolean;
   className?: string;
 }
-
 function normalizeText(value: string): string {
   return value
     .normalize('NFKD')
@@ -33,7 +29,6 @@ function normalizeText(value: string): string {
     .toLowerCase()
     .trim();
 }
-
 function toCssColor(color?: string | number | null): string {
   if (typeof color === 'number') {
     return `#${color.toString(16).padStart(6, '0')}`;
@@ -43,7 +38,6 @@ function toCssColor(color?: string | number | null): string {
   }
   return '#99aab5';
 }
-
 export default function EntityDropdown({
   label,
   options,
@@ -62,12 +56,9 @@ export default function EntityDropdown({
   const [query, setQuery] = useState('');
   const [remoteOptions, setRemoteOptions] = useState<EntityDropdownOption[]>([]);
   const [loadingRemote, setLoadingRemote] = useState(false);
-
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-
   useEffect(() => {
     if (!fetchOptions || !open) return;
-
     let cancelled = false;
     const timer = setTimeout(async () => {
       setLoadingRemote(true);
@@ -86,21 +77,17 @@ export default function EntityDropdown({
         }
       }
     }, 180);
-
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
   }, [fetchOptions, open, query]);
-
   const filteredOptions = useMemo(() => {
     if (fetchOptions) {
       return remoteOptions;
     }
-
     const needle = normalizeText(query);
     if (!needle) return options;
-
     return options.filter((opt) => {
       const hay = [opt.name, opt.id, opt.subtitle || '']
         .map((v) => normalizeText(v))
@@ -108,7 +95,6 @@ export default function EntityDropdown({
       return hay.includes(needle);
     });
   }, [fetchOptions, options, query, remoteOptions]);
-
   const selectedOptions = useMemo(() => {
     const map = new Map<string, EntityDropdownOption>();
     for (const opt of options) map.set(opt.id, opt);
@@ -116,10 +102,8 @@ export default function EntityDropdown({
     for (const opt of selectedOptionsProp) map.set(opt.id, opt);
     return selectedIds.map((id) => map.get(id)).filter(Boolean) as EntityDropdownOption[];
   }, [options, remoteOptions, selectedIds, selectedOptionsProp]);
-
   const toggleSelection = (id: string) => {
     if (disabled) return;
-
     if (multiple) {
       if (selectedSet.has(id)) {
         onChange(selectedIds.filter((x) => x !== id));
@@ -128,7 +112,6 @@ export default function EntityDropdown({
       }
       return;
     }
-
     if (selectedSet.has(id)) {
       onChange([]);
     } else {
@@ -136,18 +119,15 @@ export default function EntityDropdown({
     }
     setOpen(false);
   };
-
   const removeSelection = (id: string) => {
     if (disabled) return;
     onChange(selectedIds.filter((x) => x !== id));
   };
-
   const triggerText = selectedOptions.length > 0
     ? multiple
       ? `${selectedOptions.length} selected`
       : selectedOptions[0]?.name || placeholder
     : placeholder;
-
   return (
     <div className={className}>
       {label && (
@@ -155,7 +135,6 @@ export default function EntityDropdown({
           {label}
         </label>
       )}
-
       <div className="relative">
         <button
           type="button"
@@ -166,7 +145,6 @@ export default function EntityDropdown({
           <span className="truncate text-sm text-[rgb(var(--color-text-primary))]">{triggerText}</span>
           <FiChevronDown className={`w-4 h-4 text-[rgb(var(--color-text-secondary))] transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
-
         {open && (
           <div className="absolute z-40 mt-2 w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] shadow-xl overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b border-[rgb(var(--color-border))]">
@@ -180,7 +158,6 @@ export default function EntityDropdown({
                 <FiX className="w-4 h-4" />
               </button>
             </div>
-
             <div className="p-2 border-b border-[rgb(var(--color-border))]">
               <div className="relative">
                 <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
@@ -192,7 +169,6 @@ export default function EntityDropdown({
                 />
               </div>
             </div>
-
             <div className="max-h-56 overflow-y-auto p-1.5 space-y-1">
               {loadingRemote && fetchOptions && (
                 <div className="px-3 py-2 text-xs text-[rgb(var(--color-text-tertiary))]">Searching...</div>
@@ -229,7 +205,6 @@ export default function EntityDropdown({
           </div>
         )}
       </div>
-
       {selectedOptions.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2">
           {selectedOptions.map((opt) => (

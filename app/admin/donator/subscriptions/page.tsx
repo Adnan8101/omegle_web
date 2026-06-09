@@ -1,28 +1,23 @@
 'use client';
-
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Eye, RefreshCw, ShieldX } from 'lucide-react';
 import EntityDropdown from '@/components/ui/entity-dropdown';
-
 interface GuildInfo {
   id: string;
   name: string;
 }
-
 interface UserProfile {
   id: string;
   username: string | null;
   displayName: string | null;
   avatar: string | null;
 }
-
 interface RoleDetails {
   id: string;
   name: string | null;
 }
-
 interface PaymentDetails {
   payment_id: string;
   order_id: string;
@@ -33,7 +28,6 @@ interface PaymentDetails {
   method: string | null;
   created_at: string;
 }
-
 interface Plan {
   id: string;
   guild_id: string;
@@ -47,7 +41,6 @@ interface Plan {
   created_at: string;
   updated_at: string;
 }
-
 interface Subscription {
   id: string;
   guild_id: string;
@@ -66,19 +59,15 @@ interface Subscription {
   role_details?: RoleDetails | null;
   payment_details?: PaymentDetails | null;
 }
-
 type StatusFilter = 'all' | 'active' | 'cancelled' | 'revoked' | 'expired';
-
 const usd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 const inr = (paise: number) => `₹${(paise / 100).toFixed(2)}`;
-
 const dateTime = (value: string | null | undefined) => {
   if (!value) return '-';
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return '-';
   return parsed.toLocaleString();
 };
-
 function StatusPill({ status, revoked }: { status: Subscription['status']; revoked: boolean }) {
   if (revoked) {
     return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-300 border border-red-500/40">revoked</span>;
@@ -91,51 +80,40 @@ function StatusPill({ status, revoked }: { status: Subscription['status']; revok
   }
   return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/20 text-slate-300 border border-slate-500/40">cancelled</span>;
 }
-
 export default function DonatorSubscriptionsPage() {
   const { status } = useSession();
   const router = useRouter();
-
   const [guilds, setGuilds] = useState<GuildInfo[]>([]);
   const [guildId, setGuildId] = useState('');
   const [loadingGuilds, setLoadingGuilds] = useState(true);
-
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   const [offset, setOffset] = useState(0);
   const [limit] = useState(50);
   const [total, setTotal] = useState(0);
-
   const [selected, setSelected] = useState<Subscription | null>(null);
   const [revokeReason, setRevokeReason] = useState('');
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.replace('/admin');
     }
   }, [status, router]);
-
   useEffect(() => {
     if (status !== 'authenticated') return;
-
     const loadGuilds = async () => {
       try {
         setLoadingGuilds(true);
         setError('');
-
         const response = await fetch('/api/automod/guilds');
         const data = await response.json().catch(() => ({}));
-
         if (!response.ok) {
           throw new Error(data?.error || 'Failed to load servers');
         }
-
         const items: GuildInfo[] = Array.isArray(data?.guilds) ? data.guilds : [];
         setGuilds(items);
         setGuildId((prev) => prev || items[0]?.id || '');
@@ -145,44 +123,35 @@ export default function DonatorSubscriptionsPage() {
         setLoadingGuilds(false);
       }
     };
-
     loadGuilds();
   }, [status]);
-
   const fetchSubscriptions = useCallback(async () => {
     if (!guildId) {
       setSubscriptions([]);
       setTotal(0);
       return;
     }
-
     try {
       setLoading(true);
       setError('');
-
       const params = new URLSearchParams({
         guild_id: guildId,
         limit: String(limit),
         offset: String(offset),
       });
-
       if (statusFilter === 'active') params.set('status', 'active');
       if (statusFilter === 'cancelled' || statusFilter === 'revoked') params.set('status', 'cancelled');
       if (statusFilter === 'expired') params.set('status', 'expired');
-
       const trimmed = search.trim();
       if (trimmed) {
         params.set('user_search', trimmed);
         params.set('plan', trimmed);
       }
-
       const response = await fetch(`/api/donator/subscriptions?${params.toString()}`);
       const data = await response.json().catch(() => ({}));
-
       if (!response.ok) {
         throw new Error(data?.error || 'Failed to fetch subscriptions');
       }
-
       const rows: Subscription[] = Array.isArray(data?.data) ? data.data : [];
       setSubscriptions(rows);
       setTotal(Number(data?.pagination?.total || rows.length));
@@ -194,23 +163,17 @@ export default function DonatorSubscriptionsPage() {
       setLoading(false);
     }
   }, [guildId, limit, offset, statusFilter, search]);
-
   useEffect(() => {
     if (status !== 'authenticated') return;
     fetchSubscriptions();
   }, [status, fetchSubscriptions]);
-
   const isRevoked = (item: Subscription) => item.status === 'cancelled' && Boolean(item.cancelled_by);
-
   const visibleSubscriptions = useMemo(() => {
     const term = search.trim().toLowerCase();
-
     return subscriptions.filter((item) => {
       if (statusFilter === 'cancelled' && isRevoked(item)) return false;
       if (statusFilter === 'revoked' && !isRevoked(item)) return false;
-
       if (!term) return true;
-
       const haystack = [
         item.id,
         item.user_id,
@@ -222,36 +185,28 @@ export default function DonatorSubscriptionsPage() {
       ]
         .join(' ')
         .toLowerCase();
-
       return haystack.includes(term);
     });
   }, [subscriptions, search, statusFilter]);
-
   const stats = useMemo(() => {
     const active = subscriptions.filter((item) => item.status === 'active').length;
     const cancelled = subscriptions.filter((item) => item.status === 'cancelled' && !isRevoked(item)).length;
     const revoked = subscriptions.filter((item) => isRevoked(item)).length;
     const expired = subscriptions.filter((item) => item.status === 'expired').length;
-
     return { active, cancelled, revoked, expired };
   }, [subscriptions]);
-
   const page = Math.floor(offset / limit) + 1;
   const totalPages = Math.max(1, Math.ceil(total / limit));
-
   const setFilter = (next: StatusFilter) => {
     setStatusFilter(next);
     setOffset(0);
   };
-
   const handleRevoke = async (subscription: Subscription) => {
     if (subscription.status === 'cancelled') return;
-
     try {
       setRevokingId(subscription.id);
       setError('');
       setNotice('');
-
       const response = await fetch('/api/donator/subscriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -260,16 +215,13 @@ export default function DonatorSubscriptionsPage() {
           reason: revokeReason.trim() || undefined,
         }),
       });
-
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data?.error || 'Failed to revoke subscription');
       }
-
       setNotice('Subscription revoked successfully.');
       setRevokeReason('');
       await fetchSubscriptions();
-
       if (selected?.id === subscription.id) {
         setSelected(null);
       }
@@ -279,7 +231,6 @@ export default function DonatorSubscriptionsPage() {
       setRevokingId(null);
     }
   };
-
   if (status === 'loading' || loadingGuilds) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
@@ -290,7 +241,6 @@ export default function DonatorSubscriptionsPage() {
       </div>
     );
   }
-
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -307,7 +257,6 @@ export default function DonatorSubscriptionsPage() {
           Refresh
         </button>
       </div>
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4 bg-[rgb(var(--color-bg-secondary))]">
           <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Active</p>
@@ -326,7 +275,6 @@ export default function DonatorSubscriptionsPage() {
           <p className="text-3xl font-bold text-[rgb(var(--color-text-primary))] mt-1">{stats.expired}</p>
         </div>
       </div>
-
       <div className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5 md:p-6 shadow-apple-lg space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -343,7 +291,6 @@ export default function DonatorSubscriptionsPage() {
               searchPlaceholder="Search servers"
             />
           </div>
-
           <div>
             <label className="block text-sm font-semibold text-[rgb(var(--color-text-primary))] mb-2">Search User / Plan / IDs</label>
             <input
@@ -357,7 +304,6 @@ export default function DonatorSubscriptionsPage() {
             />
           </div>
         </div>
-
         <div className="flex flex-wrap gap-2">
           {(['all', 'active', 'cancelled', 'revoked', 'expired'] as StatusFilter[]).map((filter) => (
             <button
@@ -374,19 +320,16 @@ export default function DonatorSubscriptionsPage() {
           ))}
         </div>
       </div>
-
       {notice && (
         <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-green-700 dark:text-green-300">
           {notice}
         </div>
       )}
-
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-700 dark:text-red-300">
           {error}
         </div>
       )}
-
       <div className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] shadow-apple-md overflow-hidden">
         {loading ? (
           <div className="p-8 text-center">
@@ -415,7 +358,6 @@ export default function DonatorSubscriptionsPage() {
                   {visibleSubscriptions.map((item) => {
                     const revoked = isRevoked(item);
                     const canRevoke = item.status !== 'cancelled';
-
                     return (
                       <tr key={item.id} className="border-b border-[rgb(var(--color-border))] last:border-b-0">
                         <td className="px-4 py-3 text-sm">
@@ -433,23 +375,18 @@ export default function DonatorSubscriptionsPage() {
                             </div>
                           </div>
                         </td>
-
                         <td className="px-4 py-3 text-sm">
                           <p className="font-semibold text-[rgb(var(--color-text-primary))]">{item.plan?.title || '-'}</p>
                           <p className="text-xs text-[rgb(var(--color-text-secondary))]">{usd(item.plan?.price || 0)}</p>
                         </td>
-
                         <td className="px-4 py-3 text-sm">
                           <StatusPill status={item.status} revoked={revoked} />
                         </td>
-
                         <td className="px-4 py-3 text-sm text-[rgb(var(--color-text-secondary))]">
                           {item.role_details?.name || item.role_details?.id || item.plan?.linked_role_id || '-'}
                         </td>
-
                         <td className="px-4 py-3 text-sm text-[rgb(var(--color-text-secondary))]">{dateTime(item.start_date)}</td>
                         <td className="px-4 py-3 text-sm text-[rgb(var(--color-text-secondary))]">{dateTime(item.expiry_date)}</td>
-
                         <td className="px-4 py-3 text-sm">
                           {item.payment_details ? (
                             <div>
@@ -460,7 +397,6 @@ export default function DonatorSubscriptionsPage() {
                             <span className="text-[rgb(var(--color-text-secondary))]">-</span>
                           )}
                         </td>
-
                         <td className="px-4 py-3 text-sm">
                           <div className="flex items-center gap-2">
                             <button
@@ -470,7 +406,6 @@ export default function DonatorSubscriptionsPage() {
                             >
                               <Eye className="h-4 w-4" />
                             </button>
-
                             <button
                               onClick={() => handleRevoke(item)}
                               disabled={!canRevoke || revokingId === item.id}
@@ -487,7 +422,6 @@ export default function DonatorSubscriptionsPage() {
                 </tbody>
               </table>
             </div>
-
             <div className="px-4 py-4 border-t border-[rgb(var(--color-border))] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">
                 Showing {Math.min(offset + 1, total)} - {Math.min(offset + limit, total)} of {total}
@@ -513,7 +447,6 @@ export default function DonatorSubscriptionsPage() {
           </>
         )}
       </div>
-
       {selected && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center">
           <div className="w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] shadow-apple-xl flex flex-col">
@@ -532,7 +465,6 @@ export default function DonatorSubscriptionsPage() {
                 Close
               </button>
             </div>
-
             <div className="p-5 flex-1 overflow-y-auto space-y-6">
               <div className="flex items-center gap-4">
                 {selected.user_profile?.avatar ? (
@@ -548,7 +480,6 @@ export default function DonatorSubscriptionsPage() {
                   <p className="font-mono text-xs text-[rgb(var(--color-text-tertiary))]">User ID: {selected.user_id}</p>
                 </div>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="rounded-xl border border-[rgb(var(--color-border))] p-4">
                   <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-3">Subscription Fields</p>
@@ -567,7 +498,6 @@ export default function DonatorSubscriptionsPage() {
                     <p><span className="font-semibold text-[rgb(var(--color-text-primary))]">updated_at:</span> {dateTime(selected.updated_at)}</p>
                   </div>
                 </div>
-
                 <div className="rounded-xl border border-[rgb(var(--color-border))] p-4">
                   <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-3">Plan Fields</p>
                   <div className="space-y-2 text-sm text-[rgb(var(--color-text-secondary))]">
@@ -584,7 +514,6 @@ export default function DonatorSubscriptionsPage() {
                   </div>
                 </div>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="rounded-xl border border-[rgb(var(--color-border))] p-4 shadow-sm bg-[rgb(var(--color-bg-primary))]">
                   <p className="text-xs uppercase tracking-wider font-semibold text-[rgb(var(--color-text-tertiary))] mb-4">User Details</p>
@@ -614,7 +543,6 @@ export default function DonatorSubscriptionsPage() {
                     </div>
                   )}
                 </div>
-
                 <div className="rounded-xl border border-[rgb(var(--color-border))] p-4 shadow-sm bg-[rgb(var(--color-bg-primary))]">
                   <p className="text-xs uppercase tracking-wider font-semibold text-[rgb(var(--color-text-tertiary))] mb-4">Transaction Hub</p>
                   {selected.payment_details ? (
@@ -659,7 +587,6 @@ export default function DonatorSubscriptionsPage() {
                   )}
                 </div>
               </div>
-
               <div className="rounded-xl border border-[rgb(var(--color-border))] p-4">
                 <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-3">Plan Perks</p>
                 {selected.plan?.perks?.length ? (
@@ -672,7 +599,6 @@ export default function DonatorSubscriptionsPage() {
                   <p className="text-sm text-[rgb(var(--color-text-secondary))]">No perks configured.</p>
                 )}
               </div>
-
               <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 space-y-3">
                 <p className="text-sm font-semibold text-red-300">Revoke This Subscription</p>
                 <textarea

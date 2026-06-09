@@ -2,58 +2,43 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
-
 const GUILD_ID = "1507458872225566811";
-
 export async function GET(request: NextRequest) {
   console.log('=== CATEGORIES API START ===');
   console.log('Timestamp:', new Date().toISOString());
-  
   try {
-    
     console.log('Step 1: Getting session...');
     const session = await getServerSession(authOptions);
     console.log('Session user ID:', session?.user?.id || 'NO SESSION');
-    
     if (!session?.user?.id) {
       console.log('ERROR: No session - returning 401');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    
     console.log('Step 2: Checking permissions...');
     const perms = session.user.permissions;
     console.log('Permissions:', JSON.stringify(perms));
-    
     if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
       console.log('ERROR: No casino access - returning 403');
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
-
-    
     console.log('Step 3: Checking DISCORD_BOT_TOKEN...');
     const botToken = process.env.DISCORD_BOT_TOKEN;
     console.log('BOT_TOKEN exists:', !!botToken);
     console.log('BOT_TOKEN length:', botToken?.length || 0);
     console.log('BOT_TOKEN first 20 chars:', botToken?.substring(0, 20) || 'MISSING');
-    
     if (!botToken) {
       console.log('ERROR: DISCORD_BOT_TOKEN is not set');
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Bot configuration error',
-        details: 'DISCORD_BOT_TOKEN is not configured' 
+        details: 'DISCORD_BOT_TOKEN is not configured'
       }, { status: 500 });
     }
-
-    
     console.log('Step 4: Fetching Discord channels...');
     console.log('Guild ID:', GUILD_ID);
-    
     let channels: any[] = [];
     try {
       const discordUrl = `https://discord.com/api/v10/guilds/${GUILD_ID}/channels`;
       console.log('Discord URL:', discordUrl);
-      
       const response = await fetch(discordUrl, {
         headers: {
           Authorization: `Bot ${botToken}`,
@@ -61,52 +46,44 @@ export async function GET(request: NextRequest) {
         },
         cache: 'no-store',
       });
-
       console.log('Discord response status:', response.status);
       console.log('Discord response ok:', response.ok);
-
       if (!response.ok) {
         const errorText = await response.text();
         console.log('Discord API error text:', errorText);
-        
         if (response.status === 401) {
-          return NextResponse.json({ 
+          return NextResponse.json({
             error: 'Discord authentication failed',
-            details: 'Bot token may be invalid' 
+            details: 'Bot token may be invalid'
           }, { status: 500 });
         }
         if (response.status === 403) {
-          return NextResponse.json({ 
+          return NextResponse.json({
             error: 'Discord permission denied',
-            details: 'Bot may not have access to this guild' 
+            details: 'Bot may not have access to this guild'
           }, { status: 500 });
         }
         if (response.status === 404) {
-          return NextResponse.json({ 
+          return NextResponse.json({
             error: 'Discord guild not found',
-            details: 'Guild ID may be incorrect or bot is not in the guild' 
+            details: 'Guild ID may be incorrect or bot is not in the guild'
           }, { status: 500 });
         }
-        
-        return NextResponse.json({ 
+        return NextResponse.json({
           error: 'Discord API error',
-          details: `Status ${response.status}: ${errorText}` 
+          details: `Status ${response.status}: ${errorText}`
         }, { status: 500 });
       }
-
       channels = await response.json();
       console.log('Channels fetched successfully, count:', channels.length);
-      
     } catch (discordError: any) {
       console.log('Discord fetch EXCEPTION:', discordError.message);
       console.log('Discord fetch stack:', discordError.stack);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Failed to connect to Discord',
         details: discordError.message || 'Network error'
       }, { status: 500 });
     }
-
-    
     console.log('Step 5: Processing channels...');
     const categories = channels
       .filter((ch: any) => ch.type === 4)
@@ -116,9 +93,7 @@ export async function GET(request: NextRequest) {
         position: ch.position
       }))
       .sort((a: any, b: any) => a.position - b.position);
-
     console.log('Categories found:', categories.length);
-
     const textChannels = channels
       .filter((ch: any) => ch.type === 0)
       .map((ch: any) => ({
@@ -128,7 +103,6 @@ export async function GET(request: NextRequest) {
         position: ch.position,
         type: 'text'
       }));
-
     const voiceChannels = channels
       .filter((ch: any) => ch.type === 2)
       .map((ch: any) => ({
@@ -138,43 +112,33 @@ export async function GET(request: NextRequest) {
         position: ch.position,
         type: 'voice'
       }));
-
     console.log('Text channels:', textChannels.length);
     console.log('Voice channels:', voiceChannels.length);
-
-    
     console.log('Step 6: Fetching database records...');
     let categoryRewards: any[] = [];
     let blacklistedChannels: any[] = [];
     let blacklistedCategories: any[] = [];
     let blacklistedRoles: any[] = [];
-    
     try {
       console.log('Querying economyCategoryReward...');
       categoryRewards = await prismaBot.economyCategoryReward.findMany({
         where: { guild_id: GUILD_ID }
       });
       console.log('Category rewards found:', categoryRewards.length);
-
       console.log('Querying blacklist tables...');
       const [blChannels, blCategories, blRoles] = await Promise.all([
         prismaBot.economyBlacklistChannel.findMany({ where: { guild_id: GUILD_ID } }),
         prismaBot.economyBlacklistCategory.findMany({ where: { guild_id: GUILD_ID } }),
         prismaBot.economyBlacklistRole.findMany({ where: { guild_id: GUILD_ID } })
       ]);
-      
       blacklistedChannels = blChannels;
       blacklistedCategories = blCategories;
       blacklistedRoles = blRoles;
       console.log('Blacklist - channels:', blChannels.length, 'categories:', blCategories.length, 'roles:', blRoles.length);
-      
     } catch (dbError: any) {
       console.log('Database EXCEPTION:', dbError.message);
       console.log('Database stack:', dbError.stack);
-      
     }
-
-    
     console.log('Step 7: Building response...');
     const responseData = {
       categories,
@@ -203,57 +167,49 @@ export async function GET(request: NextRequest) {
         roles: blacklistedRoles.map((r: any) => r.role_id)
       }
     };
-    
     console.log('=== CATEGORIES API SUCCESS ===');
     return NextResponse.json(responseData);
-    
   } catch (error: any) {
     console.log('=== CATEGORIES API FATAL ERROR ===');
     console.log('Error message:', error.message);
     console.log('Error stack:', error.stack);
     console.log('Error name:', error.name);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Internal server error',
-      details: error.message 
+      details: error.message
     }, { status: 500 });
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
-
     const body = await request.json();
-    const { 
-      categoryId, 
+    const {
+      categoryId,
       categoryName,
-      vcEnabled, 
+      vcEnabled,
       vcMinutesPerPoint,
       vcOzyAmount,
       vcMinMembers,
       vcCountBots,
       vcIgnoreSelfMuted,
       vcIgnoreDeafened,
-      messageEnabled, 
+      messageEnabled,
       messagesPerPoint,
       msgOzyAmount,
       msgMinLength,
       msgCooldown
     } = body;
-
     if (!categoryId) {
       return NextResponse.json({ error: 'Category ID is required' }, { status: 400 });
     }
-
     const reward = await prismaBot.economyCategoryReward.upsert({
       where: {
         guild_id_category_id: {
@@ -294,34 +250,27 @@ export async function POST(request: NextRequest) {
         msg_cooldown: msgCooldown
       }
     });
-
     return NextResponse.json({ success: true, reward });
   } catch (error: any) {
     console.error('Error saving category reward:', error);
     return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
   }
 }
-
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
-
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('categoryId');
-
     if (!categoryId) {
       return NextResponse.json({ error: 'Category ID is required' }, { status: 400 });
     }
-
     await prismaBot.economyCategoryReward.delete({
       where: {
         guild_id_category_id: {
@@ -330,7 +279,6 @@ export async function DELETE(request: NextRequest) {
         }
       }
     });
-
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Error deleting category reward:', error);

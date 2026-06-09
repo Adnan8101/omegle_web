@@ -1,18 +1,15 @@
 'use client';
-
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FiArrowLeft, FiSave, FiPackage, FiImage, FiAlertCircle, FiCheck, FiUpload, FiX, FiLoader } from 'react-icons/fi';
 import EntityDropdown from '@/components/ui/entity-dropdown';
-
 interface GuildRole {
   id: string;
   name: string;
   color: number;
 }
-
 interface FormData {
   name: string;
   price: string;
@@ -28,12 +25,10 @@ interface FormData {
   reply_message: string;
   expires_in_days: string;
 }
-
 export default function AddItemPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [formData, setFormData] = useState<FormData>({
     name: '',
     price: '',
@@ -49,7 +44,6 @@ export default function AddItemPage() {
     reply_message: '',
     expires_in_days: '',
   });
-
   const [currencyEmoji, setCurrencyEmoji] = useState('🪙');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -57,8 +51,6 @@ export default function AddItemPage() {
   const [success, setSuccess] = useState(false);
   const [roles, setRoles] = useState<GuildRole[]>([]);
   const [selectedRequiredRoles, setSelectedRequiredRoles] = useState<string[]>([]);
-
-  
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -82,13 +74,11 @@ export default function AddItemPage() {
     }
     return <span className="inline-block">{emoji}</span>;
   };
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin');
     }
   }, [status, router]);
-
   useEffect(() => {
     fetch('/api/casino/shop')
       .then(res => res.json())
@@ -98,27 +88,20 @@ export default function AddItemPage() {
       })
       .catch(() => {});
   }, []);
-
   useEffect(() => {
     setFormData((prev) => ({ ...prev, role_required_id: selectedRequiredRoles.join(',') }));
   }, [selectedRequiredRoles]);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
-  
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
-      
       img.onload = () => {
-        
         let { width, height } = img;
         const maxSize = 512;
-        
         if (width > maxSize || height > maxSize) {
           if (width > height) {
             height = (height / width) * maxSize;
@@ -128,16 +111,11 @@ export default function AddItemPage() {
             height = maxSize;
           }
         }
-        
         canvas.width = width;
         canvas.height = height;
-        
-        
         ctx!.imageSmoothingEnabled = true;
         ctx!.imageSmoothingQuality = 'high';
         ctx!.drawImage(img, 0, 0, width, height);
-        
-        
         canvas.toBlob(
           (blob) => {
             if (blob) {
@@ -151,73 +129,53 @@ export default function AddItemPage() {
             }
           },
           'image/webp',
-          0.85 
+          0.85
         );
       };
-      
       img.onerror = () => reject(new Error('Failed to load image'));
       img.src = URL.createObjectURL(file);
     });
   };
-
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       setError('Invalid file type. Please upload JPEG, PNG, GIF, or WebP.');
       return;
     }
-
-    
     if (file.size > 10 * 1024 * 1024) {
       setError('File too large. Maximum size: 10MB');
       return;
     }
-
     setUploading(true);
     setError(null);
-
     try {
-      
       const compressedFile = await compressImage(file);
       console.log(`Original: ${(file.size / 1024).toFixed(1)}KB, Compressed: ${(compressedFile.size / 1024).toFixed(1)}KB`);
-
-      
       const formData = new FormData();
       formData.append('file', compressedFile);
-
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         throw new Error(data.error || 'Failed to upload image');
       }
-
-      
       setFormData(prev => ({ ...prev, thumbnail: data.url }));
     } catch (err: any) {
       console.error('Upload error:', err);
       setError(err.message || 'Failed to upload image');
     } finally {
       setUploading(false);
-      
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
   };
-
   const removeImage = async () => {
     if (!formData.thumbnail) return;
-    
-    
     if (formData.thumbnail.includes('blob.vercel-storage.com')) {
       try {
         await fetch('/api/upload', {
@@ -229,38 +187,30 @@ export default function AddItemPage() {
         console.error('Failed to delete old image:', err);
       }
     }
-    
     setFormData(prev => ({ ...prev, thumbnail: '' }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
-
     try {
       const res = await fetch('/api/casino/shop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         throw new Error(data.error || 'Failed to create item');
       }
-
       setSuccess(true);
       setTimeout(() => router.push('/admin/casino'), 1500);
-
     } catch (err: any) {
       setError(err.message || 'Failed to create item');
     } finally {
       setSaving(false);
     }
   };
-
   if (status === 'loading') {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
@@ -277,7 +227,6 @@ export default function AddItemPage() {
       </div>
     );
   }
-
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-4xl mx-auto">
@@ -298,7 +247,6 @@ export default function AddItemPage() {
             </p>
           </div>
         </div>
-
         {}
         {success && (
           <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-2xl flex items-center gap-3">
@@ -306,7 +254,6 @@ export default function AddItemPage() {
             <span className="text-green-500 font-medium">Item created successfully! Redirecting...</span>
           </div>
         )}
-
         {}
         {error && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
@@ -314,7 +261,6 @@ export default function AddItemPage() {
             <span className="text-red-500">{error}</span>
           </div>
         )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
@@ -337,7 +283,6 @@ export default function AddItemPage() {
                   className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2 flex items-center gap-1">
                   Price ({getEmojiDisplay(currencyEmoji, 'w-4 h-4')}) *
@@ -353,7 +298,6 @@ export default function AddItemPage() {
                   className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Stock (leave empty for unlimited)
@@ -368,7 +312,6 @@ export default function AddItemPage() {
                   className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
                 />
               </div>
-
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Description
@@ -384,7 +327,6 @@ export default function AddItemPage() {
               </div>
             </div>
           </div>
-
           {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
@@ -427,14 +369,12 @@ export default function AddItemPage() {
                   Supported: JPEG, PNG, GIF, WebP. Max 10MB. Images are automatically compressed and optimized.
                 </p>
               </div>
-
               {}
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]"></div>
                 <span className="text-xs text-[rgb(var(--color-text-tertiary))]">OR</span>
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]"></div>
               </div>
-
               {}
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
@@ -449,7 +389,6 @@ export default function AddItemPage() {
                   className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
                 />
               </div>
-
               {}
               {formData.thumbnail && (
                 <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
@@ -485,7 +424,6 @@ export default function AddItemPage() {
               )}
             </div>
           </div>
-
           {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
@@ -522,7 +460,6 @@ export default function AddItemPage() {
               </div>
             </div>
           </div>
-
           {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
@@ -570,7 +507,6 @@ export default function AddItemPage() {
               </div>
             </div>
           </div>
-
           {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
@@ -620,7 +556,6 @@ export default function AddItemPage() {
               </div>
             </div>
           </div>
-
           {}
           <div className="flex gap-4">
             <Link

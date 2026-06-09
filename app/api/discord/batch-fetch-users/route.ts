@@ -1,11 +1,8 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getCachedUsers } from '@/lib/botDb';
 import { getErrorMessage } from '@/lib/constants';
-
 interface UserDisplay {
   id: string;
   username: string;
@@ -14,10 +11,8 @@ interface UserDisplay {
   inGuild: boolean;
   tag: string;
 }
-
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
-    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
@@ -30,28 +25,22 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, size: number 
   const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
-
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.hasAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const { userIds } = await request.json();
     if (!Array.isArray(userIds) || userIds.length === 0) {
       return NextResponse.json({ error: 'userIds array required' }, { status: 400 });
     }
-
-    const limitedIds = userIds.slice(0, 100); 
+    const limitedIds = userIds.slice(0, 100);
     const results: Record<string, UserDisplay> = {};
     const missingIds: string[] = [];
-
-    
     try {
       const cachedUsers = await getCachedUsers(limitedIds);
       const cachedMap = new Map(cachedUsers.map((u: any) => [u.user_id, u]));
-
       for (const userId of limitedIds) {
         const cached = cachedMap.get(userId);
         if (cached && cached.username) {
@@ -71,12 +60,9 @@ export async function POST(request: NextRequest) {
       console.error('Error fetching from cache:', getErrorMessage(error));
       missingIds.push(...limitedIds);
     }
-
-    
     if (missingIds.length > 0) {
       const botToken = process.env.DISCORD_BOT_TOKEN;
       if (botToken) {
-        
         const batchSize = 10;
         for (let i = 0; i < missingIds.length; i += batchSize) {
           const batch = missingIds.slice(i, i + batchSize);
@@ -98,9 +84,7 @@ export async function POST(request: NextRequest) {
                 };
               }
             } catch {
-              
             }
-            
             return {
               id: userId,
               username: 'Unknown User',
@@ -110,7 +94,6 @@ export async function POST(request: NextRequest) {
               tag: `Unknown#${userId.slice(-4)}`,
             };
           });
-
           const batchResults = await Promise.all(promises);
           for (const user of batchResults) {
             if (user) {
@@ -119,7 +102,6 @@ export async function POST(request: NextRequest) {
           }
         }
       } else {
-        
         for (const userId of missingIds) {
           results[userId] = {
             id: userId,
@@ -132,7 +114,6 @@ export async function POST(request: NextRequest) {
         }
       }
     }
-
     return NextResponse.json({ users: results });
   } catch (error: unknown) {
     console.error('Error in batch fetch:', getErrorMessage(error));

@@ -21,9 +21,9 @@ const RoleFormSettingSchema = new Schema<IRoleFormSetting>(
 const ApplicationSettingsSchema = new Schema<IApplicationSettings>(
   {
     isOpen: { type: Boolean, default: true },
-    closedMessage: { 
-      type: String, 
-      default: 'Staff applications are currently closed. Please check back later.' 
+    closedMessage: {
+      type: String,
+      default: 'Staff applications are currently closed. Please check back later.'
     },
     roleForms: {
       moderation: { type: RoleFormSettingSchema, default: () => ({ isOpen: true, closedMessage: '' }) },

@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -10,37 +9,29 @@ import {
   FiXCircle, FiZap, FiMessageSquare, FiSearch, FiX, FiCpu, FiBarChart2
 } from 'react-icons/fi';
 import { buildAvatarUrl } from '@/lib/userUtils';
-
 type TabType = 'vc' | 'messages' | 'search';
-
 export default function LiveMonitorPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
   const MONITOR_CACHE_KEY = 'admin_monitor_snapshot_v1';
-
   const [activeTab, setActiveTab] = useState<TabType>('vc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
   const [connected, setConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  
-  
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<any>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptRef = useRef(0);
-
   const clearReconnectTimer = () => {
     if (reconnectTimerRef.current) {
       clearTimeout(reconnectTimerRef.current);
       reconnectTimerRef.current = null;
     }
   };
-
   const closeStream = () => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
@@ -48,24 +39,20 @@ export default function LiveMonitorPage() {
     }
     clearReconnectTimer();
   };
-
   const fetchData = useCallback(async () => {
     try {
       const res = await fetch('/api/economy/live-status');
       const result = await res.json();
-      
       if (!res.ok) {
         setError(result.error || 'Failed to fetch data');
         return;
       }
-      
       setData(result);
       setLastUpdate(new Date());
       setError(null);
       try {
         sessionStorage.setItem(MONITOR_CACHE_KEY, JSON.stringify(result));
       } catch {
-        
       }
     } catch (err) {
       console.error('Error fetching live status:', err);
@@ -74,15 +61,12 @@ export default function LiveMonitorPage() {
       setLoading(false);
     }
   }, []);
-
   const searchUser = useCallback(async () => {
     if (!searchQuery.trim()) return;
-    
     setSearchLoading(true);
     try {
       const res = await fetch(`/api/economy/live-status?userId=${encodeURIComponent(searchQuery.trim())}`);
       const result = await res.json();
-      
       if (res.ok) {
         setSearchResult(result);
         setActiveTab('search');
@@ -93,19 +77,15 @@ export default function LiveMonitorPage() {
       setSearchLoading(false);
     }
   }, [searchQuery]);
-
   const connectStream = useCallback(() => {
     closeStream();
-
     const stream = new EventSource('/api/economy/live-stream');
     eventSourceRef.current = stream;
-
     stream.onopen = () => {
       reconnectAttemptRef.current = 0;
       setConnected(true);
       setError(null);
     };
-
     stream.onmessage = (event) => {
       try {
         const result = JSON.parse(event.data);
@@ -117,19 +97,16 @@ export default function LiveMonitorPage() {
         try {
           sessionStorage.setItem(MONITOR_CACHE_KEY, JSON.stringify(result));
         } catch {
-          
         }
       } catch (err) {
         console.error('Error parsing SSE data:', err);
       }
     };
-
     stream.onerror = () => {
       setConnected(false);
       setError('Connection interrupted. Reconnecting...');
       stream.close();
       eventSourceRef.current = null;
-
       const nextAttempt = Math.min(reconnectAttemptRef.current + 1, 5);
       reconnectAttemptRef.current = nextAttempt;
       const delayMs = Math.min(1000 * Math.pow(2, nextAttempt), 10_000);
@@ -139,22 +116,18 @@ export default function LiveMonitorPage() {
       }, delayMs);
     };
   }, []);
-
   useEffect(() => {
     if (status === 'loading') return;
-    
     if (status === 'unauthenticated') {
       router.push('/admin');
       return;
     }
-    
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
       if (!perms?.hasFullAccess) {
         router.push('/admin');
         return;
       }
-
       try {
         const cached = sessionStorage.getItem(MONITOR_CACHE_KEY);
         if (cached) {
@@ -166,18 +139,14 @@ export default function LiveMonitorPage() {
           }
         }
       } catch {
-        
       }
-
       void fetchData();
       connectStream();
-
       return () => {
         closeStream();
       };
     }
   }, [status, session, router, fetchData, connectStream]);
-
   const formatDuration = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
     const mins = Math.floor(seconds / 60);
@@ -187,7 +156,6 @@ export default function LiveMonitorPage() {
     const remainMins = mins % 60;
     return remainMins > 0 ? `${hours}h ${remainMins}m` : `${hours}h`;
   };
-
   const formatTimeAgo = (dateStr: string) => {
     const seconds = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 1000);
     if (seconds < 60) return 'just now';
@@ -195,7 +163,6 @@ export default function LiveMonitorPage() {
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
     return `${Math.floor(seconds / 86400)}d ago`;
   };
-
   const getEmojiDisplay = (emoji: string) => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -205,7 +172,6 @@ export default function LiveMonitorPage() {
     }
     return <span>{emoji}</span>;
   };
-
   if (status === 'loading' || loading) {
     return (
       <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -216,7 +182,6 @@ export default function LiveMonitorPage() {
       </main>
     );
   }
-
   if (error && !data) {
     return (
       <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6">
@@ -231,12 +196,10 @@ export default function LiveMonitorPage() {
       </main>
     );
   }
-
   const vcActive = data?.vc?.active || [];
   const vcEarning = vcActive.filter((u: any) => u.isEarning);
   const msgActive = data?.messages?.active || [];
   const currency = data?.currency?.emoji || '🪙';
-
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -254,7 +217,6 @@ export default function LiveMonitorPage() {
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">Real-time voice & chat earnings</p>
             </div>
           </div>
-          
           <div className="flex items-center gap-3">
             <div className={`px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 ${
               data?.config?.enabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
@@ -262,14 +224,12 @@ export default function LiveMonitorPage() {
               {data?.config?.enabled ? <FiCheckCircle /> : <FiXCircle />}
               {data?.config?.enabled ? 'Economy Active' : 'Economy Disabled'}
             </div>
-            
             <div className={`px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 ${
               connected ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'
             }`}>
               <div className={`w-2 h-2 rounded-full ${connected ? 'bg-blue-400 animate-pulse' : 'bg-gray-400'}`} />
               {connected ? 'Live' : 'Connecting...'}
             </div>
-
             {lastUpdate && (
               <span className="text-xs text-[rgb(var(--color-text-tertiary))]">
                 Updated: {lastUpdate.toLocaleTimeString()}
@@ -277,7 +237,6 @@ export default function LiveMonitorPage() {
             )}
           </div>
         </div>
-
         {}
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))] p-4">
           <div className="flex gap-2">
@@ -297,8 +256,8 @@ export default function LiveMonitorPage() {
                 </button>
               )}
             </div>
-            <button 
-              onClick={searchUser} 
+            <button
+              onClick={searchUser}
               disabled={searchLoading || !searchQuery.trim()}
               className="px-6 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500/50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
             >
@@ -306,7 +265,6 @@ export default function LiveMonitorPage() {
             </button>
           </div>
         </div>
-
         {}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <StatCard icon={<FiUsers />} label="In VC Now" value={vcActive.length} color="blue" />
@@ -315,14 +273,12 @@ export default function LiveMonitorPage() {
           <StatCard icon={getEmojiDisplay(currency)} label="VC Today" value={data?.stats?.vcEarned || 0} color="yellow" />
           <StatCard icon={getEmojiDisplay(currency)} label="Msg Today" value={data?.stats?.msgEarned || 0} color="orange" />
         </div>
-
         {}
         <div className="flex gap-2 border-b border-[rgb(var(--color-border))]">
           <TabButton active={activeTab === 'vc'} onClick={() => setActiveTab('vc')} icon={<FiMic />} label="Voice Channels" count={vcActive.length} />
           <TabButton active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} icon={<FiMessageSquare />} label="Chat Messages" count={msgActive.length} />
           {searchResult && <TabButton active={activeTab === 'search'} onClick={() => setActiveTab('search')} icon={<FiSearch />} label="Search Result" />}
         </div>
-
         {}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {}
@@ -331,7 +287,6 @@ export default function LiveMonitorPage() {
             {activeTab === 'messages' && <MessagesTab data={data} buildAvatarUrl={buildAvatarUrl} currency={currency} getEmojiDisplay={getEmojiDisplay} />}
             {activeTab === 'search' && searchResult && <SearchTab result={searchResult} formatDuration={formatDuration} formatTimeAgo={formatTimeAgo} buildAvatarUrl={buildAvatarUrl} currency={searchResult?.config?.emoji || '🪙'} getEmojiDisplay={getEmojiDisplay} />}
           </div>
-
           {}
           <div className="space-y-4">
             <RecentAwardsPanel title="Recent VC Rewards" awards={data?.vc?.recentAwards || []} formatTimeAgo={formatTimeAgo} buildAvatarUrl={buildAvatarUrl} getEmojiDisplay={getEmojiDisplay} currency={currency} />
@@ -343,7 +298,6 @@ export default function LiveMonitorPage() {
     </main>
   );
 }
-
 function StatCard({ icon, label, value, color }: any) {
   const colors: any = {
     blue: 'text-blue-400',
@@ -352,7 +306,6 @@ function StatCard({ icon, label, value, color }: any) {
     yellow: 'text-yellow-400',
     orange: 'text-orange-400'
   };
-
   return (
     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
       <div className={`flex items-center gap-2 ${colors[color]} mb-2`}>
@@ -363,7 +316,6 @@ function StatCard({ icon, label, value, color }: any) {
     </div>
   );
 }
-
 function TabButton({ active, onClick, icon, label, count }: any) {
   return (
     <button
@@ -384,17 +336,14 @@ function TabButton({ active, onClick, icon, label, count }: any) {
     </button>
   );
 }
-
 function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisplay }: any) {
   const users = data?.vc?.active || [];
-
   return (
     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))]">
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
         <h2 className="font-semibold text-[rgb(var(--color-text-primary))]">Active in Voice</h2>
         <span className="text-sm text-[rgb(var(--color-text-tertiary))]">{users.length} users</span>
       </div>
-      
       <div className="max-h-[600px] overflow-y-auto">
         {users.length === 0 ? (
           <div className="p-8 text-center text-[rgb(var(--color-text-tertiary))]">
@@ -410,7 +359,6 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-[rgb(var(--color-text-primary))]">{user.name}</span>
-                      
                       {user.isBlacklisted ? (
                         <span className="px-2 py-0.5 rounded text-xs bg-red-500/20 text-red-400">Blacklisted</span>
                       ) : user.isEarning ? (
@@ -421,16 +369,13 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
                       ) : (
                         <span className="px-2 py-0.5 rounded text-xs bg-gray-500/20 text-gray-400">Not Earning</span>
                       )}
-                      
                       {user.muted && <FiMicOff className="w-4 h-4 text-yellow-400" />}
                       {user.deafened && <FiVolumeX className="w-4 h-4 text-red-400" />}
                     </div>
-                    
                     <div className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
                       📍 {user.channel}
                       {user.category && <span className="text-[rgb(var(--color-text-tertiary))]"> • {user.category}</span>}
                     </div>
-                    
                     <div className="flex items-center gap-4 mt-2 text-xs text-[rgb(var(--color-text-tertiary))]">
                       <span className="flex items-center gap-1">
                         <FiClock />
@@ -438,13 +383,11 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
                       </span>
                       <span>Rate: {user.rate}</span>
                     </div>
-                    
                     {user.trackingDisabled && (
                       <div className="mt-2 p-2 bg-orange-500/10 border border-orange-500/30 rounded text-xs text-orange-400">
                         ⚠️ Tracking disabled: {user.memberCount}/{user.minMembers} members (min: {user.minMembers})
                       </div>
                     )}
-                    
                     {user.isEarning && (
                       <div className="mt-2">
                         <div className="flex justify-between text-xs mb-1">
@@ -469,20 +412,17 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
     </div>
   );
 }
-
 function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
   const users = data?.messages?.active || [];
   const config = data?.messages?.config || data?.messages?.settings || {};
   const messagesPerPoint = config?.perPoint ?? config?.messagesPerPoint ?? 25;
   const ozyAmount = config?.ozyAmount ?? 1;
-
   return (
     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))]">
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
         <h2 className="font-semibold text-[rgb(var(--color-text-primary))]">Active Message Earners</h2>
         <span className="text-sm text-[rgb(var(--color-text-tertiary))]">{users.length} users</span>
       </div>
-      
       <div className="p-4 bg-[rgb(var(--color-bg-primary))] border-b border-[rgb(var(--color-border))]">
         <div className="grid grid-cols-1 gap-4 text-sm">
           <div>
@@ -491,7 +431,6 @@ function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
           </div>
         </div>
       </div>
-      
       <div className="max-h-[500px] overflow-y-auto">
         {users.length === 0 ? (
           <div className="p-8 text-center text-[rgb(var(--color-text-tertiary))]">
@@ -533,10 +472,8 @@ function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
     </div>
   );
 }
-
 function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, currency, getEmojiDisplay }: any) {
   const configEmoji = result?.config?.emoji || currency || '🪙';
-  
   return (
     <div className="space-y-4">
       {}
@@ -551,7 +488,6 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
             </span>
           </div>
         </div>
-        
         <div className="grid grid-cols-3 gap-4 p-4 bg-[rgb(var(--color-bg-primary))] rounded-lg">
           <div>
             <div className="text-[rgb(var(--color-text-tertiary))] text-sm">Balance</div>
@@ -567,7 +503,6 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
           </div>
         </div>
       </div>
-
       {}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))] p-4">
@@ -587,7 +522,6 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
             </div>
           )}
         </div>
-
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))] p-4">
           <h4 className="font-semibold text-[rgb(var(--color-text-primary))] mb-3 flex items-center gap-2">
             <FiMessageSquare className="text-purple-400" />
@@ -598,7 +532,6 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
           </div>
         </div>
       </div>
-
       {}
       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))]">
         <div className="px-4 py-3 border-b border-[rgb(var(--color-border))]">
@@ -629,14 +562,11 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
     </div>
   );
 }
-
 function RecentAwardsPanel({ title, awards, formatTimeAgo, buildAvatarUrl, getEmojiDisplay, currency }: any) {
-  
   const aggregated = awards.reduce((acc: any, award: any) => {
     const existing = acc.find((a: any) => a.id === award.id);
     if (existing) {
       existing.amount += award.amount;
-      
       if (new Date(award.time) > new Date(existing.time)) {
         existing.time = award.time;
       }
@@ -645,10 +575,7 @@ function RecentAwardsPanel({ title, awards, formatTimeAgo, buildAvatarUrl, getEm
     }
     return acc;
   }, []);
-
-  
   aggregated.sort((a: any, b: any) => b.amount - a.amount);
-
   return (
     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))]">
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border))]">
@@ -679,7 +606,6 @@ function RecentAwardsPanel({ title, awards, formatTimeAgo, buildAvatarUrl, getEm
     </div>
   );
 }
-
 function StagedPanel({ users, formatDuration, buildAvatarUrl }: any) {
   return (
     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))]">

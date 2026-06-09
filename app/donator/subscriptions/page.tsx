@@ -1,10 +1,8 @@
 'use client';
-
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
-
 interface Plan {
   id: string;
   title: string;
@@ -12,14 +10,12 @@ interface Plan {
   price: number;
   linked_role_id: string;
 }
-
 interface UserProfile {
   id: string;
   username: string | null;
   displayName: string | null;
   avatar: string | null;
 }
-
 interface PaymentDetails {
   payment_id: string;
   order_id: string;
@@ -30,7 +26,6 @@ interface PaymentDetails {
   method: string | null;
   created_at: string;
 }
-
 interface Subscription {
   id: string;
   guild_id: string;
@@ -45,9 +40,7 @@ interface Subscription {
   user_profile?: UserProfile;
   payment_details?: PaymentDetails | null;
 }
-
 const formatUsd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
-
 function StatusPill({ status }: { status: Subscription['status'] }) {
   const cls =
     status === 'active'
@@ -55,37 +48,28 @@ function StatusPill({ status }: { status: Subscription['status'] }) {
       : status === 'cancelled'
       ? 'bg-red-500/20 text-red-300 border border-red-500/40'
       : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40';
-
   return <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${cls}`}>{status}</span>;
 }
-
 export default function DonatorSubscriptionsPage() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
-
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
   const guildId = searchParams.get('guild_id') || '';
-
   const fetchSubscriptions = useCallback(async () => {
     if (status !== 'authenticated') return;
-
     try {
       setLoading(true);
       setError('');
-
       const params = new URLSearchParams({
         limit: '50',
         offset: '0',
       });
       if (guildId) params.set('guild_id', guildId);
-
       const response = await fetch(`/api/donator/subscriptions?${params.toString()}`);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.error || 'Failed to fetch subscriptions');
-
       setSubscriptions(Array.isArray(data?.data) ? data.data : []);
     } catch (fetchError: any) {
       setError(fetchError?.message || 'Failed to load subscriptions');
@@ -94,13 +78,10 @@ export default function DonatorSubscriptionsPage() {
       setLoading(false);
     }
   }, [status, guildId]);
-
   useEffect(() => {
     fetchSubscriptions();
   }, [fetchSubscriptions]);
-
   const activeCount = useMemo(() => subscriptions.filter((s) => s.status === 'active').length, [subscriptions]);
-
   if (status === 'loading') {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
@@ -111,7 +92,6 @@ export default function DonatorSubscriptionsPage() {
       </div>
     );
   }
-
   if (status !== 'authenticated') {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-6">
@@ -128,7 +108,6 @@ export default function DonatorSubscriptionsPage() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 md:p-8 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -152,7 +131,6 @@ export default function DonatorSubscriptionsPage() {
           </button>
         </div>
       </div>
-
       <section className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5 md:p-6 shadow-apple-lg">
         <div className="flex items-center gap-4">
           {session?.user?.image ? (
@@ -171,13 +149,11 @@ export default function DonatorSubscriptionsPage() {
           </div>
         </div>
       </section>
-
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-red-700 dark:text-red-300">
           {error}
         </div>
       )}
-
       <section className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] shadow-apple-md overflow-hidden">
         {loading ? (
           <div className="p-8 text-center">

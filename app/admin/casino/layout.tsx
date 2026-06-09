@@ -1,35 +1,28 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-
 interface CasinoLayoutProps {
   children: React.ReactNode;
 }
-
 export default function CasinoLayout({ children }: CasinoLayoutProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin');
       return;
     }
-
     if (status === 'authenticated') {
       checkAccess();
     }
   }, [status]);
-
   const checkAccess = async () => {
     try {
       const res = await fetch('/api/casino/access');
       const data = await res.json();
-      
       if (data.hasAccess) {
         setHasAccess(true);
       } else {
@@ -42,7 +35,6 @@ export default function CasinoLayout({ children }: CasinoLayoutProps) {
       setLoading(false);
     }
   };
-
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -56,7 +48,6 @@ export default function CasinoLayout({ children }: CasinoLayoutProps) {
       </div>
     );
   }
-
   if (hasAccess === false) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
@@ -66,7 +57,7 @@ export default function CasinoLayout({ children }: CasinoLayoutProps) {
             Access Denied
           </h2>
           <p className="text-[rgb(var(--color-text-secondary))] mb-6">
-            You don&apos;t have permission to access the Casino Economy Dashboard. 
+            You don&apos;t have permission to access the Casino Economy Dashboard.
             You need to be a Server Admin or have the Casino Admin role.
           </p>
           <button
@@ -79,6 +70,5 @@ export default function CasinoLayout({ children }: CasinoLayoutProps) {
       </div>
     );
   }
-
   return <>{children}</>;
 }

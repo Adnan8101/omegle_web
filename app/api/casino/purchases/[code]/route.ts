@@ -3,9 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { canAccessCasino } from '@/lib/apiAuth';
-
 const GUILD_ID = "1507458872225566811";
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ code: string }> }
@@ -13,34 +11,25 @@ export async function GET(
   try {
     const { code } = await params;
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.permissions?.hasAnyAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
     const hasAccess = canAccessCasino(session.user?.permissions);
     if (!hasAccess) {
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }
-    
     const purchase = await prismaBot.shopPurchase.findUnique({
       where: { redeem_code: code.toUpperCase() }
     });
-    
     if (!purchase) {
       return NextResponse.json({ error: 'Purchase not found' }, { status: 404 });
     }
-    
-    
     const item = await prismaBot.shopItem.findUnique({
       where: { id: purchase.item_id }
     });
-    
-    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
-    
     return NextResponse.json({
       purchase: {
         ...purchase,
@@ -52,13 +41,11 @@ export async function GET(
       item,
       currencyEmoji: config?.currency_emoji || '🪙'
     });
-    
   } catch (error) {
     console.error('Error fetching purchase:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ code: string }> }
@@ -66,35 +53,27 @@ export async function PUT(
   try {
     const { code } = await params;
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.permissions?.hasAnyAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
     const hasAccess = canAccessCasino(session.user?.permissions);
     if (!hasAccess) {
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }
-    
     const body = await request.json();
     const { proof_link } = body;
-    
     const purchase = await prismaBot.shopPurchase.findUnique({
       where: { redeem_code: code.toUpperCase() }
     });
-    
     if (!purchase) {
       return NextResponse.json({ error: 'Purchase not found' }, { status: 404 });
     }
-    
     if (purchase.status === 'redeemed') {
       return NextResponse.json({ error: 'This code has already been redeemed' }, { status: 400 });
     }
-
     if (purchase.status === 'expired') {
       return NextResponse.json({ error: 'This code has already expired' }, { status: 400 });
     }
-
     if (purchase.expires_at && new Date() > purchase.expires_at) {
       await prismaBot.shopPurchase.update({
         where: { redeem_code: code.toUpperCase() },
@@ -104,7 +83,6 @@ export async function PUT(
         error: `This code expired on ${purchase.expires_at.toISOString()}`
       }, { status: 400 });
     }
-    
     const updated = await prismaBot.shopPurchase.update({
       where: { redeem_code: code.toUpperCase() },
       data: {
@@ -114,7 +92,6 @@ export async function PUT(
         proof_link: proof_link || null
       }
     });
-    
     return NextResponse.json({
       success: true,
       purchase: {
@@ -125,7 +102,6 @@ export async function PUT(
         item_deleted_at: updated.item_deleted_at?.toISOString() || null
       }
     });
-    
   } catch (error) {
     console.error('Error redeeming purchase:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

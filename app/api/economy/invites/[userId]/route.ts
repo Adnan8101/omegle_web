@@ -3,9 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { getDiscordUser, getDiscordUserAvatar } from '@/lib/discord';
-
 const GUILD_ID = "1507458872225566811";
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
@@ -13,23 +11,17 @@ export async function GET(
   try {
     const { userId } = await params;
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess) {
       return NextResponse.json({ error: 'Insufficient permissions - Admin only' }, { status: 403 });
     }
-
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
-    const status = searchParams.get('status'); 
-
-    
+    const status = searchParams.get('status');
     const discordUser = await getDiscordUser(userId);
     const userInfo = {
       user_id: userId,
@@ -37,21 +29,15 @@ export async function GET(
       avatar: discordUser ? getDiscordUserAvatar(discordUser.user) : null,
       joined_at: discordUser?.joined_at || null,
     };
-
-    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
-
-    
     const inviteWhere: any = {
       guild_id: GUILD_ID,
       inviter_id: userId,
     };
     if (status === 'active') inviteWhere.active = true;
     if (status === 'left') inviteWhere.active = false;
-
-    
     const totalInvites = await prismaBot.economyInvite.count({
       where: { guild_id: GUILD_ID, inviter_id: userId }
     });
@@ -61,16 +47,12 @@ export async function GET(
     const leftInvites = await prismaBot.economyInvite.count({
       where: { guild_id: GUILD_ID, inviter_id: userId, active: false }
     });
-
-    
     const invites = await prismaBot.economyInvite.findMany({
       where: inviteWhere,
       orderBy: { created_at: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
     });
-
-    
     const stats = await prismaBot.economyInviteStats.findUnique({
       where: {
         guild_id_user_id: {
@@ -79,8 +61,6 @@ export async function GET(
         },
       },
     });
-
-    
     const bonusLogs = await prismaBot.economyPointLog.findMany({
       where: {
         guild_id: GUILD_ID,
@@ -91,12 +71,9 @@ export async function GET(
     const bonusCoins = bonusLogs.reduce((sum, log) => sum + log.amount, 0);
     const coinsPerInvite = config?.coins_per_invite || 100;
     const bonusInvites = Math.floor(bonusCoins / coinsPerInvite);
-
-    
     const invitesWithUsers = await Promise.all(
       invites.map(async (invite) => {
         const invitedUser = await getDiscordUser(invite.invited_user_id);
-        
         return {
           id: invite.id,
           invited_user_id: invite.invited_user_id,
@@ -110,7 +87,6 @@ export async function GET(
         };
       })
     );
-
     return NextResponse.json({
       user: userInfo,
       stats: {
@@ -118,7 +94,7 @@ export async function GET(
         active_invites: activeInvites,
         left_invites: leftInvites,
         bonus_invites: bonusInvites,
-        fake_invites: 0, 
+        fake_invites: 0,
         coins_earned: stats?.coins_earned || 0,
         coins_per_invite: coinsPerInvite,
       },

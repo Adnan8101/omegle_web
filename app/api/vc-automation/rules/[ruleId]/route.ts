@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
-
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ ruleId: string }> }
@@ -18,31 +17,26 @@ export async function GET(
         if (!perms?.hasFullAccess) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
-
         const rule = await prismaBot.voiceAutomationRule.findFirst({
             where: { id: ruleId, guild_id: GUILD_ID },
         });
         if (!rule) {
             return NextResponse.json({ error: 'Rule not found' }, { status: 404 });
         }
-
         const grantCount = await prismaBot.voiceAutomationGranted.count({
             where: { guild_id: GUILD_ID, rule_id: rule.id },
         });
-
         const recentAudit = await prismaBot.voiceAutomationAuditLog.findMany({
             where: { guild_id: GUILD_ID, rule_id: rule.id },
             orderBy: { created_at: 'desc' },
             take: 10,
         });
-
         return NextResponse.json({ rule: { ...rule, grant_count: grantCount }, recentAudit });
     } catch (error) {
         console.error('[VCAutomation] GET /rules/[ruleId] error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
-
 export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ ruleId: string }> }
@@ -57,14 +51,12 @@ export async function PATCH(
         if (!perms?.hasFullAccess) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
-
         const existing = await prismaBot.voiceAutomationRule.findFirst({
             where: { id: ruleId, guild_id: GUILD_ID },
         });
         if (!existing) {
             return NextResponse.json({ error: 'Rule not found' }, { status: 404 });
         }
-
         const body = await request.json();
         const {
             name,
@@ -77,8 +69,6 @@ export async function PATCH(
             count_deafened,
             enabled,
         } = body;
-
-        
         if (reward_role_id && reward_role_id !== existing.reward_role_id) {
             const roleConflict = await prismaBot.voiceAutomationRule.findUnique({
                 where: { guild_id_reward_role_id: { guild_id: GUILD_ID, reward_role_id } },
@@ -91,12 +81,9 @@ export async function PATCH(
                 }, { status: 409 });
             }
         }
-
         const newTargetType = target_type ?? existing.target_type;
         const newTargetId = target_id ?? existing.target_id;
         const newExcluded = excluded_channel_ids ?? existing.excluded_channel_ids;
-
-        
         if (newTargetType === 'channel' && newTargetId !== existing.target_id) {
             const channelInfo = await prismaBot.discordChannelCache.findUnique({
                 where: { channel_id: newTargetId },
@@ -118,7 +105,6 @@ export async function PATCH(
                 }
             }
         }
-
         const updated = await prismaBot.voiceAutomationRule.update({
             where: { id: ruleId },
             data: {
@@ -133,7 +119,6 @@ export async function PATCH(
                 ...(enabled !== undefined && { enabled: Boolean(enabled) }),
             },
         });
-
         await prismaBot.voiceAutomationAuditLog.create({
             data: {
                 guild_id: GUILD_ID,
@@ -144,14 +129,12 @@ export async function PATCH(
                 meta: { changes: body },
             },
         });
-
         return NextResponse.json({ success: true, rule: updated });
     } catch (error) {
         console.error('[VCAutomation] PATCH /rules/[ruleId] error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
-
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ ruleId: string }> }
@@ -166,15 +149,12 @@ export async function DELETE(
         if (!perms?.hasFullAccess) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
-
         const existing = await prismaBot.voiceAutomationRule.findFirst({
             where: { id: ruleId, guild_id: GUILD_ID },
         });
         if (!existing) {
             return NextResponse.json({ error: 'Rule not found' }, { status: 404 });
         }
-
-        
         await prismaBot.voiceAutomationAuditLog.create({
             data: {
                 guild_id: GUILD_ID,
@@ -185,22 +165,15 @@ export async function DELETE(
                 meta: { rule_name: existing.name, reward_role_id: existing.reward_role_id },
             },
         });
-
-        
         await prismaBot.voiceAutomationGranted.deleteMany({
             where: { guild_id: GUILD_ID, rule_id: ruleId },
         });
-
-        
         await prismaBot.voiceAutomationAuditLog.deleteMany({
             where: { guild_id: GUILD_ID, rule_id: ruleId },
         });
-
-        
         await prismaBot.voiceAutomationRule.delete({
             where: { id: ruleId },
         });
-
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('[VCAutomation] DELETE /rules/[ruleId] error:', error);

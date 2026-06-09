@@ -1,5 +1,4 @@
 'use client';
-
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState, useCallback, use } from 'react';
@@ -7,7 +6,6 @@ import {
     FiArrowLeft, FiClock, FiUsers, FiTarget, FiActivity, FiMic, FiTag, FiAward, FiInfo
 } from 'react-icons/fi';
 import Image from 'next/image';
-
 interface RuleDetails {
     rule: {
         id: string;
@@ -37,17 +35,14 @@ interface RuleDetails {
         top_channel_name: string;
     }>;
 }
-
 export default function RuleDetailsPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const params = useParams();
     const ruleId = params.ruleId as string;
-
     const [data, setData] = useState<RuleDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
@@ -64,7 +59,6 @@ export default function RuleDetailsPage() {
             setLoading(false);
         }
     }, [ruleId]);
-
     useEffect(() => {
         if (status === 'unauthenticated') {
             router.replace('/admin');
@@ -79,7 +73,6 @@ export default function RuleDetailsPage() {
             loadData();
         }
     }, [status, session, router, loadData]);
-
     if (status === 'loading' || loading) {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -90,7 +83,6 @@ export default function RuleDetailsPage() {
             </div>
         );
     }
-
     if (error || !data) {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex flex-col items-center justify-center p-6">
@@ -108,26 +100,20 @@ export default function RuleDetailsPage() {
             </div>
         );
     }
-
     const { rule, roleHolders, grindingUsers } = data;
-
     const formatTime = (seconds: number) => {
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
         if (h > 0) return `${h}h ${m}m`;
         return `${m}m`;
     };
-
     const getAvatar = (user: any) => {
         if (user.avatar_url) return user.avatar_url;
-        
         return `https://cdn.discordapp.com/embed/avatars/${parseInt(user.user_id) % 5}.png`;
     };
-
     return (
         <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
             <div className="max-w-6xl mx-auto space-y-8">
-
                 {}
                 <div className="flex items-center gap-4 border-b border-[rgb(var(--color-border))] pb-6">
                     <button
@@ -150,7 +136,6 @@ export default function RuleDetailsPage() {
                         </p>
                     </div>
                 </div>
-
                 {}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] p-5 rounded-2xl shadow-sm hover:border-blue-500/30 transition-all">
@@ -161,7 +146,6 @@ export default function RuleDetailsPage() {
                         <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{rule.required_hours} Hours</p>
                         <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-1">in a rolling {rule.rolling_days}-day period</p>
                     </div>
-
                     <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] p-5 rounded-2xl shadow-sm hover:border-purple-500/30 transition-all">
                         <div className="flex items-center gap-2 mb-2 text-purple-400">
                             <FiUsers className="w-5 h-5" />
@@ -170,7 +154,6 @@ export default function RuleDetailsPage() {
                         <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{roleHolders.length}</p>
                         <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-1">users currently have this role</p>
                     </div>
-
                     <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] p-5 rounded-2xl shadow-sm hover:border-orange-500/30 transition-all">
                         <div className="flex items-center gap-2 mb-2 text-orange-400">
                             <FiActivity className="w-5 h-5" />
@@ -179,7 +162,6 @@ export default function RuleDetailsPage() {
                         <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{grindingUsers.length}</p>
                         <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-1">users actively grinding</p>
                     </div>
-
                     <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] p-5 rounded-2xl shadow-sm hover:border-green-500/30 transition-all">
                         <div className="flex items-center gap-2 mb-2 text-green-400">
                             <FiClock className="w-5 h-5" />
@@ -189,7 +171,6 @@ export default function RuleDetailsPage() {
                         <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-1">Past {rule.rolling_days} days tracking</p>
                     </div>
                 </div>
-
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px]">
@@ -202,7 +183,6 @@ export default function RuleDetailsPage() {
                                 {roleHolders.length} Users
                             </span>
                         </div>
-                        
                         <div className="flex-1 overflow-y-auto p-2">
                             {roleHolders.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-60">
@@ -226,7 +206,6 @@ export default function RuleDetailsPage() {
                             )}
                         </div>
                     </div>
-
                     {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px]">
                         <div className="p-5 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-tertiary))]/50 flex justify-between items-center">
@@ -238,7 +217,6 @@ export default function RuleDetailsPage() {
                                 {grindingUsers.length} Users
                             </span>
                         </div>
-                        
                         <div className="flex-1 overflow-y-auto p-2">
                             {grindingUsers.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-60">
@@ -272,15 +250,13 @@ export default function RuleDetailsPage() {
                                                     </p>
                                                 </div>
                                             </div>
-                                            
                                             {}
                                             <div className="relative w-full h-2 bg-[rgb(var(--color-bg-primary))] rounded-full overflow-hidden mb-2 shadow-inner">
-                                                <div 
+                                                <div
                                                     className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-1000 ease-out"
                                                     style={{ width: `${user.progress_percentage}%` }}
                                                 />
                                             </div>
-                                            
                                             {}
                                             <div className="flex items-center gap-4 mt-2">
                                                 <div className="flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-secondary))]">

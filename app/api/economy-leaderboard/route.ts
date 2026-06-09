@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prismaBot } from '@/lib/prismaBot';
-
 const GUILD_ID = "1507458872225566811";
-
 export async function GET(request: NextRequest) {
   try {
-    
     const topUsers = await prismaBot.economyUser.findMany({
       where: {
         guild_id: GUILD_ID,
-        total_points: { gt: 0 } 
+        total_points: { gt: 0 }
       },
       orderBy: { total_points: 'desc' },
       take: 20,
@@ -19,17 +16,12 @@ export async function GET(request: NextRequest) {
         leaderboard_points: true
       }
     });
-
-    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
-
-    
     const leaderboard = await Promise.all(
       topUsers.map(async (user, index) => {
         try {
-          
           const userRes = await fetch(
             `https://discord.com/api/v10/users/${user.user_id}`,
             {
@@ -38,10 +30,8 @@ export async function GET(request: NextRequest) {
               },
             }
           );
-
           let username = 'Unknown User';
           let avatar = null;
-
           if (userRes.ok) {
             const userData = await userRes.json();
             username = userData.global_name || userData.username;
@@ -49,7 +39,6 @@ export async function GET(request: NextRequest) {
               avatar = `https://cdn.discordapp.com/avatars/${user.user_id}/${userData.avatar}.png?size=128`;
             }
           }
-
           return {
             rank: index + 1,
             user_id: user.user_id,
@@ -71,13 +60,11 @@ export async function GET(request: NextRequest) {
         }
       })
     );
-
     return NextResponse.json({
       leaderboard,
       currencyEmoji: config?.currency_emoji || '🪙',
       currencyName: config?.currency_name || 'Ozy'
     });
-
   } catch (error) {
     console.error('Error fetching economy leaderboard:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

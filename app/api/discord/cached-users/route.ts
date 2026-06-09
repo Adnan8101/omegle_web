@@ -1,50 +1,38 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getUsersDisplay } from '@/lib/botDb';
 import { getErrorMessage } from '@/lib/constants';
-
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.hasAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const { userIds } = await request.json();
     if (!Array.isArray(userIds) || userIds.length === 0) {
       return NextResponse.json({ error: 'userIds array required' }, { status: 400 });
     }
-
     const limitedIds = [...new Set(
       userIds
         .map((id) => (typeof id === 'string' ? id.trim() : String(id ?? '').trim()))
         .filter((id) => /^\d{5,25}$/.test(id))
     )].slice(0, 500);
-
     if (limitedIds.length === 0) {
       return NextResponse.json({ users: {} });
     }
-
-    
     const usersMap = await getUsersDisplay(limitedIds, 128);
-
     const results: Record<string, { id: string; username: string; displayName: string; avatar: string; inGuild: boolean; tag: string }> = {};
-
-    
     usersMap.forEach((user, userId) => {
       results[userId] = {
         id: user.id,
         username: user.username,
         displayName: user.displayName,
-        avatar: user.avatar, 
+        avatar: user.avatar,
         inGuild: user.inGuild,
         tag: user.tag,
       };
     });
-
     return NextResponse.json({ users: results });
   } catch (error: unknown) {
     console.error('Error fetching cached users:', getErrorMessage(error));

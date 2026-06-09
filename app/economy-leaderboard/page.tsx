@@ -1,9 +1,7 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FiTrendingUp, FiRefreshCw, FiArrowLeft, FiClock } from 'react-icons/fi';
-
 interface LeaderboardEntry {
   rank: number;
   user_id: string;
@@ -12,15 +10,12 @@ interface LeaderboardEntry {
   total_points: number;
   leaderboard_points: number;
 }
-
 export default function EconomyLeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [currencyEmoji, setCurrencyEmoji] = useState('🪙');
   const [currencyName, setCurrencyName] = useState('Ozy');
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-
-  
   const getEmojiDisplay = (emoji: string, size: string = 'w-6 h-6') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -44,24 +39,18 @@ export default function EconomyLeaderboardPage() {
     }
     return <span className="inline-block text-2xl">{emoji}</span>;
   };
-
   useEffect(() => {
     fetchLeaderboard();
-
-    
     const interval = setInterval(() => {
       fetchLeaderboard();
-    }, 30 * 60 * 1000); 
-
+    }, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
-
   const fetchLeaderboard = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/economy-leaderboard');
       const data = await res.json();
-      
       if (res.ok) {
         setEntries(data.leaderboard || []);
         setCurrencyEmoji(data.currencyEmoji || '🪙');
@@ -74,7 +63,6 @@ export default function EconomyLeaderboardPage() {
       setLoading(false);
     }
   };
-
   const getRankColor = (rank: number) => {
     switch (rank) {
       case 1:
@@ -87,7 +75,6 @@ export default function EconomyLeaderboardPage() {
         return 'from-blue-500 to-blue-600';
     }
   };
-
   const getRankBadge = (rank: number) => {
     switch (rank) {
       case 1:
@@ -100,7 +87,6 @@ export default function EconomyLeaderboardPage() {
         return `#${rank}`;
     }
   };
-
   const formatTimeAgo = (date: Date) => {
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
     if (seconds < 60) return 'Just now';
@@ -109,7 +95,6 @@ export default function EconomyLeaderboardPage() {
     const hours = Math.floor(minutes / 60);
     return `${hours}h ago`;
   };
-
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6">
       <div className="max-w-5xl mx-auto">
@@ -142,7 +127,6 @@ export default function EconomyLeaderboardPage() {
             <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
-
         {}
         {loading && entries.length === 0 ? (
           <div className="space-y-3">
@@ -168,8 +152,8 @@ export default function EconomyLeaderboardPage() {
                 className={`glass-blue rounded-2xl p-4 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/50 apple-transition ${
                   index < 3 ? 'ring-2 ring-offset-2 ring-offset-[rgb(var(--color-bg-primary))]' : ''
                 } ${
-                  index === 0 ? 'ring-yellow-500/50' : 
-                  index === 1 ? 'ring-gray-400/50' : 
+                  index === 0 ? 'ring-yellow-500/50' :
+                  index === 1 ? 'ring-gray-400/50' :
                   index === 2 ? 'ring-orange-600/50' : ''
                 }`}
               >
@@ -178,7 +162,6 @@ export default function EconomyLeaderboardPage() {
                   <div className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br ${getRankColor(entry.rank)} flex items-center justify-center font-bold text-white shadow-lg`}>
                     <span className="text-lg sm:text-xl">{getRankBadge(entry.rank)}</span>
                   </div>
-
                   {}
                   <div className="flex-shrink-0">
                     <img
@@ -187,7 +170,6 @@ export default function EconomyLeaderboardPage() {
                       className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-[rgb(var(--color-border))]"
                     />
                   </div>
-
                   {}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-base sm:text-lg text-[rgb(var(--color-text-primary))] truncate">
@@ -197,7 +179,6 @@ export default function EconomyLeaderboardPage() {
                       Rank #{entry.rank} of {entries.length}
                     </p>
                   </div>
-
                   {}
                   <div className="flex-shrink-0 text-right">
                     <div className="flex items-center gap-2 justify-end mb-1">
@@ -215,7 +196,6 @@ export default function EconomyLeaderboardPage() {
             ))}
           </div>
         )}
-
         {}
         <div className="mt-8 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
           <p className="text-sm text-[rgb(var(--color-text-secondary))] text-center">

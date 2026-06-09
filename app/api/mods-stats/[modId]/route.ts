@@ -3,12 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { queryBotDb, getUserDisplay } from '@/lib/botDb';
 import { getErrorMessage, GUILD_ID } from '@/lib/constants';
-
 interface DateFilter {
   startDate?: string | null;
   endDate?: string | null;
 }
-
 function buildDateClause(
   column: string,
   dateFilter: DateFilter,
@@ -30,7 +28,6 @@ function buildDateClause(
     params,
   };
 }
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ modId: string }> }
@@ -38,20 +35,14 @@ export async function GET(
   try {
     const { modId } = await params;
     const session = await getServerSession(authOptions);
-    
     if (!session || !session.user?.permissions?.hasFullAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const dateFilter: DateFilter = { startDate, endDate };
-
-    
     let modProfile = await getUserDisplay(modId, 256);
-    
-    
     if (modProfile.username === 'Unknown User') {
       const botToken = process.env.DISCORD_BOT_TOKEN;
       if (botToken) {
@@ -77,15 +68,12 @@ export async function GET(
             };
           }
         } catch {
-          
         }
       }
     }
-
-    
     const df = buildDateClause('created_at', dateFilter, 3);
     const modStats = await queryBotDb(`
-      SELECT 
+      SELECT
         COUNT(*) as total_cases,
         COUNT(CASE WHEN action = 'MUTE' THEN 1 END) as mutes,
         COUNT(CASE WHEN action = 'BAN' THEN 1 END) as bans,
@@ -98,11 +86,9 @@ export async function GET(
       FROM moderation_cases
       WHERE guild_id = $1 AND moderator_id = $2${df.clause}
     `, [GUILD_ID, modId, ...df.params]);
-
-    
     const casesDf = buildDateClause('mc.created_at', dateFilter, 3);
     const modCases = await queryBotDb(`
-      SELECT 
+      SELECT
         mc.id,
         mc.case_number,
         mc.action,
@@ -121,15 +107,11 @@ export async function GET(
       ORDER BY mc.created_at DESC
       LIMIT 200
     `, [GUILD_ID, modId, ...casesDf.params]);
-
-    
     const missingTargetIds = [...new Set(
       modCases
         .filter((c: any) => !c.target_username)
         .map((c: any) => c.target_id)
     )].slice(0, 30);
-
-    
     const fetchedTargets: Record<string, { username: string; displayName: string; avatar: string }> = {};
     const botToken = process.env.DISCORD_BOT_TOKEN;
     if (botToken && missingTargetIds.length > 0) {
@@ -156,18 +138,13 @@ export async function GET(
               };
             }
           } catch {
-            
           }
         });
         await Promise.all(promises);
       }
     }
-
-    
     const casesWithAvatars = modCases.map((c: any) => {
-      
       const fetched = fetchedTargets[c.target_id];
-      
       let targetAvatar = null;
       if (c.target_avatar_url) {
         const extension = c.target_avatar_url.startsWith('a_') ? 'gif' : 'png';
@@ -178,7 +155,6 @@ export async function GET(
         const defaultIndex = Number(BigInt(c.target_id) >> 22n) % 6;
         targetAvatar = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
       }
-      
       return {
         ...c,
         target_avatar: targetAvatar,
@@ -186,11 +162,9 @@ export async function GET(
         target_username: c.target_username || fetched?.username || null,
       };
     });
-
-    
     const manualsDf = buildDateClause('m.created_at', dateFilter, 3);
     const manualCases = await queryBotDb(`
-      SELECT 
+      SELECT
         m.id,
         m.manual_number,
         m.target_id,
@@ -210,11 +184,8 @@ export async function GET(
       ORDER BY m.created_at DESC
       LIMIT 100
     `, [GUILD_ID, modId, ...manualsDf.params]);
-
-    
     const manualsWithAvatars = manualCases.map((m: any) => {
       const fetched = fetchedTargets[m.target_id];
-      
       let targetAvatar = null;
       if (m.target_avatar_url) {
         const extension = m.target_avatar_url.startsWith('a_') ? 'gif' : 'png';
@@ -225,17 +196,14 @@ export async function GET(
         const defaultIndex = Number(BigInt(m.target_id) >> 22n) % 6;
         targetAvatar = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
       }
-      
       return {
         ...m,
         target_avatar: targetAvatar,
         target_display_name: m.target_nickname || m.target_display_name || m.target_username || fetched?.displayName || 'Unknown User',
       };
     });
-
-    
     const reviewedManuals = await queryBotDb(`
-      SELECT 
+      SELECT
         m.id,
         m.manual_number,
         m.target_id,
@@ -256,11 +224,9 @@ export async function GET(
       ORDER BY m.created_at DESC
       LIMIT 50
     `, [GUILD_ID, modId]);
-
-    
     const vcDf = buildDateClause('joined_at', dateFilter, 3);
     const vcStats = await queryBotDb(`
-      SELECT 
+      SELECT
         COUNT(*) as vc_sessions,
         COALESCE(SUM(duration_seconds), 0) as total_vc_time,
         COALESCE(AVG(duration_seconds), 0) as avg_session_duration,
@@ -269,10 +235,8 @@ export async function GET(
       FROM voice_logs
       WHERE guild_id = $1 AND user_id = $2 AND left_at IS NOT NULL${vcDf.clause}
     `, [GUILD_ID, modId, ...vcDf.params]);
-
-    
     const vcSessions = await queryBotDb(`
-      SELECT 
+      SELECT
         id,
         channel_id,
         channel_name,
@@ -284,11 +248,9 @@ export async function GET(
       ORDER BY joined_at DESC
       LIMIT 100
     `, [GUILD_ID, modId, ...vcDf.params]);
-
-    
     const chatDf = buildDateClause('created_at', dateFilter, 3);
     const chatStats = await queryBotDb(`
-      SELECT 
+      SELECT
         COUNT(*) as message_count,
         COUNT(DISTINCT channel_id) as unique_channels,
         COALESCE(SUM(content_length), 0) as total_characters,
@@ -296,25 +258,21 @@ export async function GET(
       FROM chat_logs
       WHERE guild_id = $1 AND user_id = $2${chatDf.clause}
     `, [GUILD_ID, modId, ...chatDf.params]);
-
-    
     const activityByDay = await queryBotDb(`
-      SELECT 
+      SELECT
         DATE(created_at) as date,
         COUNT(*) as case_count,
         COUNT(CASE WHEN action = 'MUTE' THEN 1 END) as mutes,
         COUNT(CASE WHEN action = 'BAN' THEN 1 END) as bans,
         COUNT(CASE WHEN action = 'WARN' THEN 1 END) as warns
       FROM moderation_cases
-      WHERE guild_id = $1 AND moderator_id = $2 
+      WHERE guild_id = $1 AND moderator_id = $2
         AND created_at >= NOW() - INTERVAL '30 days'
       GROUP BY DATE(created_at)
       ORDER BY date DESC
     `, [GUILD_ID, modId]);
-
-    
     const activityByHour = await queryBotDb(`
-      SELECT 
+      SELECT
         EXTRACT(HOUR FROM created_at) as hour,
         COUNT(*) as case_count
       FROM moderation_cases
@@ -322,7 +280,6 @@ export async function GET(
       GROUP BY EXTRACT(HOUR FROM created_at)
       ORDER BY hour
     `, [GUILD_ID, modId]);
-
     return NextResponse.json({
       success: true,
       mod: {

@@ -4,19 +4,15 @@ import { authOptions } from '@/lib/auth';
 import { queryBotDb } from '@/lib/botDb';
 import { GUILD_ID, getErrorMessage } from '@/lib/constants';
 import { canAccessServerStats } from '@/lib/apiAuth';
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !canAccessServerStats(session.user?.permissions)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
-
-    
     const vcDateParts: string[] = [];
     const vcParams: unknown[] = [GUILD_ID];
     let vcIdx = 2;
@@ -31,8 +27,6 @@ export async function GET(request: NextRequest) {
       vcIdx++;
     }
     const vcDateClause = vcDateParts.length ? ' AND ' + vcDateParts.join(' AND ') : '';
-
-    
     const chatDateParts: string[] = [];
     const chatParams: unknown[] = [GUILD_ID];
     let chatIdx = 2;
@@ -47,16 +41,10 @@ export async function GET(request: NextRequest) {
       chatIdx++;
     }
     const chatDateClause = chatDateParts.length ? ' AND ' + chatDateParts.join(' AND ') : '';
-
-    
-    
     const combinedParams: unknown[] = [GUILD_ID];
     let paramIdx = 2;
-    
-    
     const vcSubqueryDateParts: string[] = [];
     const chatSubqueryDateParts: string[] = [];
-    
     if (startDate) {
       vcSubqueryDateParts.push(`joined_at >= $${paramIdx}`);
       chatSubqueryDateParts.push(`created_at >= $${paramIdx}`);
@@ -69,11 +57,8 @@ export async function GET(request: NextRequest) {
       combinedParams.push(endDate);
       paramIdx++;
     }
-    
     const vcSubqueryDateClause = vcSubqueryDateParts.length ? ' AND ' + vcSubqueryDateParts.join(' AND ') : '';
     const chatSubqueryDateClause = chatSubqueryDateParts.length ? ' AND ' + chatSubqueryDateParts.join(' AND ') : '';
-
-    
     const totalMembersResult = await queryBotDb(`
       SELECT COUNT(DISTINCT COALESCE(vc.user_id, cl.user_id))::int as total_members
       FROM (
@@ -87,12 +72,9 @@ export async function GET(request: NextRequest) {
         WHERE guild_id = $1${chatSubqueryDateClause}
       ) cl ON vc.user_id = cl.user_id
     `, combinedParams).catch((err) => { console.error('totalMembers error:', err); return [{ total_members: 0 }]; });
-    
     const totalMembers = totalMembersResult[0]?.total_members || 0;
-
-    
     const userRankings = await queryBotDb(`
-      SELECT 
+      SELECT
         COALESCE(vc.user_id, cl.user_id) as user_id,
         COALESCE(vc.total_duration, 0)::int as vc_duration,
         COALESCE(vc.session_count, 0)::int as vc_sessions,
@@ -119,13 +101,10 @@ export async function GET(request: NextRequest) {
       ORDER BY (COALESCE(vc.total_duration, 0) + COALESCE(cl.message_count, 0) * 60) DESC
       LIMIT 500
     `, combinedParams).catch((err) => { console.error('userRankings error:', err); return []; });
-
-    
     const vcDatePartsWithAlias = vcDateParts.map(p => p.replace('joined_at', 'vl.joined_at'));
     const vcDateClauseWithAlias = vcDatePartsWithAlias.length ? ' AND ' + vcDatePartsWithAlias.join(' AND ') : '';
-    
     const topVoiceChannels = await queryBotDb(`
-      SELECT 
+      SELECT
         vl.channel_id,
         COALESCE(dcc.name, vl.channel_name, vl.channel_id) as channel_name,
         COUNT(*) as total_sessions,
@@ -140,15 +119,13 @@ export async function GET(request: NextRequest) {
       ORDER BY total_duration DESC
       LIMIT 50
     `, vcParams).catch((err) => { console.error('topVoiceChannels error:', err); return []; });
-
-    
     const topChannelIds = (topVoiceChannels || []).slice(0, 30).map((ch: Record<string, unknown>) => ch.channel_id as string);
     let vcContributors: Record<string, unknown>[] = [];
     if (topChannelIds.length > 0) {
       const baseIdx = vcParams.length + 1;
       const placeholders = topChannelIds.map((_: string, i: number) => `$${baseIdx + i}`).join(', ');
       vcContributors = await queryBotDb(`
-        SELECT 
+        SELECT
           vl.channel_id,
           vl.user_id,
           SUM(vl.duration_seconds)::int as total_duration,
@@ -166,13 +143,10 @@ export async function GET(request: NextRequest) {
         ORDER BY vl.channel_id, total_duration DESC
       `, [...vcParams, ...topChannelIds]).catch((err) => { console.error('vcContributors error:', err); return []; });
     }
-
-    
     const chatDatePartsWithAlias = chatDateParts.map(p => p.replace('created_at', 'cl.created_at'));
     const chatDateClauseWithAlias = chatDatePartsWithAlias.length ? ' AND ' + chatDatePartsWithAlias.join(' AND ') : '';
-    
     const topMessageChannels = await queryBotDb(`
-      SELECT 
+      SELECT
         cl.channel_id,
         COALESCE(dcc.name, cl.channel_name, cl.channel_id) as channel_name,
         COUNT(*) as message_count,
@@ -186,15 +160,13 @@ export async function GET(request: NextRequest) {
       ORDER BY message_count DESC
       LIMIT 50
     `, chatParams).catch((err) => { console.error('topMessageChannels error:', err); return []; });
-
-    
     const topMsgChannelIds = (topMessageChannels || []).slice(0, 30).map((ch: Record<string, unknown>) => ch.channel_id as string);
     let msgContributors: Record<string, unknown>[] = [];
     if (topMsgChannelIds.length > 0) {
       const baseIdx = chatParams.length + 1;
       const placeholders = topMsgChannelIds.map((_: string, i: number) => `$${baseIdx + i}`).join(', ');
       msgContributors = await queryBotDb(`
-        SELECT 
+        SELECT
           cl.channel_id,
           cl.user_id,
           COUNT(*) as message_count,
@@ -212,8 +184,6 @@ export async function GET(request: NextRequest) {
         ORDER BY cl.channel_id, message_count DESC
       `, [...chatParams, ...topMsgChannelIds]).catch((err) => { console.error('msgContributors error:', err); return []; });
     }
-
-    
     const vcContributorsByChannel: Record<string, Record<string, unknown>[]> = {};
     for (const c of vcContributors) {
       const chId = c.channel_id as string;
@@ -222,7 +192,6 @@ export async function GET(request: NextRequest) {
         vcContributorsByChannel[chId].push(c);
       }
     }
-
     const msgContributorsByChannel: Record<string, Record<string, unknown>[]> = {};
     for (const c of msgContributors) {
       const chId = c.channel_id as string;
@@ -231,7 +200,6 @@ export async function GET(request: NextRequest) {
         msgContributorsByChannel[chId].push(c);
       }
     }
-
     return NextResponse.json({
       totalMembers,
       userRankings: userRankings || [],

@@ -6,7 +6,6 @@ import dbConnect from '@/lib/mongodb';
 import StaffApplication from '@/models/StaffApplication';
 import { queryBotDb } from '@/lib/botDb';
 import { STAFF_ROLES } from '@/lib/staffApplicationForm';
-
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
@@ -17,7 +16,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
     const body = await request.json();
     const validRoles = new Set(STAFF_ROLES.map((role) => role.id));
     const selectedRole = validRoles.has(body.applicationRole) ? body.applicationRole : 'moderation';
@@ -34,17 +32,12 @@ export async function POST(request: NextRequest) {
       discordUserId: session.user.id,
       discordUsername: session.user.name || body.discordUsername || '',
     };
-    
     const userId = normalizedBody.discordUserId;
-    
-    
     let userProfile = null;
     let userStats = null;
     let modLogs = null;
-    
     if (userId) {
       try {
-        
         const botToken = process.env.DISCORD_BOT_TOKEN;
         if (botToken) {
           try {
@@ -52,7 +45,6 @@ export async function POST(request: NextRequest) {
               headers: { Authorization: `Bot ${botToken}` },
               cache: 'no-store',
             });
-            
             const memberRes = await fetch(
               `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${userId}`,
               {
@@ -60,17 +52,14 @@ export async function POST(request: NextRequest) {
                 cache: 'no-store',
               }
             );
-
             if (userRes.ok) {
               const user = await userRes.json();
               const member = memberRes.ok ? await memberRes.json() : null;
-              
               let avatarUrl = `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`;
               if (user.avatar) {
                 const ext = user.avatar.startsWith('a_') ? 'gif' : 'png';
                 avatarUrl = `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.${ext}?size=128`;
               }
-              
               userProfile = {
                 username: user.username,
                 display_name: member?.nick || user.global_name || user.username,
@@ -83,20 +72,15 @@ export async function POST(request: NextRequest) {
             console.error('Error fetching user from Discord:', fetchErr);
           }
         }
-        
-        
         const statsResult = await queryBotDb(`
-          SELECT 
+          SELECT
             (SELECT COALESCE(SUM(duration_seconds), 0) FROM voice_logs WHERE user_id = $1 AND guild_id = $2 AND left_at IS NOT NULL) as vc_duration,
             (SELECT COUNT(*) FROM voice_logs WHERE user_id = $1 AND guild_id = $2 AND left_at IS NOT NULL) as vc_sessions,
             (SELECT COUNT(*) FROM chat_logs WHERE user_id = $1 AND guild_id = $2) as message_count
         `, [userId, GUILD_ID]);
-        
         userStats = statsResult[0] || null;
-        
-        
         const modLogsResult = await queryBotDb(`
-          SELECT 
+          SELECT
             case_number,
             action,
             reason,
@@ -109,13 +93,11 @@ export async function POST(request: NextRequest) {
           ORDER BY created_at DESC
           LIMIT 50
         `, [userId, GUILD_ID]);
-        
         modLogs = modLogsResult || [];
       } catch (err) {
         console.error('Error fetching user data:', err);
       }
     }
-
     const application = await StaffApplication.create({
       ...normalizedBody,
       status: 'pending',
@@ -124,7 +106,6 @@ export async function POST(request: NextRequest) {
       modLogs,
       dataFetchedAt: new Date(),
     });
-
     return NextResponse.json(
       { success: true, data: application },
       { status: 201 }
@@ -136,30 +117,23 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
 export async function GET(request: NextRequest) {
   try {
     const { getServerSession } = await import('next-auth');
     const { authOptions } = await import('@/lib/auth');
     const { canAccessAdminFeatures } = await import('@/lib/apiAuth');
-    
     const session = await getServerSession(authOptions);
     if (!session || !canAccessAdminFeatures(session.user?.permissions)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     await dbConnect();
-    
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const search = searchParams.get('search');
-    
     let query: any = {};
-    
     if (status && status !== 'all') {
       query.status = status;
     }
-    
     if (search) {
       query.$or = [
         { country: { $regex: search, $options: 'i' } },
@@ -169,11 +143,9 @@ export async function GET(request: NextRequest) {
         { applicationRole: { $regex: search, $options: 'i' } },
       ];
     }
-
     const applications = await StaffApplication.find(query)
       .sort({ createdAt: -1 })
       .lean();
-
     return NextResponse.json({ success: true, data: applications });
   } catch (error: unknown) {
     return NextResponse.json(

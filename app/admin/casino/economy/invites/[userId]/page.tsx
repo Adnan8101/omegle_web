@@ -1,23 +1,20 @@
 'use client';
-
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { 
-  FiUsers, FiUserCheck, FiUserX, FiDollarSign, FiUserPlus, 
+import {
+  FiUsers, FiUserCheck, FiUserX, FiDollarSign, FiUserPlus,
   FiRefreshCw, FiChevronLeft, FiChevronRight, FiClock,
   FiAward, FiArrowLeft, FiGift, FiActivity
 } from 'react-icons/fi';
-
 interface UserInfo {
   user_id: string;
   username: string;
   avatar: string | null;
   joined_at: string | null;
 }
-
 interface UserStats {
   total_invites: number;
   active_invites: number;
@@ -27,7 +24,6 @@ interface UserStats {
   coins_earned: number;
   coins_per_invite: number;
 }
-
 interface InviteRecord {
   id: string;
   invited_user_id: string;
@@ -39,20 +35,17 @@ interface InviteRecord {
   active: boolean;
   coins_earned: number;
 }
-
 interface Pagination {
   page: number;
   limit: number;
   total: number;
   totalPages: number;
 }
-
 export default function UserInviteDetailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
   const userId = params.userId as string;
-  
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [stats, setStats] = useState<UserStats>({
@@ -67,8 +60,6 @@ export default function UserInviteDetailPage() {
   const [invites, setInvites] = useState<InviteRecord[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'left'>('all');
-
-  
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin/signin');
@@ -80,8 +71,6 @@ export default function UserInviteDetailPage() {
       }
     }
   }, [status, session, router]);
-
-  
   const fetchUserInvites = useCallback(async () => {
     try {
       const params = new URLSearchParams({
@@ -89,10 +78,8 @@ export default function UserInviteDetailPage() {
         limit: pagination.limit.toString(),
         ...(filterStatus !== 'all' && { status: filterStatus }),
       });
-      
       const response = await fetch(`/api/economy/invites/${userId}?${params}`);
       if (!response.ok) throw new Error('Failed to fetch');
-      
       const data = await response.json();
       setUser(data.user);
       setStats(data.stats);
@@ -104,13 +91,11 @@ export default function UserInviteDetailPage() {
       setLoading(false);
     }
   }, [userId, pagination.page, pagination.limit, filterStatus]);
-
   useEffect(() => {
     if (status === 'authenticated' && userId) {
       fetchUserInvites();
     }
   }, [status, userId, fetchUserInvites]);
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -121,20 +106,17 @@ export default function UserInviteDetailPage() {
       minute: '2-digit',
     });
   };
-
   const formatRelativeDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
     if (days === 0) return 'Today';
     if (days === 1) return 'Yesterday';
     if (days < 7) return `${days} days ago`;
     if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
     return `${Math.floor(days / 30)} months ago`;
   };
-
   if (status === 'loading' || loading) {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen flex items-center justify-center">
@@ -145,7 +127,6 @@ export default function UserInviteDetailPage() {
       </div>
     );
   }
-
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -157,7 +138,6 @@ export default function UserInviteDetailPage() {
           <FiArrowLeft className="w-4 h-4" />
           Back to Invite Dashboard
         </Link>
-
         {}
         <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-[var(--shadow-md)]">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -175,7 +155,6 @@ export default function UserInviteDetailPage() {
                 <FiUsers className="w-10 h-10 text-purple-500" />
               </div>
             )}
-            
             {}
             <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] mb-2">
@@ -184,7 +163,6 @@ export default function UserInviteDetailPage() {
               <p className="text-[rgb(var(--color-text-tertiary))] font-mono text-sm mb-4">
                 ID: {userId}
               </p>
-              
               {}
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgb(var(--color-bg-tertiary))] rounded-lg">
@@ -197,7 +175,6 @@ export default function UserInviteDetailPage() {
                 </div>
               </div>
             </div>
-            
             {}
             <button
               onClick={fetchUserInvites}
@@ -208,7 +185,6 @@ export default function UserInviteDetailPage() {
             </button>
           </div>
         </div>
-
         {}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="glass-blue rounded-2xl p-4 border border-[rgb(var(--color-border))]">
@@ -218,7 +194,6 @@ export default function UserInviteDetailPage() {
             </div>
             <p className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{stats.total_invites}</p>
           </div>
-
           <div className="glass-blue rounded-2xl p-4 border border-[rgb(var(--color-border))]">
             <div className="flex items-center gap-2 mb-2">
               <FiUserCheck className="w-4 h-4 text-green-500" />
@@ -226,7 +201,6 @@ export default function UserInviteDetailPage() {
             </div>
             <p className="text-xl font-bold text-green-500">{stats.active_invites}</p>
           </div>
-
           <div className="glass-blue rounded-2xl p-4 border border-[rgb(var(--color-border))]">
             <div className="flex items-center gap-2 mb-2">
               <FiGift className="w-4 h-4 text-purple-500" />
@@ -234,7 +208,6 @@ export default function UserInviteDetailPage() {
             </div>
             <p className="text-xl font-bold text-purple-500">{stats.bonus_invites}</p>
           </div>
-
           <div className="glass-blue rounded-2xl p-4 border border-[rgb(var(--color-border))]">
             <div className="flex items-center gap-2 mb-2">
               <FiActivity className="w-4 h-4 text-orange-500" />
@@ -242,7 +215,6 @@ export default function UserInviteDetailPage() {
             </div>
             <p className="text-xl font-bold text-orange-500">{stats.fake_invites}</p>
           </div>
-
           <div className="glass-blue rounded-2xl p-4 border border-[rgb(var(--color-border))]">
             <div className="flex items-center gap-2 mb-2">
               <FiUserX className="w-4 h-4 text-red-500" />
@@ -250,7 +222,6 @@ export default function UserInviteDetailPage() {
             </div>
             <p className="text-xl font-bold text-red-500">{stats.left_invites}</p>
           </div>
-
           <div className="glass-blue rounded-2xl p-4 border border-[rgb(var(--color-border))]">
             <div className="flex items-center gap-2 mb-2">
               <FiDollarSign className="w-4 h-4 text-yellow-500" />
@@ -259,7 +230,6 @@ export default function UserInviteDetailPage() {
             <p className="text-xl font-bold text-yellow-500">{stats.coins_earned.toLocaleString()} 🪙</p>
           </div>
         </div>
-
         {}
         <div className="glass-blue rounded-2xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8">
           <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
@@ -281,7 +251,6 @@ export default function UserInviteDetailPage() {
             </div>
           </div>
         </div>
-
         {}
         <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] shadow-[var(--shadow-md)]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -289,7 +258,6 @@ export default function UserInviteDetailPage() {
               <FiUsers className="w-5 h-5" />
               Invited Members
             </h2>
-            
             {}
             <div className="flex items-center gap-2">
               <button
@@ -298,8 +266,8 @@ export default function UserInviteDetailPage() {
                   setPagination(p => ({ ...p, page: 1 }));
                 }}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium apple-transition ${
-                  filterStatus === 'all' 
-                    ? 'bg-purple-500 text-white' 
+                  filterStatus === 'all'
+                    ? 'bg-purple-500 text-white'
                     : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
                 }`}
               >
@@ -311,8 +279,8 @@ export default function UserInviteDetailPage() {
                   setPagination(p => ({ ...p, page: 1 }));
                 }}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium apple-transition ${
-                  filterStatus === 'active' 
-                    ? 'bg-green-500 text-white' 
+                  filterStatus === 'active'
+                    ? 'bg-green-500 text-white'
                     : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
                 }`}
               >
@@ -324,8 +292,8 @@ export default function UserInviteDetailPage() {
                   setPagination(p => ({ ...p, page: 1 }));
                 }}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium apple-transition ${
-                  filterStatus === 'left' 
-                    ? 'bg-red-500 text-white' 
+                  filterStatus === 'left'
+                    ? 'bg-red-500 text-white'
                     : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
                 }`}
               >
@@ -333,7 +301,6 @@ export default function UserInviteDetailPage() {
               </button>
             </div>
           </div>
-          
           {}
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -420,7 +387,7 @@ export default function UserInviteDetailPage() {
                     <td colSpan={6} className="px-4 py-12 text-center">
                       <FiUsers className="w-12 h-12 text-[rgb(var(--color-text-tertiary))] mx-auto mb-4" />
                       <p className="text-[rgb(var(--color-text-tertiary))]">
-                        {filterStatus === 'all' 
+                        {filterStatus === 'all'
                           ? 'No invites recorded for this user'
                           : filterStatus === 'active'
                           ? 'No active invites'
@@ -432,7 +399,6 @@ export default function UserInviteDetailPage() {
               </tbody>
             </table>
           </div>
-          
           {}
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between mt-6 pt-6 border-t border-[rgb(var(--color-border))]">

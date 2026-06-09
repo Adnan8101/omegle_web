@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import { UserPermissions } from "../lib/permissions";
-
 declare module "next-auth" {
   interface Session {
     user: {
@@ -8,13 +7,12 @@ declare module "next-auth" {
       name?: string | null;
       email?: string | null;
       image?: string | null;
-      hasAccess?: boolean; 
+      hasAccess?: boolean;
       permissions?: UserPermissions;
     };
     accessToken?: string;
   }
 }
-
 declare module "next-auth/jwt" {
   interface JWT {
     accessToken?: string;

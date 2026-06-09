@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -10,7 +9,6 @@ import {
   FiFilter,
   FiX,
 } from 'react-icons/fi';
-
 interface AutoModLog {
   id: string;
   guild_id: string;
@@ -23,12 +21,10 @@ interface AutoModLog {
   action_summary: string;
   created_at: string;
 }
-
 interface GuildInfo {
   id: string;
   name: string;
 }
-
 export default function AutoModLogsPage() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -42,11 +38,8 @@ export default function AutoModLogsPage() {
   const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState({ userId: '', ruleName: '' });
   const [showFilters, setShowFilters] = useState(false);
-
-  
   useEffect(() => {
     if (!session?.user?.id) return;
-
     const loadGuilds = async () => {
       try {
         const res = await fetch('/api/automod/guilds');
@@ -59,14 +52,10 @@ export default function AutoModLogsPage() {
         console.error('Failed to load guilds:', err);
       }
     };
-
     loadGuilds();
   }, [session]);
-
-  
   useEffect(() => {
     if (!selectedGuild) return;
-
     const loadLogs = async () => {
       setLoading(true);
       setError(null);
@@ -78,15 +67,12 @@ export default function AutoModLogsPage() {
           ...(filters.userId && { user_id: filters.userId }),
           ...(filters.ruleName && { rule_name: filters.ruleName }),
         });
-
         const res = await fetch(`/api/automod/logs?${params}`);
         const data = await res.json();
-
         if (!res.ok) {
           setError(data.error || 'Failed to load logs');
           return;
         }
-
         setLogs(data.data || []);
         setTotal(data.pagination?.total || 0);
       } catch (err) {
@@ -96,10 +82,8 @@ export default function AutoModLogsPage() {
         setLoading(false);
       }
     };
-
     loadLogs();
   }, [selectedGuild, page, pageSize, filters]);
-
   if (!session) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -107,10 +91,8 @@ export default function AutoModLogsPage() {
       </div>
     );
   }
-
   const totalPages = Math.ceil(total / pageSize);
   const guild = guilds.find(g => g.id === selectedGuild);
-
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
@@ -123,7 +105,6 @@ export default function AutoModLogsPage() {
         </button>
         <h1 className="text-3xl font-bold text-white">AutoMod Logs</h1>
       </div>
-
       {}
       <div className="bg-gray-800 rounded-lg p-4 mb-6">
         <div className="flex items-center gap-4 mb-4">
@@ -160,7 +141,6 @@ export default function AutoModLogsPage() {
             </button>
           </div>
         </div>
-
         {}
         {showFilters && (
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-700">
@@ -204,7 +184,6 @@ export default function AutoModLogsPage() {
           </div>
         )}
       </div>
-
       {}
       {!loading && logs.length > 0 && (
         <div className="bg-gray-800 rounded-lg p-4 mb-6">
@@ -213,14 +192,12 @@ export default function AutoModLogsPage() {
           </p>
         </div>
       )}
-
       {}
       {error && (
         <div className="bg-red-900 text-red-200 p-4 rounded-lg mb-6">
           {error}
         </div>
       )}
-
       {}
       {loading ? (
         <div className="flex justify-center items-center py-12">
@@ -282,7 +259,6 @@ export default function AutoModLogsPage() {
               </tbody>
             </table>
           </div>
-
           {}
           <div className="flex items-center justify-between mt-6">
             <div className="flex items-center gap-2">
@@ -300,7 +276,6 @@ export default function AutoModLogsPage() {
                 <option value="100">100</option>
               </select>
             </div>
-
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -309,11 +284,9 @@ export default function AutoModLogsPage() {
               >
                 <FiChevronLeft size={18} />
               </button>
-
               <span className="text-gray-300 text-sm px-4">
                 Page {page} of {totalPages}
               </span>
-
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
@@ -322,7 +295,6 @@ export default function AutoModLogsPage() {
                 <FiChevronRight size={18} />
               </button>
             </div>
-
             <div className="text-gray-400 text-sm">
               Total: {total} logs
             </div>

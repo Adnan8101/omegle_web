@@ -1,5 +1,4 @@
 'use client';
-
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -8,7 +7,6 @@ import Image from 'next/image';
 import { FiMessageSquare, FiTrendingUp, FiUsers, FiClock, FiActivity, FiSearch, FiChevronLeft } from 'react-icons/fi';
 import { BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DateRangeFilter from '@/components/DateRangeFilter';
-
 interface ChatMessage {
   id: string;
   user_id: string;
@@ -19,7 +17,6 @@ interface ChatMessage {
   in_voice_chat: boolean;
   replied_to_id: string | null;
 }
-
 interface DiscordUserInfo {
   id: string;
   username: string;
@@ -28,14 +25,12 @@ interface DiscordUserInfo {
   inGuild: boolean;
   nickname: string | null;
 }
-
 interface UserStats {
   userId: string;
   messageCount: number;
   channelCount: number;
   inVcCount: number;
 }
-
 export default function ChatLogsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -48,24 +43,18 @@ export default function ChatLogsPage() {
   const [dateRange, setDateRange] = useState<{ startDate: string | null; endDate: string | null }>({ startDate: null, endDate: null });
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
-
   useEffect(() => {
     if (status === 'loading') return;
-    
     if (status === 'unauthenticated') {
       setIsRedirecting(true);
       router.replace('/admin');
       return;
     }
-    
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
-      
       const canAccess = perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasViewOnlyAccess;
-      
       if (!canAccess) {
         setHasPermission(false);
-        
         if (perms?.hasCasinoAccess) {
           setIsRedirecting(true);
           router.replace('/admin/casino');
@@ -75,12 +64,10 @@ export default function ChatLogsPage() {
         }
         return;
       }
-      
       setHasPermission(true);
       fetchChatData();
     }
   }, [status, session, router]);
-
   const fetchChatData = useCallback(async (range?: { startDate: string | null; endDate: string | null }) => {
     setLoading(true);
     try {
@@ -88,15 +75,11 @@ export default function ChatLogsPage() {
       const r = range || dateRange;
       if (r.startDate) params.set('startDate', r.startDate);
       if (r.endDate) params.set('endDate', r.endDate);
-
       const messagesRes = await fetch(`/api/vctranscript/chatlogs?${params}`);
       const messagesData = await messagesRes.json();
       setMessages(messagesData.messages || []);
-
       const uniqueUserIds = Array.from(new Set((messagesData.messages || []).map((m: ChatMessage) => m.user_id))) as string[];
       const uniqueChannelIds = Array.from(new Set((messagesData.messages || []).map((m: ChatMessage) => m.channel_id))) as string[];
-
-      
       if (uniqueUserIds.length > 0) {
         const userRes = await fetch('/api/discord/user-data', {
           method: 'POST',
@@ -118,8 +101,6 @@ export default function ChatLogsPage() {
         }
         setUsers(userMap);
       }
-
-      
       if (uniqueChannelIds.length > 0) {
         const chRes = await fetch('/api/discord/cached-channels', {
           method: 'POST',
@@ -139,27 +120,20 @@ export default function ChatLogsPage() {
       setLoading(false);
     }
   }, [dateRange]);
-
   const filteredMessages = messages.filter(msg => {
     const matchesSearch = searchTerm === '' ||
       users.get(msg.user_id)?.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       msg.channel_name?.toLowerCase().includes(searchTerm.toLowerCase());
-
     const matchesFilter =
       filter === 'all' ? true :
         filter === 'vc' ? msg.in_voice_chat :
           !msg.in_voice_chat;
-
     return matchesSearch && matchesFilter;
   });
-
-  
   const totalMessages = messages.length;
   const vcMessages = messages.filter(m => m.in_voice_chat).length;
   const uniqueUsers = new Set(messages.map(m => m.user_id)).size;
   const uniqueChannels = new Set(messages.map(m => m.channel_id)).size;
-
-  
   const userStats = Array.from(
     messages.reduce((acc, msg) => {
       const count = acc.get(msg.user_id) || 0;
@@ -174,20 +148,15 @@ export default function ChatLogsPage() {
     }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
-
-  
   const messagesByHour = messages.reduce((acc, msg) => {
     const hour = new Date(msg.created_at).getHours();
     acc[hour] = (acc[hour] || 0) + 1;
     return acc;
   }, {} as Record<number, number>);
-
   const hourlyData = Array.from({ length: 24 }, (_, i) => ({
     hour: `${i}:00`,
     messages: messagesByHour[i] || 0
   }));
-
-  
   const messagesByChannel = Array.from(
     messages.reduce((acc, msg) => {
       const count = acc.get(msg.channel_id) || 0;
@@ -201,10 +170,7 @@ export default function ChatLogsPage() {
     }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 8);
-
   const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#f97316'];
-
-  
   if (status === 'loading' || hasPermission === null || isRedirecting) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -217,8 +183,6 @@ export default function ChatLogsPage() {
       </div>
     );
   }
-
-  
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -251,7 +215,6 @@ export default function ChatLogsPage() {
       </div>
     );
   }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
@@ -268,7 +231,6 @@ export default function ChatLogsPage() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -289,7 +251,6 @@ export default function ChatLogsPage() {
           </p>
           <DateRangeFilter onChange={(r) => { setDateRange(r); fetchChatData(r); }} initialRange={dateRange} />
         </div>
-
         {}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <StatCard
@@ -317,7 +278,6 @@ export default function ChatLogsPage() {
             subtitle="Messages per user"
           />
         </div>
-
         {}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {}
@@ -349,7 +309,6 @@ export default function ChatLogsPage() {
               </ResponsiveContainer>
             </div>
           </div>
-
           {}
           <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h3 className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">
@@ -385,7 +344,6 @@ export default function ChatLogsPage() {
             </div>
           </div>
         </div>
-
         {}
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))] mb-8">
           <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">
@@ -420,7 +378,6 @@ export default function ChatLogsPage() {
             ))}
           </div>
         </div>
-
         {}
         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
@@ -458,7 +415,6 @@ export default function ChatLogsPage() {
                   Text Only
                 </button>
               </div>
-
               {}
               <div className="relative w-full sm:w-auto mt-2 sm:mt-0">
                 <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[rgb(var(--color-text-tertiary))]" />
@@ -472,7 +428,6 @@ export default function ChatLogsPage() {
               </div>
             </div>
           </div>
-
           <div className="space-y-2 max-h-[600px] overflow-y-auto">
             {filteredMessages.slice(0, 200).map((msg) => {
               const user = users.get(msg.user_id);
@@ -514,7 +469,6 @@ export default function ChatLogsPage() {
     </div>
   );
 }
-
 function StatCard({ icon, title, value, subtitle }: { icon: React.ReactNode; title: string; value: string; subtitle: string }) {
   return (
     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-4 sm:p-6 border border-[rgb(var(--color-border))] shadow-apple-sm flex flex-col justify-center">

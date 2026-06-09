@@ -1,28 +1,24 @@
 'use client';
-
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTheme } from '@/contexts/ThemeContext';
-
 export default function Home() {
   const { theme } = useTheme();
-
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition relative overflow-hidden">
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-20">
         <div className="absolute inset-0 overflow-hidden">
-          <video 
+          <video
             className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2 object-cover opacity-30 dark:opacity-15"
-            autoPlay 
-            loop 
-            muted 
+            autoPlay
+            loop
+            muted
             playsInline
           >
             <source src="/Discord:Omegle.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-gradient-to-b from-[rgb(var(--color-bg-primary))]/80 via-[rgb(var(--color-bg-primary))]/50 to-[rgb(var(--color-bg-primary))]"></div>
         </div>
-
         {theme === 'light' && (
           <div className="absolute inset-0">
             <div className="absolute top-0 -left-4 w-[500px] h-[500px] bg-sky-300/20 rounded-full mix-blend-multiply filter blur-3xl opacity-55 animate-float"></div>
@@ -30,21 +26,17 @@ export default function Home() {
             <div className="absolute -bottom-8 left-20 w-[500px] h-[500px] bg-indigo-200/20 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-float" style={{ animationDelay: '4s' }}></div>
           </div>
         )}
-
         <div className="relative z-10 max-w-6xl w-full px-4 sm:px-6 md:px-8 py-12 sm:py-16 md:py-20">
           <div className="text-center space-y-8 sm:space-y-10 md:space-y-12 animate-fade-in">
-            
             <div className="flex justify-center animate-slide-down mb-8">
               <div className="relative group cursor-pointer">
                 {}
                 <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-full blur-2xl opacity-60 group-hover:opacity-85 transition-opacity duration-500 animate-pulse"></div>
-                
                 {}
-                <div 
+                <div
                   className="absolute -inset-1.5 bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 rounded-full opacity-95 group-hover:scale-105 transition-all duration-500 shadow-blue-glow"
                   style={{ animation: 'spin 12s linear infinite' }}
                 ></div>
-                
                 {}
                 <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 bg-black dark:bg-[rgb(var(--color-bg-secondary))] rounded-full overflow-hidden border-[3px] border-white/90 dark:border-white/15 flex items-center justify-center shadow-inner group-hover:scale-[1.02] transition-transform duration-500">
                   <Image
@@ -58,7 +50,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
             <div className="space-y-4 sm:space-y-5 md:space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-[rgb(var(--color-text-primary))] dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-gray-200 dark:to-white animate-slide-up will-change-transform">
                 Omeglee
@@ -72,11 +63,10 @@ export default function Home() {
                 </p>
               </div>
             </div>
-
             <div className="max-w-2xl mx-auto animate-scale-in will-change-transform" style={{ animationDelay: '0.2s' }}>
-              <a 
-                href="https://discord.gg/omeglee" 
-                target="_blank" 
+              <a
+                href="https://discord.gg/omeglee"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="block glass-blue rounded-3xl p-8 sm:p-10 md:p-12 border border-[rgb(var(--color-border))] dark:border-white/10 shadow-apple-lg hover:shadow-xl backdrop-blur-xl hover:border-[rgb(var(--color-accent))] dark:hover:border-white/20 apple-transition group will-change-transform"
               >
@@ -106,7 +96,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       <section className="relative bg-[rgb(var(--color-bg-primary))] py-16 sm:py-20 md:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
           <div className="glass-blue rounded-3xl p-8 sm:p-10 md:p-12 lg:p-16 border border-[rgb(var(--color-border))] dark:border-white/10 shadow-apple-lg animate-scale-in backdrop-blur-xl hover:border-[rgb(var(--color-accent))] dark:hover:border-white/20 apple-transition will-change-transform">
@@ -120,23 +109,22 @@ export default function Home() {
               <p className="text-base sm:text-lg md:text-xl font-light text-[rgb(var(--color-text-secondary))] max-w-3xl mx-auto leading-relaxed">
                 We're crafting an extraordinary experience that will redefine how communities connect and engage.
               </p>
-              
               <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
-                <Link 
+                <Link
                   href="/staff-application"
                   className="inline-flex items-center justify-center gap-3 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-hover))] dark:from-white dark:to-gray-200 dark:hover:from-gray-200 dark:hover:to-white text-white dark:text-black active:scale-95 font-semibold px-8 sm:px-10 md:px-12 py-4 sm:py-5 md:py-6 rounded-2xl apple-transition shadow-blue-glow hover:shadow-xl text-base sm:text-lg md:text-xl touch-manipulation w-full sm:w-auto group will-change-transform"
                 >
-                  <svg 
-                    className="w-6 h-6 sm:w-7 sm:h-7 group-hover:rotate-12 apple-transition will-change-transform" 
-                    fill="none" 
-                    stroke="currentColor" 
+                  <svg
+                    className="w-6 h-6 sm:w-7 sm:h-7 group-hover:rotate-12 apple-transition will-change-transform"
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                   >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
                   <span className="whitespace-nowrap">Join Our Staff Team</span>
@@ -172,7 +160,6 @@ export default function Home() {
                   <span className="whitespace-nowrap">Shop</span>
                 </Link>
               </div>
-
             </div>
           </div>
         </div>

@@ -4,25 +4,20 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { addGuildMemberRole, getGuildRoleName, sendDM } from '@/lib/discord';
 import crypto from 'crypto';
-
 const DEFAULT_SUBSCRIPTION_DAYS = 30;
 const USER_ERROR_PREFIX = 'USER_ERROR:';
-
 function userError(message: string): Error {
   return new Error(`${USER_ERROR_PREFIX}${message}`);
 }
-
 function stripHtml(value: string): string {
   return String(value || '')
     .replace(/<[^>]*>/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
-
 async function sendDonatorWebhook(payload: Record<string, unknown>) {
   const webhookUrl = process.env.DONATOR_PAYMENT_WEBHOOK_URL || process.env.PAYMENT_WEBHOOK_URL || '';
   if (!webhookUrl) return;
-
   try {
     await fetch(webhookUrl, {
       method: 'POST',
@@ -33,25 +28,19 @@ async function sendDonatorWebhook(payload: Record<string, unknown>) {
     console.error('Failed to send donator webhook:', error);
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const body = await request.json();
     const guildId = String(body?.guild_id || '').trim();
     const planId = String(body?.plan_id || '').trim();
-
     if (!guildId || !planId) {
       return NextResponse.json({ error: 'guild_id and plan_id are required' }, { status: 400 });
     }
-
     const now = new Date();
-    
-    
     const [plan, config, economyUser] = await Promise.all([
       (prismaBot as any).donatorPlan.findFirst({
         where: { id: planId, guild_id: guildId },
@@ -65,30 +54,24 @@ export async function POST(request: NextRequest) {
         select: { total_points: true },
       }),
     ]);
-
     if (!plan) throw userError('Plan not found for selected server.');
     if (!plan.enabled || plan.paused) throw userError('This plan is currently unavailable.');
     if (!plan.ozy_enabled) throw userError('Ozy checkout is not enabled for this plan.');
-
     const ozyPrice = Number(plan.price_ozy || 0);
     if (!Number.isFinite(ozyPrice) || ozyPrice <= 0) {
       throw userError('This plan does not have a valid Ozy price configured yet.');
     }
-
     if (!economyUser) {
       throw userError(`You do not have an economy account yet. Earn some ${config?.currency_name || 'Ozy'} first.`);
     }
-
     if (economyUser.total_points < ozyPrice) {
       throw userError(
         `Insufficient balance. Required: ${ozyPrice.toLocaleString()} ${config?.currency_name || 'Ozy'}, available: ${economyUser.total_points.toLocaleString()}.`
       );
     }
-
     const runCheckoutTransaction = () => (prismaBot as any).$transaction(async (tx: any) => {
       const paymentId = `ozy_tx_${crypto.randomUUID().replace(/-/g, '').slice(0, 24)}`;
       const orderId = `ozy_order_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
-
       const payment = await tx.razorpayPayment.create({
         data: {
           razorpay_id: paymentId,
@@ -116,7 +99,6 @@ export async function POST(request: NextRequest) {
           },
         },
       });
-
       await tx.economyUser.update({
         where: { guild_id_user_id: { guild_id: guildId, user_id: session.user.id } },
         data: {
@@ -124,7 +106,6 @@ export async function POST(request: NextRequest) {
           leaderboard_points: config?.leaderboard_sync !== false ? { decrement: ozyPrice } : undefined,
         },
       });
-
       await tx.economyPointLog.create({
         data: {
           guild_id: guildId,
@@ -134,7 +115,6 @@ export async function POST(request: NextRequest) {
           source: 'donator',
         },
       });
-
       const existingSub = await tx.donatorSubscription.findFirst({
         where: {
           guild_id: guildId,
@@ -142,7 +122,6 @@ export async function POST(request: NextRequest) {
           plan_id: plan.id,
         },
       });
-
       let subscription;
       if (existingSub) {
         const baseDate = existingSub.status === 'active' && existingSub.expiry_date
@@ -150,7 +129,6 @@ export async function POST(request: NextRequest) {
           : now;
         const nextExpiry = new Date(baseDate);
         nextExpiry.setDate(nextExpiry.getDate() + DEFAULT_SUBSCRIPTION_DAYS);
-
         subscription = await tx.donatorSubscription.update({
           where: { id: existingSub.id },
           data: {
@@ -166,7 +144,6 @@ export async function POST(request: NextRequest) {
       } else {
         const expiryDate = new Date(now);
         expiryDate.setDate(expiryDate.getDate() + DEFAULT_SUBSCRIPTION_DAYS);
-
         subscription = await tx.donatorSubscription.create({
           data: {
             guild_id: guildId,
@@ -180,7 +157,6 @@ export async function POST(request: NextRequest) {
           include: { plan: true },
         });
       }
-
       return {
         subscription,
         payment,
@@ -190,13 +166,10 @@ export async function POST(request: NextRequest) {
         balanceAfter: economyUser.total_points - ozyPrice,
       };
     }, {
-      
-      
       maxWait: 15_000,
       timeout: 40_000,
       isolationLevel: 'Serializable',
     });
-
     let result;
     let retryCount = 0;
     const maxRetries = 2;
@@ -206,24 +179,20 @@ export async function POST(request: NextRequest) {
         break;
       } catch (txError: any) {
         retryCount++;
-        
         if (txError?.code === 'P2028' && retryCount < maxRetries) {
           console.warn(`[Ozy TX] P2028 error on attempt ${retryCount}, retrying...`, txError.message);
-          await new Promise(r => setTimeout(r, 100 * retryCount)); 
+          await new Promise(r => setTimeout(r, 100 * retryCount));
           continue;
         }
         throw txError;
       }
     }
-
     const roleId = result.subscription?.plan?.linked_role_id;
     if (roleId) {
       await addGuildMemberRole(session.user.id, roleId, guildId);
     }
-
     const roleName = roleId ? await getGuildRoleName(guildId, roleId) : null;
     const perks = Array.isArray(result.subscription?.plan?.perks) ? result.subscription.plan.perks : [];
-
     await sendDM(session.user.id, {
       embed: {
         title: '✔ Ozy Purchase Successful!',
@@ -251,7 +220,6 @@ export async function POST(request: NextRequest) {
         timestamp: new Date().toISOString(),
       },
     });
-
     await sendDonatorWebhook({
       event: 'donator.ozy_payment.captured',
       guild_id: guildId,
@@ -267,12 +235,10 @@ export async function POST(request: NextRequest) {
       status: 'captured',
       created_at: new Date().toISOString(),
     });
-
     const hostUrl = process.env.NEXTAUTH_URL || request.headers.get('origin') || '';
     const redirectUrl = hostUrl
       ? `${hostUrl}/donator/subscriptions?guild_id=${encodeURIComponent(guildId)}`
       : `/donator/subscriptions?guild_id=${encodeURIComponent(guildId)}`;
-
     return NextResponse.json({
       success: true,
       data: {
@@ -290,7 +256,6 @@ export async function POST(request: NextRequest) {
     if (message.startsWith(USER_ERROR_PREFIX)) {
       return NextResponse.json({ error: message.slice(USER_ERROR_PREFIX.length) }, { status: 400 });
     }
-
     console.error('Ozy payment error:', error);
     return NextResponse.json({ error: 'Failed to process Ozy payment' }, { status: 500 });
   }

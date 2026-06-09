@@ -1,9 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-
 declare global {
   var prismaBotClient: PrismaClient | undefined;
 }
-
 export const prismaBot = global.prismaBotClient || new PrismaClient({
   datasources: {
     db: {
@@ -11,5 +9,4 @@ export const prismaBot = global.prismaBotClient || new PrismaClient({
     },
   },
 });
-
 if (process.env.NODE_ENV !== 'production') global.prismaBotClient = prismaBot;

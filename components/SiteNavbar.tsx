@@ -1,5 +1,4 @@
 'use client';
-
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -7,7 +6,6 @@ import { signIn, signOut, useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
 import { FiSun, FiMoon, FiChevronDown, FiMenu, FiX } from 'react-icons/fi';
-
 export default function SiteNavbar() {
   const { theme, toggleTheme } = useTheme();
   const { data: session, status } = useSession();
@@ -15,7 +13,6 @@ export default function SiteNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     const onDocClick = (event: MouseEvent) => {
       if (!profileRef.current) return;
@@ -23,28 +20,23 @@ export default function SiteNavbar() {
         setProfileOpen(false);
       }
     };
-
     document.addEventListener('click', onDocClick);
     return () => document.removeEventListener('click', onDocClick);
   }, []);
-
   useEffect(() => {
     setMobileOpen(false);
     setProfileOpen(false);
   }, [pathname]);
-
   useEffect(() => {
     if (!mobileOpen) {
       document.body.style.overflow = '';
       return;
     }
-
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = '';
     };
   }, [mobileOpen]);
-
   const links = useMemo(
     () => [
       { label: 'Subscription', href: '/donator' },
@@ -53,12 +45,10 @@ export default function SiteNavbar() {
     ],
     []
   );
-
   const sessionGuildId = (session?.user as any)?.guild_id as string | undefined;
   const membershipsHref = sessionGuildId
     ? `/donator/subscriptions?guild_id=${encodeURIComponent(sessionGuildId)}`
     : '/memberships';
-
   return (
     <header className="sticky top-0 z-50 border-b border-black/10 dark:border-white/10 bg-[rgba(245,245,247,0.78)] dark:bg-[rgba(22,22,23,0.82)] backdrop-blur-2xl">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -75,7 +65,6 @@ export default function SiteNavbar() {
             </div>
             <span className="font-[var(--font-display)] text-sm sm:text-base font-semibold tracking-tight text-[rgb(var(--color-text-primary))]">Omeglee</span>
           </Link>
-
           <nav className="hidden md:flex items-center gap-0.5">
             {links.map((item) => (
               <Link
@@ -87,7 +76,6 @@ export default function SiteNavbar() {
               </Link>
             ))}
           </nav>
-
           <div className="hidden md:flex items-center gap-2" ref={profileRef}>
             <button
               onClick={toggleTheme}
@@ -100,7 +88,6 @@ export default function SiteNavbar() {
                 <FiMoon className="w-4 h-4 text-[rgb(var(--color-text-primary))]" />
               )}
             </button>
-
             {status === 'authenticated' ? (
               <>
                 <button
@@ -117,7 +104,6 @@ export default function SiteNavbar() {
                   </span>
                   <FiChevronDown className="w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
                 </button>
-
                 {profileOpen && (
                   <div className="absolute top-12 right-6 w-64 rounded-xl border border-black/10 dark:border-white/10 bg-[rgba(255,255,255,0.92)] dark:bg-[rgba(33,33,36,0.95)] backdrop-blur-2xl shadow-xl p-2">
                     <Link
@@ -152,7 +138,6 @@ export default function SiteNavbar() {
               </button>
             )}
           </div>
-
           <button
             className="md:hidden p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
             onClick={() => setMobileOpen((prev) => !prev)}
@@ -161,7 +146,6 @@ export default function SiteNavbar() {
             {mobileOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
           </button>
         </div>
-
         {mobileOpen && (
           <div className="md:hidden border-t border-black/10 dark:border-white/10 px-2 py-2 pb-4 space-y-1.5 max-h-[calc(100vh-3.5rem)] overflow-y-auto">
             {links.map((item) => (

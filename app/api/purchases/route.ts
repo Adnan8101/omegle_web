@@ -2,20 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
-
 const GUILD_ID = "1507458872225566811";
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const userId = session.user.id;
-
-    
     const purchases = await prismaBot.shopPurchase.findMany({
       where: {
         guild_id: GUILD_ID,
@@ -23,7 +17,6 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { created_at: 'desc' }
     });
-
     const purchasedItemIds = Array.from(
       new Set(
         purchases
@@ -31,7 +24,6 @@ export async function GET(request: NextRequest) {
           .filter((id: any) => typeof id === 'string' && id.length > 0)
       )
     );
-
     let existingItemIds = new Set<string>();
     if (purchasedItemIds.length > 0) {
       const existingItems = await prismaBot.shopItem.findMany({
@@ -43,12 +35,9 @@ export async function GET(request: NextRequest) {
       });
       existingItemIds = new Set(existingItems.map((item: any) => item.id));
     }
-
-    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
-
     return NextResponse.json({
       purchases: purchases.map((p: any) => ({
         id: p.id,
@@ -67,7 +56,6 @@ export async function GET(request: NextRequest) {
       })),
       currencyEmoji: config?.currency_emoji || '🪙'
     });
-
   } catch (error) {
     console.error('Error fetching user purchases:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

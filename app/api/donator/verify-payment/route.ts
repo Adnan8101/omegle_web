@@ -4,63 +4,47 @@ import crypto from 'crypto';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { addGuildMemberRole, getGuildRoleName, sendDM } from '@/lib/discord';
-
 const isProduction = process.env.NODE_ENV === 'production';
-
 const RAZORPAY_KEY_ID = isProduction
   ? (process.env.RAZORPAY_KEY_ID || '')
   : (process.env.RAZORPAY_TEST_KEY_ID || process.env.RAZORPAY_KEY_ID || '');
-
 const RAZORPAY_KEY_SECRET = isProduction
   ? (process.env.RAZORPAY_KEY_SECRET || '')
   : (process.env.RAZORPAY_TEST_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET || '');
-
 const DEFAULT_SUBSCRIPTION_DAYS = 30;
-
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const body = await request.json();
     const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = body;
-
     if (!razorpay_payment_id || !razorpay_order_id) {
       return NextResponse.json({ error: 'Missing payment details' }, { status: 400 });
     }
-
     if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
       return NextResponse.json({ error: 'Razorpay keys are not configured' }, { status: 503 });
     }
-
-    
     const payment = await (prismaBot as any).razorpayPayment.findUnique({
       where: { razorpay_order_id },
       include: { plan: true }
     });
-
     if (!payment) {
       return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
     }
-
     if (payment.user_id !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-
     if (razorpay_signature) {
       const expected = crypto
         .createHmac('sha256', RAZORPAY_KEY_SECRET)
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
         .digest('hex');
-
       if (expected !== razorpay_signature) {
         return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 });
       }
     }
-
-    
     try {
       const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64');
       const razorpayResponse = await fetch(
@@ -72,26 +56,18 @@ export async function POST(request: NextRequest) {
           }
         }
       );
-
       if (!razorpayResponse.ok) {
         console.error('Failed to fetch payment from Razorpay');
         return NextResponse.json({ error: 'Payment verification failed' }, { status: 500 });
       }
-
       const razorpayPayment = await razorpayResponse.json();
-
-      
       if (razorpayPayment.order_id !== razorpay_order_id) {
         return NextResponse.json({ error: 'Order ID mismatch' }, { status: 400 });
       }
-
-      
       if (razorpayPayment.amount !== Number(payment.amount)) {
         return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 });
       }
-
       if (razorpayPayment.status === 'captured' || razorpayPayment.status === 'authorized') {
-        
         await (prismaBot as any).razorpayPayment.update({
           where: { razorpay_order_id },
           data: {
@@ -101,12 +77,9 @@ export async function POST(request: NextRequest) {
             updated_at: new Date()
           }
         });
-
-        
         const now = new Date();
         const expiryDate = new Date(now);
         expiryDate.setDate(expiryDate.getDate() + DEFAULT_SUBSCRIPTION_DAYS);
-
         let subscription: any;
         const existingSub = await (prismaBot as any).donatorSubscription.findFirst({
           where: {
@@ -115,15 +88,12 @@ export async function POST(request: NextRequest) {
             plan_id: payment.plan_id,
           }
         });
-
         if (existingSub) {
-          
           const baseDate = existingSub.status === 'active' && existingSub.expiry_date
             ? new Date(existingSub.expiry_date)
             : now;
           const newExpiry = new Date(baseDate);
           newExpiry.setDate(newExpiry.getDate() + DEFAULT_SUBSCRIPTION_DAYS);
-
           subscription = await (prismaBot as any).donatorSubscription.update({
             where: { id: existingSub.id },
             data: {
@@ -150,14 +120,10 @@ export async function POST(request: NextRequest) {
             include: { plan: true }
           });
         }
-
-        
         const roleId = payment.plan?.linked_role_id;
         if (payment.user_id && roleId && payment.guild_id) {
           await addGuildMemberRole(payment.user_id, roleId, payment.guild_id);
         }
-
-        
         const planTitle = payment.plan?.title || 'Donator';
         const roleName = payment.plan?.linked_role_id
           ? await getGuildRoleName(payment.guild_id, payment.plan.linked_role_id)
@@ -166,7 +132,6 @@ export async function POST(request: NextRequest) {
         const perksText = perks.length > 0
           ? perks.map((perk: string, idx: number) => `${idx + 1}. ${String(perk).replace(/<[^>]*>/g, '').trim()}`).join('\n').slice(0, 1000)
           : 'No perk data available';
-
         await sendDM(payment.user_id, {
           embed: {
             title: '✔ Subscription Activated!',
@@ -222,7 +187,6 @@ export async function POST(request: NextRequest) {
             timestamp: new Date().toISOString(),
           }
         });
-
         return NextResponse.json({
           success: true,
           status: razorpayPayment.status,

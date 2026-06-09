@@ -6,59 +6,42 @@ import { sendDM } from '@/lib/discord';
 import { getDiscordUser } from '@/lib/discord';
 import { getGuildRoleName } from '@/lib/discord';
 import crypto from 'crypto';
-
 const GUILD_ID = "1507458872225566811";
-
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
 function generateCode(): string {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
-
 function calculatePurchaseExpiry(baseDate: Date): Date {
   const expiresAt = new Date(baseDate);
   expiresAt.setMonth(expiresAt.getMonth() + 1);
   return expiresAt;
 }
-
 function normalizeRoleId(roleRef: string | null | undefined): string | null {
   if (!roleRef) return null;
-
   const trimmed = roleRef.trim();
   if (/^\d{17,20}$/.test(trimmed)) return trimmed;
-
   const mentionMatch = trimmed.match(/^<@&?(\d{17,20})>$/);
   if (mentionMatch) return mentionMatch[1];
-
   return null;
 }
-
 function parseRoleIds(roleRef: string | null | undefined): string[] {
   if (!roleRef) return [];
-
   const unique = new Set<string>();
   const parts = roleRef.split(/[\s,|/]+/).filter(Boolean);
-
   for (const part of parts) {
     const normalized = normalizeRoleId(part);
     if (normalized) unique.add(normalized);
   }
-
   return Array.from(unique);
 }
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
-
-    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
-
-    
     if (config?.shop_enabled === false) {
       return NextResponse.json({
         shopDisabled: true,
@@ -70,8 +53,6 @@ export async function GET(request: NextRequest) {
         user: null
       });
     }
-
-    
     const now = new Date();
     const items = await prismaBot.shopItem.findMany({
       where: {
@@ -83,11 +64,9 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { price: 'asc' }
     });
-
     let userBalance = 0;
     let userPurchases: any[] = [];
     let userRoleIds: string[] = [];
-
     const roleNameCache = new Map<string, string | null>();
     const resolveRoleName = async (roleRef: string | null): Promise<string | null> => {
       const roleId = normalizeRoleId(roleRef);
@@ -95,25 +74,19 @@ export async function GET(request: NextRequest) {
       if (roleNameCache.has(roleId)) {
         return roleNameCache.get(roleId) || null;
       }
-
       const roleName = await getGuildRoleName(GUILD_ID, roleId);
       roleNameCache.set(roleId, roleName);
       return roleName;
     };
-
     const resolveRoleNames = async (roleRef: string | null): Promise<string[]> => {
       const roleIds = parseRoleIds(roleRef);
       if (roleIds.length === 0) return [];
-
       const names = await Promise.all(roleIds.map(async (roleId) => {
         const roleName = await resolveRoleName(roleId);
         return roleName || `@${roleId}`;
       }));
-
       return names;
     };
-
-    
     if (userId) {
       const [economyUser, member, pendingPurchases] = await Promise.all([
         prismaBot.economyUser.findUnique({
@@ -130,13 +103,10 @@ export async function GET(request: NextRequest) {
           take: 10
         })
       ]);
-
       userBalance = economyUser?.total_points || 0;
       userRoleIds = member?._fromGuild ? (member.roles || []) : [];
-
       userPurchases = pendingPurchases;
     }
-
     const mappedItems = await Promise.all(items.map(async (item: any) => ({
         id: item.id,
         name: item.name,
@@ -161,7 +131,6 @@ export async function GET(request: NextRequest) {
         out_of_stock: item.stock !== null && item.stock !== -1 && item.stock <= 0,
         enabled: item.enabled
       })));
-
     return NextResponse.json({
       items: mappedItems,
       config: {
@@ -185,94 +154,64 @@ export async function GET(request: NextRequest) {
         'Cache-Control': 'no-store, max-age=0',
       }
     });
-
   } catch (error) {
     console.error('Error fetching shop:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'You must be logged in to purchase items' }, { status: 401 });
     }
-
     const userId = session.user.id;
     const body = await request.json();
     const { itemId } = body;
-
     const member = await getDiscordUser(userId);
     const userRoleIds = member?._fromGuild ? (member.roles || []) : [];
-
     if (!itemId) {
       return NextResponse.json({ error: 'Item ID is required' }, { status: 400 });
     }
-
-    
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
-
     if (config?.shop_enabled === false) {
       return NextResponse.json({ error: 'The shop is currently closed' }, { status: 400 });
     }
-
     const result = await prismaBot.$transaction(async (tx) => {
-      
       const item = await tx.shopItem.findFirst({
         where: { id: itemId, guild_id: GUILD_ID }
       });
-
       if (!item) {
         throw new Error('ITEM_NOT_FOUND');
       }
-
-      
       if (!item.enabled) {
         throw new Error('ITEM_DISABLED');
       }
-
-      
       if (item.expires_at && new Date() > item.expires_at) {
         throw new Error('ITEM_EXPIRED');
       }
-
       const requiredRoleIds = parseRoleIds(item.role_required_id);
       if (requiredRoleIds.length > 0 && !requiredRoleIds.some((requiredRoleId) => userRoleIds.includes(requiredRoleId))) {
         throw new Error(`MISSING_REQUIRED_ROLE:${requiredRoleIds.join(',')}`);
       }
-
-      
       if (item.stock !== null && item.stock !== -1 && item.stock <= 0) {
         throw new Error('OUT_OF_STOCK');
       }
-
-      
       const economyUser = await tx.economyUser.findUnique({
         where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
       });
-
-      
       const currencyName = config?.currency_name || 'Ozy';
-
       if (!economyUser) {
         throw new Error(`NO_ECONOMY_ACCOUNT:${currencyName}`);
       }
-
-      
       if (economyUser.total_points < item.price) {
         throw new Error(`INSUFFICIENT_BALANCE:${item.price}:${economyUser.total_points}:${currencyName}`);
       }
-
-      
       if (item.required_balance && economyUser.total_points < item.required_balance) {
         throw new Error(`MIN_BALANCE:${item.required_balance}:${currencyName}`);
       }
-
-      
       let code = generateCode();
       let attempts = 0;
       while (attempts < 10) {
@@ -281,23 +220,16 @@ export async function POST(request: NextRequest) {
         code = generateCode();
         attempts++;
       }
-
-      
       if (item.stock !== null && item.stock !== -1) {
         const stockUpdate = await tx.shopItem.updateMany({
           where: { id: item.id, guild_id: GUILD_ID, stock: { gt: 0 } },
           data: { stock: { decrement: 1 } }
         });
-
         if (stockUpdate.count === 0) {
           throw new Error('OUT_OF_STOCK');
         }
       }
-
-      
       const leaderboardSync = config?.leaderboard_sync ?? true;
-
-      
       const pointsUpdate = await tx.economyUser.updateMany({
         where: {
           guild_id: GUILD_ID,
@@ -309,12 +241,9 @@ export async function POST(request: NextRequest) {
           leaderboard_points: leaderboardSync ? { decrement: item.price } : undefined
         }
       });
-
       if (pointsUpdate.count === 0) {
         throw new Error(`INSUFFICIENT_BALANCE:${item.price}:${economyUser.total_points}:${currencyName}`);
       }
-
-      
       const purchaseExpiresAt = calculatePurchaseExpiry(new Date());
       const purchase = await tx.shopPurchase.create({
         data: {
@@ -327,8 +256,6 @@ export async function POST(request: NextRequest) {
           expires_at: purchaseExpiresAt
         }
       });
-
-      
       await tx.economyPointLog.create({
         data: {
           guild_id: GUILD_ID,
@@ -338,24 +265,18 @@ export async function POST(request: NextRequest) {
           source: 'shop'
         }
       });
-
       return { item, purchase, economyUser, purchaseExpiresAt };
     });
-
     const { item, purchase, economyUser, purchaseExpiresAt } = result;
-
-    
     const currencyEmoji = config?.currency_emoji || 'OZY';
     const formatNumber = (n: number) => n.toLocaleString();
-
-    
     let dmSent = false;
     try {
       const dmResult = await sendDM(userId, {
         embed: {
           title: 'Purchase Successful',
           description: `Thank you for your purchase from **Omeglee Community Shop**!`,
-          color: 0x57F287, 
+          color: 0x57F287,
           thumbnail: item.thumbnail ? { url: item.thumbnail } : undefined,
           fields: [
             { name: 'Item', value: item.name, inline: true },
@@ -375,7 +296,6 @@ export async function POST(request: NextRequest) {
     } catch (dmError) {
       console.error('Failed to send DM notification:', dmError);
     }
-
     return NextResponse.json({
       success: true,
       purchase: {
@@ -390,7 +310,6 @@ export async function POST(request: NextRequest) {
       newBalance: economyUser.total_points - item.price,
       dmSent
     });
-
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === 'ITEM_NOT_FOUND') {

@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useRef, useState } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -8,7 +7,6 @@ import {
   FiShoppingCart, FiDollarSign, FiPackage, FiClock, FiCheck,
   FiX, FiCopy, FiRefreshCw, FiLock, FiAlertCircle, FiMessageCircle
 } from 'react-icons/fi';
-
 interface ShopItem {
   id: string;
   name: string;
@@ -26,7 +24,6 @@ interface ShopItem {
   out_of_stock?: boolean;
   enabled: boolean;
 }
-
 interface PendingPurchase {
   id: string;
   itemName: string;
@@ -35,7 +32,6 @@ interface PendingPurchase {
   createdAt: string;
   expiresAt: string | null;
 }
-
 interface PurchaseResult {
   id: string;
   itemName: string;
@@ -46,11 +42,9 @@ interface PurchaseResult {
   expiresAt: string | null;
   dmSent?: boolean;
 }
-
 export default function ShopPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
   const [items, setItems] = useState<ShopItem[]>([]);
   const [currencyEmoji, setCurrencyEmoji] = useState('🪙');
   const [currencyName, setCurrencyName] = useState('Ozy');
@@ -65,21 +59,13 @@ export default function ShopPage() {
   const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null);
   const [shopDisabled, setShopDisabled] = useState(false);
   const purchaseInFlightRef = useRef(false);
-
-  
   useEffect(() => {
-    
-    
   }, [status, router]);
-
-  
   useEffect(() => {
     if (session) {
       fetchShop();
     }
   }, [session]);
-
-  
   if (status === 'unauthenticated') {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6">
@@ -110,8 +96,6 @@ export default function ShopPage() {
       </div>
     );
   }
-
-  
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -122,10 +106,7 @@ export default function ShopPage() {
       </div>
     );
   }
-
-  
   const getEmojiDisplay = (emoji: string, size: string = 'w-6 h-6') => {
-    
     const emojiMatch = emoji.match(/<a?:([\w_]+):(\d+)>/);
     if (emojiMatch) {
       const [, name, id] = emojiMatch;
@@ -140,16 +121,13 @@ export default function ShopPage() {
         />
       );
     }
-    
     return <span className="text-xl">{emoji}</span>;
   };
-
   const fetchShop = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/shop', { cache: 'no-store' });
       const data = await res.json();
-
       if (res.ok) {
         if (data.shopDisabled) {
           setShopDisabled(true);
@@ -160,7 +138,6 @@ export default function ShopPage() {
           setItems(data.items || []);
           setCurrencyEmoji(data.config?.currencyEmoji || '🪙');
           setCurrencyName(data.config?.currencyName || 'Ozy');
-
           if (data.user) {
             setUserBalance(data.user.balance || 0);
             setPendingPurchases(data.user.pendingPurchases || []);
@@ -173,18 +150,15 @@ export default function ShopPage() {
       setLoading(false);
     }
   };
-
   const handlePurchase = async (item: ShopItem) => {
     if (!session) {
       signIn('discord');
       return;
     }
-
     if (userBalance < item.price) {
       setError(`Insufficient balance. You need ${item.price.toLocaleString()} ${currencyName} but only have ${userBalance.toLocaleString()} ${currencyName}.`);
       return;
     }
-
     if (item.role_required_ids?.length > 0 && item.has_required_role === false) {
       const requiredRoles = item.role_required_ids?.length
         ? item.role_required_ids.map((id) => `<@&${id}>`).join(', ')
@@ -192,43 +166,32 @@ export default function ShopPage() {
       setError(`You need any one of the following roles to buy this item: ${requiredRoles}`);
       return;
     }
-
-    
     setConfirmItem(item);
   };
-
   const confirmPurchase = async () => {
     if (!confirmItem) return;
     if (purchaseInFlightRef.current || purchasing) return;
     purchaseInFlightRef.current = true;
-    
     const item = confirmItem;
     setPurchasing(item.id);
     setError(null);
     setPurchaseResult(null);
-
     try {
       const res = await fetch('/api/shop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ itemId: item.id })
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         throw new Error(data.error || 'Purchase failed');
       }
-
       setPurchaseResult({
         ...data.purchase,
         dmSent: data.dmSent
       });
       setUserBalance(data.newBalance);
-      
-      
       fetchShop();
-
     } catch (err: any) {
       setError(err.message || 'Failed to purchase item');
     } finally {
@@ -237,15 +200,12 @@ export default function ShopPage() {
       purchaseInFlightRef.current = false;
     }
   };
-
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
   };
-
   const formatNumber = (n: number) => n.toLocaleString();
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -259,8 +219,6 @@ export default function ShopPage() {
       </div>
     );
   }
-
-  
   if (shopDisabled) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6">
@@ -288,7 +246,6 @@ export default function ShopPage() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))]">
       <section className="max-w-7xl mx-auto px-4 pt-5 pb-2">
@@ -297,7 +254,6 @@ export default function ShopPage() {
             <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Omeglee Shop</h1>
             <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Casino Economy Store</p>
           </div>
-
           <div className="flex items-center gap-3">
             {session ? (
               <>
@@ -306,7 +262,6 @@ export default function ShopPage() {
                   <span className="font-bold text-yellow-500">{formatNumber(userBalance)}</span>
                   <span className="text-xs text-yellow-500/70">{currencyName}</span>
                 </div>
-
                 <Link
                   href="/purchases"
                   className="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-colors text-sm"
@@ -315,7 +270,6 @@ export default function ShopPage() {
                   <FiPackage className="w-4 h-4" />
                   <span>My Stuff</span>
                 </Link>
-
                 <Link
                   href="/purchases"
                   className="relative p-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
@@ -328,7 +282,6 @@ export default function ShopPage() {
                     </span>
                   )}
                 </Link>
-
                 <img
                   src={session.user?.image || `https://cdn.discordapp.com/embed/avatars/0.png`}
                   alt="Avatar"
@@ -346,7 +299,6 @@ export default function ShopPage() {
           </div>
         </div>
       </section>
-
       {}
       {confirmItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -359,7 +311,6 @@ export default function ShopPage() {
               <p className="text-[rgb(var(--color-text-secondary))] mb-4">
                 You are about to buy:
               </p>
-
               {}
               <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl mb-4 flex items-center gap-4">
                 {confirmItem.thumbnail ? (
@@ -381,7 +332,6 @@ export default function ShopPage() {
                   </div>
                 </div>
               </div>
-
               {}
               <div className="space-y-2 mb-6 text-left">
                 <div className="flex justify-between items-center p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-lg">
@@ -407,7 +357,6 @@ export default function ShopPage() {
                   </div>
                 </div>
               </div>
-
               {}
               <div className="flex gap-3">
                 <button
@@ -429,7 +378,6 @@ export default function ShopPage() {
           </div>
         </div>
       )}
-
       {}
       {purchaseResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -440,11 +388,10 @@ export default function ShopPage() {
               </div>
               <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-2">Purchase Successful!</h3>
               <p className="text-[rgb(var(--color-text-secondary))] mb-4 flex items-center justify-center gap-1.5 flex-wrap">
-                You purchased <strong>{purchaseResult.itemName}</strong> for 
+                You purchased <strong>{purchaseResult.itemName}</strong> for
                 {getEmojiDisplay(currencyEmoji, 'w-5 h-5')}
                 <strong>{formatNumber(purchaseResult.pricePaid)}</strong>
               </p>
-
               {}
               <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl mb-4">
                 <p className="text-xs text-[rgb(var(--color-text-tertiary))] mb-2">Your Redeem Code</p>
@@ -475,13 +422,11 @@ export default function ShopPage() {
                   </p>
                 )}
               </div>
-
               {purchaseResult.replyMessage && (
                 <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-4 p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
                   {purchaseResult.replyMessage.replace(/<@\d+>/g, '')}
                 </p>
               )}
-
               {}
               {purchaseResult.dmSent ? (
                 <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl mb-4 flex items-center gap-2">
@@ -494,7 +439,6 @@ export default function ShopPage() {
                   <span className="text-sm text-yellow-500">Could not DM you. Make sure your DMs are open!</span>
                 </div>
               )}
-
               {}
               <div className="p-4 bg-[#5865F2]/10 border border-[#5865F2]/30 rounded-xl mb-4 text-left">
                 <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] mb-2 flex items-center gap-2">
@@ -506,7 +450,6 @@ export default function ShopPage() {
                   <li>Send your code: <code className="bg-[rgb(var(--color-bg-tertiary))] px-1.5 py-0.5 rounded text-yellow-500 font-mono">{purchaseResult.redeemCode}</code></li>
                 </ol>
               </div>
-
               <button
                 onClick={() => setPurchaseResult(null)}
                 className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] rounded-xl transition-colors"
@@ -517,7 +460,6 @@ export default function ShopPage() {
           </div>
         </div>
       )}
-
       {}
       {showPurchases && pendingPurchases.length > 0 && (
         <div className="fixed top-20 right-4 z-40 w-80 bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))] shadow-xl">
@@ -560,7 +502,6 @@ export default function ShopPage() {
           </div>
         </div>
       )}
-
       {}
       {error && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3 shadow-xl">
@@ -571,7 +512,6 @@ export default function ShopPage() {
           </button>
         </div>
       )}
-
       {}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {}
@@ -583,7 +523,6 @@ export default function ShopPage() {
             </p>
           </div>
         )}
-
         {}
         {items.length === 0 ? (
           <div className="text-center py-20">
@@ -602,13 +541,12 @@ export default function ShopPage() {
               const daysLeft = item.expires_at
                 ? Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
                 : null;
-
               return (
                 <div
                   key={item.id}
                   className={`bg-[rgb(var(--color-bg-secondary))] rounded-2xl border overflow-hidden transition-all hover:shadow-lg ${
                     isUnavailable
-                      ? 'border-red-500/30 opacity-75 hover:border-red-500/50 hover:shadow-red-500/10' 
+                      ? 'border-red-500/30 opacity-75 hover:border-red-500/50 hover:shadow-red-500/10'
                       : 'border-[rgb(var(--color-border))] hover:border-yellow-500/30 hover:shadow-yellow-500/10'
                   }`}
                 >
@@ -626,7 +564,6 @@ export default function ShopPage() {
                         <FiPackage className="w-16 h-16 text-[rgb(var(--color-text-tertiary))]" />
                       </div>
                     )}
-
                     {}
                     {isOutOfStock && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -635,7 +572,6 @@ export default function ShopPage() {
                         </div>
                       </div>
                     )}
-
                     {}
                     {isDisabled && !isOutOfStock && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -644,17 +580,15 @@ export default function ShopPage() {
                         </div>
                       </div>
                     )}
-
                     {}
                     {!isOutOfStock && item.stock !== null && item.stock !== -1 && (
                       <div className={`absolute top-3 right-3 px-2 py-1 rounded-lg text-xs font-semibold ${
-                        item.stock <= 5 ? 'bg-orange-500/90 text-white' : 
+                        item.stock <= 5 ? 'bg-orange-500/90 text-white' :
                         'bg-[rgb(var(--color-bg-secondary))]/90 text-[rgb(var(--color-text-primary))]'
                       }`}>
                         {item.stock} left
                       </div>
                     )}
-
                     {}
                     {daysLeft !== null && daysLeft <= 7 && (
                       <div className="absolute top-3 left-3 px-2 py-1 bg-red-500/90 rounded-lg text-xs font-semibold text-white flex items-center gap-1">
@@ -663,14 +597,12 @@ export default function ShopPage() {
                       </div>
                     )}
                   </div>
-
                   {}
                   <div className="p-4">
                     <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-1">{item.name}</h3>
                     {item.description && (
                       <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-3 line-clamp-2">{item.description}</p>
                     )}
-
                     {}
                     {item.income_amount && item.time_hours && (
                       <div className="text-xs text-green-500 mb-3 flex items-center gap-1.5">
@@ -679,7 +611,6 @@ export default function ShopPage() {
                         {formatNumber(item.income_amount)} every {item.time_hours}h
                       </div>
                     )}
-
                     {}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
@@ -688,7 +619,6 @@ export default function ShopPage() {
                           {formatNumber(item.price)}
                         </span>
                       </div>
-
                       <button
                         onClick={() => handlePurchase(item)}
                         disabled={purchasing === item.id || (session && !canAfford) || isUnavailable || missingRequiredRole}
@@ -721,7 +651,6 @@ export default function ShopPage() {
                         )}
                       </button>
                     </div>
-
                     {}
                     {session && item.required_balance && userBalance < item.required_balance && (
                       <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
@@ -729,7 +658,6 @@ export default function ShopPage() {
                         Requires {getEmojiDisplay(currencyEmoji, 'w-3.5 h-3.5')}{formatNumber(item.required_balance)} minimum balance
                       </div>
                     )}
-
                     {session && missingRequiredRole && (
                       <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
                         <FiLock className="w-3 h-3" />

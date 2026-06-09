@@ -1,10 +1,8 @@
 'use client';
-
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, ReactNode } from 'react';
 import { UserPermissions } from '@/lib/permissions';
-
 interface AuthGuardProps {
   children: ReactNode;
   requireFullAccess?: boolean;
@@ -13,7 +11,6 @@ interface AuthGuardProps {
   requireCasinoAccess?: boolean;
   fallbackUrl?: string;
 }
-
 const LoadingSpinner = () => (
   <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
     <div className="text-center">
@@ -22,7 +19,6 @@ const LoadingSpinner = () => (
     </div>
   </div>
 );
-
 const AccessDenied = ({ onGoBack }: { onGoBack: () => void }) => (
   <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
     <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
@@ -46,7 +42,6 @@ const AccessDenied = ({ onGoBack }: { onGoBack: () => void }) => (
     </div>
   </div>
 );
-
 export function AuthGuard({
   children,
   requireFullAccess = false,
@@ -57,18 +52,14 @@ export function AuthGuard({
 }: AuthGuardProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.replace(fallbackUrl);
       return;
     }
-    
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
       let hasAccess = false;
-
-      
       if (requireFullAccess) {
         hasAccess = perms?.hasFullAccess ?? false;
       } else if (requireModeratorAccess) {
@@ -78,27 +69,20 @@ export function AuthGuard({
       } else if (requireCasinoAccess) {
         hasAccess = perms?.hasFullAccess || perms?.hasCasinoAccess ?? false;
       } else {
-        
         hasAccess = perms?.hasAnyAccess ?? false;
       }
-
       if (!hasAccess) {
         router.replace(fallbackUrl);
         return;
       }
     }
   }, [status, session, router, requireFullAccess, requireModeratorAccess, requireViewAccess, requireCasinoAccess, fallbackUrl]);
-
-  
   if (status === 'loading') {
     return <LoadingSpinner />;
   }
-
-  
   if (status === 'authenticated') {
     const perms = session?.user?.permissions;
     let hasAccess = false;
-
     if (requireFullAccess) {
       hasAccess = perms?.hasFullAccess ?? false;
     } else if (requireModeratorAccess) {
@@ -110,11 +94,9 @@ export function AuthGuard({
     } else {
       hasAccess = perms?.hasAnyAccess ?? false;
     }
-
     if (!hasAccess) {
       return <AccessDenied onGoBack={() => router.replace(fallbackUrl)} />;
     }
   }
-
   return <>{children}</>;
 }

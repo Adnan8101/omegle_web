@@ -4,20 +4,17 @@ export type StaffRole =
   | 'gaming_mod'
   | 'media_team'
   | 'entertainment_team';
-
 export interface StaffQuestion {
   id: string;
   title: string;
   prompt: string;
   placeholder: string;
 }
-
 export interface StaffRoleMeta {
   id: StaffRole;
   label: string;
   shortDescription: string;
 }
-
 export const STAFF_ROLES: StaffRoleMeta[] = [
   {
     id: 'moderation',
@@ -45,7 +42,6 @@ export const STAFF_ROLES: StaffRoleMeta[] = [
     shortDescription: 'Host music/jamming activities and keep daily VC energy high.',
   },
 ];
-
 export const COMMON_QUESTIONS: StaffQuestion[] = [
   {
     id: 'introduction_purpose',
@@ -64,7 +60,6 @@ export const COMMON_QUESTIONS: StaffQuestion[] = [
       'Example: 2-3 hours daily, mostly 7 PM to 10 PM IST, available 6 days a week.',
   },
 ];
-
 export const ROLE_QUESTIONS: Record<StaffRole, StaffQuestion[]> = {
   moderation: [
     {
@@ -264,7 +259,6 @@ export const ROLE_QUESTIONS: Record<StaffRole, StaffQuestion[]> = {
     },
   ],
 };
-
 export const STAFF_ROLE_LABELS: Record<StaffRole, string> = STAFF_ROLES.reduce(
   (acc, role) => {
     acc[role.id] = role.label;
@@ -272,12 +266,10 @@ export const STAFF_ROLE_LABELS: Record<StaffRole, string> = STAFF_ROLES.reduce(
   },
   {} as Record<StaffRole, string>
 );
-
 export function getRoleLabel(role: string | undefined | null): string {
   if (!role) return 'Unknown Role';
   return STAFF_ROLE_LABELS[role as StaffRole] || role;
 }
-
 export function getQuestionTitle(role: string | undefined | null, key: string): string {
   const roleKey = role as StaffRole | undefined;
   const roleQuestions = roleKey ? ROLE_QUESTIONS[roleKey] : undefined;

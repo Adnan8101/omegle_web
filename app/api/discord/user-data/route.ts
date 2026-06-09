@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getCachedUsers } from '@/lib/botDb';
 import { GUILD_ID, getErrorMessage } from '@/lib/constants';
-
 interface UserData {
   id: string;
   username: string;
@@ -17,10 +16,8 @@ interface UserData {
   roles: string[];
   joinedAt: string | null;
 }
-
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
-    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
@@ -33,47 +30,37 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, size: number 
   if (!/^\d+$/.test(userId)) {
     return 'https://cdn.discordapp.com/embed/avatars/0.png';
   }
-
   let defaultIndex = 0;
   try {
     defaultIndex = Number(BigInt(userId) >> 22n) % 6;
   } catch {
     defaultIndex = 0;
   }
-
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
-
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.hasAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const { userIds } = await request.json();
     if (!Array.isArray(userIds) || userIds.length === 0) {
       return NextResponse.json({ error: 'userIds array required' }, { status: 400 });
     }
-
     const limitedIds = [...new Set(
       userIds
         .map((id) => (typeof id === 'string' ? id.trim() : String(id ?? '').trim()))
         .filter((id) => /^\d{5,25}$/.test(id))
-    )].slice(0, 500); 
-
+    )].slice(0, 500);
     if (limitedIds.length === 0) {
       return NextResponse.json({ users: {} }, { status: 200 });
     }
     const results: Record<string, UserData> = {};
-
-    
     try {
       const cachedUsers = await getCachedUsers(limitedIds);
-
       for (const cached of cachedUsers) {
         if (cached && cached.username) {
-          
           let roles: string[] = [];
           if (cached.roles) {
             try {
@@ -82,7 +69,6 @@ export async function POST(request: NextRequest) {
               roles = [];
             }
           }
-
           results[cached.user_id] = {
             id: cached.user_id,
             username: cached.username,
@@ -100,16 +86,11 @@ export async function POST(request: NextRequest) {
       }
     } catch (cacheError) {
       console.error('[user-data] Cache query failed:', getErrorMessage(cacheError));
-      
     }
-
-    
     const missingIds = limitedIds.filter(id => !results[id]);
-
     if (missingIds.length > 0) {
       const botToken = process.env.DISCORD_BOT_TOKEN;
       if (botToken) {
-        
         const guildMembers = new Map<string, any>();
         try {
           const memberPromises = missingIds.slice(0, 100).map(async (userId) => {
@@ -126,11 +107,9 @@ export async function POST(request: NextRequest) {
                 return { userId, member };
               }
             } catch {
-              
             }
             return null;
           });
-
           const memberResults = await Promise.allSettled(memberPromises);
           memberResults.forEach((result) => {
             if (result.status === 'fulfilled' && result.value) {
@@ -138,26 +117,20 @@ export async function POST(request: NextRequest) {
             }
           });
         } catch {
-          
         }
-
-        
         const batchSize = 10;
         for (let i = 0; i < missingIds.length && i < 100; i += batchSize) {
           const batch = missingIds.slice(i, i + batchSize);
-          
           const promises = batch.map(async (userId) => {
             try {
               const res = await fetch(`https://discord.com/api/v10/users/${userId}`, {
                 headers: { Authorization: `Bot ${botToken}` },
                 cache: 'no-store',
               });
-              
               if (res.ok) {
                 const user = await res.json();
                 const member = guildMembers.get(userId);
                 const inGuild = !!member;
-                
                 return {
                   id: userId,
                   username: user.username,
@@ -173,26 +146,20 @@ export async function POST(request: NextRequest) {
                 };
               }
             } catch {
-              
             }
             return null;
           });
-
           const batchResults = await Promise.allSettled(promises);
           batchResults.forEach((result) => {
             if (result.status === 'fulfilled' && result.value) {
               results[result.value.id] = result.value;
             }
           });
-
-          
           if (i + batchSize < missingIds.length) {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
         }
       }
-
-      
       for (const userId of missingIds) {
         if (!results[userId]) {
           results[userId] = {
@@ -211,7 +178,6 @@ export async function POST(request: NextRequest) {
         }
       }
     }
-
     return NextResponse.json({ users: results }, { status: 200 });
   } catch (error: unknown) {
     console.error('[user-data] Error:', getErrorMessage(error));

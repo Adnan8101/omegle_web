@@ -3,9 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
-
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || process.env.BOT_TOKEN;
-
 export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -16,21 +14,17 @@ export async function GET(request: NextRequest) {
         if (!perms?.hasFullAccess) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
-
-        
         const allChannels = await prismaBot.discordChannelCache.findMany({
             where: {
                 guild_id: GUILD_ID,
                 is_deleted: false,
-                type: { in: [2, 4, 13] }, 
+                type: { in: [2, 4, 13] },
             },
             orderBy: [{ parent_id: 'asc' }, { position: 'asc' }],
         });
-
         const categories = allChannels
             .filter((c) => c.type === 4)
             .map((c) => ({ id: c.channel_id, name: c.name, type: 'category' }));
-
         const voiceChannels = allChannels
             .filter((c) => c.type === 2 || c.type === 13)
             .map((c) => ({
@@ -40,8 +34,6 @@ export async function GET(request: NextRequest) {
                 parent_name: c.parent_name,
                 type: 'voice',
             }));
-
-        
         let roles: any[] = [];
         if (BOT_TOKEN) {
             try {
@@ -62,10 +54,8 @@ export async function GET(request: NextRequest) {
                         .sort((a: any, b: any) => b.position - a.position);
                 }
             } catch {
-                
             }
         }
-
         return NextResponse.json({ categories, voiceChannels, roles });
     } catch (error) {
         console.error('[VCAutomation] GET /discord-data error:', error);

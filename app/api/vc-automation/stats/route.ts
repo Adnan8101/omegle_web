@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
-
 export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -14,7 +13,6 @@ export async function GET(request: NextRequest) {
         if (!perms?.hasFullAccess) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
-
         const [totalRules, enabledRules, totalGrants, recentActions] = await Promise.all([
             prismaBot.voiceAutomationRule.count({ where: { guild_id: GUILD_ID } }),
             prismaBot.voiceAutomationRule.count({ where: { guild_id: GUILD_ID, enabled: true } }),
@@ -25,13 +23,10 @@ export async function GET(request: NextRequest) {
                 take: 20,
             }),
         ]);
-
-        
         const rules = await prismaBot.voiceAutomationRule.findMany({
             where: { guild_id: GUILD_ID },
             select: { id: true, name: true, reward_role_id: true, enabled: true, rolling_days: true, required_hours: true },
         });
-
         const ruleStats = await Promise.all(
             rules.map(async (rule) => {
                 const count = await prismaBot.voiceAutomationGranted.count({
@@ -40,7 +35,6 @@ export async function GET(request: NextRequest) {
                 return { ...rule, grant_count: count };
             })
         );
-
         return NextResponse.json({
             totalRules,
             enabledRules,

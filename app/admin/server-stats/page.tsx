@@ -1,5 +1,4 @@
 'use client';
-
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -10,10 +9,8 @@ import {
 } from 'react-icons/fi';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DateRangeFilter from '@/components/DateRangeFilter';
-
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
-    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
@@ -26,7 +23,6 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, size: number 
   const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
-
 interface UserRanking {
     user_id: string;
     vc_duration: number;
@@ -39,7 +35,6 @@ interface UserRanking {
     in_guild?: boolean;
     nickname?: string;
 }
-
 interface ChannelStats {
     channel_id: string;
     channel_name: string;
@@ -51,7 +46,6 @@ interface ChannelStats {
     message_count?: number;
     total_characters?: number;
 }
-
 interface Contributor {
     channel_id: string;
     user_id: string;
@@ -65,10 +59,8 @@ interface Contributor {
     in_guild?: boolean;
     nickname?: string;
 }
-
 type RankSort = 'combined' | 'vc' | 'text';
 type ActiveTab = 'users' | 'voice' | 'messages';
-
 export default function ServerStatsPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -79,7 +71,6 @@ export default function ServerStatsPage() {
     const [dateRange, setDateRange] = useState<{ startDate: string | null; endDate: string | null }>({ startDate: null, endDate: null });
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [isRedirecting, setIsRedirecting] = useState(false);
-
     const [totalMembers, setTotalMembers] = useState(0);
     const [userRankings, setUserRankings] = useState<UserRanking[]>([]);
     const [topVoiceChannels, setTopVoiceChannels] = useState<ChannelStats[]>([]);
@@ -88,24 +79,18 @@ export default function ServerStatsPage() {
     const [msgContributors, setMsgContributors] = useState<Record<string, Contributor[]>>({});
     const [expandedVcContributors, setExpandedVcContributors] = useState<Set<string>>(new Set());
     const [expandedMsgContributors, setExpandedMsgContributors] = useState<Set<string>>(new Set());
-
     useEffect(() => {
         if (status === 'loading') return;
-        
         if (status === 'unauthenticated') {
             setIsRedirecting(true);
             router.replace('/admin');
             return;
         }
-        
         if (status === 'authenticated') {
           const perms = session?.user?.permissions;
-          
           const canAccess = perms?.hasFullAccess || perms?.hasModeratorAccess;
-          
           if (!canAccess) {
             setHasPermission(false);
-            
             if (perms?.hasCasinoAccess && !perms?.hasViewOnlyAccess) {
               setIsRedirecting(true);
               router.replace('/admin/casino');
@@ -118,17 +103,14 @@ export default function ServerStatsPage() {
             }
             return;
           }
-          
           setHasPermission(true);
         }
     }, [status, session, router]);
-    
     useEffect(() => {
         if (status === 'authenticated' && hasPermission) {
           fetchServerStats();
         }
     }, [status, hasPermission]);
-
     const fetchServerStats = useCallback(async (range?: { startDate: string | null; endDate: string | null }) => {
         setLoading(true);
         try {
@@ -138,21 +120,16 @@ export default function ServerStatsPage() {
             if (r.endDate) params.set('endDate', r.endDate);
             const res = await fetch(`/api/vctranscript/server-stats?${params}`);
             const data = await res.json();
-
-            
             const allUsers = [
                 ...(data.userRankings || []),
                 ...Object.values(data.vcContributorsByChannel || {}).flat(),
                 ...Object.values(data.msgContributorsByChannel || {}).flat(),
             ] as (UserRanking | Contributor)[];
-
             const missingUserIds = [...new Set(
                 allUsers
                     .filter((u: UserRanking | Contributor) => !u.username || !u.avatar_url)
                     .map((u: UserRanking | Contributor) => u.user_id)
             )].slice(0, 100);
-
-            
             let userMap: Record<string, { displayName: string; avatar: string; username: string }> = {};
             if (missingUserIds.length > 0) {
                 try {
@@ -169,8 +146,6 @@ export default function ServerStatsPage() {
                     console.error('Failed to fetch missing users:', e);
                 }
             }
-
-            
             const enrichedRankings = (data.userRankings || []).map((user: UserRanking) => {
                 if (userMap[user.user_id]) {
                     const fetched = userMap[user.user_id];
@@ -183,8 +158,6 @@ export default function ServerStatsPage() {
                 }
                 return user;
             });
-
-            
             const enrichContributors = (contribs: Record<string, Contributor[]>) => {
                 const result: Record<string, Contributor[]> = {};
                 for (const [channelId, list] of Object.entries(contribs)) {
@@ -203,7 +176,6 @@ export default function ServerStatsPage() {
                 }
                 return result;
             };
-
             setTotalMembers(data.totalMembers || 0);
             setUserRankings(enrichedRankings);
             setTopVoiceChannels(data.topVoiceChannels || []);
@@ -216,12 +188,10 @@ export default function ServerStatsPage() {
             setLoading(false);
         }
     }, [dateRange]);
-
     const handleDateChange = (range: { startDate: string | null; endDate: string | null }) => {
         setDateRange(range);
         fetchServerStats(range);
     };
-
     const formatDuration = (seconds: number) => {
         if (!seconds) return '0m';
         const days = Math.floor(seconds / 86400);
@@ -231,14 +201,12 @@ export default function ServerStatsPage() {
         if (hours > 0) return `${hours}h ${minutes}m`;
         return `${minutes}m`;
     };
-
     const getUserDisplay = (user: UserRanking | Contributor) => ({
         name: user.nickname || user.display_name || user.username || 'Unknown User',
         avatar: buildAvatarUrl(user.user_id, user.avatar_url || null, 128),
         username: user.username || 'unknown',
         inGuild: user.in_guild ?? false,
     });
-
     const sortedUsers = [...userRankings].sort((a, b) => {
         switch (rankSort) {
             case 'vc': return b.vc_duration - a.vc_duration;
@@ -247,7 +215,6 @@ export default function ServerStatsPage() {
             default: return 0;
         }
     });
-
     const toggleChannel = (channelId: string) => {
         setExpandedChannels(prev => {
             const next = new Set(prev);
@@ -256,15 +223,12 @@ export default function ServerStatsPage() {
             return next;
         });
     };
-
     const getRankBadge = (idx: number) => {
         if (idx === 0) return <span className="text-lg">🥇</span>;
         if (idx === 1) return <span className="text-lg">🥈</span>;
         if (idx === 2) return <span className="text-lg">🥉</span>;
         return <span className="text-sm font-bold text-[rgb(var(--color-text-tertiary))]">#{idx + 1}</span>;
     };
-
-    
     if (status === 'loading' || hasPermission === null || isRedirecting) {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -277,8 +241,6 @@ export default function ServerStatsPage() {
             </div>
         );
     }
-
-    
     if (hasPermission === false) {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -313,7 +275,6 @@ export default function ServerStatsPage() {
             </div>
         );
     }
-
     if (loading) {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
@@ -332,16 +293,14 @@ export default function ServerStatsPage() {
             </div>
         );
     }
-
     const totalVcTime = userRankings.reduce((sum, u) => sum + u.vc_duration, 0);
     const totalMessages = userRankings.reduce((sum, u) => sum + u.message_count, 0);
-    const totalUsers = totalMembers || userRankings.length; 
+    const totalUsers = totalMembers || userRankings.length;
     const totalSessions = userRankings.reduce((sum, u) => sum + (u.vc_sessions || 0), 0);
     const totalCharacters = userRankings.reduce((sum, u) => sum + (u.total_characters || 0), 0);
     const avgVcTime = totalUsers > 0 ? totalVcTime / totalUsers : 0;
     const avgMessages = totalUsers > 0 ? totalMessages / totalUsers : 0;
     const avgSessionDuration = totalSessions > 0 ? totalVcTime / totalSessions : 0;
-
     const toggleVcExpand = (channelId: string) => {
         setExpandedVcContributors(prev => {
             const next = new Set(prev);
@@ -350,7 +309,6 @@ export default function ServerStatsPage() {
             return next;
         });
     };
-
     const toggleMsgExpand = (channelId: string) => {
         setExpandedMsgContributors(prev => {
             const next = new Set(prev);
@@ -359,17 +317,11 @@ export default function ServerStatsPage() {
             return next;
         });
     };
-
-    
     const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#f97316', '#ef4444', '#84cc16'];
-
-    
     const activityDistribution = [
-        { name: 'Voice Chat', value: Math.round(totalVcTime / 60), color: '#8b5cf6' }, 
+        { name: 'Voice Chat', value: Math.round(totalVcTime / 60), color: '#8b5cf6' },
         { name: 'Messages', value: totalMessages, color: '#10b981' },
     ];
-
-    
     const top10VcUsers = [...userRankings]
         .sort((a, b) => b.vc_duration - a.vc_duration)
         .slice(0, 10)
@@ -378,8 +330,6 @@ export default function ServerStatsPage() {
             hours: Math.round(u.vc_duration / 3600 * 10) / 10,
             fullName: getUserDisplay(u).name,
         }));
-
-    
     const top10ChatUsers = [...userRankings]
         .sort((a, b) => b.message_count - a.message_count)
         .slice(0, 10)
@@ -388,23 +338,18 @@ export default function ServerStatsPage() {
             messages: u.message_count,
             fullName: getUserDisplay(u).name,
         }));
-
-    
     const channelActivityData = topVoiceChannels.slice(0, 8).map((ch, idx) => ({
         name: (ch.channel_name || 'Unknown').slice(0, 10) + ((ch.channel_name || '').length > 10 ? '...' : ''),
         sessions: ch.total_sessions || 0,
         duration: Math.round((ch.total_duration || 0) / 3600 * 10) / 10,
         fill: COLORS[idx % COLORS.length],
     }));
-
-    
     const messageChannelData = topMessageChannels.slice(0, 8).map((ch, idx) => ({
         name: (ch.channel_name || 'Unknown').slice(0, 10) + ((ch.channel_name || '').length > 10 ? '...' : ''),
         messages: Number(ch.message_count) || 0,
         users: ch.unique_users || 0,
         fill: COLORS[idx % COLORS.length],
     }));
-
     return (
         <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
@@ -419,7 +364,6 @@ export default function ServerStatsPage() {
                     </p>
                     <DateRangeFilter onChange={handleDateChange} initialRange={dateRange} />
                 </div>
-
                 {}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-4 sm:p-5 border border-[rgb(var(--color-border))] hover:border-blue-500/50 transition-colors">
@@ -451,7 +395,6 @@ export default function ServerStatsPage() {
                         <p className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))]">{totalSessions.toLocaleString()}</p>
                     </div>
                 </div>
-
                 {}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl p-3 sm:p-5 border border-[rgb(var(--color-border))]">
@@ -483,7 +426,6 @@ export default function ServerStatsPage() {
                         <p className="text-lg sm:text-2xl font-bold text-indigo-400">{totalCharacters.toLocaleString()}</p>
                     </div>
                 </div>
-
                 {}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     {}
@@ -526,7 +468,6 @@ export default function ServerStatsPage() {
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
-
                     {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                         <h3 className="text-sm sm:text-lg font-bold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
@@ -549,7 +490,6 @@ export default function ServerStatsPage() {
                             </ResponsiveContainer>
                         </div>
                     </div>
-
                     {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                         <h3 className="text-sm sm:text-lg font-bold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
@@ -572,7 +512,6 @@ export default function ServerStatsPage() {
                             </ResponsiveContainer>
                         </div>
                     </div>
-
                     {}
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))]">
                         <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
@@ -592,7 +531,6 @@ export default function ServerStatsPage() {
                         </ResponsiveContainer>
                     </div>
                 </div>
-
                 {}
                 {channelActivityData.length > 0 && (
                     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 border border-[rgb(var(--color-border))] mb-8">
@@ -622,7 +560,6 @@ export default function ServerStatsPage() {
                         </ResponsiveContainer>
                     </div>
                 )}
-
                 {}
                 <div className="flex border-b border-[rgb(var(--color-border))] mb-8 overflow-x-auto no-scrollbar gap-1 touch-pan-x snap-x pb-1">
                     {([
@@ -647,7 +584,6 @@ export default function ServerStatsPage() {
                         </button>
                     ))}
                 </div>
-
                 {}
                 {activeTab === 'users' && (
                     <div className="space-y-4">
@@ -670,7 +606,6 @@ export default function ServerStatsPage() {
                                 </button>
                             ))}
                         </div>
-
                         {}
                         <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))] overflow-hidden -mx-4 sm:mx-0 shadow-apple-md">
                             <div className="overflow-x-auto w-full touch-pan-x">
@@ -733,7 +668,6 @@ export default function ServerStatsPage() {
                         </div>
                     </div>
                 )}
-
                 {}
                 {activeTab === 'voice' && (
                     <div className="space-y-4">
@@ -774,14 +708,12 @@ export default function ServerStatsPage() {
                                             </button>
                                         </div>
                                     </div>
-
                                     {}
                                     {expandedChannels.has(channel.channel_id) && vcContributors[channel.channel_id] && (() => {
                                         const contributors = vcContributors[channel.channel_id];
                                         const isExpanded = expandedVcContributors.has(channel.channel_id);
                                         const displayedContributors = isExpanded ? contributors : contributors.slice(0, 10);
                                         const hasMore = contributors.length > 10;
-
                                         return (
                                             <div className="border-t border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-tertiary))] p-4">
                                                 <div className="flex items-center justify-between mb-3">
@@ -835,7 +767,6 @@ export default function ServerStatsPage() {
                         )}
                     </div>
                 )}
-
                 {}
                 {activeTab === 'messages' && (
                     <div className="space-y-4">
@@ -875,14 +806,12 @@ export default function ServerStatsPage() {
                                             </button>
                                         </div>
                                     </div>
-
                                     {}
                                     {expandedChannels.has(`msg-${channel.channel_id}`) && msgContributors[channel.channel_id] && (() => {
                                         const contributors = msgContributors[channel.channel_id];
                                         const isExpanded = expandedMsgContributors.has(channel.channel_id);
                                         const displayedContributors = isExpanded ? contributors : contributors.slice(0, 10);
                                         const hasMore = contributors.length > 10;
-
                                         return (
                                             <div className="border-t border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-tertiary))] p-4">
                                                 <div className="flex items-center justify-between mb-3">

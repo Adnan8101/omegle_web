@@ -5,19 +5,16 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { Providers } from "./providers";
 import FrontendNavbarMount from '@/components/FrontendNavbarMount';
 import FrontendFooterMount from '@/components/FrontendFooterMount';
-
 const displayFont = Sora({
   subsets: ['latin'],
   variable: '--font-display',
   weight: ['500', '600', '700', '800'],
 });
-
 const bodyFont = Manrope({
   subsets: ['latin'],
   variable: '--font-body',
   weight: ['400', '500', '600', '700'],
 });
-
 export const metadata: Metadata = {
   title: "Omeglee Community - Where Connections Become Conversations",
   description: "Join the Omeglee Community - A vibrant Discord community with thousands of active members. Apply to join our professional moderation team.",
@@ -32,13 +29,11 @@ export const metadata: Metadata = {
     type: 'website',
   }
 };
-
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
 };
-
 export default function RootLayout({
   children,
 }: Readonly<{

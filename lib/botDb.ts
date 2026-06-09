@@ -1,39 +1,30 @@
 import { Pool } from 'pg';
 import { GUILD_ID, getErrorMessage } from './constants';
 import { cachedUserToDisplay, getUserDisplay as getUserDisplayFromCache, type CachedUser, type UserDisplay } from './userUtils';
-
 let pool: Pool | null = null;
-
 function getBotDatabaseConnectionString() {
   return process.env.BOT_DATABASE_URL || process.env.BOT_DATABASE_WRITE_URL || process.env.DATABASE_URL;
 }
-
 function getPool() {
   if (!pool) {
     const connectionString = getBotDatabaseConnectionString();
-
     if (!connectionString) {
       throw new Error('Bot database connection string is not configured');
     }
-
     pool = new Pool({
       connectionString,
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
       statement_timeout: 10000,
-      
       ssl: { rejectUnauthorized: false },
     });
-    
-    
     pool.on('error', (err) => {
       console.error('Bot DB pool error:', err.message);
     });
   }
   return pool;
 }
-
 export async function queryBotDb(query: string, params?: unknown[]) {
   let client;
   try {
@@ -48,12 +39,10 @@ export async function queryBotDb(query: string, params?: unknown[]) {
     if (client) client.release();
   }
 }
-
 interface DateFilter {
   startDate?: string | null;
   endDate?: string | null;
 }
-
 function buildDateClause(
   column: string,
   dateFilter: DateFilter,
@@ -75,11 +64,10 @@ function buildDateClause(
     params,
   };
 }
-
 export async function getUserVCStats(userId: string, guildId: string = GUILD_ID, dateFilter: DateFilter = {}) {
   const df = buildDateClause('joined_at', dateFilter, 3);
   const query = `
-    SELECT 
+    SELECT
       COUNT(*) as total_sessions,
       SUM(duration_seconds) as total_duration,
       COUNT(DISTINCT channel_id) as unique_channels,
@@ -101,10 +89,9 @@ export async function getUserVCStats(userId: string, guildId: string = GUILD_ID,
   const result = await queryBotDb(query, [userId, guildId, ...df.params]);
   return result[0] || {};
 }
-
 export async function getUserVoiceUserStats(userId: string, guildId: string = GUILD_ID) {
   const query = `
-    SELECT 
+    SELECT
       total_time_in_vc,
       total_time_speaking,
       total_time_muted,
@@ -118,7 +105,6 @@ export async function getUserVoiceUserStats(userId: string, guildId: string = GU
   const result = await queryBotDb(query, [userId, guildId]);
   return result[0] || null;
 }
-
 export async function getUserVCSessions(
   userId: string,
   guildId: string = GUILD_ID,
@@ -127,7 +113,7 @@ export async function getUserVCSessions(
 ) {
   const df = buildDateClause('vl.joined_at', dateFilter, 4);
   const query = `
-    SELECT 
+    SELECT
       vl.id,
       vl.channel_id,
       COALESCE(dcc.name, vl.channel_name) as channel_name,
@@ -159,11 +145,10 @@ export async function getUserVCSessions(
   `;
   return await queryBotDb(query, [userId, guildId, limit, ...df.params]);
 }
-
 export async function getAllUsersWithVCActivity(guildId: string = GUILD_ID, dateFilter: DateFilter = {}) {
   const df = buildDateClause('joined_at', dateFilter, 2);
   const query = `
-    SELECT 
+    SELECT
       user_id,
       COUNT(*) as session_count,
       SUM(duration_seconds) as total_duration,
@@ -176,11 +161,10 @@ export async function getAllUsersWithVCActivity(guildId: string = GUILD_ID, date
   `;
   return await queryBotDb(query, [guildId, ...df.params]);
 }
-
 export async function getAllUsersWithVCActivityAndProfiles(guildId: string = GUILD_ID, dateFilter: DateFilter = {}) {
   const df = buildDateClause('vl.joined_at', dateFilter, 2);
   const query = `
-    SELECT 
+    SELECT
       vl.user_id,
       COUNT(*) as session_count,
       SUM(vl.duration_seconds) as total_duration,
@@ -199,11 +183,10 @@ export async function getAllUsersWithVCActivityAndProfiles(guildId: string = GUI
   `;
   return await queryBotDb(query, [guildId, ...df.params]);
 }
-
 export async function getUserChatStats(userId: string, guildId: string = GUILD_ID, dateFilter: DateFilter = {}) {
   const df = buildDateClause('created_at', dateFilter, 3);
   const query = `
-    SELECT 
+    SELECT
       COUNT(*) as total_messages,
       COUNT(DISTINCT channel_id) as unique_channels,
       SUM(content_length) as total_characters,
@@ -216,10 +199,9 @@ export async function getUserChatStats(userId: string, guildId: string = GUILD_I
   const result = await queryBotDb(query, [userId, guildId, ...df.params]);
   return result[0] || {};
 }
-
 export async function getUserInteractions(userId: string, guildId: string = GUILD_ID) {
   const query = `
-    SELECT 
+    SELECT
       target_user_id,
       mutual_vc_sessions,
       mutual_vc_duration,
@@ -233,10 +215,9 @@ export async function getUserInteractions(userId: string, guildId: string = GUIL
   `;
   return await queryBotDb(query, [userId, guildId]);
 }
-
 export async function getChannelActivity(guildId: string = GUILD_ID) {
   const query = `
-    SELECT 
+    SELECT
       vl.channel_id,
       COALESCE(dcc.name, vl.channel_name, vl.channel_id) as channel_name,
       COUNT(DISTINCT vl.user_id) as unique_users,
@@ -252,7 +233,6 @@ export async function getChannelActivity(guildId: string = GUILD_ID) {
   `;
   return await queryBotDb(query, [guildId]);
 }
-
 export async function getAllChatMessages(
   limit: number = 1000,
   guildId: string = GUILD_ID,
@@ -260,7 +240,7 @@ export async function getAllChatMessages(
 ) {
   const df = buildDateClause('created_at', dateFilter, 3);
   const query = `
-    SELECT 
+    SELECT
       id,
       user_id,
       channel_id,
@@ -281,10 +261,9 @@ export async function getAllChatMessages(
   console.log('[botDb] getAllChatMessages returned', result?.length || 0, 'rows');
   return result;
 }
-
 export async function getCachedUser(userId: string) {
   const query = `
-    SELECT user_id, username, display_name, avatar_url, global_name, 
+    SELECT user_id, username, display_name, avatar_url, global_name,
            discriminator, in_guild, roles, nickname, joined_at, updated_at
     FROM discord_user_cache
     WHERE user_id = $1
@@ -292,48 +271,41 @@ export async function getCachedUser(userId: string) {
   const result = await queryBotDb(query, [userId]);
   return result[0] || null;
 }
-
 export async function getCachedUsers(userIds: string[]) {
   if (!userIds.length) return [];
   const placeholders = userIds.map((_, i) => `$${i + 1}`).join(', ');
   const query = `
-    SELECT user_id, username, display_name, avatar_url, global_name, 
+    SELECT user_id, username, display_name, avatar_url, global_name,
            discriminator, in_guild, roles, nickname, joined_at, updated_at
     FROM discord_user_cache
     WHERE user_id IN (${placeholders})
   `;
   return await queryBotDb(query, userIds);
 }
-
 export async function getAllCachedUsers() {
   const query = `
-    SELECT user_id, username, display_name, avatar_url, global_name, 
+    SELECT user_id, username, display_name, avatar_url, global_name,
            discriminator, in_guild, nickname, updated_at
     FROM discord_user_cache
     ORDER BY display_name ASC
   `;
   return await queryBotDb(query);
 }
-
 export async function getUserDisplay(userId: string, size: number = 128): Promise<UserDisplay> {
   const cachedUser = await getCachedUser(userId);
   return getUserDisplayFromCache(cachedUser as CachedUser | null, userId, size);
 }
-
 export async function getUsersDisplay(userIds: string[], size: number = 128): Promise<Map<string, UserDisplay>> {
   const cachedUsers = await getCachedUsers(userIds);
   const userMap = new Map<string, CachedUser>();
   cachedUsers.forEach((user: any) => userMap.set(user.user_id, user as CachedUser));
-  
   const result = new Map<string, UserDisplay>();
   userIds.forEach(userId => {
     const cached = userMap.get(userId);
     result.set(userId, getUserDisplayFromCache(cached || null, userId, size));
   });
-  
   return result;
 }
-
 export async function getCachedChannel(channelId: string) {
   const query = `
     SELECT channel_id, guild_id, name, type, parent_id, parent_name,
@@ -344,7 +316,6 @@ export async function getCachedChannel(channelId: string) {
   const result = await queryBotDb(query, [channelId]);
   return result[0] || null;
 }
-
 export async function getCachedChannels(channelIds: string[]) {
   if (!channelIds.length) return [];
   const placeholders = channelIds.map((_, i) => `$${i + 1}`).join(', ');
@@ -356,7 +327,6 @@ export async function getCachedChannels(channelIds: string[]) {
   `;
   return await queryBotDb(query, channelIds);
 }
-
 export async function getAllCachedChannels(guildId: string = GUILD_ID) {
   const query = `
     SELECT channel_id, name, type, parent_id, parent_name,

@@ -1,5 +1,4 @@
 'use client';
-
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -7,10 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FiUsers, FiClock, FiActivity, FiSearch, FiArrowUp, FiChevronRight } from 'react-icons/fi';
 import DateRangeFilter from '@/components/DateRangeFilter';
-
 function buildAvatarUrl(userId: string, avatarHash: string | null, discriminator: string = '0', size: number = 128): string {
   if (avatarHash) {
-    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
@@ -20,39 +17,33 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, discriminator
     const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
     return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=${size}`;
   }
-  
   if (discriminator === '0' || !discriminator) {
     if (!/^\d+$/.test(userId)) {
       return 'https://cdn.discordapp.com/embed/avatars/0.png';
     }
-
     let defaultIndex = 0;
     try {
       defaultIndex = Number(BigInt(userId) >> 22n) % 6;
     } catch {
       defaultIndex = 0;
     }
-
     return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
   }
   const parsedDiscriminator = parseInt(discriminator, 10);
   const defaultIndex = Number.isNaN(parsedDiscriminator) ? 0 : parsedDiscriminator % 5;
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
-
 interface User {
   user_id: string;
   session_count: number;
   total_duration: number;
   last_active: string;
-  
   username?: string;
   display_name?: string;
   avatar_url?: string;
   in_guild?: boolean;
   nickname?: string;
 }
-
 interface DiscordUser {
   id: string;
   username: string;
@@ -60,10 +51,8 @@ interface DiscordUser {
   avatar: string | null;
   inGuild: boolean;
 }
-
 type SortField = 'duration' | 'sessions' | 'last_active' | 'name';
 type SortDir = 'asc' | 'desc';
-
 export default function VCTranscriptPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -77,7 +66,6 @@ export default function VCTranscriptPage() {
   const [dateRange, setDateRange] = useState<{ startDate: string | null; endDate: string | null }>({ startDate: null, endDate: null });
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
-
   const fetchUsers = useCallback(async (range?: { startDate: string | null; endDate: string | null }) => {
     setLoading(true);
     try {
@@ -90,12 +78,8 @@ export default function VCTranscriptPage() {
         const data = await response.json();
         const userList: User[] = data.users || [];
         setUsers(userList);
-
-        
         const userIds = userList.map((u: User) => u.user_id);
-        
         if (userIds.length > 0) {
-          
           const batchRes = await fetch('/api/discord/user-data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -127,25 +111,18 @@ export default function VCTranscriptPage() {
       setLoading(false);
     }
   }, [dateRange]);
-
-  
   useEffect(() => {
     if (status === 'loading') return;
-    
     if (status === 'unauthenticated') {
       setIsRedirecting(true);
       router.replace('/admin');
       return;
     }
-    
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
-      
       const canAccess = perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasViewOnlyAccess;
-      
       if (!canAccess) {
         setHasPermission(false);
-        
         if (perms?.hasCasinoAccess) {
           setIsRedirecting(true);
           router.replace('/admin/casino');
@@ -155,13 +132,10 @@ export default function VCTranscriptPage() {
         }
         return;
       }
-      
       setHasPermission(true);
       fetchUsers();
     }
   }, [status, session, router, fetchUsers]);
-
-  
   if (status === 'loading' || hasPermission === null || isRedirecting) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -174,8 +148,6 @@ export default function VCTranscriptPage() {
       </div>
     );
   }
-
-  
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -208,13 +180,11 @@ export default function VCTranscriptPage() {
       </div>
     );
   }
-
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     return `${hours}h ${minutes}m`;
   };
-
   const getUser = (userId: string): DiscordUser => {
     return discordUsers.get(userId) || {
       id: userId,
@@ -224,7 +194,6 @@ export default function VCTranscriptPage() {
       inGuild: false,
     };
   };
-
   const filteredUsers = users
     .filter(user => {
       const du = getUser(user.user_id);
@@ -243,7 +212,6 @@ export default function VCTranscriptPage() {
         default: return 0;
       }
     });
-
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir(d => d === 'desc' ? 'asc' : 'desc');
@@ -252,7 +220,6 @@ export default function VCTranscriptPage() {
       setSortDir('desc');
     }
   };
-
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -266,7 +233,6 @@ export default function VCTranscriptPage() {
           </p>
           <DateRangeFilter onChange={(r) => { setDateRange(r); fetchUsers(r); }} initialRange={dateRange} />
         </div>
-
         {hasDbError && users.length === 0 && (
           <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-3">
             <span className="text-yellow-500 text-lg">⚠️</span>
@@ -278,7 +244,6 @@ export default function VCTranscriptPage() {
             </div>
           </div>
         )}
-
         {}
         <div className="mb-6">
           <div className="relative">
@@ -292,7 +257,6 @@ export default function VCTranscriptPage() {
             />
           </div>
         </div>
-
         {loading ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -342,7 +306,6 @@ export default function VCTranscriptPage() {
                 </div>
               </div>
             )}
-
             {filteredUsers.length === 0 && users.length === 0 ? (
               <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))] p-12 text-center">
                 <div className="text-6xl mb-4">📭</div>
@@ -450,7 +413,6 @@ export default function VCTranscriptPage() {
                     </tbody>
                   </table>
                 </div>
-
                 {}
                 <div className="px-6 py-3 bg-[rgb(var(--color-bg-tertiary))] border-t border-[rgb(var(--color-border))]">
                   <p className="text-xs text-[rgb(var(--color-text-tertiary))]">

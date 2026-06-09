@@ -1,5 +1,4 @@
 'use client';
-
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -8,7 +7,6 @@ import {
     FiUsers, FiClock, FiAlertCircle, FiCheck, FiX,
     FiChevronDown, FiMic, FiTag, FiList, FiRefreshCw, FiInfo
 } from 'react-icons/fi';
-
 interface AutomationRule {
     id: string;
     name: string;
@@ -23,14 +21,12 @@ interface AutomationRule {
     created_at: string;
     grant_count?: number;
 }
-
 interface DiscordRole {
     id: string;
     name: string;
     color: number;
     position: number;
 }
-
 interface VoiceChannel {
     id: string;
     name: string;
@@ -38,13 +34,11 @@ interface VoiceChannel {
     parent_name: string | null;
     type: string;
 }
-
 interface Category {
     id: string;
     name: string;
     type: string;
 }
-
 interface AuditEntry {
     id: string;
     rule_id: string | null;
@@ -55,7 +49,6 @@ interface AuditEntry {
     meta: any;
     rule?: { name: string; reward_role_id: string } | null;
 }
-
 interface Stats {
     totalRules: number;
     enabledRules: number;
@@ -63,12 +56,10 @@ interface Stats {
     recentActions: AuditEntry[];
     ruleStats: (AutomationRule & { grant_count: number })[];
 }
-
 function roleColor(color: number): string {
     if (!color) return '#99aab5';
     return `#${color.toString(16).padStart(6, '0')}`;
 }
-
 function actionBadge(action: string) {
     const map: Record<string, { label: string; bg: string; text: string }> = {
         role_granted: { label: 'Granted', bg: 'bg-green-500/20', text: 'text-green-400' },
@@ -85,7 +76,6 @@ function actionBadge(action: string) {
         </span>
     );
 }
-
 interface RuleModalProps {
     rule?: AutomationRule | null;
     roles: DiscordRole[];
@@ -95,7 +85,6 @@ interface RuleModalProps {
     onClose: () => void;
     onSave: () => void;
 }
-
 function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onClose, onSave }: RuleModalProps) {
     const isEdit = !!rule;
     const [form, setForm] = useState({
@@ -112,9 +101,7 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [conflictRuleId, setConflictRuleId] = useState('');
-
     const set = (key: string, val: any) => setForm(f => ({ ...f, [key]: val }));
-
     const toggleExcluded = (channelId: string) => {
         setForm(f => ({
             ...f,
@@ -123,12 +110,9 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                 : [...f.excluded_channel_ids, channelId],
         }));
     };
-
-    
     const channelsInSelectedCategory = form.target_type === 'category'
         ? voiceChannels.filter(c => c.parent_id === form.target_id)
         : [];
-
     const handleSave = async () => {
         setError('');
         setConflictRuleId('');
@@ -139,7 +123,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
         const hours = parseFloat(form.required_hours);
         if (isNaN(days) || days < 1) { setError('Rolling days must be at least 1.'); return; }
         if (isNaN(hours) || hours <= 0) { setError('Required hours must be greater than 0.'); return; }
-
         setSaving(true);
         try {
             const url = isEdit ? `/api/vc-automation/rules/${rule!.id}` : '/api/vc-automation/rules';
@@ -172,10 +155,8 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
             setSaving(false);
         }
     };
-
     const conflictRule = existingRules.find(r => r.id === conflictRuleId);
     const selectedRole = roles.find(r => r.id === form.reward_role_id);
-
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -188,7 +169,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                         <FiX className="w-5 h-5 text-[rgb(var(--color-text-secondary))]" />
                     </button>
                 </div>
-
                 <div className="p-6 space-y-5">
                     {}
                     <div>
@@ -201,7 +181,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                             className="w-full px-4 py-2.5 bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                         />
                     </div>
-
                     {}
                     <div>
                         <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-2">Target Type</label>
@@ -220,7 +199,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                             ))}
                         </div>
                     </div>
-
                     {}
                     {form.target_type === 'category' ? (
                         <div>
@@ -235,7 +213,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                                 ))}
                             </select>
-
                             {}
                             {form.target_id && channelsInSelectedCategory.length > 0 && (
                                 <div className="mt-3">
@@ -275,7 +252,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                             </select>
                         </div>
                     )}
-
                     {}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -300,7 +276,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                             />
                         </div>
                     </div>
-
                     {}
                     <div>
                         <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-2">Reward Role</label>
@@ -326,7 +301,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                             </div>
                         )}
                     </div>
-
                     {}
                     <div className="flex items-center justify-between p-4 bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-xl">
                         <div>
@@ -344,7 +318,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.count_deafened ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                     </div>
-
                     {}
                     {isEdit && (
                         <div className="flex items-center justify-between p-4 bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-xl">
@@ -360,7 +333,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                             </button>
                         </div>
                     )}
-
                     {}
                     {conflictRule && (
                         <div className="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
@@ -373,7 +345,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                             </div>
                         </div>
                     )}
-
                     {}
                     {error && !conflictRule && (
                         <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
@@ -382,7 +353,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
                         </div>
                     )}
                 </div>
-
                 {}
                 <div className="flex items-center justify-end gap-3 p-6 border-t border-[rgb(var(--color-border))]">
                     <button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-bg-primary))] transition-colors font-medium">
@@ -400,7 +370,6 @@ function RuleModal({ rule, roles, voiceChannels, categories, existingRules, onCl
         </div>
     );
 }
-
 export default function VCAutomationPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -418,7 +387,6 @@ export default function VCAutomationPage() {
     const [auditPage, setAuditPage] = useState(1);
     const [auditTotal, setAuditTotal] = useState(0);
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
@@ -441,7 +409,6 @@ export default function VCAutomationPage() {
             setLoading(false);
         }
     }, []);
-
     const loadAudit = useCallback(async (page = 1) => {
         try {
             const res = await fetch(`/api/vc-automation/audit?page=${page}&pageSize=20`);
@@ -452,7 +419,6 @@ export default function VCAutomationPage() {
             }
         } catch {}
     }, []);
-
     useEffect(() => {
         if (status === 'loading') return;
         if (status === 'unauthenticated') { router.replace('/admin'); return; }
@@ -464,11 +430,9 @@ export default function VCAutomationPage() {
             loadAudit();
         }
     }, [status, session, router, loadData, loadAudit]);
-
     useEffect(() => {
         if (activeTab === 'audit') loadAudit(auditPage);
     }, [activeTab, auditPage, loadAudit]);
-
     const deleteRule = async (id: string) => {
         if (!confirm('Delete this automation rule? Roles will no longer be managed by it.')) return;
         setDeletingId(id);
@@ -478,7 +442,6 @@ export default function VCAutomationPage() {
         } catch {}
         setDeletingId(null);
     };
-
     const getRoleName = (roleId: string) => roles.find(r => r.id === roleId)?.name || roleId;
     const getRoleColor = (roleId: string) => {
         const role = roles.find(r => r.id === roleId);
@@ -492,7 +455,6 @@ export default function VCAutomationPage() {
         const ch = voiceChannels.find(c => c.id === rule.target_id);
         return `🔊 ${ch?.name || rule.target_id}`;
     };
-
     if (status === 'loading' || hasPermission === null) {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -503,11 +465,9 @@ export default function VCAutomationPage() {
             </div>
         );
     }
-
     return (
         <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
-
                 {}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
@@ -522,7 +482,6 @@ export default function VCAutomationPage() {
                         </div>
                     </div>
                 </div>
-
                 {}
                 {stats && (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
@@ -542,7 +501,6 @@ export default function VCAutomationPage() {
                         ))}
                     </div>
                 )}
-
                 {}
                 <div className="flex items-center gap-1 mb-6 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl p-1 w-fit">
                     {(['rules', 'audit'] as const).map(tab => (
@@ -558,7 +516,6 @@ export default function VCAutomationPage() {
                         </button>
                     ))}
                 </div>
-
                 {}
                 {activeTab === 'rules' && (
                     <div>
@@ -574,7 +531,6 @@ export default function VCAutomationPage() {
                                 Add Rule
                             </button>
                         </div>
-
                         {loading ? (
                             <div className="space-y-3">
                                 {[...Array(3)].map((_, i) => (
@@ -613,7 +569,6 @@ export default function VCAutomationPage() {
                                                         <span className="text-xs px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400 font-medium">Disabled</span>
                                                     )}
                                                 </div>
-
                                                 <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-2">
                                                     <div className="flex items-center gap-1.5 text-sm text-[rgb(var(--color-text-secondary))]">
                                                         <FiMic className="w-3.5 h-3.5" />
@@ -634,7 +589,6 @@ export default function VCAutomationPage() {
                                                         <span>{rule.grant_count ?? 0} users holding role</span>
                                                     </div>
                                                 </div>
-
                                                 <div className="flex flex-wrap gap-2 mt-2.5">
                                                     {rule.count_deafened && (
                                                         <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/20">Counts deafened</span>
@@ -646,7 +600,6 @@ export default function VCAutomationPage() {
                                                     )}
                                                 </div>
                                             </div>
-
                                             <div className="flex items-center gap-2 flex-shrink-0">
                                                 <button
                                                     onClick={() => router.push(`/admin/vc-automation/${rule.id}`)}
@@ -678,7 +631,6 @@ export default function VCAutomationPage() {
                         )}
                     </div>
                 )}
-
                 {}
                 {activeTab === 'audit' && (
                     <div>
@@ -691,7 +643,6 @@ export default function VCAutomationPage() {
                                 Refresh
                             </button>
                         </div>
-
                         {audit.length === 0 ? (
                             <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl p-12 text-center">
                                 <div className="text-5xl mb-4">📜</div>
@@ -734,7 +685,6 @@ export default function VCAutomationPage() {
                                         </table>
                                     </div>
                                 </div>
-
                                 {}
                                 {auditTotal > 20 && (
                                     <div className="flex items-center justify-between mt-4">
@@ -764,7 +714,6 @@ export default function VCAutomationPage() {
                     </div>
                 )}
             </div>
-
             {}
             {showModal && (
                 <RuleModal

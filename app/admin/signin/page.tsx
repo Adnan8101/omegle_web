@@ -1,14 +1,11 @@
 'use client';
-
 import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-
 function SignInContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
   const callbackUrl = searchParams.get('callbackUrl') || '/admin/dashboard';
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-[rgb(var(--color-bg-primary))]">
       <div className="max-w-md w-full space-y-8 p-8 bg-[rgb(var(--color-bg-secondary))] rounded-3xl shadow-apple-lg border border-[rgb(var(--color-border))]">
@@ -20,17 +17,15 @@ function SignInContent() {
             Sign in with Discord to access the admin panel
           </p>
         </div>
-
         {error && (
           <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4">
             <p className="text-red-500 text-sm">
-              {error === 'AccessDenied' 
+              {error === 'AccessDenied'
                 ? 'You do not have the required permissions to access this area.'
                 : 'An error occurred during sign in. Please try again.'}
             </p>
           </div>
         )}
-
         <button
           onClick={() => signIn('discord', { callbackUrl })}
           className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
@@ -40,7 +35,6 @@ function SignInContent() {
           </svg>
           Sign in with Discord
         </button>
-
         <p className="text-xs text-center text-[rgb(var(--color-text-tertiary))]">
           You must have the required role in Omeglee Community server
         </p>
@@ -48,7 +42,6 @@ function SignInContent() {
     </div>
   );
 }
-
 export default function SignIn() {
   return (
     <Suspense fallback={

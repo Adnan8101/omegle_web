@@ -1,15 +1,12 @@
 'use client';
-
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-
 export default function DebugPermissionsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [apiResult, setApiResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-
   const testPermissions = async () => {
     setLoading(true);
     try {
@@ -22,7 +19,6 @@ export default function DebugPermissionsPage() {
       setLoading(false);
     }
   };
-
   const forceRefresh = async () => {
     try {
       localStorage.clear();
@@ -31,12 +27,10 @@ export default function DebugPermissionsPage() {
     await signOut({ redirect: false });
     router.push('/admin');
   };
-
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold">🔧 Permission Debug Tool</h1>
-        
         <div className="bg-gray-800 rounded-lg p-6 space-y-4">
           <h2 className="text-xl font-semibold">Session Status</h2>
           <div className="space-y-2">
@@ -45,14 +39,12 @@ export default function DebugPermissionsPage() {
             <div><strong>Has Access Token:</strong> {session?.accessToken ? '✅ Yes' : '❌ No'}</div>
           </div>
         </div>
-
         <div className="bg-gray-800 rounded-lg p-6 space-y-4">
           <h2 className="text-xl font-semibold">Permissions</h2>
           <pre className="bg-gray-900 p-4 rounded overflow-auto text-sm">
             {JSON.stringify(session?.user?.permissions, null, 2)}
           </pre>
         </div>
-
         <div className="bg-gray-800 rounded-lg p-6 space-y-4">
           <h2 className="text-xl font-semibold">API Test</h2>
           <button
@@ -68,7 +60,6 @@ export default function DebugPermissionsPage() {
             </pre>
           )}
         </div>
-
         <div className="bg-gray-800 rounded-lg p-6 space-y-4">
           <h2 className="text-xl font-semibold">Actions</h2>
           <div className="flex gap-4">
@@ -86,7 +77,6 @@ export default function DebugPermissionsPage() {
             </button>
           </div>
         </div>
-
         <div className="bg-yellow-900/50 border border-yellow-600 rounded-lg p-6 space-y-2">
           <h3 className="font-semibold">💡 How to Fix</h3>
           <ol className="list-decimal list-inside space-y-1 text-sm">

@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -16,9 +15,7 @@ import {
   FiX,
   FiCheck,
 } from 'react-icons/fi';
-
 type RuleModalMode = 'create' | 'edit';
-
 type RuleType =
   | 'bad_words'
   | 'caps'
@@ -33,7 +30,6 @@ type RuleType =
   | 'sticker_spam'
   | 'image_spam'
   | 'phishing';
-
 interface AutoModConfig {
   enabled: boolean;
   ignore_admins: boolean;
@@ -43,7 +39,6 @@ interface AutoModConfig {
   ignored_users?: string[];
   ignored_channels: string[];
 }
-
 interface AutoModRule {
   id: string;
   guild_id?: string;
@@ -64,32 +59,27 @@ interface AutoModRule {
     [key: string]: unknown;
   };
 }
-
 interface GuildInfo {
   id: string;
   name: string;
   icon?: string | null;
   description?: string;
 }
-
 interface NamedRole {
   id: string;
   name: string;
   color?: string | null;
 }
-
 interface NamedChannel {
   id: string;
   name: string;
 }
-
 interface NamedUser {
   id: string;
   name: string;
   username?: string;
   avatar?: string | null;
 }
-
 const RULE_TYPES: RuleType[] = [
   'bad_words',
   'caps',
@@ -105,7 +95,6 @@ const RULE_TYPES: RuleType[] = [
   'image_spam',
   'phishing',
 ];
-
 const RULE_TYPE_LABELS: Record<RuleType, string> = {
   bad_words: 'Bad Words',
   caps: 'Caps Spam',
@@ -121,7 +110,6 @@ const RULE_TYPE_LABELS: Record<RuleType, string> = {
   image_spam: 'Image Spam',
   phishing: 'Phishing',
 };
-
 const RULE_TYPE_HELP: Record<RuleType, string[]> = {
   bad_words: [
     'Scans messages for blocked words and phrases before they spread in chat.',
@@ -189,7 +177,6 @@ const RULE_TYPE_HELP: Record<RuleType, string[]> = {
     'Use with logging enabled so staff can review incidents quickly.',
   ],
 };
-
 type RuleActionPreset =
   | 'delete'
   | 'warn'
@@ -197,7 +184,6 @@ type RuleActionPreset =
   | 'delete_warn'
   | 'delete_mute'
   | 'delete_warn_mute';
-
 const ACTION_PRESET_LABELS: Record<RuleActionPreset, string> = {
   delete: 'Delete',
   warn: 'Warn',
@@ -206,14 +192,12 @@ const ACTION_PRESET_LABELS: Record<RuleActionPreset, string> = {
   delete_mute: 'Delete and Mute',
   delete_warn_mute: 'Delete, Warn and Mute',
 };
-
 function actionPresetToActions(
   preset: RuleActionPreset,
   muteDurationMinutes = 10
 ): AutoModRule['actions'] {
   const safeMinutes = Math.min(40320, Math.max(1, Math.floor(Number.isFinite(muteDurationMinutes) ? muteDurationMinutes : 10)));
   const muteDurationMs = safeMinutes * 60 * 1000;
-
   switch (preset) {
     case 'warn':
       return { delete: false, warn: true, mute: false, kick: false, ban: false };
@@ -230,27 +214,22 @@ function actionPresetToActions(
       return { delete: true, warn: false, mute: false, kick: false, ban: false };
   }
 }
-
 function actionPresetIncludesMute(preset: RuleActionPreset): boolean {
   return preset === 'mute' || preset === 'delete_mute' || preset === 'delete_warn_mute';
 }
-
 function muteDurationMinutesFromActions(actions?: AutoModRule['actions']): number {
   const minutes = Number(actions?.muteDurationMinutes);
   if (Number.isFinite(minutes) && minutes > 0) {
     return Math.min(40320, Math.max(1, Math.floor(minutes)));
   }
-
   const ms = Number(actions?.muteDurationMs);
   if (!Number.isFinite(ms) || ms <= 0) return 10;
   return Math.min(40320, Math.max(1, Math.floor(ms / 60000)));
 }
-
 function actionsToPreset(actions: AutoModRule['actions']): RuleActionPreset {
   const hasDelete = Boolean(actions?.delete);
   const hasWarn = Boolean(actions?.warn);
   const hasMute = Boolean(actions?.mute);
-
   if (hasDelete && hasWarn && hasMute) return 'delete_warn_mute';
   if (hasDelete && hasWarn) return 'delete_warn';
   if (hasDelete && hasMute) return 'delete_mute';
@@ -258,7 +237,6 @@ function actionsToPreset(actions: AutoModRule['actions']): RuleActionPreset {
   if (hasMute) return 'mute';
   return 'delete';
 }
-
 function withSharedSettings(settings: Record<string, unknown>): Record<string, unknown> {
   return {
     ...settings,
@@ -268,17 +246,14 @@ function withSharedSettings(settings: Record<string, unknown>): Record<string, u
     logChannelId: typeof settings.logChannelId === 'string' ? settings.logChannelId : '',
   };
 }
-
 function toNumber(value: unknown, fallback: number): number {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
-
 function toBoolean(value: unknown, fallback: boolean): boolean {
   if (typeof value === 'boolean') return value;
   return fallback;
 }
-
 function defaultSettings(type: RuleType): Record<string, unknown> {
   switch (type) {
     case 'bad_words':
@@ -313,11 +288,9 @@ function defaultSettings(type: RuleType): Record<string, unknown> {
       return {};
   }
 }
-
 function normalizeSettings(type: RuleType, settings?: Record<string, unknown>): Record<string, unknown> {
   const base = defaultSettings(type);
   const current = settings || {};
-
   switch (type) {
     case 'bad_words':
       return withSharedSettings({
@@ -443,18 +416,15 @@ function normalizeSettings(type: RuleType, settings?: Record<string, unknown>): 
       return base;
   }
 }
-
 function listToText(value: unknown): string {
   return Array.isArray(value) ? value.map((v) => String(v)).join('\n') : '';
 }
-
 function textToList(value: string): string[] {
   return value
     .split(/[\n,]+/g)
     .map((v) => v.trim())
     .filter(Boolean);
 }
-
 function ToggleSwitch({
   checked,
   onChange,
@@ -485,7 +455,6 @@ function ToggleSwitch({
     </button>
   );
 }
-
 function MultiCheckDropdown({
   label,
   options,
@@ -518,7 +487,6 @@ function MultiCheckDropdown({
     </div>
   );
 }
-
 function SelectedReadonly({
   label,
   selectedIds,
@@ -542,11 +510,9 @@ function SelectedReadonly({
     </div>
   );
 }
-
 export default function AutoModPage() {
   const { status } = useSession();
   const router = useRouter();
-
   const [config, setConfig] = useState<AutoModConfig>({
     enabled: false,
     ignore_admins: true,
@@ -556,14 +522,12 @@ export default function AutoModPage() {
     ignored_users: [],
     ignored_channels: [],
   });
-
   const [guilds, setGuilds] = useState<GuildInfo[]>([]);
   const [selectedGuildId, setSelectedGuildId] = useState<string>('');
   const [roles, setRoles] = useState<NamedRole[]>([]);
   const [users, setUsers] = useState<NamedUser[]>([]);
   const [channels, setChannels] = useState<NamedChannel[]>([]);
   const [rules, setRules] = useState<AutoModRule[]>([]);
-
   const [loadingGuilds, setLoadingGuilds] = useState(true);
   const [loadingGuildData, setLoadingGuildData] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -573,7 +537,6 @@ export default function AutoModPage() {
   const [ruleModalMode, setRuleModalMode] = useState<RuleModalMode>('create');
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const guildContextCacheRef = useRef(new Map<string, { roles: NamedRole[]; users: NamedUser[]; channels: NamedChannel[] }>());
-
   const [newRuleDraft, setNewRuleDraft] = useState<{
     name: string;
     type: RuleType | '';
@@ -593,47 +556,38 @@ export default function AutoModPage() {
     actionPreset: 'delete_warn',
     muteDurationMinutes: 10,
   });
-
   const selectedGuild = useMemo(
     () => guilds.find((g) => g.id === selectedGuildId) || null,
     [guilds, selectedGuildId]
   );
-
   const globalRoleWhitelistIds = useMemo(
     () => config.ignored_roles,
     [config.ignored_roles]
   );
-
   const globalUserWhitelistIds = useMemo(
     () => (Array.isArray(config.ignored_users) ? config.ignored_users : []),
     [config.ignored_users]
   );
-
   const ruleTypeOptions = useMemo(
     () => RULE_TYPES.map((type) => ({ id: type, name: RULE_TYPE_LABELS[type] })),
     []
   );
-
   const actionPresetOptions = useMemo(
     () => (Object.keys(ACTION_PRESET_LABELS) as RuleActionPreset[]).map((preset) => ({ id: preset, name: ACTION_PRESET_LABELS[preset] })),
     []
   );
-
   const setGlobalRoleWhitelistIds = (roleIds: string[]) => {
     setConfig((prev) => ({ ...prev, ignored_roles: roleIds }));
   };
-
   const setGlobalUserWhitelistIds = (userIds: string[]) => {
     setConfig((prev) => ({ ...prev, ignored_users: userIds }));
   };
-
   useEffect(() => {
     if (status === 'loading') return;
     if (status !== 'authenticated') {
       router.push('/admin/signin');
       return;
     }
-
     void (async () => {
       setError(null);
       const res = await fetch('/api/automod/guilds').catch(() => null);
@@ -643,7 +597,6 @@ export default function AutoModPage() {
         setLoadingGuilds(false);
         return;
       }
-
       const data = await res.json().catch(() => ({} as any));
       if (!res.ok) {
         setGuilds([]);
@@ -651,23 +604,19 @@ export default function AutoModPage() {
         setLoadingGuilds(false);
         return;
       }
-
       const items: GuildInfo[] = Array.isArray(data?.guilds) ? data.guilds : [];
       setGuilds(items);
       setLoadingGuilds(false);
     })();
   }, [status, router]);
-
   useEffect(() => {
     if (!selectedGuildId) return;
-
     const cached = guildContextCacheRef.current.get(selectedGuildId);
     if (cached) {
       setRoles(cached.roles);
       setUsers(cached.users);
       setChannels(cached.channels);
     }
-
     void (async () => {
       setLoadingGuildData(true);
       setError(null);
@@ -678,19 +627,16 @@ export default function AutoModPage() {
           fetch(`/api/automod/rules${query}`),
           fetch(`/api/automod/guild-context${query}`),
         ]);
-
         const [cfg, rls, ctx] = await Promise.all([
           cfgRes.json().catch(() => null),
           rulesRes.json().catch(() => null),
           ctxRes.json().catch(() => null),
         ]);
-
         const firstError = [
           { ok: ctxRes.ok, body: ctx },
           { ok: cfgRes.ok, body: cfg },
           { ok: rulesRes.ok, body: rls },
         ].find((x) => !x.ok);
-
         if (firstError) {
           const reason = firstError.body?.reason;
           if (reason === 'BOT_NOT_IN_GUILD') {
@@ -704,7 +650,6 @@ export default function AutoModPage() {
           } else {
             setError(firstError.body?.details || firstError.body?.error || 'Failed to load AutoMod data for selected guild.');
           }
-
           if (!cached) {
             setRoles([]);
             setUsers([]);
@@ -713,7 +658,6 @@ export default function AutoModPage() {
           setRules([]);
           return;
         }
-
         if (cfg?.config) setConfig(cfg.config);
         if (Array.isArray(rls?.rules)) setRules(rls.rules);
         const nextRoles = Array.isArray(ctx?.roles) ? ctx.roles : [];
@@ -727,11 +671,9 @@ export default function AutoModPage() {
           users: nextUsers,
           channels: nextChannels,
         });
-
         if (cfg?.reason === 'DB_UNAVAILABLE' || rls?.reason === 'DB_UNAVAILABLE') {
           setError('AutoMod database is unavailable. Showing fallback data only.');
         }
-
         if (ctx?.guild?.id) {
           setGuilds((prev) => prev.map((g) =>
             g.id === ctx.guild.id
@@ -751,12 +693,10 @@ export default function AutoModPage() {
       }
     })();
   }, [selectedGuildId]);
-
   const saveConfig = async () => {
     if (!selectedGuildId) return;
     setSaving(true);
     setError(null);
-
     try {
       const res = await fetch('/api/automod/config', {
         method: 'PATCH',
@@ -778,7 +718,6 @@ export default function AutoModPage() {
       setSaving(false);
     }
   };
-
   const createRule = async () => {
     if (!selectedGuildId) return;
     if (creatingRule) return;
@@ -790,12 +729,9 @@ export default function AutoModPage() {
       setError('Select a rule type first.');
       return;
     }
-
     setCreatingRule(true);
     setError(null);
-
     const normalized = normalizeSettings(newRuleDraft.type, newRuleDraft.settings);
-
     const res = await fetch('/api/automod/rules', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -810,7 +746,6 @@ export default function AutoModPage() {
         actions: actionPresetToActions(newRuleDraft.actionPreset, newRuleDraft.muteDurationMinutes),
       }),
     });
-
     if (res.ok) {
       const data = await fetch(`/api/automod/rules?guildId=${encodeURIComponent(selectedGuildId)}`).then((r) => r.json());
       setRules(data.rules || []);
@@ -831,10 +766,8 @@ export default function AutoModPage() {
       const body = await res.json().catch(() => ({}));
       setError(body?.details || body?.error || 'Failed to create rule');
     }
-
     setCreatingRule(false);
   };
-
   const saveRule = async (rule: AutoModRule): Promise<boolean> => {
     const res = await fetch('/api/automod/rules', {
       method: 'PUT',
@@ -848,7 +781,6 @@ export default function AutoModPage() {
     }
     return true;
   };
-
   const deleteRule = async (id: string) => {
     const res = await fetch(`/api/automod/rules?id=${id}&guildId=${encodeURIComponent(selectedGuildId)}`, { method: 'DELETE' });
     if (!res.ok) {
@@ -863,7 +795,6 @@ export default function AutoModPage() {
       setRuleModalMode('create');
     }
   };
-
   const openCreateModal = () => {
     setError(null);
     setRuleModalMode('create');
@@ -880,7 +811,6 @@ export default function AutoModPage() {
     });
     setIsCreateModalOpen(true);
   };
-
   const openEditModal = (rule: AutoModRule) => {
     setError(null);
     setRuleModalMode('edit');
@@ -897,20 +827,17 @@ export default function AutoModPage() {
     });
     setIsCreateModalOpen(true);
   };
-
   const submitRuleModal = async () => {
     if (ruleModalMode === 'create') {
       await createRule();
       return;
     }
-
     if (!editingRuleId || !newRuleDraft.type) return;
     const existing = rules.find((r) => r.id === editingRuleId);
     if (!existing) {
       setError('Rule not found. Please refresh and try again.');
       return;
     }
-
     const updatedRule: AutoModRule = {
       ...existing,
       name: newRuleDraft.name.trim(),
@@ -921,39 +848,32 @@ export default function AutoModPage() {
       settings: normalizeSettings(newRuleDraft.type, newRuleDraft.settings),
       actions: actionPresetToActions(newRuleDraft.actionPreset, newRuleDraft.muteDurationMinutes),
     };
-
     const ok = await saveRule(updatedRule);
     if (!ok) return;
-
     setRules((prev) => prev.map((r) => (r.id === updatedRule.id ? updatedRule : r)));
     setIsCreateModalOpen(false);
     setRuleModalMode('create');
     setEditingRuleId(null);
   };
-
   const toggleIgnoredRole = (roleId: string, checked: boolean) => {
     setConfig((prev) => ({
       ...prev,
       ignored_roles: checked ? Array.from(new Set([...prev.ignored_roles, roleId])) : prev.ignored_roles.filter((id) => id !== roleId),
     }));
   };
-
   const toggleIgnoredChannel = (channelId: string, checked: boolean) => {
     setConfig((prev) => ({
       ...prev,
       ignored_channels: checked ? Array.from(new Set([...prev.ignored_channels, channelId])) : prev.ignored_channels.filter((id) => id !== channelId),
     }));
   };
-
   const renderConditionFields = (
     type: RuleType | '',
     settings: Record<string, unknown>,
     setSetting: (key: string, value: unknown) => void
   ) => {
     if (!type) return null;
-
     const box = 'w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-sm';
-
     switch (type) {
       case 'bad_words':
         return (
@@ -968,7 +888,6 @@ export default function AutoModPage() {
               />
               <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-2">Wildcard catches words inside larger text, for example dumbfuckass matches fuck.</p>
             </div>
-
             <div>
               <p className="text-sm font-medium mb-2">Banned Words (exact)</p>
               <textarea
@@ -1126,7 +1045,6 @@ export default function AutoModPage() {
         return null;
     }
   };
-
   if (loadingGuilds || status === 'loading') {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
@@ -1140,7 +1058,6 @@ export default function AutoModPage() {
       </div>
     );
   }
-
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1154,7 +1071,6 @@ export default function AutoModPage() {
           </h1>
           <p className="text-base text-[rgb(var(--color-text-secondary))] mt-1">Manage automated moderation rules.</p>
         </div>
-
         <button
           onClick={saveConfig}
           disabled={saving || !selectedGuildId}
@@ -1163,9 +1079,7 @@ export default function AutoModPage() {
           <FiSave /> Save Config
         </button>
       </div>
-
       {error && <div className="p-4 rounded-xl bg-red-500/10 text-red-400 border border-red-500/30">{error}</div>}
-
       <div className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5 md:p-6 shadow-apple-lg space-y-5">
         <div>
           <label className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] block mb-2">Select Server</label>
@@ -1184,13 +1098,11 @@ export default function AutoModPage() {
             </p>
           )}
         </div>
-
         {!selectedGuildId && (
           <div className="p-4 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]">
             Select a server to open AutoMod settings.
           </div>
         )}
-
         {selectedGuild && !loadingGuildData && (
           <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -1216,26 +1128,22 @@ export default function AutoModPage() {
           </div>
         )}
       </div>
-
       {selectedGuildId && loadingGuildData && (
         <div className="p-4 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30">
           Loading server AutoMod settings...
         </div>
       )}
-
       {!selectedGuildId && (
         <div className="rounded-2xl border border-[rgb(var(--color-border))] p-6 bg-[rgb(var(--color-bg-secondary))] text-center text-[rgb(var(--color-text-secondary))]">
           Server settings will appear here after you select a server.
         </div>
       )}
-
       {selectedGuildId && !loadingGuildData && (
       <div className="rounded-2xl border border-[rgb(var(--color-border))] p-5 bg-[rgb(var(--color-bg-secondary))] space-y-4">
         <div>
           <h3 className="text-xl font-bold">Global Settings</h3>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">Global whitelist is applied across all rules. Rule-level logging overrides global logging when set.</p>
         </div>
-
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           <div className="rounded-xl border border-[rgb(var(--color-border))] p-4 bg-[rgb(var(--color-bg-primary))] space-y-3">
             <MultiCheckDropdown
@@ -1257,12 +1165,10 @@ export default function AutoModPage() {
               onChange={(values) => setConfig((p) => ({ ...p, ignored_channels: values }))}
             />
           </div>
-
           <div className="rounded-xl border border-[rgb(var(--color-border))] p-4 bg-[rgb(var(--color-bg-primary))] space-y-3">
             <SelectedReadonly label="Global Roles" options={roles} selectedIds={globalRoleWhitelistIds} />
             <SelectedReadonly label="Global Users" options={users} selectedIds={globalUserWhitelistIds} />
             <SelectedReadonly label="Global Channels" options={channels.map((c) => ({ id: c.id, name: `#${c.name}` }))} selectedIds={config.ignored_channels} />
-
             <div>
               <label className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] block mb-2">Global Logging Channel</label>
               <EntityDropdown
@@ -1282,7 +1188,6 @@ export default function AutoModPage() {
         </div>
       </div>
       )}
-
       {selectedGuildId && !loadingGuildData && (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4 bg-[rgb(var(--color-bg-secondary))] flex items-center justify-between">
@@ -1299,7 +1204,6 @@ export default function AutoModPage() {
         </div>
       </div>
       )}
-
       {selectedGuildId && !loadingGuildData && (
       <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4 bg-[rgb(var(--color-bg-secondary))] space-y-4">
         <div className="flex items-center justify-between">
@@ -1314,7 +1218,6 @@ export default function AutoModPage() {
             <FiPlus /> Add Rule
           </button>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {rules.map((rule) => (
             <div
@@ -1367,7 +1270,6 @@ export default function AutoModPage() {
         </div>
       </div>
       )}
-
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 md:p-6">
           <div className="w-full max-w-6xl max-h-[92vh] overflow-y-auto rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] shadow-2xl p-5 md:p-7 space-y-5">
@@ -1387,7 +1289,6 @@ export default function AutoModPage() {
                 <FiX />
               </button>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
                 value={newRuleDraft.name}
@@ -1418,7 +1319,6 @@ export default function AutoModPage() {
               />
               )}
             </div>
-
             {ruleModalMode === 'edit' && (
               <EntityDropdown
                 options={ruleTypeOptions}
@@ -1436,7 +1336,6 @@ export default function AutoModPage() {
                 searchPlaceholder="Search rule types"
               />
             )}
-
             {newRuleDraft.type && (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <div className="space-y-3 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] p-4">
@@ -1452,7 +1351,6 @@ export default function AutoModPage() {
                     (key, value) => setNewRuleDraft((p) => ({ ...p, settings: { ...p.settings, [key]: value } }))
                   )}
                 </div>
-
                 <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] p-4 space-y-3">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Action</p>
@@ -1466,7 +1364,6 @@ export default function AutoModPage() {
                     searchPlaceholder="Search actions"
                   />
                 </div>
-
                 {actionPresetIncludesMute(newRuleDraft.actionPreset) && (
                   <div>
                     <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Mute Duration (Minutes)</p>
@@ -1482,7 +1379,6 @@ export default function AutoModPage() {
                     />
                   </div>
                 )}
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <MultiCheckDropdown
@@ -1501,14 +1397,12 @@ export default function AutoModPage() {
                     />
                   </div>
                 </div>
-
                 <MultiCheckDropdown
                   label="Whitelist Channels"
                   options={channels.map((c) => ({ id: c.id, name: `#${c.name}` }))}
                   selectedIds={Array.isArray(newRuleDraft.settings.whitelistChannelIds) ? newRuleDraft.settings.whitelistChannelIds.map((v) => String(v)) : []}
                   onChange={(values) => setNewRuleDraft((p) => ({ ...p, settings: { ...p.settings, whitelistChannelIds: values } }))}
                 />
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <SelectedReadonly
                     label="Roles"
@@ -1526,7 +1420,6 @@ export default function AutoModPage() {
                     selectedIds={Array.isArray(newRuleDraft.settings.whitelistChannelIds) ? newRuleDraft.settings.whitelistChannelIds.map((v) => String(v)) : []}
                   />
                 </div>
-
                 <div>
                   <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Logging Channel</p>
                   <EntityDropdown
@@ -1546,7 +1439,6 @@ export default function AutoModPage() {
                 </div>
               </div>
             )}
-
             <div className="flex items-center justify-end gap-2 pt-1">
               {ruleModalMode === 'edit' && editingRuleId ? (
                 <button

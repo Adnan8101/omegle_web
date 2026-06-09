@@ -1,11 +1,9 @@
 'use client';
-
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { FiCheck, FiStar, FiShield, FiZap } from 'react-icons/fi';
-
 interface Plan {
   id: string;
   title: string;
@@ -19,18 +17,14 @@ interface Plan {
   ozy_enabled?: boolean;
   price_ozy?: number | null;
 }
-
 interface GuildInfo {
   id: string;
   name: string;
 }
-
 declare global {
   interface Window { Razorpay: any; }
 }
-
 const formatUsd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
-
 async function ensureRazorpayLoaded(): Promise<void> {
   if (typeof window !== 'undefined' && window.Razorpay) return;
   await new Promise<void>((resolve, reject) => {
@@ -49,11 +43,9 @@ async function ensureRazorpayLoaded(): Promise<void> {
     document.head.appendChild(script);
   });
 }
-
 export default function DonatorPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
   const [useMutualServers, setUseMutualServers] = useState(true);
   const [guilds, setGuilds] = useState<GuildInfo[]>([]);
   const [loadingGuilds, setLoadingGuilds] = useState(false);
@@ -70,14 +62,12 @@ export default function DonatorPage() {
   const [ozyCurrencyName, setOzyCurrencyName] = useState('Ozy');
   const [ozyCurrencyEmoji, setOzyCurrencyEmoji] = useState('🪙');
   const [loadingOzyBalance, setLoadingOzyBalance] = useState(false);
-
   useEffect(() => {
     fetch('/api/donator/crypto-min')
       .then(res => res.json())
       .then(data => data?.min_amount && setCryptoMin(data.min_amount))
       .catch(() => {});
   }, []);
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const paramGuild = params.get('guild');
@@ -85,7 +75,6 @@ export default function DonatorPage() {
     const sessionGuildId = (session?.user as any)?.guild_id as string | undefined;
     if (sessionGuildId) setGuildId(sessionGuildId);
   }, [session]);
-
   useEffect(() => {
     if (!useMutualServers || status !== 'authenticated') return;
     const fetchMutualGuilds = async () => {
@@ -109,18 +98,15 @@ export default function DonatorPage() {
     };
     fetchMutualGuilds();
   }, [useMutualServers, status, session, guildId]);
-
   useEffect(() => {
     if (!guildId) { setPlanList([]); return; }
     fetchPlans(guildId);
   }, [guildId]);
-
   useEffect(() => {
     if (status !== 'authenticated' || !guildId) {
       setOzyBalance(0);
       return;
     }
-
     const fetchOzyBalance = async () => {
       try {
         setLoadingOzyBalance(true);
@@ -132,17 +118,13 @@ export default function DonatorPage() {
         setOzyCurrencyName(String(payload.currency_name || 'Ozy'));
         setOzyCurrencyEmoji(String(payload.currency_emoji || '🪙'));
       } catch {
-        
       } finally {
         setLoadingOzyBalance(false);
       }
     };
-
     fetchOzyBalance();
   }, [status, guildId]);
-
   const plans = useMemo(() => planList.filter((p) => p.enabled && !p.paused), [planList]);
-
   const fetchPlans = async (guild: string) => {
     try {
       setLoadingPlans(true);
@@ -158,11 +140,9 @@ export default function DonatorPage() {
       setLoadingPlans(false);
     }
   };
-
   const handleBuyClick = (plan: Plan) => {
     if (status !== 'authenticated') { signIn('discord'); return; }
     if (!guildId.trim()) { setError('Select a server before subscribing.'); return; }
-
      const hasExtraMethod = plan.crypto_enabled !== false || Boolean(plan.ozy_enabled);
      if (hasExtraMethod) {
        setShowMethodModal({ plan });
@@ -170,7 +150,6 @@ export default function DonatorPage() {
        initiateRazorpay(plan);
     }
   };
-
   const initiateCrypto = async (plan: Plan) => {
     try {
       setProcessingPlan(plan.id);
@@ -183,7 +162,6 @@ export default function DonatorPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.error || 'Failed to initialize crypto checkout');
-      
       if (data?.data?.invoice_url) {
         window.location.href = data.data.invoice_url;
       }
@@ -192,13 +170,11 @@ export default function DonatorPage() {
       setProcessingPlan(null);
     }
   };
-
   const initiateOzy = async (plan: Plan) => {
     try {
       setProcessingPlan(plan.id);
       setError('');
       setPaymentSuccess(false);
-
       const response = await fetch('/api/donator/payments/ozy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -206,12 +182,10 @@ export default function DonatorPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.error || 'Failed to process Ozy payment');
-
       setPaymentSuccess(true);
       if (typeof data?.data?.balance_after === 'number') {
         setOzyBalance(data.data.balance_after);
       }
-
       const next = guildId ? `/donator/subscriptions?guild_id=${encodeURIComponent(guildId)}` : '/donator/subscriptions';
       const redirectUrl = typeof data?.data?.redirect_url === 'string' ? data.data.redirect_url : next;
       setTimeout(() => router.push(redirectUrl), 800);
@@ -222,7 +196,6 @@ export default function DonatorPage() {
       setProcessingPlan(null);
     }
   };
-
   const initiateRazorpay = async (plan: Plan) => {
     try {
       setProcessingPlan(plan.id);
@@ -262,7 +235,6 @@ export default function DonatorPage() {
       setProcessingPlan(null);
     }
   };
-
   const verifyPayment = async (paymentId: string, orderId: string, signature?: string) => {
     try {
       setError('');
@@ -285,13 +257,11 @@ export default function DonatorPage() {
       setError(e?.message || 'Payment verification error');
     }
   };
-
   const featureIcons = [
     { icon: <FiShield className="w-6 h-6" />, label: 'Secure Checkout', desc: 'Razorpay-powered with server-side verification.' },
     { icon: <FiZap className="w-6 h-6" />, label: 'Instant Activation', desc: 'Active immediately for cards, or upon blockchain confirmation for crypto.' },
     { icon: <FiStar className="w-6 h-6" />, label: '30-Day Access', desc: 'Every subscription runs for a full 30 days.' },
   ];
-
   return (
     <div className="p-4 md:p-8 space-y-6 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -316,7 +286,6 @@ export default function DonatorPage() {
           </div>
         </div>
       </div>
-
         {}
         {paymentSuccess && (
           <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-5 py-4 text-green-700 dark:text-green-300 flex items-center gap-3">
@@ -329,7 +298,6 @@ export default function DonatorPage() {
             {error}
           </div>
         )}
-
         {}
         {status === 'authenticated' ? (
           <section className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5 md:p-6 shadow-apple-lg">
@@ -368,7 +336,6 @@ export default function DonatorPage() {
             </button>
           </section>
         )}
-
         {}
         <section className="rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5 md:p-6 shadow-apple-lg">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -386,7 +353,6 @@ export default function DonatorPage() {
               My mutual servers
             </label>
           </div>
-
           {useMutualServers ? (
             status !== 'authenticated' ? (
               <div className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] p-5">
@@ -426,7 +392,6 @@ export default function DonatorPage() {
               <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Manual mode — paste a server ID directly.</p>
             </div>
           )}
-
           <div className="mt-4">
             <button
               onClick={() => guildId && fetchPlans(guildId)}
@@ -437,7 +402,6 @@ export default function DonatorPage() {
             </button>
           </div>
         </section>
-
         {}
         {loadingPlans ? (
           <section className="rounded-2xl border border-[rgb(var(--color-border))] p-10 bg-[rgb(var(--color-bg-secondary))] text-center">
@@ -467,14 +431,12 @@ export default function DonatorPage() {
                       <FiStar className="w-3 h-3" /> Most Popular
                     </span>
                   )}
-
                   <h2 className="text-2xl font-bold tracking-tight">{plan.title}</h2>
                   {plan.description && (
                     <p className={`mt-2 text-sm ${isHighlighted ? 'text-white/85' : 'text-[rgb(var(--color-text-secondary))]'}`}>
                       {plan.description}
                     </p>
                   )}
-
                   <div className="mt-5">
                     <p className="text-4xl font-extrabold leading-none">{formatUsd(plan.price)}</p>
                     <p className={`mt-1.5 text-sm ${isHighlighted ? 'text-white/80' : 'text-[rgb(var(--color-text-secondary))]'}`}>
@@ -486,7 +448,6 @@ export default function DonatorPage() {
                       </p>
                     )}
                   </div>
-
                   <div className="mt-6">
                     <p className={`text-xs uppercase tracking-wider font-semibold mb-3 ${isHighlighted ? 'text-white/70' : 'text-[rgb(var(--color-text-tertiary))]'}`}>
                       Included Perks
@@ -500,7 +461,6 @@ export default function DonatorPage() {
                       ))}
                     </ul>
                   </div>
-
                   <button
                     onClick={() => handleBuyClick(plan)}
                     disabled={processingPlan === plan.id}
@@ -521,7 +481,6 @@ export default function DonatorPage() {
             })}
           </section>
         ) : null}
-
         {}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
           {featureIcons.map((f, i) => (
@@ -536,13 +495,12 @@ export default function DonatorPage() {
             </div>
           ))}
         </section>
-
       {showMethodModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-3xl p-6 w-full max-w-md shadow-2xl">
             <h3 className="text-xl font-bold mb-4 text-[rgb(var(--color-text-primary))]">Select Payment Method</h3>
             <div className="space-y-3">
-              <button 
+              <button
                 onClick={() => { setShowMethodModal(null); initiateRazorpay(showMethodModal.plan); }}
                 className="w-full text-left p-4 rounded-xl border border-blue-500/30 hover:border-blue-500 bg-blue-500/10 transition group"
               >
@@ -552,9 +510,8 @@ export default function DonatorPage() {
                 </div>
                 <div className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">Instant activation in INR.</div>
               </button>
-              
               {showMethodModal.plan.crypto_enabled !== false && (
-                <button 
+                <button
                   onClick={() => { setShowMethodModal(null); initiateCrypto(showMethodModal.plan); }}
                   className="w-full text-left p-4 rounded-xl border border-orange-500/30 hover:border-orange-500 bg-orange-500/10 transition group"
                 >
@@ -568,7 +525,6 @@ export default function DonatorPage() {
                   </div>
                 </button>
               )}
-
               {showMethodModal.plan.ozy_enabled && showMethodModal.plan.price_ozy != null && (
                 <button
                   onClick={() => {
@@ -588,7 +544,7 @@ export default function DonatorPage() {
                 </button>
               )}
             </div>
-            <button 
+            <button
               onClick={() => setShowMethodModal(null)}
               className="mt-5 w-full py-3 rounded-xl border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] font-semibold hover:bg-[rgb(var(--color-bg-primary))]"
             >
@@ -597,7 +553,6 @@ export default function DonatorPage() {
           </div>
         </div>
       )}
-
       {showOzyConfirmModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-3xl p-6 w-full max-w-md shadow-2xl">
@@ -605,7 +560,6 @@ export default function DonatorPage() {
             <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-4">
               You are about to buy <span className="font-semibold text-[rgb(var(--color-text-primary))]">{showOzyConfirmModal.plan.title}</span> using your Ozy balance.
             </p>
-
             <div className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-primary))] p-4 space-y-2 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-[rgb(var(--color-text-secondary))]">Current Balance</span>
@@ -622,11 +576,9 @@ export default function DonatorPage() {
                 </span>
               </div>
             </div>
-
             <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-3">
               This action deducts balance instantly and activates your subscription immediately.
             </p>
-
             <div className="mt-5 grid grid-cols-2 gap-3">
               <button
                 onClick={() => setShowOzyConfirmModal(null)}

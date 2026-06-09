@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { queryBotDb } from '@/lib/botDb';
 import { getErrorMessage } from '@/lib/constants';
 import { canAccessVCAndChats } from '@/lib/apiAuth';
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
@@ -12,17 +11,14 @@ export async function GET(
   try {
     const { sessionId } = await params;
     const session = await getServerSession(authOptions);
-
     if (!session || !session.user?.hasAccess) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
-
-    
     const sessionData = await queryBotDb(`
-      SELECT 
+      SELECT
         vl.*,
         COALESCE(dcc.name, vl.channel_name) as resolved_channel_name,
         -- Parse members_present JSON if it exists
@@ -31,17 +27,13 @@ export async function GET(
       LEFT JOIN discord_channel_cache dcc ON dcc.channel_id = vl.channel_id
       WHERE vl.id = $1
     `, [sessionId]);
-
     if (!sessionData || sessionData.length === 0) {
       return NextResponse.json(
         { error: 'Session not found' },
         { status: 404 }
       );
     }
-
     const sessionInfo = sessionData[0];
-
-    
     const overlappingUsers = await queryBotDb(`
       SELECT DISTINCT
         user_id,
@@ -72,7 +64,6 @@ export async function GET(
       sessionInfo.joined_at,
       sessionInfo.left_at || new Date()
     ]);
-
     return NextResponse.json({
       session: sessionInfo,
       overlappingUsers: overlappingUsers || [],
@@ -86,7 +77,6 @@ export async function GET(
     );
   }
 }
-
 interface TimelineEvent {
   type: string;
   userId: string;
@@ -95,7 +85,6 @@ interface TimelineEvent {
   joinOrder?: number;
   count?: number;
 }
-
 interface SessionRecord {
   user_id: string;
   joined_at: string;
@@ -103,7 +92,6 @@ interface SessionRecord {
   channel_id: string;
   guild_id: string;
 }
-
 interface UserRecord {
   user_id: string;
   joined_at: string;
@@ -114,21 +102,16 @@ interface UserRecord {
   screen_share_stop: number;
   join_order: number;
 }
-
 function generateTimeline(session: SessionRecord, users: UserRecord[]): TimelineEvent[] {
   const events: TimelineEvent[] = [];
   const sessionStart = new Date(session.joined_at).getTime();
   const sessionEnd = session.left_at ? new Date(session.left_at).getTime() : Date.now();
-
-  
   events.push({
     type: 'session_start',
     userId: session.user_id,
     timestamp: session.joined_at,
     relativeTime: 0,
   });
-
-  
   for (const user of users) {
     const joinTime = new Date(user.joined_at).getTime();
     if (joinTime >= sessionStart && joinTime <= sessionEnd) {
@@ -140,10 +123,8 @@ function generateTimeline(session: SessionRecord, users: UserRecord[]): Timeline
         joinOrder: user.join_order,
       });
     }
-
-    
     if (user.video_on_count > 0) {
-      const videoTime = Math.min(joinTime + 5000, sessionEnd); 
+      const videoTime = Math.min(joinTime + 5000, sessionEnd);
       events.push({
         type: 'video_on',
         userId: user.user_id,
@@ -152,10 +133,8 @@ function generateTimeline(session: SessionRecord, users: UserRecord[]): Timeline
         count: user.video_on_count,
       });
     }
-
-    
     if (user.screen_share_start > 0) {
-      const ssTime = Math.min(joinTime + 10000, sessionEnd); 
+      const ssTime = Math.min(joinTime + 10000, sessionEnd);
       events.push({
         type: 'screen_share_start',
         userId: user.user_id,
@@ -164,11 +143,9 @@ function generateTimeline(session: SessionRecord, users: UserRecord[]): Timeline
         count: user.screen_share_start,
       });
     }
-
     if (user.left_at) {
       const leaveTime = new Date(user.left_at).getTime();
       if (leaveTime >= sessionStart && leaveTime <= sessionEnd) {
-        
         if (user.screen_share_stop > 0) {
           const ssStopTime = Math.max(leaveTime - 5000, sessionStart);
           events.push({
@@ -179,7 +156,6 @@ function generateTimeline(session: SessionRecord, users: UserRecord[]): Timeline
             count: user.screen_share_stop,
           });
         }
-
         if (user.video_off_count > 0) {
           const videoOffTime = Math.max(leaveTime - 3000, sessionStart);
           events.push({
@@ -190,7 +166,6 @@ function generateTimeline(session: SessionRecord, users: UserRecord[]): Timeline
             count: user.video_off_count,
           });
         }
-
         events.push({
           type: 'user_leave',
           userId: user.user_id,
@@ -200,8 +175,6 @@ function generateTimeline(session: SessionRecord, users: UserRecord[]): Timeline
       }
     }
   }
-
-  
   if (session.left_at) {
     events.push({
       type: 'session_end',
@@ -210,9 +183,7 @@ function generateTimeline(session: SessionRecord, users: UserRecord[]): Timeline
       relativeTime: Math.floor((sessionEnd - sessionStart) / 1000),
     });
   }
-
   return events.sort((a, b) => a.relativeTime - b.relativeTime ||
-    
     (['session_start', 'user_join'].includes(a.type) ? -1 : ['session_end', 'user_leave'].includes(a.type) ? 1 : 0)
   );
 }

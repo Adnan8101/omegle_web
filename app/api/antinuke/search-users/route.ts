@@ -2,24 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { verifyAccess } from '@/lib/verifyAccess';
-
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const guildId = request.nextUrl.searchParams.get('guildId') || '';
     const query   = request.nextUrl.searchParams.get('q') || '';
-
     if (!guildId) return NextResponse.json({ error: 'guildId required' }, { status: 400 });
     if (!query.trim()) return NextResponse.json({ users: [] });
-
     const ok = await verifyAccess(session, guildId);
     if (!ok) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
     const botToken = process.env.DISCORD_BOT_TOKEN!;
-
     let members: any[] = [];
     if (/^\d{17,20}$/.test(query)) {
       const memberRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${query}`, {
@@ -47,7 +40,6 @@ export async function GET(request: NextRequest) {
       });
       members = res.ok ? await res.json().catch(() => []) : [];
     }
-
     const users = (Array.isArray(members) ? members : []).map((m: any) => {
       const user = m.user || {};
       const fallbackIndex = Number(BigInt(String(user.id || '0')) % 6n);
@@ -62,7 +54,6 @@ export async function GET(request: NextRequest) {
         isBot:    Boolean(user.bot),
       };
     }).filter((u: any) => u.id && u.name);
-
     return NextResponse.json({ users });
   } catch (err) {
     console.error('[search-users] error:', err);

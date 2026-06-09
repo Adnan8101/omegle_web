@@ -1,9 +1,7 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { X, Clock, Hash, Users, Calendar, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
-
 interface SharedSessionsModalProps {
   userId: string;
   targetUserId: string;
@@ -12,7 +10,6 @@ interface SharedSessionsModalProps {
   onClose: () => void;
   onSessionClick: (sessionId: string) => void;
 }
-
 interface SharedSession {
   session_id: string;
   channel_id: string;
@@ -27,7 +24,6 @@ interface SharedSession {
   overlap_end: string | null;
   overlap_duration: number;
 }
-
 export default function SharedSessionsModal({
   userId,
   targetUserId,
@@ -38,7 +34,6 @@ export default function SharedSessionsModal({
 }: SharedSessionsModalProps) {
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<SharedSession[]>([]);
-
   useEffect(() => {
     fetchSharedSessions();
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -47,7 +42,6 @@ export default function SharedSessionsModal({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
   const fetchSharedSessions = async () => {
     try {
       console.log('Fetching shared sessions for:', userId, 'and', targetUserId);
@@ -62,7 +56,6 @@ export default function SharedSessionsModal({
       setLoading(false);
     }
   };
-
   const formatDuration = (seconds: number) => {
     if (!seconds) return '0m';
     const hours = Math.floor(seconds / 3600);
@@ -70,7 +63,6 @@ export default function SharedSessionsModal({
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
   };
-
   const formatDateTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('en-US', {
       month: 'short',
@@ -79,7 +71,6 @@ export default function SharedSessionsModal({
       minute: '2-digit',
     });
   };
-
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
@@ -92,14 +83,12 @@ export default function SharedSessionsModal({
       </div>
     );
   }
-
   return (
     <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
-        <div 
-          className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl max-w-5xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-[rgb(var(--color-border))] flex flex-col" 
+        <div
+          className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl max-w-5xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-[rgb(var(--color-border))] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
-        
         {}
         <div className="p-5 border-b border-[rgb(var(--color-border))] flex-shrink-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
           <div className="flex items-center justify-between">
@@ -122,7 +111,6 @@ export default function SharedSessionsModal({
             </button>
           </div>
         </div>
-
         {}
         <div className="flex-1 overflow-y-auto p-5">
           {sessions.length > 0 ? (
@@ -146,7 +134,6 @@ export default function SharedSessionsModal({
                       {formatDateTime(session.overlap_start)}
                     </div>
                   </div>
-
                   {}
                   <div className="grid grid-cols-3 gap-3">
                     {}
@@ -168,7 +155,6 @@ export default function SharedSessionsModal({
                         )}
                       </div>
                     </div>
-
                     {}
                     <div className="bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-lg p-3">
                       <div className="flex items-center gap-1.5 mb-1.5">
@@ -183,7 +169,6 @@ export default function SharedSessionsModal({
                         )}
                       </div>
                     </div>
-
                     {}
                     <div className="bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-lg p-3">
                       <div className="flex items-center gap-1.5 mb-1.5">
@@ -199,7 +184,6 @@ export default function SharedSessionsModal({
                       </div>
                     </div>
                   </div>
-
                   {}
                   <div className="mt-3 pt-2 border-t border-[rgb(var(--color-border))] flex items-center justify-center text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                     <span>Click for full session details</span>

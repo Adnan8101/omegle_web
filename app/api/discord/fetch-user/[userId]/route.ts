@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getErrorMessage } from '@/lib/constants';
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
@@ -13,18 +12,13 @@ export async function GET(
     if (!session || !session.user?.hasAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    
     const discordRes = await fetch(`https://discord.com/api/v10/users/${userId}`, {
       headers: {
         Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
       },
-      
       cache: 'no-store',
     });
-
     if (!discordRes.ok) {
-      
       const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
       return NextResponse.json({
         id: userId,
@@ -35,10 +29,7 @@ export async function GET(
         tag: `Unknown#${userId.slice(-4)}`,
       });
     }
-
     const discordUser = await discordRes.json();
-    
-    
     let avatarUrl: string;
     if (discordUser.avatar) {
       const extension = discordUser.avatar.startsWith('a_') ? 'gif' : 'png';
@@ -47,13 +38,12 @@ export async function GET(
       const defaultIndex = Number(BigInt(userId) >> 22n) % 6;
       avatarUrl = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
     }
-
     return NextResponse.json({
       id: userId,
       username: discordUser.username,
       displayName: discordUser.global_name || discordUser.username,
       avatar: avatarUrl,
-      inGuild: true, 
+      inGuild: true,
       tag: discordUser.discriminator === '0' ? `@${discordUser.username}` : `${discordUser.username}#${discordUser.discriminator}`,
     });
   } catch (error: unknown) {

@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
     if (!session?.accessToken) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
-
-    
     const GUILD_ID = "1507458872225566811";
     const response = await fetch(
       `https://discord.com/api/v10/users/@me/guilds/${GUILD_ID}/member`,
@@ -20,7 +16,6 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-
     const debug = {
       status: response.status,
       statusText: response.statusText,
@@ -28,7 +23,6 @@ export async function GET(request: NextRequest) {
       userId: session.user?.id,
       permissions: session.user?.permissions,
     };
-
     if (!response.ok) {
       const errorText = await response.text();
       return NextResponse.json({
@@ -37,7 +31,6 @@ export async function GET(request: NextRequest) {
         endpoint: `https://discord.com/api/v10/users/@me/guilds/${GUILD_ID}/member`
       });
     }
-
     const member = await response.json();
     return NextResponse.json({
       ...debug,

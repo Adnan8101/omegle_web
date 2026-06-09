@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
-
 export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -14,13 +13,10 @@ export async function GET(request: NextRequest) {
         if (!perms?.hasFullAccess) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
-
         const rules = await prismaBot.voiceAutomationRule.findMany({
             where: { guild_id: GUILD_ID },
             orderBy: { created_at: 'asc' },
         });
-
-        
         const enriched = await Promise.all(
             rules.map(async (rule) => {
                 const grantCount = await prismaBot.voiceAutomationGranted.count({
@@ -29,14 +25,12 @@ export async function GET(request: NextRequest) {
                 return { ...rule, grant_count: grantCount };
             })
         );
-
         return NextResponse.json({ rules: enriched });
     } catch (error) {
         console.error('[VCAutomation] GET /rules error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
-
 export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -47,7 +41,6 @@ export async function POST(request: NextRequest) {
         if (!perms?.hasFullAccess) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
-
         const body = await request.json();
         const {
             name,
@@ -59,8 +52,6 @@ export async function POST(request: NextRequest) {
             reward_role_id,
             count_deafened = false,
         } = body;
-
-        
         if (!name?.trim()) {
             return NextResponse.json({ error: 'Rule name is required' }, { status: 400 });
         }
@@ -79,8 +70,6 @@ export async function POST(request: NextRequest) {
         if (!reward_role_id) {
             return NextResponse.json({ error: 'reward_role_id is required' }, { status: 400 });
         }
-
-        
         const roleConflict = await prismaBot.voiceAutomationRule.findUnique({
             where: { guild_id_reward_role_id: { guild_id: GUILD_ID, reward_role_id } },
         });
@@ -91,8 +80,6 @@ export async function POST(request: NextRequest) {
                 conflictRuleName: roleConflict.name,
             }, { status: 409 });
         }
-
-        
         if (target_type === 'channel') {
             const channelInfo = await prismaBot.discordChannelCache.findUnique({
                 where: { channel_id: target_id },
@@ -114,8 +101,6 @@ export async function POST(request: NextRequest) {
                 }
             }
         }
-
-        
         if (target_type === 'category') {
             const channelsInCategory = await prismaBot.discordChannelCache.findMany({
                 where: {
@@ -144,7 +129,6 @@ export async function POST(request: NextRequest) {
                 }
             }
         }
-
         const rule = await prismaBot.voiceAutomationRule.create({
             data: {
                 guild_id: GUILD_ID,
@@ -159,8 +143,6 @@ export async function POST(request: NextRequest) {
                 created_by: session.user.id,
             },
         });
-
-        
         await prismaBot.voiceAutomationAuditLog.create({
             data: {
                 guild_id: GUILD_ID,
@@ -171,7 +153,6 @@ export async function POST(request: NextRequest) {
                 meta: { rule_name: rule.name, target_type, target_id, reward_role_id },
             },
         });
-
         return NextResponse.json({ success: true, rule });
     } catch (error) {
         console.error('[VCAutomation] POST /rules error:', error);

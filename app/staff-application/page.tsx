@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useMemo, useState } from 'react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { FiArrowLeft, FiCheckCircle, FiLock, FiSend, FiUser } from 'react-icons/fi';
@@ -10,12 +9,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 import { COMMON_QUESTIONS, ROLE_QUESTIONS, STAFF_ROLES, StaffRole, getRoleLabel } from '@/lib/staffApplicationForm';
-
 type RoleFormSetting = {
   isOpen: boolean;
   closedMessage?: string;
 };
-
 interface AppSettingsResponse {
   success: boolean;
   data?: {
@@ -24,12 +21,10 @@ interface AppSettingsResponse {
     roleForms?: Partial<Record<StaffRole, RoleFormSetting>>;
   };
 }
-
 interface SubmitResponse {
   success: boolean;
   error?: string;
 }
-
 type RoleVisualStyle = {
   Icon: IconType;
   openCard: string;
@@ -44,7 +39,6 @@ type RoleVisualStyle = {
   buttonHover: string;
   avatarBorder: string;
 };
-
 const ROLE_VISUALS: Record<StaffRole, RoleVisualStyle> = {
   moderation: {
     Icon: FaGavel,
@@ -117,16 +111,13 @@ const ROLE_VISUALS: Record<StaffRole, RoleVisualStyle> = {
     avatarBorder: 'border-violet-500 dark:border-purple-400',
   },
 };
-
 export default function StaffApplicationPage() {
   const { theme } = useTheme();
   const { data: session } = useSession();
-
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isApplicationsOpen, setIsApplicationsOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState('Staff applications are currently closed. Please check back later.');
-
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [agreedToTOS, setAgreedToTOS] = useState(false);
   const [showFormFlow, setShowFormFlow] = useState(false);
@@ -139,20 +130,16 @@ export default function StaffApplicationPage() {
     media_team: { isOpen: true, closedMessage: '' },
     entertainment_team: { isOpen: true, closedMessage: '' },
   });
-
   const [profileData, setProfileData] = useState({
     country: '',
     timezone: '',
     age: '',
   });
-
   const [answers, setAnswers] = useState<Record<string, string>>({});
-
   const activeQuestions = useMemo(() => {
     if (!selectedRole) return [];
     return [...COMMON_QUESTIONS, ...ROLE_QUESTIONS[selectedRole]];
   }, [selectedRole]);
-
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -182,10 +169,8 @@ export default function StaffApplicationPage() {
         setIsLoading(false);
       }
     };
-
     loadSettings();
   }, []);
-
   const resetFlow = () => {
     setShowFormFlow(false);
     setSelectedRole(null);
@@ -194,7 +179,6 @@ export default function StaffApplicationPage() {
     setProfileData({ country: '', timezone: '', age: '' });
     setAnswers({});
   };
-
   const handleRoleSelect = (role: StaffRole) => {
     const roleSetting = roleForms[role];
     if (roleSetting && !roleSetting.isOpen) {
@@ -204,7 +188,6 @@ export default function StaffApplicationPage() {
       );
       return;
     }
-
     setRoleClosedNotice('');
     setSelectedRole(role);
     setAnswers((prev) => {
@@ -216,61 +199,49 @@ export default function StaffApplicationPage() {
       return next;
     });
   };
-
   const selectedRoleSetting = selectedRole ? roleForms[selectedRole] : null;
   const selectedRoleVisual = selectedRole ? ROLE_VISUALS[selectedRole] : null;
   const isSelectedRoleClosed = Boolean(selectedRoleSetting && !selectedRoleSetting.isOpen);
   const selectedRoleClosedMessage =
     (selectedRoleSetting?.closedMessage || '').trim() ||
     (selectedRole ? `${getRoleLabel(selectedRole)} applications are currently closed.` : 'This application form is currently closed.');
-
   const updateAnswer = (questionId: string, value: string) => {
     setAnswers((prev) => ({
       ...prev,
       [questionId]: value,
     }));
   };
-
   const validateForm = (): string | null => {
     if (!session?.user?.id) return 'Please login with Discord before submitting.';
     if (!selectedRole) return 'Please select one role before filling the form.';
     if (!profileData.country.trim()) return 'Country is required.';
     if (!profileData.timezone.trim()) return 'Timezone is required.';
     if (!profileData.age.trim()) return 'Age is required.';
-
     for (const question of activeQuestions) {
       if (!answers[question.id]?.trim()) {
         return `Please answer: ${question.title}`;
       }
     }
-
     return null;
   };
-
   const buildPayload = () => {
     const introduction = answers.introduction_purpose || '';
     const dailyAvailability = answers.daily_availability || '';
-
     return {
       formVersion: 2,
       applicationRole: selectedRole,
-
       discordUsername: session?.user?.name || '',
       discordUserId: session?.user?.id || '',
-
       country: profileData.country.trim(),
       timezone: profileData.timezone.trim(),
       age: profileData.age.trim(),
-
       aboutYourself: introduction,
       whyJoin: introduction,
       dailyAvailability,
       hoursPerWeek: dailyAvailability,
-
       roleAnswers: Object.fromEntries(
         Object.entries(answers).map(([key, value]) => [key, value.trim()])
       ),
-
       moderationExperience: answers.moderation_experience || '',
       moderatorDefinition: answers.moderator_definition || '',
       leadershipExperience: answers.leadership_experience || '',
@@ -280,18 +251,14 @@ export default function StaffApplicationPage() {
       modCommandsKnowledge: answers.mod_commands_knowledge || '',
     };
   };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
     const validationError = validateForm();
     if (validationError) {
       alert(validationError);
       return;
     }
-
     setIsSubmitting(true);
-
     try {
       const response = await fetch('/api/applications', {
         method: 'POST',
@@ -300,14 +267,11 @@ export default function StaffApplicationPage() {
         },
         body: JSON.stringify(buildPayload()),
       });
-
       const result: SubmitResponse = await response.json();
-
       if (!response.ok || !result.success) {
         alert(result.error || 'Failed to submit application. Please try again.');
         return;
       }
-
       setShowSuccessModal(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       resetFlow();
@@ -318,7 +282,6 @@ export default function StaffApplicationPage() {
       setIsSubmitting(false);
     }
   };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -326,7 +289,6 @@ export default function StaffApplicationPage() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] relative overflow-hidden">
       {theme === 'light' && (
@@ -336,7 +298,6 @@ export default function StaffApplicationPage() {
           <div className="absolute -bottom-8 left-24 w-96 h-96 bg-sky-400/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '4s' }} />
         </div>
       )}
-
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={(event) => event.target === event.currentTarget && setShowSuccessModal(false)}>
             <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-blue-glow max-w-md w-full animate-scale-in">
@@ -365,7 +326,6 @@ export default function StaffApplicationPage() {
             </div>
         </div>
       )}
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
         {!isApplicationsOpen ? (
           <section className="text-center space-y-8 animate-fade-in">
@@ -392,7 +352,6 @@ export default function StaffApplicationPage() {
                 Select a team role, answer the dedicated form, and submit through your Discord login.
               </p>
             </header>
-
             {!showFormFlow ? (
               <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
                 <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Terms of Service</h2>
@@ -549,7 +508,6 @@ export default function StaffApplicationPage() {
                       Change Role
                     </button>
                   </div>
-
                   <div className="flex items-center gap-3 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl p-4">
                     {session.user?.image ? (
                       <img src={session.user.image} alt={session.user.name || 'User'} className={`w-12 h-12 rounded-full border ${selectedRoleVisual?.avatarBorder || 'border-blue-500'}`} />
@@ -564,7 +522,6 @@ export default function StaffApplicationPage() {
                     </div>
                   </div>
                 </div>
-
                 <div className={`glass-blue rounded-3xl p-6 sm:p-8 border ${selectedRoleVisual?.softBorder || 'border-blue-500/20'} shadow-apple-md space-y-5`}>
                   <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">Basic Information</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -601,10 +558,8 @@ export default function StaffApplicationPage() {
                     </label>
                   </div>
                 </div>
-
                 <div className={`glass-blue rounded-3xl p-6 sm:p-8 border ${selectedRoleVisual?.softBorder || 'border-blue-500/20'} shadow-apple-md space-y-6`}>
                   <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">Application Form</h3>
-
                   {activeQuestions.map((question, index) => (
                     <div key={question.id} className="space-y-2">
                       <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))]">
@@ -621,7 +576,6 @@ export default function StaffApplicationPage() {
                     </div>
                   ))}
                 </div>
-
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -644,7 +598,6 @@ export default function StaffApplicationPage() {
           </section>
         )}
       </main>
-
     </div>
   );
 }

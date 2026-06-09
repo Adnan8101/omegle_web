@@ -1,55 +1,44 @@
-
-
 const GUILD_ID = "1507458872225566811";
-
 const TRAIL_MOD_ROLE_IDS = [
-  "1470799621927338298"  
+  "1470799621927338298"
 ];
-
 const MODERATOR_ROLE_IDS = [
-  "1470334572557369384"  
+  "1470334572557369384"
 ];
-
 const VIEW_ONLY_ROLE_IDS = [
-  "1470799621927338298",  
+  "1470799621927338298",
   "1470334506337828874",
   "1474416428772888739"
 ];
-
 const CASINO_ADMIN_ROLE_IDS: string[] = [
-  "1470329047262167040"  
+  "1470329047262167040"
 ];
-
 const ADMIN_ROLE_IDS: string[] = [
-  "910086064109133844",  
-  "910922901107146823",  
-  "1469439337635643504", 
-  "1475568654560006165", 
+  "910086064109133844",
+  "910922901107146823",
+  "1469439337635643504",
+  "1475568654560006165",
 ];
-
 const MODERATOR_ACCESSIBLE_SECTIONS = [
   "vc_stats",
-  "chat_stats", 
+  "chat_stats",
   "server_stats"
 ];
-
 const PERMISSIONS = {
   ADMINISTRATOR: 0x0000000000000008n,
   MANAGE_GUILD: 0x0000000000000020n,
 };
-
 export interface UserPermissions {
-  hasFullAccess: boolean;      
-  hasModeratorAccess: boolean; 
-  hasViewOnlyAccess: boolean;  
-  hasCasinoAccess: boolean;    
-  hasAnyAccess: boolean;        
+  hasFullAccess: boolean;
+  hasModeratorAccess: boolean;
+  hasViewOnlyAccess: boolean;
+  hasCasinoAccess: boolean;
+  hasAnyAccess: boolean;
   isOwner: boolean;
   isAdmin: boolean;
   hasManageServer: boolean;
   roles: string[];
 }
-
 export async function checkUserPermissions(
   accessToken: string,
   casinoRoleIds: string[] = []
@@ -65,9 +54,7 @@ export async function checkUserPermissions(
     hasManageServer: false,
     roles: [],
   };
-
   try {
-    
     let response = await fetch(
       `https://discord.com/api/v10/users/@me/guilds/${GUILD_ID}/member`,
       {
@@ -76,18 +63,13 @@ export async function checkUserPermissions(
         },
       }
     );
-
-    
     let member: any = null;
     let userId: string | null = null;
-
     if (!response.ok) {
       console.error("OAuth member fetch failed:", {
         status: response.status,
         statusText: response.statusText
       });
-      
-      
       const userResponse = await fetch(
         `https://discord.com/api/v10/users/@me`,
         {
@@ -96,13 +78,10 @@ export async function checkUserPermissions(
           },
         }
       );
-
       if (userResponse.ok) {
         const user = await userResponse.json();
         userId = user.id;
         console.log("Got user ID from OAuth:", userId);
-
-        
         const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
         if (BOT_TOKEN && userId) {
           const botResponse = await fetch(
@@ -113,7 +92,6 @@ export async function checkUserPermissions(
               },
             }
           );
-
           if (botResponse.ok) {
             member = await botResponse.json();
             console.log("Successfully fetched member data using bot token");
@@ -122,7 +100,6 @@ export async function checkUserPermissions(
           }
         }
       }
-
       if (!member) {
         return defaultPerms;
       }
@@ -136,9 +113,7 @@ export async function checkUserPermissions(
         permissionsType: typeof member.permissions
       });
     }
-    
     const roles: string[] = member.roles || [];
-    
     let permissions: bigint;
     try {
       if (typeof member.permissions === 'string') {
@@ -152,7 +127,6 @@ export async function checkUserPermissions(
       console.error("Failed to parse permissions:", member.permissions, e);
       permissions = 0n;
     }
-
     console.log("🔍 Checking permissions for user:", {
       roleCount: roles.length,
       roles: roles,
@@ -161,15 +135,9 @@ export async function checkUserPermissions(
       casinoRoleIds: CASINO_ADMIN_ROLE_IDS,
       adminRoleIds: ADMIN_ROLE_IDS,
     });
-
-    
     const isAdmin = (permissions & PERMISSIONS.ADMINISTRATOR) !== 0n;
     const hasManageServer = (permissions & PERMISSIONS.MANAGE_GUILD) !== 0n;
-    
-    
     let isOwner = member.owner === true;
-
-    
     if (!isOwner) {
       try {
         const guildsResponse = await fetch('https://discord.com/api/v10/users/@me/guilds', {
@@ -177,7 +145,6 @@ export async function checkUserPermissions(
             Authorization: `Bearer ${accessToken}`,
           },
         });
-
         if (guildsResponse.ok) {
           const guilds = await guildsResponse.json();
           const targetGuild = Array.isArray(guilds)
@@ -189,8 +156,6 @@ export async function checkUserPermissions(
         console.error('Failed to check guild ownership:', guildError);
       }
     }
-
-    
     const hasAdminRole = roles.some((roleId) => {
       const isAdmin = ADMIN_ROLE_IDS.includes(roleId);
       if (isAdmin) {
@@ -198,10 +163,7 @@ export async function checkUserPermissions(
       }
       return isAdmin;
     });
-
-    
     const hasFullAccess = isAdmin || hasManageServer || isOwner || hasAdminRole;
-
     console.log("🔐 Permission results:", {
       isAdmin,
       hasManageServer,
@@ -209,24 +171,17 @@ export async function checkUserPermissions(
       hasAdminRole,
       hasFullAccess,
     });
-
-    
     const hasModeratorRole = !hasFullAccess && roles.some((roleId) =>
       MODERATOR_ROLE_IDS.includes(roleId)
     );
-
-    
     const hasViewOnlyRole = !hasFullAccess && !hasModeratorRole && roles.some((roleId) =>
       VIEW_ONLY_ROLE_IDS.includes(roleId)
     );
-
-    
     const allCasinoRoles = [...CASINO_ADMIN_ROLE_IDS, ...casinoRoleIds];
     const hasCasinoRole = roles.some((roleId) =>
       allCasinoRoles.includes(roleId)
     );
     const hasCasinoAccess = hasFullAccess || hasCasinoRole;
-
     console.log("✅ Permission check results:", {
       isOwner,
       isAdmin,
@@ -241,7 +196,6 @@ export async function checkUserPermissions(
       matchedViewOnlyRole: roles.find(r => VIEW_ONLY_ROLE_IDS.includes(r)),
       matchedAdminRole: roles.find(r => ADMIN_ROLE_IDS.includes(r))
     });
-
     return {
       hasFullAccess,
       hasModeratorAccess: hasModeratorRole,
@@ -258,31 +212,24 @@ export async function checkUserPermissions(
     return defaultPerms;
   }
 }
-
 export function canAccessFullDashboard(perms: UserPermissions): boolean {
   return perms.hasFullAccess;
 }
-
 export function canAccessVCTranscript(perms: UserPermissions): boolean {
   return perms.hasFullAccess || perms.hasModeratorAccess || perms.hasViewOnlyAccess;
 }
-
 export function canAccessChatLogs(perms: UserPermissions): boolean {
   return perms.hasFullAccess || perms.hasModeratorAccess || perms.hasViewOnlyAccess;
 }
-
 export function canAccessServerStats(perms: UserPermissions): boolean {
   return perms.hasFullAccess || perms.hasModeratorAccess;
 }
-
 export function canAccessApplications(perms: UserPermissions): boolean {
   return perms.hasFullAccess;
 }
-
 export function canAccessModStats(perms: UserPermissions): boolean {
   return perms.hasFullAccess;
 }
-
 export function canAccessCasinoDashboard(perms: UserPermissions): boolean {
   return perms.hasCasinoAccess;
 }

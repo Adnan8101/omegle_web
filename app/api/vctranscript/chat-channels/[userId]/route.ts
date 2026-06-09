@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { canAccessVCAndChats } from '@/lib/apiAuth';
 import { queryBotDb } from '@/lib/botDb';
 import { GUILD_ID, getErrorMessage } from '@/lib/constants';
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
@@ -15,12 +14,9 @@ export async function GET(
     if (!session || !canAccessVCAndChats(session.user?.permissions)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
-
-    
     const dateParts: string[] = [];
     const dateParams: unknown[] = [userId, GUILD_ID];
     let paramIdx = 3;
@@ -34,9 +30,8 @@ export async function GET(
       dateParams.push(endDate);
     }
     const dateClause = dateParts.length ? ' AND ' + dateParts.join(' AND ') : '';
-
     const channels = await queryBotDb(`
-      SELECT 
+      SELECT
         cl.channel_id,
         COALESCE(dcc.name, cl.channel_name, cl.channel_id) as channel_name,
         COUNT(*) as message_count,
@@ -52,7 +47,6 @@ export async function GET(
       ORDER BY message_count DESC
       LIMIT 50
     `, dateParams).catch(() => []);
-
     return NextResponse.json({ channels: channels || [] });
   } catch (error: unknown) {
     console.error('Error fetching chat channels:', getErrorMessage(error));

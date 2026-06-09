@@ -1,11 +1,9 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FiArrowLeft, FiPackage, FiClock, FiCheckCircle, FiCopy, FiCheck, FiAlertTriangle, FiExternalLink } from 'react-icons/fi';
-
 interface Purchase {
   id: string;
   item_id: string;
@@ -21,19 +19,14 @@ interface Purchase {
   redeemed_at: string | null;
   redeemed_by: string | null;
 }
-
 const SUPPORT_SERVER_URL = 'https://discord.gg/omeglee';
-
 export default function PurchasesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [currencyEmoji, setCurrencyEmoji] = useState('🪙');
   const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-
-  
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -57,25 +50,21 @@ export default function PurchasesPage() {
     }
     return <span className="inline-block">{emoji}</span>;
   };
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/shop');
     }
   }, [status, router]);
-
   useEffect(() => {
     if (status === 'authenticated') {
       fetchPurchases();
     }
   }, [status]);
-
   const fetchPurchases = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/purchases');
       const data = await res.json();
-      
       if (res.ok) {
         setPurchases(data.purchases || []);
         setCurrencyEmoji(data.currencyEmoji || '🪙');
@@ -86,13 +75,11 @@ export default function PurchasesPage() {
       setLoading(false);
     }
   };
-
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
   };
-
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
@@ -102,7 +89,6 @@ export default function PurchasesPage() {
       minute: '2-digit'
     });
   };
-
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6">
@@ -117,7 +103,6 @@ export default function PurchasesPage() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
@@ -138,7 +123,6 @@ export default function PurchasesPage() {
             </p>
           </div>
         </div>
-
         {}
         {purchases.length === 0 ? (
           <div className="glass-blue rounded-3xl p-12 text-center border border-[rgb(var(--color-border))]">
@@ -178,7 +162,6 @@ export default function PurchasesPage() {
                           : isExpired
                             ? 'bg-red-500/20 text-red-500'
                             : 'bg-yellow-500/20 text-yellow-500';
-
                         return (
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                         badgeClass
@@ -203,7 +186,6 @@ export default function PurchasesPage() {
                         );
                       })()}
                     </div>
-
                     <div className="flex flex-wrap items-center gap-4 text-sm text-[rgb(var(--color-text-secondary))]">
                       <span className="flex items-center gap-1">
                         {getEmojiDisplay(currencyEmoji, 'w-4 h-4')}
@@ -212,19 +194,16 @@ export default function PurchasesPage() {
                       <span>•</span>
                       <span>{formatDate(purchase.created_at)}</span>
                     </div>
-
                     {purchase.redeemed_at && (
                       <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
                         Redeemed on {formatDate(purchase.redeemed_at)}
                       </p>
                     )}
-
                     {purchase.status !== 'redeemed' && purchase.expires_at && (
                       <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
                         {purchase.is_expired ? 'Expired on' : 'Expires on'} {formatDate(purchase.expires_at)}
                       </p>
                     )}
-
                     {purchase.is_item_deleted && purchase.status !== 'redeemed' && (
                       <div className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
                         <div className="flex items-start gap-2">
@@ -260,7 +239,6 @@ export default function PurchasesPage() {
                       </div>
                     )}
                   </div>
-
                   {}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <div className="px-4 py-2 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">

@@ -1,7 +1,4 @@
-
-
 import { PrismaClient } from '@prisma/client';
-
 export const prismaBotScript = new PrismaClient({
   datasources: {
     db: {

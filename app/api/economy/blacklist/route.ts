@@ -2,33 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
-
 const GUILD_ID = "1507458872225566811";
-
 export async function GET(request: NextRequest) {
   console.log('=== BLACKLIST API START ===');
-  
   try {
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
-
     const botToken = process.env.DISCORD_BOT_TOKEN;
     if (!botToken) {
       console.error('DISCORD_BOT_TOKEN not set');
       return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
     }
-
     console.log('Fetching Discord channels and roles...');
-
-    
     const channelsResponse = await fetch(
       `https://discord.com/api/v10/guilds/${GUILD_ID}/channels`,
       {
@@ -39,8 +30,6 @@ export async function GET(request: NextRequest) {
         cache: 'no-store',
       }
     );
-
-    
     const rolesResponse = await fetch(
       `https://discord.com/api/v10/guilds/${GUILD_ID}/roles`,
       {
@@ -51,35 +40,26 @@ export async function GET(request: NextRequest) {
         cache: 'no-store',
       }
     );
-
     console.log('Channels response:', channelsResponse.status);
     console.log('Roles response:', rolesResponse.status);
-
     const channels = channelsResponse.ok ? await channelsResponse.json() : [];
     const roles = rolesResponse.ok ? await rolesResponse.json() : [];
-
     console.log('Channels fetched:', channels.length);
     console.log('Roles fetched:', roles.length);
-
-    
     const [blacklistedChannels, blacklistedCategories, blacklistedRoles, blacklistedMembers] = await Promise.all([
       prismaBot.economyBlacklistChannel.findMany({ where: { guild_id: GUILD_ID } }),
       prismaBot.economyBlacklistCategory.findMany({ where: { guild_id: GUILD_ID } }),
       prismaBot.economyBlacklistRole.findMany({ where: { guild_id: GUILD_ID } }),
       prismaBot.economyBlacklistMember.findMany({ where: { guild_id: GUILD_ID } })
     ]);
-
     console.log('Blacklisted channels:', blacklistedChannels.length);
     console.log('Blacklisted categories:', blacklistedCategories.length);
     console.log('Blacklisted roles:', blacklistedRoles.length);
     console.log('Blacklisted members:', blacklistedMembers.length);
-
-    
     const categories = channels
       .filter((ch: any) => ch.type === 4)
       .map((ch: any) => ({ id: ch.id, name: ch.name, position: ch.position }))
       .sort((a: any, b: any) => a.position - b.position);
-
     const textChannels = channels
       .filter((ch: any) => ch.type === 0)
       .map((ch: any) => ({
@@ -89,7 +69,6 @@ export async function GET(request: NextRequest) {
         parentName: channels.find((c: any) => c.id === ch.parent_id)?.name || 'No Category',
         type: 'text'
       }));
-
     const voiceChannels = channels
       .filter((ch: any) => ch.type === 2)
       .map((ch: any) => ({
@@ -99,7 +78,6 @@ export async function GET(request: NextRequest) {
         parentName: channels.find((c: any) => c.id === ch.parent_id)?.name || 'No Category',
         type: 'voice'
       }));
-
     const formattedRoles = roles
       .filter((r: any) => r.name !== '@everyone')
       .map((r: any) => ({
@@ -109,13 +87,10 @@ export async function GET(request: NextRequest) {
         position: r.position
       }))
       .sort((a: any, b: any) => b.position - a.position);
-
     console.log('Available categories:', categories.length);
     console.log('Available text channels:', textChannels.length);
     console.log('Available voice channels:', voiceChannels.length);
     console.log('Available roles:', formattedRoles.length);
-
-    
     const mappedBlacklistedCategories = blacklistedCategories.map(c => {
       const cat = categories.find((cat: any) => cat.id === c.category_id);
       console.log(`Category ${c.category_id} -> ${cat?.name || 'NOT FOUND'}`);
@@ -124,7 +99,6 @@ export async function GET(request: NextRequest) {
         name: cat?.name || 'Unknown'
       };
     });
-
     const mappedBlacklistedChannels = blacklistedChannels.map(c => {
       const ch = [...textChannels, ...voiceChannels].find(ch => ch.id === c.channel_id);
       console.log(`Channel ${c.channel_id} -> ${ch?.name || 'NOT FOUND'}`);
@@ -134,7 +108,6 @@ export async function GET(request: NextRequest) {
         name: ch?.name || 'Unknown'
       };
     });
-
     const mappedBlacklistedRoles = blacklistedRoles.map(r => {
       const role = formattedRoles.find((role: any) => role.id === r.role_id);
       console.log(`Role ${r.role_id} -> ${role?.name || 'NOT FOUND'}`);
@@ -144,10 +117,8 @@ export async function GET(request: NextRequest) {
         color: role?.color || 0
       };
     });
-
     const mappedBlacklistedMembers = await Promise.all(
       blacklistedMembers.map(async (m) => {
-        
         try {
           const memberRes = await fetch(
             `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${m.user_id}`,
@@ -159,7 +130,6 @@ export async function GET(request: NextRequest) {
               cache: 'no-store',
             }
           );
-
           if (memberRes.ok) {
             const memberData = await memberRes.json();
             const user = memberData.user;
@@ -174,8 +144,6 @@ export async function GET(request: NextRequest) {
         } catch (err) {
           console.log(`Could not fetch member ${m.user_id}:`, err);
         }
-
-        
         return {
           id: m.user_id,
           name: m.user_name || `User ${m.user_id}`,
@@ -185,9 +153,7 @@ export async function GET(request: NextRequest) {
         };
       })
     );
-
     console.log('=== BLACKLIST API END ===');
-
     return NextResponse.json({
       available: {
         categories,
@@ -207,27 +173,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
-
     const body = await request.json();
     const { type, id, channelType } = body;
-
     if (!type || !id) {
       return NextResponse.json({ error: 'Type and ID are required' }, { status: 400 });
     }
-
     switch (type) {
       case 'channel':
         await prismaBot.economyBlacklistChannel.upsert({
@@ -246,7 +206,6 @@ export async function POST(request: NextRequest) {
           update: {}
         });
         break;
-
       case 'category':
         await prismaBot.economyBlacklistCategory.upsert({
           where: {
@@ -263,7 +222,6 @@ export async function POST(request: NextRequest) {
           update: {}
         });
         break;
-
       case 'role':
         await prismaBot.economyBlacklistRole.upsert({
           where: {
@@ -280,7 +238,6 @@ export async function POST(request: NextRequest) {
           update: {}
         });
         break;
-
       case 'member':
         await prismaBot.economyBlacklistMember.upsert({
           where: {
@@ -297,39 +254,31 @@ export async function POST(request: NextRequest) {
           update: {}
         });
         break;
-
       default:
         return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
-
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error adding to blacklist:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess && !perms?.hasCasinoAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
-
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
     const id = searchParams.get('id');
-
     if (!type || !id) {
       return NextResponse.json({ error: 'Type and ID are required' }, { status: 400 });
     }
-
     switch (type) {
       case 'channel':
         await prismaBot.economyBlacklistChannel.delete({
@@ -341,7 +290,6 @@ export async function DELETE(request: NextRequest) {
           }
         });
         break;
-
       case 'category':
         await prismaBot.economyBlacklistCategory.delete({
           where: {
@@ -352,7 +300,6 @@ export async function DELETE(request: NextRequest) {
           }
         });
         break;
-
       case 'role':
         await prismaBot.economyBlacklistRole.delete({
           where: {
@@ -363,7 +310,6 @@ export async function DELETE(request: NextRequest) {
           }
         });
         break;
-
       case 'member':
         await prismaBot.economyBlacklistMember.delete({
           where: {
@@ -374,11 +320,9 @@ export async function DELETE(request: NextRequest) {
           }
         });
         break;
-
       default:
         return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
-
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error removing from blacklist:', error);

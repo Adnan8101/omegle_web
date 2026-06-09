@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -9,7 +8,6 @@ import {
   FiPlus, FiEdit2, FiTrash2, FiSearch, FiRefreshCw, FiTrendingUp,
   FiChevronRight, FiAlertCircle
 } from 'react-icons/fi';
-
 interface ShopItem {
   id: string;
   name: string;
@@ -19,7 +17,6 @@ interface ShopItem {
   stock: number | null;
   created_at: string;
 }
-
 interface Stats {
   totalItems: number;
   totalPurchases: number;
@@ -28,17 +25,14 @@ interface Stats {
   totalUsers: number;
   totalPoints: number;
 }
-
 interface TopItem {
   name: string;
   purchaseCount: number;
   totalRevenue: number;
 }
-
 export default function CasinoDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
   const [items, setItems] = useState<ShopItem[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [topItems, setTopItems] = useState<TopItem[]>([]);
@@ -47,11 +41,8 @@ export default function CasinoDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
-
-  
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -76,24 +67,18 @@ export default function CasinoDashboard() {
     }
     return <span className="inline-block">{emoji}</span>;
   };
-
   useEffect(() => {
     if (status === 'loading') return;
-
     if (status === 'unauthenticated') {
       setIsRedirecting(true);
       router.push('/admin');
       return;
     }
-    
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
-      
       const canAccess = perms?.hasFullAccess || perms?.hasCasinoAccess;
-      
       if (!canAccess) {
         setHasPermission(false);
-        
         if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
           setIsRedirecting(true);
           router.push('/admin/vctranscript');
@@ -103,33 +88,26 @@ export default function CasinoDashboard() {
         }
         return;
       }
-      
       setHasPermission(true);
     }
   }, [status, session, router]);
-
   useEffect(() => {
     if (status === 'authenticated') {
       fetchData();
     }
   }, [status]);
-
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    
     try {
       const [itemsRes, statsRes] = await Promise.all([
         fetch('/api/casino/shop', { cache: 'no-store' }),
         fetch('/api/casino/stats', { cache: 'no-store' })
       ]);
-      
       const itemsData = await itemsRes.json();
       const statsData = await statsRes.json();
-      
       console.log('Items response:', itemsRes.status, itemsData);
       console.log('Stats response:', statsRes.status, statsData);
-      
       if (itemsRes.ok) {
         setItems(itemsData.items || []);
         setCurrencyEmoji(itemsData.currencyEmoji || '🪙');
@@ -137,14 +115,12 @@ export default function CasinoDashboard() {
         console.error('Items error:', itemsData);
         setError(itemsData.error || 'Failed to load items');
       }
-      
       if (statsRes.ok) {
         setStats(statsData.stats || null);
         setTopItems(statsData.topItems || []);
       } else {
         console.error('Stats error:', statsData);
       }
-      
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load casino data');
@@ -152,7 +128,6 @@ export default function CasinoDashboard() {
       setLoading(false);
     }
   };
-
   const handleDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/casino/shop/${id}`, { method: 'DELETE' });
@@ -164,13 +139,10 @@ export default function CasinoDashboard() {
       console.error('Error deleting item:', err);
     }
   };
-
   const filteredItems = items.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   const formatNumber = (n: number) => n.toLocaleString();
-
   const statCards = [
     {
       title: 'Total Items',
@@ -202,7 +174,6 @@ export default function CasinoDashboard() {
       showCurrency: true,
     },
   ];
-
   if (status === 'loading' || hasPermission === null || isRedirecting) {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen flex items-center justify-center">
@@ -215,8 +186,6 @@ export default function CasinoDashboard() {
       </div>
     );
   }
-
-  
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -249,7 +218,6 @@ export default function CasinoDashboard() {
       </div>
     );
   }
-
   if (loading) {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
@@ -267,7 +235,6 @@ export default function CasinoDashboard() {
       </div>
     );
   }
-
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       {}
@@ -297,7 +264,6 @@ export default function CasinoDashboard() {
           </Link>
         </div>
       </div>
-
       {}
       {error && (
         <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
@@ -305,7 +271,6 @@ export default function CasinoDashboard() {
           <span className="text-red-500">{error}</span>
         </div>
       )}
-
       {}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         {statCards.map((card, index) => (
@@ -330,7 +295,6 @@ export default function CasinoDashboard() {
           </div>
         ))}
       </div>
-
       {}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 sm:mb-8">
         <Link
@@ -350,7 +314,6 @@ export default function CasinoDashboard() {
           </div>
           <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-yellow-500 group-hover:translate-x-1 apple-transition" />
         </Link>
-
         {}
         {session?.user?.permissions?.hasFullAccess && (
           <Link
@@ -371,7 +334,6 @@ export default function CasinoDashboard() {
             <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-purple-500 group-hover:translate-x-1 apple-transition" />
           </Link>
         )}
-
         <Link
           href="/admin/casino/purchases"
           className="glass-blue rounded-2xl p-4 sm:p-5 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] apple-transition flex items-center justify-between group"
@@ -389,7 +351,6 @@ export default function CasinoDashboard() {
           </div>
           <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-[rgb(var(--color-accent))] group-hover:translate-x-1 apple-transition" />
         </Link>
-
         <Link
           href="/shop"
           target="_blank"
@@ -407,7 +368,6 @@ export default function CasinoDashboard() {
           <FiChevronRight className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-[rgb(var(--color-accent))] group-hover:translate-x-1 apple-transition" />
         </Link>
       </div>
-
       {}
       {topItems.length > 0 && (
         <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8">
@@ -440,7 +400,6 @@ export default function CasinoDashboard() {
           </div>
         </div>
       )}
-
       {}
       <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -458,7 +417,6 @@ export default function CasinoDashboard() {
             />
           </div>
         </div>
-
         {filteredItems.length === 0 ? (
           <div className="text-center py-12">
             <FiPackage className="w-12 h-12 mx-auto text-[rgb(var(--color-text-tertiary))] mb-4" />
@@ -503,17 +461,16 @@ export default function CasinoDashboard() {
                     <div className={`absolute top-3 right-3 px-2 py-1 rounded-lg text-xs font-medium ${
                       item.stock === -1
                         ? 'bg-green-500/90 text-white'
-                        : item.stock === 0 
-                        ? 'bg-red-500/90 text-white' 
-                        : item.stock <= 5 
-                        ? 'bg-yellow-500/90 text-black' 
+                        : item.stock === 0
+                        ? 'bg-red-500/90 text-white'
+                        : item.stock <= 5
+                        ? 'bg-yellow-500/90 text-black'
                         : 'bg-[rgb(var(--color-bg-secondary))]/90 text-[rgb(var(--color-text-primary))]'
                     }`}>
                       {item.stock === -1 ? 'Unlimited' : item.stock === 0 ? 'Sold Out' : `${item.stock} left`}
                     </div>
                   )}
                 </div>
-
                 {}
                 <div className="p-4">
                   <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-1 truncate">
@@ -550,7 +507,6 @@ export default function CasinoDashboard() {
           </div>
         )}
       </div>
-
       {}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">

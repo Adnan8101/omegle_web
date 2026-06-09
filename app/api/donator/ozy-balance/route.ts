@@ -2,19 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const guildId = request.nextUrl.searchParams.get('guild_id')?.trim();
     if (!guildId) {
       return NextResponse.json({ error: 'guild_id is required' }, { status: 400 });
     }
-
     const [config, economyUser] = await Promise.all([
       (prismaBot as any).economyConfig.findUnique({
         where: { guild_id: guildId },
@@ -25,7 +22,6 @@ export async function GET(request: NextRequest) {
         select: { total_points: true },
       }),
     ]);
-
     return NextResponse.json({
       data: {
         balance: Number(economyUser?.total_points || 0),

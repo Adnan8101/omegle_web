@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prismaBot } from '@/lib/prismaBot';
-
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || process.env.DISCORD_TOKEN || '';
 const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || '';
-
 interface RazorpayWebhookEvent {
   event: string;
   payload: {
@@ -31,7 +29,6 @@ interface RazorpayWebhookEvent {
     };
   };
 }
-
 interface RazorpayPaymentEntity {
     id: string;
     entity: string;
@@ -46,33 +43,28 @@ interface RazorpayPaymentEntity {
       plan_id?: string;
     };
 }
-
 function verifyWebhookSignature(body: string, signature: string): boolean {
   try {
     if (!WEBHOOK_SECRET) {
       console.warn('RAZORPAY_WEBHOOK_SECRET not set, skipping signature verification');
       return true;
     }
-
     const hash = crypto
       .createHmac('sha256', WEBHOOK_SECRET)
       .update(body)
       .digest('hex');
-
     return hash === signature;
   } catch (error) {
     console.error('Signature verification error:', error);
     return false;
   }
 }
-
 async function assignRoleToUser(guildId: string, userId: string, roleId: string): Promise<boolean> {
   try {
     if (!BOT_TOKEN || !roleId) {
       console.warn('Bot token or role ID missing, skipping role assignment');
       return false;
     }
-
     const response = await fetch(
       `https://discord.com/api/v10/guilds/${guildId}/members/${userId}/roles/${roleId}`,
       {
@@ -83,20 +75,17 @@ async function assignRoleToUser(guildId: string, userId: string, roleId: string)
         }
       }
     );
-
     if (!response.ok) {
       const error = await response.json();
       console.error('Failed to assign role:', error);
       return false;
     }
-
     return true;
   } catch (error) {
     console.error('Error assigning role:', error);
     return false;
   }
 }
-
 async function sendPaymentNotificationDM(
   userId: string,
   planTitle: string,
@@ -109,8 +98,6 @@ async function sendPaymentNotificationDM(
       console.warn('Bot token missing, skipping DM notification');
       return false;
     }
-
-    
     const dmResponse = await fetch('https://discord.com/api/v10/users/@me/channels', {
       method: 'POST',
       headers: {
@@ -121,15 +108,11 @@ async function sendPaymentNotificationDM(
         recipient_id: userId
       })
     });
-
     if (!dmResponse.ok) {
       console.error('Failed to create DM channel');
       return false;
     }
-
     const channel = await dmResponse.json();
-
-    
     const embed = {
       title: `✨ Welcome to ${planTitle}!`,
       description: `Thank you for purchasing our **${planTitle}** plan!`,
@@ -165,7 +148,6 @@ async function sendPaymentNotificationDM(
       },
       timestamp: new Date().toISOString()
     };
-
     const messageResponse = await fetch(
       `https://discord.com/api/v10/channels/${channel.id}/messages`,
       {
@@ -179,41 +161,31 @@ async function sendPaymentNotificationDM(
         })
       }
     );
-
     return messageResponse.ok;
   } catch (error) {
     console.error('Error sending DM notification:', error);
     return false;
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
     const signature = request.headers.get('x-razorpay-signature') || '';
     const body = await request.text();
-
-    
     if (!verifyWebhookSignature(body, signature)) {
       console.warn('Invalid webhook signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
-
     const event: RazorpayWebhookEvent = JSON.parse(body);
-
     if (event.event === 'payment.authorized' || event.event === 'payment.captured') {
       const payment: RazorpayPaymentEntity | undefined = event?.payload?.payment?.entity;
       const orderId = payment?.order_id || event?.payload?.order?.entity?.id;
-
       if (!payment || !orderId) {
         return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 });
       }
-
       if (!payment.notes?.guild_id || !payment.notes?.user_id || !payment.notes?.plan_id) {
         console.error('Missing required notes in payment:', payment.notes);
         return NextResponse.json({ error: 'Invalid payment notes' }, { status: 400 });
       }
-
-      
       const updatedPayment = await (prismaBot as any).razorpayPayment.update({
         where: { razorpay_order_id: orderId },
         data: {
@@ -225,15 +197,12 @@ export async function POST(request: NextRequest) {
         },
         include: { plan: true }
       });
-
-      
       let subscription = await (prismaBot as any).donatorSubscription.findFirst({
         where: {
           payment_id: payment.id
         },
         include: { plan: true }
       });
-
       if (!subscription) {
         subscription = await (prismaBot as any).donatorSubscription.create({
           data: {
@@ -242,14 +211,12 @@ export async function POST(request: NextRequest) {
             plan_id: payment.notes.plan_id,
             status: 'active',
             start_date: new Date(),
-            expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
+            expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             payment_id: payment.id
           },
           include: { plan: true }
         });
       }
-
-      
       if (subscription.plan.linked_role_id) {
         await assignRoleToUser(
           payment.notes.guild_id,
@@ -257,8 +224,6 @@ export async function POST(request: NextRequest) {
           subscription.plan.linked_role_id
         );
       }
-
-      
       try {
         const userResponse = await fetch(
           `https://discord.com/api/v10/users/${payment.notes.user_id}`,
@@ -269,7 +234,6 @@ export async function POST(request: NextRequest) {
             }
           }
         );
-
         let userAvatar = null;
         if (userResponse.ok) {
           const user = await userResponse.json();
@@ -277,7 +241,6 @@ export async function POST(request: NextRequest) {
             userAvatar = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
           }
         }
-
         await sendPaymentNotificationDM(
           payment.notes.user_id,
           subscription.plan.title,
@@ -288,17 +251,13 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         console.error('Error in post-payment notifications:', error);
       }
-
       return NextResponse.json({ success: true, subscription_id: subscription.id });
     } else if (event.event === 'payment.failed') {
       const payment: RazorpayPaymentEntity | undefined = event?.payload?.payment?.entity;
       const orderId = payment?.order_id || event?.payload?.order?.entity?.id;
-
       if (!orderId) {
         return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 });
       }
-
-      
       await (prismaBot as any).razorpayPayment.update({
         where: { razorpay_order_id: orderId },
         data: {
@@ -308,10 +267,8 @@ export async function POST(request: NextRequest) {
           updated_at: new Date()
         }
       });
-
       return NextResponse.json({ success: true, status: 'payment_failed' });
     }
-
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Webhook processing error:', error);

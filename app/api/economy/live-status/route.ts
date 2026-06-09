@@ -2,41 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { queryBotDb } from '@/lib/botDb';
-
 const GUILD_ID = "1507458872225566811";
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const perms = session.user.permissions;
     if (!perms?.hasFullAccess) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
-
     const { searchParams } = new URL(request.url);
     const searchUserId = searchParams.get('userId');
-
-    
     const configResult = await queryBotDb(`
       SELECT * FROM economy_config WHERE guild_id = $1
     `, [GUILD_ID]);
     const config = configResult[0] || null;
-
     const today = new Date().toISOString().split('T')[0];
-
-    
     if (searchUserId) {
       return await getUserHistory(searchUserId, config, today);
     }
-
-    
     const activeVcSessions = await queryBotDb(`
-      SELECT 
+      SELECT
         vt.user_id,
         vt.channel_id,
         vt.joined_at,
@@ -54,20 +42,14 @@ export async function GET(request: NextRequest) {
       WHERE vt.guild_id = $1 AND vt.left_at IS NULL
       ORDER BY vt.joined_at ASC
     `, [GUILD_ID]);
-
-    
     const activeUserIds = activeVcSessions.map((s: any) => s.user_id);
-    
-    
     const channelMemberCounts = await queryBotDb(`
       SELECT channel_id, COUNT(DISTINCT user_id) as member_count
       FROM voice_tracking
       WHERE guild_id = $1 AND left_at IS NULL
       GROUP BY channel_id
     `, [GUILD_ID]);
-    
     const memberCountMap = new Map(channelMemberCounts.map((c: any) => [c.channel_id, Number(c.member_count)]));
-    
     let vcProgress: any[] = [];
     if (activeUserIds.length > 0) {
       vcProgress = await queryBotDb(`
@@ -76,38 +58,30 @@ export async function GET(request: NextRequest) {
         WHERE guild_id = $1 AND user_id = ANY($2)
       `, [GUILD_ID, activeUserIds]);
     }
-
-    
     let categoryRewards: any[] = [];
     if (config?.advanced_mode) {
       categoryRewards = await queryBotDb(`
-        SELECT category_id, category_name, vc_enabled, vc_minutes_per_point, 
+        SELECT category_id, category_name, vc_enabled, vc_minutes_per_point,
                vc_ozy_amount, vc_min_members, vc_count_bots,
                message_enabled, messages_per_point, msg_ozy_amount
         FROM economy_category_rewards
         WHERE guild_id = $1
       `, [GUILD_ID]);
     }
-
-    
     const blacklistedChannels = await queryBotDb(`
       SELECT channel_id FROM economy_blacklist_channels
       WHERE guild_id = $1 AND channel_type = 'voice'
     `, [GUILD_ID]);
     const blacklistedChannelIds = new Set(blacklistedChannels.map((c: any) => c.channel_id));
-
-    
     const recentVcAwards = await queryBotDb(`
       SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
       FROM economy_point_logs epl
       LEFT JOIN discord_user_cache duc ON duc.user_id = epl.user_id
-      WHERE epl.guild_id = $1 AND epl.source = 'voice' 
+      WHERE epl.guild_id = $1 AND epl.source = 'voice'
         AND epl.created_at > NOW() - INTERVAL '1 hour'
       ORDER BY epl.created_at DESC
       LIMIT 50
     `, [GUILD_ID]);
-
-    
     const recentMsgAwards = await queryBotDb(`
       SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
       FROM economy_point_logs epl
@@ -117,8 +91,6 @@ export async function GET(request: NextRequest) {
       ORDER BY epl.created_at DESC
       LIMIT 50
     `, [GUILD_ID]);
-
-    
     const activeMsgProgress = await queryBotDb(`
       SELECT emp.user_id, emp.category_id, emp.accumulated_msgs,
              duc.username, duc.display_name, duc.avatar_url
@@ -128,24 +100,18 @@ export async function GET(request: NextRequest) {
       ORDER BY emp.accumulated_msgs DESC
       LIMIT 100
     `, [GUILD_ID]);
-
     const vcProgressMap = new Map<string, any>();
     for (const progress of vcProgress) {
       vcProgressMap.set(`${progress.user_id}:${progress.category_id}`, progress);
     }
-
     const categoryRewardMap = new Map<string, any>();
     for (const reward of categoryRewards) {
       categoryRewardMap.set(reward.category_id, reward);
     }
-
-    
     const activeCategoryMap = new Map<string, string>();
     for (const sess of activeVcSessions) {
       activeCategoryMap.set(sess.user_id, sess.category_id);
     }
-
-    
     const stagedVcProgress = await queryBotDb(`
       SELECT evp.user_id,
              evp.category_id,
@@ -155,21 +121,17 @@ export async function GET(request: NextRequest) {
       FROM economy_vc_progress evp
       LEFT JOIN discord_user_cache duc ON duc.user_id = evp.user_id
       LEFT JOIN economy_category_rewards ecr ON ecr.guild_id = evp.guild_id AND ecr.category_id = evp.category_id
-      WHERE evp.guild_id = $1 
+      WHERE evp.guild_id = $1
         AND evp.accumulated_seconds > 0
       ORDER BY evp.accumulated_seconds DESC
       LIMIT 200
     `, [GUILD_ID]);
-
-    
     const filteredStaged = stagedVcProgress.filter((row: any) => {
       const activeCategory = activeCategoryMap.get(row.user_id);
       return !activeCategory || activeCategory !== row.category_id;
     });
-
-    
     const todayStats = await queryBotDb(`
-      SELECT 
+      SELECT
         COUNT(DISTINCT CASE WHEN source = 'voice' THEN user_id END) as vc_users,
         COUNT(DISTINCT CASE WHEN source = 'message' THEN user_id END) as msg_users,
         COALESCE(SUM(CASE WHEN source = 'voice' THEN amount ELSE 0 END), 0) as vc_earned,
@@ -178,43 +140,28 @@ export async function GET(request: NextRequest) {
       FROM economy_point_logs
       WHERE guild_id = $1 AND created_at >= CURRENT_DATE AND amount > 0
     `, [GUILD_ID]);
-
-    
     const vcUsers = activeVcSessions.map((session: any) => {
       const categoryId = session.category_id || 'global';
       const userProg = vcProgressMap.get(`${session.user_id}:${categoryId}`);
-
       const catReward = categoryRewardMap.get(categoryId);
       const isBlacklisted = blacklistedChannelIds.has(session.channel_id);
-      
-      
       const isAdvanced = config?.advanced_mode && catReward;
       const minutesPerPoint = isAdvanced ? catReward.vc_minutes_per_point : (config?.minutes_per_point || 5);
       const ozyAmount = isAdvanced ? (catReward.vc_ozy_amount || 1) : (config?.vc_ozy_amount || 1);
       const vcEnabled = isAdvanced ? catReward.vc_enabled : true;
       const minMembers = isAdvanced ? (catReward.vc_min_members || 1) : (config?.require_two_members || 1);
       const countBots = isAdvanced ? (catReward.vc_count_bots ?? false) : (config?.count_bots ?? false);
-
       const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);
       const thresholdSeconds = minutesPerPoint * 60;
-      
-      
       const currentMemberCount = memberCountMap.get(session.channel_id) || 1;
-      
       const hasEnoughMembers = countBots ? true : currentMemberCount >= minMembers;
-      
-      
       const dbProgress = userProg?.accumulated_seconds || 0;
-      
-      
       let liveProgress = dbProgress;
       if (hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false)) {
         const estimatedElapsed = Math.min(sessionDuration % 10, 10);
         liveProgress = (dbProgress + estimatedElapsed) % thresholdSeconds;
       }
-      
       const progressPercent = Math.round((liveProgress / thresholdSeconds) * 100);
-      
       return {
         id: session.user_id,
         name: session.display_name || session.username || session.user_id,
@@ -225,13 +172,12 @@ export async function GET(request: NextRequest) {
         duration: sessionDuration,
         muted: session.was_muted,
         deafened: session.was_deafened,
-        
         isEarning: !isBlacklisted && vcEnabled && (config?.enabled ?? false) && hasEnoughMembers,
         isBlacklisted,
         memberCount: currentMemberCount,
         minMembers: minMembers,
         trackingDisabled: !hasEnoughMembers && !countBots,
-        totalProgress: liveProgress, 
+        totalProgress: liveProgress,
         progress: progressPercent,
         threshold: thresholdSeconds,
         nextIn: thresholdSeconds - liveProgress,
@@ -240,15 +186,12 @@ export async function GET(request: NextRequest) {
         mode: isAdvanced ? 'category' : 'global'
       };
     });
-
-    
     const msgActivity = activeMsgProgress.map((p: any) => {
       const catReward = categoryRewardMap.get(p.category_id);
       const useCategorySettings = config?.advanced_mode && p.category_id !== 'global' && !!catReward;
       const threshold = useCategorySettings
         ? (catReward.messages_per_point || 25)
         : (config?.messages_per_point || 25);
-
       return {
         id: p.user_id,
         name: p.display_name || p.username || p.user_id,
@@ -261,7 +204,6 @@ export async function GET(request: NextRequest) {
         progress: Math.min(100, Math.round((p.accumulated_msgs / threshold) * 100))
       };
     });
-
     return NextResponse.json({
       timestamp: new Date().toISOString(),
       economy: {
@@ -330,39 +272,29 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching live economy status:', error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
-
 async function getUserHistory(userId: string, config: any, today: string) {
-  
   const userInfo = await queryBotDb(`
     SELECT user_id, username, display_name, avatar_url, in_guild
     FROM discord_user_cache WHERE user_id = $1
   `, [userId]);
-
-  
   const economyUser = await queryBotDb(`
     SELECT total_points, total_vc_minutes, total_messages
     FROM economy_users WHERE guild_id = $1 AND user_id = $2
   `, [GUILD_ID, userId]);
-
-  
   const vcProgress = await queryBotDb(`
     SELECT category_id, accumulated_seconds
     FROM economy_vc_progress WHERE guild_id = $1 AND user_id = $2
   `, [GUILD_ID, userId]);
-
-  
   const msgProgress = await queryBotDb(`
     SELECT accumulated_msgs
     FROM economy_message_progress WHERE guild_id = $1 AND user_id = $2
   `, [GUILD_ID, userId]);
-
-  
   const recentHistory = await queryBotDb(`
     SELECT amount, reason, source, created_at
     FROM economy_point_logs
@@ -370,20 +302,16 @@ async function getUserHistory(userId: string, config: any, today: string) {
     ORDER BY created_at DESC
     LIMIT 100
   `, [GUILD_ID, userId]);
-
-  
   const activeVc = await queryBotDb(`
     SELECT vt.channel_id, vt.joined_at, dcc.name as channel_name
     FROM voice_tracking vt
     LEFT JOIN discord_channel_cache dcc ON dcc.channel_id = vt.channel_id
     WHERE vt.guild_id = $1 AND vt.user_id = $2 AND vt.left_at IS NULL
   `, [GUILD_ID, userId]);
-
   const user = userInfo[0];
   const economy = economyUser[0];
   const vc = vcProgress[0];
   const msg = msgProgress[0];
-
   return NextResponse.json({
     user: {
       id: userId,

@@ -3,36 +3,28 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { queryBotDb, getUsersDisplay } from '@/lib/botDb';
 import { getErrorMessage, GUILD_ID } from '@/lib/constants';
-
 const STAFF_ROLE_IDS = [
-  '1470334572557369384', 
-  '1470334506337828874', 
+  '1470334572557369384',
+  '1470334506337828874',
 ];
-
 const MOD_ROLE_IDS = [
-  '1470334572557369384', 
-  '1470334506337828874', 
+  '1470334572557369384',
+  '1470334506337828874',
 ];
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
     if (!session || !session.user?.permissions?.hasFullAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    
     const staffUsers = await queryBotDb(`
-      SELECT 
+      SELECT
         user_id,
         roles
       FROM discord_user_cache
       WHERE in_guild = true AND roles IS NOT NULL
       ORDER BY user_id ASC
     `);
-
-    
     const staffMembers = staffUsers.filter((user: any) => {
       if (!user.roles) return false;
       try {
@@ -42,24 +34,16 @@ export async function GET(request: NextRequest) {
         return false;
       }
     });
-
-    
     const staffIds = staffMembers.map((u: any) => u.user_id);
-    
     if (staffIds.length === 0) {
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         mods: [],
         message: 'No staff members found'
       });
     }
-
-    
     const usersDisplayMap = await getUsersDisplay(staffIds, 128);
-    
     const userDataMap = new Map<string, any>();
-    
-    
     for (const userId of staffIds) {
       const userDisplay = usersDisplayMap.get(userId);
       if (userDisplay) {
@@ -68,7 +52,7 @@ export async function GET(request: NextRequest) {
           displayName: userDisplay.displayName,
           avatarUrl: userDisplay.avatar,
           inGuild: userDisplay.inGuild,
-          nickname: null, 
+          nickname: null,
           joinedAt: null,
         });
       } else {
@@ -82,13 +66,9 @@ export async function GET(request: NextRequest) {
         });
       }
     }
-
-    
     const placeholders = staffIds.map((_: string, i: number) => `$${i + 2}`).join(', ');
-
-    
     const allModStats = await queryBotDb(`
-      SELECT 
+      SELECT
         COUNT(*) as total_cases,
         COUNT(CASE WHEN action = 'mute' THEN 1 END) as mutes,
         COUNT(CASE WHEN action = 'ban' THEN 1 END) as bans,
@@ -99,16 +79,13 @@ export async function GET(request: NextRequest) {
       FROM moderation_cases
       WHERE guild_id = $1
     `, [GUILD_ID]);
-
     const allManualStats = await queryBotDb(`
       SELECT COUNT(*) as total_manuals
       FROM manuals
       WHERE guild_id = $1
     `, [GUILD_ID]);
-
-    
     const modStats = await queryBotDb(`
-      SELECT 
+      SELECT
         moderator_id,
         COUNT(*) as total_cases,
         COUNT(CASE WHEN action = 'mute' THEN 1 END) as mutes,
@@ -122,20 +99,16 @@ export async function GET(request: NextRequest) {
       WHERE guild_id = $1 AND moderator_id IN (${placeholders})
       GROUP BY moderator_id
     `, [GUILD_ID, ...staffIds]);
-
-    
     const manualStats = await queryBotDb(`
-      SELECT 
+      SELECT
         moderator_id,
         COUNT(*) as total_manuals
       FROM manuals
       WHERE guild_id = $1 AND moderator_id IN (${placeholders})
       GROUP BY moderator_id
     `, [GUILD_ID, ...staffIds]);
-
-    
     const vcStats = await queryBotDb(`
-      SELECT 
+      SELECT
         user_id,
         COUNT(*) as vc_sessions,
         COALESCE(SUM(duration_seconds), 0) as total_vc_time
@@ -143,39 +116,28 @@ export async function GET(request: NextRequest) {
       WHERE guild_id = $1 AND user_id IN (${placeholders}) AND left_at IS NOT NULL
       GROUP BY user_id
     `, [GUILD_ID, ...staffIds]);
-
-    
     const chatStats = await queryBotDb(`
-      SELECT 
+      SELECT
         user_id,
         COUNT(*) as message_count
       FROM chat_logs
       WHERE guild_id = $1 AND user_id IN (${placeholders})
       GROUP BY user_id
     `, [GUILD_ID, ...staffIds]);
-
-    
     const modStatsMap = new Map(modStats.map((s: any) => [s.moderator_id, s]));
     const manualStatsMap = new Map(manualStats.map((s: any) => [s.moderator_id, s]));
     const vcStatsMap = new Map(vcStats.map((s: any) => [s.user_id, s]));
     const chatStatsMap = new Map(chatStats.map((s: any) => [s.user_id, s]));
-
-    
     const modsWithStats = staffMembers.map((user: any) => {
       const ms = modStatsMap.get(user.user_id) || {};
       const manuals = manualStatsMap.get(user.user_id) || {};
       const vc = vcStatsMap.get(user.user_id) || {};
       const chat = chatStatsMap.get(user.user_id) || {};
-
-      
       let userRoles: string[] = [];
       try {
         userRoles = JSON.parse(user.roles || '[]');
       } catch {}
-
       const isMod = userRoles.some(r => MOD_ROLE_IDS.includes(r));
-
-      
       const userData = userDataMap.get(user.user_id) || {
         username: 'Unknown User',
         displayName: 'Unknown User',
@@ -184,7 +146,6 @@ export async function GET(request: NextRequest) {
         nickname: null,
         joinedAt: null,
       };
-
       return {
         user_id: user.user_id,
         username: userData.username,
@@ -212,10 +173,7 @@ export async function GET(request: NextRequest) {
         },
       };
     });
-
-    
     modsWithStats.sort((a: any, b: any) => b.stats.total_cases - a.stats.total_cases);
-
     return NextResponse.json({
       success: true,
       mods: modsWithStats,

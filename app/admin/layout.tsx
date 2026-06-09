@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -12,7 +11,6 @@ import {
 } from 'react-icons/fi';
 import { useTheme } from '@/contexts/ThemeContext';
 import { QrCodeIcon } from 'lucide-react';
-
 interface AdminLayoutProps {
     children: React.ReactNode;
 }
@@ -24,38 +22,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const { theme, toggleTheme } = useTheme();
-
     useEffect(() => {
         setMounted(true);
     }, []);
-
     useEffect(() => {
         if (status === 'unauthenticated') {
             router.replace('/admin');
         } else if (status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess) {
             router.replace('/admin');
         } else if (status === 'authenticated' && session?.user?.permissions?.hasAnyAccess) {
-            
             const perms = session?.user?.permissions;
             const hasCasinoOnly = perms?.hasCasinoAccess && !perms?.hasFullAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess;
-            
             if (hasCasinoOnly && pathname && !pathname.startsWith('/admin/casino') && pathname !== '/admin' && pathname !== '/admin/signin') {
                 router.replace('/admin/casino');
             }
         }
     }, [status, session, router, pathname]);
-
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [pathname]);
-
     const handleLogout = async () => {
         try { localStorage.clear(); sessionStorage.clear(); } catch (e) { }
-        
         await signOut({ callbackUrl: '/admin', redirect: true });
     };
-
-    
     if (!mounted || status === 'loading') {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -69,12 +58,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
         );
     }
-
-    
     if (pathname === '/admin' || pathname === '/admin/signin') {
         return <>{children}</>;
     }
-
     if (status === 'unauthenticated' || (status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess)) {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -108,7 +94,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
         );
     }
-
     const navItems = [
         {
             name: 'Dashboard',
@@ -140,13 +125,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             icon: <FiDollarSign className="w-5 h-5" />,
             requiresFullAccess: false,
             requiresModeratorAccess: false,
-            requiresCasinoAccess: true, 
+            requiresCasinoAccess: true,
         },
         {
             name: 'Invite System',
             href: '/admin/casino/economy/invites',
             icon: <FiUserPlus className="w-5 h-5" />,
-            requiresFullAccess: true, 
+            requiresFullAccess: true,
             requiresModeratorAccess: false,
             requiresCasinoAccess: false,
         },
@@ -158,7 +143,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresModeratorAccess: true,
             requiresCasinoAccess: false,
         },
-
         {
             name: 'Donator Plans',
             href: '/admin/donator',
@@ -187,7 +171,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             name: 'Mod Stats',
             href: '/admin/mods-stats',
             icon: <FiUsers className="w-5 h-5" />,
-            requiresFullAccess: true, 
+            requiresFullAccess: true,
             requiresModeratorAccess: false,
             requiresCasinoAccess: false,
         },
@@ -196,7 +180,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             href: '/admin/vctranscript',
             icon: <FiMic className="w-5 h-5" />,
             requiresFullAccess: false,
-            requiresModeratorAccess: false, 
+            requiresModeratorAccess: false,
             requiresCasinoAccess: false,
         },
         {
@@ -220,7 +204,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             href: '/admin/vctranscript/chatlogs',
             icon: <FiMessageSquare className="w-5 h-5" />,
             requiresFullAccess: false,
-            requiresModeratorAccess: false, 
+            requiresModeratorAccess: false,
             requiresCasinoAccess: false,
         },
         {
@@ -228,41 +212,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             href: '/admin/server-stats',
             icon: <FiBarChart2 className="w-5 h-5" />,
             requiresFullAccess: false,
-            requiresModeratorAccess: true, 
+            requiresModeratorAccess: true,
             requiresCasinoAccess: false,
         },
     ].filter(item => {
-        
         const perms = session?.user?.permissions;
-        
-        
         if (perms?.hasFullAccess) {
             return true;
         }
-        
-        
         const hasCasinoOnly = perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess;
         if (hasCasinoOnly) {
             return item.requiresCasinoAccess;
         }
-        
-        
         if (item.requiresCasinoAccess && perms?.hasCasinoAccess) {
             return true;
         }
-        
-        
         if (item.requiresFullAccess) {
             return perms?.hasFullAccess;
         }
-        
-        
         if (item.requiresModeratorAccess) {
             return perms?.hasModeratorAccess || perms?.hasFullAccess;
         }
         return perms?.hasModeratorAccess || perms?.hasViewOnlyAccess;
     });
-
     const isActive = (href: string) => {
         if (href === '/admin/dashboard') {
             return pathname === '/admin/dashboard';
@@ -302,7 +274,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         }
         return pathname.startsWith(href);
     };
-
     return (
         <div className="min-h-screen w-full overflow-x-clip flex flex-col md:flex-row bg-[rgb(var(--color-bg-primary))] apple-transition">
             {}
@@ -332,14 +303,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     )}
                 </button>
             </div>
-
             {}
             <aside className={`
         fixed md:static inset-0 z-40 md:z-auto
-        w-full md:w-72 
+        w-full md:w-72
         bg-[rgb(var(--color-bg-secondary))]/95 backdrop-blur-xl md:bg-[rgb(var(--color-bg-secondary))]
-        border-r border-[rgb(var(--color-border))] 
-        flex flex-col 
+        border-r border-[rgb(var(--color-border))]
+        flex flex-col
         shadow-apple-lg
         transform transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
@@ -363,7 +333,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         Admin Panel
                     </p>
                 </div>
-
                 {}
                 <div className="md:hidden p-6 border-b border-[rgb(var(--color-border))]">
                     <div className="flex items-center justify-between">
@@ -393,7 +362,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         </button>
                     </div>
                 </div>
-
                 {}
                 <nav className="flex-1 p-4 md:p-6 space-y-2 overflow-y-auto">
                     {navItems.map((item) => (
@@ -411,7 +379,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         </Link>
                     ))}
                 </nav>
-
                 {}
                 <div className="p-4 md:p-6 border-t border-[rgb(var(--color-border))] space-y-2">
                     {session?.user?.name && (
@@ -450,7 +417,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     </button>
                 </div>
             </aside>
-
             {}
             {isMobileMenuOpen && (
                 <div
@@ -458,7 +424,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
             )}
-
             {}
             <main className="flex-1 min-w-0 w-full overflow-x-hidden overflow-y-auto bg-[rgb(var(--color-bg-primary))]">
                 {children}

@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -8,14 +7,12 @@ import {
   FiFileText, FiClock, FiCheckCircle, FiXCircle,
   FiChevronRight, FiLogOut, FiActivity, FiDollarSign
 } from 'react-icons/fi';
-
 interface Stats {
   total: number;
   pending: number;
   considered: number;
   denied: number;
 }
-
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -26,15 +23,12 @@ export default function AdminDashboard() {
     denied: 0,
   });
   const [loading, setLoading] = useState(true);
-
   const DASHBOARD_CACHE_KEY = 'admin_dashboard_stats_v1';
   const DASHBOARD_CACHE_TTL_MS = 60_000;
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.replace('/admin');
     } else if (status === 'authenticated' && !session?.user?.permissions?.hasFullAccess) {
-      
       const perms = session?.user?.permissions;
       if (perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
         router.replace('/admin/casino');
@@ -54,16 +48,13 @@ export default function AdminDashboard() {
           }
         }
       } catch {
-        
       }
-
       fetchStats();
       router.prefetch('/admin/monitor');
       router.prefetch('/admin/casino');
       router.prefetch('/admin/dashboard/applications');
     }
   }, [status, session, router]);
-
   const fetchStats = async () => {
     try {
       const response = await fetch('/api/applications/stats');
@@ -76,7 +67,6 @@ export default function AdminDashboard() {
             JSON.stringify({ timestamp: Date.now(), stats: result.data })
           );
         } catch {
-          
         }
       }
     } catch (error) {
@@ -85,7 +75,6 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
-
   const statCards = [
     {
       title: 'Total Applications',
@@ -116,8 +105,6 @@ export default function AdminDashboard() {
       bgColor: 'bg-red-500/20',
     },
   ];
-
-  
   if (status === 'authenticated' && !session?.user?.permissions?.hasFullAccess) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -150,7 +137,6 @@ export default function AdminDashboard() {
       </div>
     );
   }
-
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       {}
@@ -158,7 +144,6 @@ export default function AdminDashboard() {
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[rgb(var(--color-text-primary))] mb-2 tracking-tight">Dashboard Overview</h1>
         <p className="text-sm sm:text-base text-[rgb(var(--color-text-secondary))] font-light">Monitor and manage staff applications</p>
       </div>
-
       {}
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
@@ -193,7 +178,6 @@ export default function AdminDashboard() {
           ))}
         </div>
       )}
-
       {}
       <div className="glass-blue rounded-3xl p-5 sm:p-6 md:p-8 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-apple-md">
         <h2 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-4 sm:mb-6">Quick Actions</h2>
@@ -210,7 +194,6 @@ export default function AdminDashboard() {
               <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-light truncate">Review and manage applications</p>
             </div>
           </Link>
-
           <Link
             href="/admin/dashboard/applications?status=pending"
             className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] active:scale-95 rounded-apple border border-[rgb(var(--color-border))] apple-transition group shadow-apple-sm touch-manipulation"
@@ -223,7 +206,6 @@ export default function AdminDashboard() {
               <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-light truncate">Review applications awaiting decision</p>
             </div>
           </Link>
-
           <Link
             href="/admin/monitor"
             className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] active:scale-95 rounded-apple border border-[rgb(var(--color-border))] apple-transition group shadow-apple-sm touch-manipulation"
@@ -236,7 +218,6 @@ export default function AdminDashboard() {
               <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-light truncate">Real-time VC coins and activity tracking</p>
             </div>
           </Link>
-
           <Link
             href="/admin/casino"
             className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] active:scale-95 rounded-apple border border-[rgb(var(--color-border))] apple-transition group shadow-apple-sm touch-manipulation"
@@ -251,7 +232,6 @@ export default function AdminDashboard() {
           </Link>
         </div>
       </div>
-
       {}
       <div className="glass-blue rounded-3xl p-5 sm:p-6 md:p-8 border border-[rgb(var(--color-border))] shadow-apple-md">
         <h2 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-4 sm:mb-6">System Information</h2>

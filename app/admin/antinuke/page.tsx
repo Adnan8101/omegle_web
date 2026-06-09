@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -9,16 +8,12 @@ import {
   FiAlertTriangle, FiUser, FiSearch, FiRefreshCw, FiLock,
   FiEye, FiChevronDown,
 } from 'react-icons/fi';
-
 const MAIN_OWNER_ID = '929297205796417597';
 const EDITORS = [MAIN_OWNER_ID, '1066281404821930025', '1058043072522489946'];
-
 const ALL_PERMISSIONS: { key: string; label: string; group: string }[] = [
   { key: 'MANAGE_PERMISSIONS', label: 'Manage Permission', group: 'Roles' },
 ];
-
 const PERM_GROUPS = ['Roles'];
-
 const EVENT_TYPE_COLORS: Record<string, string> = {
   BOT_ADD:            'bg-purple-500/20 text-purple-300 border-purple-500/30',
   ROLE_UPDATE:        'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
@@ -32,7 +27,6 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
   WEBHOOK_UPDATE:     'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
   MEMBER_ROLE_UPDATE: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
 };
-
 const ACTION_COLORS: Record<string, string> = {
   KICKED_BOT:            'text-green-400',
   REVERTED_ROLE:         'text-green-400',
@@ -45,14 +39,12 @@ const ACTION_COLORS: Record<string, string> = {
   REVERTED_MEMBER_ROLES: 'text-green-400',
   ALERT_ONLY:            'text-yellow-400',
 };
-
 interface GuildInfo {
   id: string;
   name: string;
   icon: string | null;
   memberCount?: number | null;
 }
-
 interface WhitelistEntry {
   id: string;
   userId: string;
@@ -61,7 +53,6 @@ interface WhitelistEntry {
   createdAt: string;
   user?: GuildUser | null;
 }
-
 interface AntiNukeLog {
   id: string;
   guild_id: string;
@@ -72,14 +63,12 @@ interface AntiNukeLog {
   extra_data: Record<string, unknown> | null;
   timestamp: string;
 }
-
 interface GuildUser {
   id: string;
   name: string;
   username: string;
   avatar: string;
 }
-
 function ToggleSwitch({
   checked,
   onChange,
@@ -106,7 +95,6 @@ function ToggleSwitch({
     </button>
   );
 }
-
 function formatRelativeTime(isoString: string): string {
   const date = new Date(isoString);
   const diff = Date.now() - date.getTime();
@@ -115,27 +103,20 @@ function formatRelativeTime(isoString: string): string {
   if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
   return date.toLocaleDateString();
 }
-
 export default function AntiNukePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
   const canEdit = EDITORS.includes(session?.user?.id || '');
-
   const [guilds, setGuilds]           = useState<GuildInfo[]>([]);
   const [selectedGuild, setSelectedGuild] = useState<GuildInfo | null>(null);
   const [whitelist, setWhitelist]     = useState<WhitelistEntry[]>([]);
   const [logs, setLogs]               = useState<AntiNukeLog[]>([]);
   const [guildUsers, setGuildUsers]   = useState<GuildUser[]>([]);
-
   const [loadingGuilds, setLoadingGuilds]   = useState(true);
   const [loadingData, setLoadingData]       = useState(false);
   const [loadingLogs, setLoadingLogs]       = useState(false);
-
   const [error, setError]             = useState<string | null>(null);
   const [successMsg, setSuccessMsg]   = useState<string | null>(null);
-
-  
   const [showAddModal, setShowAddModal]       = useState(false);
   const [modalStep, setModalStep]             = useState<'user' | 'permissions'>('user');
   const [addUserId, setAddUserId]             = useState('');
@@ -148,36 +129,24 @@ export default function AntiNukePage() {
   const [searchLoading, setSearchLoading]     = useState(false);
   const [selectedSearchUser, setSelectedSearchUser] = useState<GuildUser | null>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  
   const [logEventFilter, setLogEventFilter]   = useState('');
   const [logSearch, setLogSearch]             = useState('');
-
-  
   const [editingEntry, setEditingEntry]       = useState<WhitelistEntry | null>(null);
   const [editPerms, setEditPerms]             = useState<Record<string, boolean>>({});
   const [savingEdit, setSavingEdit]           = useState(false);
-
   const [activeTab, setActiveTab]             = useState<'whitelist' | 'logs'>('whitelist');
   const [showGuildDropdown, setShowGuildDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
   const showSuccess = (msg: string) => {
     setSuccessMsg(msg);
     setTimeout(() => setSuccessMsg(null), 3000);
   };
-
-  
-
   useEffect(() => {
     if (status === 'loading') return;
     if (status !== 'authenticated') {
       router.push('/admin/signin');
     }
   }, [status, router]);
-
-  
-
   useEffect(() => {
     if (status !== 'authenticated') return;
     setLoadingGuilds(true);
@@ -187,9 +156,6 @@ export default function AntiNukePage() {
       .catch(() => setError('Failed to load guilds.'))
       .finally(() => setLoadingGuilds(false));
   }, [status]);
-
-  
-
   const loadGuildData = useCallback(async (guildId: string) => {
     setLoadingData(true);
     setError(null);
@@ -207,7 +173,6 @@ export default function AntiNukePage() {
       setLoadingData(false);
     }
   }, []);
-
   const loadLogs = useCallback(async (guildId: string) => {
     setLoadingLogs(true);
     try {
@@ -215,20 +180,15 @@ export default function AntiNukePage() {
       const d = await res.json();
       setLogs(Array.isArray(d.logs) ? d.logs : []);
     } catch {
-      
     } finally {
       setLoadingLogs(false);
     }
   }, []);
-
   useEffect(() => {
     if (!selectedGuild) return;
     loadGuildData(selectedGuild.id);
     loadLogs(selectedGuild.id);
   }, [selectedGuild, loadGuildData, loadLogs]);
-
-  
-
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -238,9 +198,6 @@ export default function AntiNukePage() {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
-
-  
-
   const searchMembers = useCallback(async (query: string) => {
     if (!selectedGuild) return;
     const q = query.trim();
@@ -259,12 +216,10 @@ export default function AntiNukePage() {
       setSearchLoading(false);
     }
   }, [selectedGuild]);
-
   const handleAddUser = async () => {
     if (!selectedGuild) return;
     const userId = addUserId.trim();
     if (!userId) return;
-
     setSavingAdd(true);
     setError(null);
     try {
@@ -275,7 +230,6 @@ export default function AntiNukePage() {
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Failed to add user');
-
       await loadGuildData(selectedGuild.id);
       setShowAddModal(false);
       setAddUserId('');
@@ -290,9 +244,6 @@ export default function AntiNukePage() {
       setSavingAdd(false);
     }
   };
-
-  
-
   const handleRemoveUser = async (userId: string) => {
     if (!selectedGuild) return;
     setError(null);
@@ -311,9 +262,6 @@ export default function AntiNukePage() {
       setError(err.message);
     }
   };
-
-  
-
   const handleSaveEdit = async () => {
     if (!selectedGuild || !editingEntry) return;
     setSavingEdit(true);
@@ -326,7 +274,6 @@ export default function AntiNukePage() {
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Failed to save');
-
       setWhitelist(prev =>
         prev.map(e => e.userId === editingEntry.userId ? { ...e, permissions: editPerms } : e)
       );
@@ -338,9 +285,6 @@ export default function AntiNukePage() {
       setSavingEdit(false);
     }
   };
-
-  
-
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
       if (logEventFilter && log.event_type !== logEventFilter) return false;
@@ -356,9 +300,6 @@ export default function AntiNukePage() {
       return true;
     });
   }, [logs, logEventFilter, logSearch]);
-
-  
-
   const filteredUsers = useMemo(() => {
     const q = addUserSearch.trim().toLowerCase();
     if (!q) return guildUsers.slice(0, 50);
@@ -368,16 +309,9 @@ export default function AntiNukePage() {
       u.id.includes(q)
     ).slice(0, 30);
   }, [guildUsers, addUserSearch]);
-
-  
-
   const userMap = useMemo(() => new Map(guildUsers.map(u => [u.id, u])), [guildUsers]);
-
-  
-
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] text-[rgb(var(--color-text-primary))]">
-
       {}
       <div className="sticky top-0 z-20 bg-[rgb(var(--color-bg-primary))]/80 backdrop-blur-xl border-b border-[rgb(var(--color-border))]">
         <div className="px-6 py-4 flex items-center justify-between">
@@ -392,7 +326,6 @@ export default function AntiNukePage() {
               </p>
             </div>
           </div>
-
           {}
           <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl
                           bg-amber-500/10 border border-amber-500/20">
@@ -401,9 +334,7 @@ export default function AntiNukePage() {
           </div>
         </div>
       </div>
-
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-
         {status === 'authenticated' && !canEdit && (
           <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm">
             <FiAlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-400" />
@@ -412,7 +343,6 @@ export default function AntiNukePage() {
             </div>
           </div>
         )}
-
         {}
         {error && (
           <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
@@ -429,13 +359,11 @@ export default function AntiNukePage() {
             <span>{successMsg}</span>
           </div>
         )}
-
         {}
         <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-6">
           <h2 className="text-sm font-semibold text-[rgb(var(--color-text-secondary))] uppercase tracking-wider mb-4">
             Select Server
           </h2>
-
           {loadingGuilds ? (
             <div className="h-12 rounded-xl bg-[rgb(var(--color-bg-tertiary))] animate-pulse" />
           ) : (
@@ -477,7 +405,6 @@ export default function AntiNukePage() {
                   className={`w-4 h-4 text-[rgb(var(--color-text-tertiary))] ml-auto flex-shrink-0 transition-transform duration-200 ${showGuildDropdown ? 'rotate-180' : ''}`}
                 />
               </button>
-
               {showGuildDropdown && (
                 <div className="absolute top-full left-0 right-0 mt-2 z-30
                                 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))]
@@ -518,7 +445,6 @@ export default function AntiNukePage() {
             </div>
           )}
         </div>
-
         {}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
@@ -529,7 +455,6 @@ export default function AntiNukePage() {
             <p className="font-mono text-sm text-amber-200 break-all">{MAIN_OWNER_ID}</p>
             <p className="text-xs text-amber-400/60 mt-1">Read-only · Always bypassed</p>
           </div>
-
           <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5">
             <div className="flex items-center gap-2 mb-2">
               <FiShield className="w-4 h-4 text-red-400" />
@@ -538,7 +463,6 @@ export default function AntiNukePage() {
             <p className="text-2xl font-bold text-red-300">Always On</p>
             <p className="text-xs text-red-400/60 mt-1">All events monitored 24/7</p>
           </div>
-
           <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] p-5">
             <div className="flex items-center gap-2 mb-2">
               <FiUser className="w-4 h-4 text-blue-400" />
@@ -550,7 +474,6 @@ export default function AntiNukePage() {
             </p>
           </div>
         </div>
-
         {}
         {selectedGuild && (
           <>
@@ -568,7 +491,6 @@ export default function AntiNukePage() {
                 </button>
               ))}
             </div>
-
             {}
             {activeTab === 'whitelist' && (
               <div className="space-y-4">
@@ -594,7 +516,6 @@ export default function AntiNukePage() {
                     </button>
                   )}
                 </div>
-
                 {loadingData ? (
                   <div className="space-y-3">
                     {[...Array(3)].map((_, i) => (
@@ -616,7 +537,6 @@ export default function AntiNukePage() {
                       const user = entry.user || userMap.get(entry.userId);
                       const grantedCount = Object.values(entry.permissions).filter(Boolean).length;
                       const isEditing = editingEntry?.userId === entry.userId;
-
                       return (
                         <div
                           key={entry.userId}
@@ -669,7 +589,6 @@ export default function AntiNukePage() {
                               </div>
                             )}
                           </div>
-
                           {}
                           {!isEditing && (
                             <div className="px-5 pb-4 flex flex-wrap gap-1.5">
@@ -689,7 +608,6 @@ export default function AntiNukePage() {
                               )}
                             </div>
                           )}
-
                           {}
                           {isEditing && (
                             <div className="border-t border-[rgb(var(--color-border))] px-5 py-4 space-y-4">
@@ -713,7 +631,6 @@ export default function AntiNukePage() {
                                   </div>
                                 ))}
                               </div>
-
                               <div className="flex items-center justify-end gap-2 pt-2 border-t border-[rgb(var(--color-border))]">
                                 <button
                                   onClick={() => setEditingEntry(null)}
@@ -745,7 +662,6 @@ export default function AntiNukePage() {
                 )}
               </div>
             )}
-
             {}
             {activeTab === 'logs' && (
               <div className="space-y-4">
@@ -786,7 +702,6 @@ export default function AntiNukePage() {
                     </button>
                   </div>
                 </div>
-
                 {loadingLogs ? (
                   <div className="space-y-2">
                     {[...Array(5)].map((_, i) => (
@@ -874,7 +789,6 @@ export default function AntiNukePage() {
             )}
           </>
         )}
-
         {}
         {!selectedGuild && !loadingGuilds && (
           <div className="rounded-2xl border border-dashed border-[rgb(var(--color-border))]
@@ -891,8 +805,7 @@ export default function AntiNukePage() {
           </div>
         )}
       </div>
-
-      {/* ── Add Whitelist Modal ── */}
+      {}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
@@ -902,8 +815,7 @@ export default function AntiNukePage() {
           <div className="relative bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))]
                           shadow-2xl w-full max-w-xl flex flex-col"
                style={{ maxHeight: '85vh' }}>
-
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[rgb(var(--color-border))] flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20">
@@ -921,7 +833,7 @@ export default function AntiNukePage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {/* Step indicator */}
+                {}
                 <div className="flex items-center gap-1 mr-2">
                   <div className={`w-2 h-2 rounded-full ${modalStep === 'user' ? 'bg-red-400' : 'bg-[rgb(var(--color-text-tertiary))]'}`} />
                   <div className={`w-2 h-2 rounded-full ${modalStep === 'permissions' ? 'bg-red-400' : 'bg-[rgb(var(--color-text-tertiary))]'}`} />
@@ -934,11 +846,10 @@ export default function AntiNukePage() {
                 </button>
               </div>
             </div>
-
-            {/* ── STEP 1: User Select ── */}
+            {}
             {modalStep === 'user' && (
               <>
-                {/* Search bar */}
+                {}
                 <div className="p-4 border-b border-[rgb(var(--color-border))] flex-shrink-0">
                   <div className="relative">
                     <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
@@ -972,8 +883,7 @@ export default function AntiNukePage() {
                         : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''}`}
                   </p>
                 </div>
-
-                {/* Selected user chip */}
+                {}
                 {selectedSearchUser && (
                   <div className="mx-4 mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 flex-shrink-0">
                     <Image src={selectedSearchUser.avatar} alt={selectedSearchUser.name} width={24} height={24} className="rounded-full" />
@@ -985,8 +895,7 @@ export default function AntiNukePage() {
                     </button>
                   </div>
                 )}
-
-                {/* Results list */}
+                {}
                 <div className="overflow-y-auto flex-1">
                   {!addUserSearch.trim() ? (
                     <div className="flex flex-col items-center justify-center py-12 gap-3 text-[rgb(var(--color-text-tertiary))]">
@@ -1030,8 +939,7 @@ export default function AntiNukePage() {
                     </div>
                   )}
                 </div>
-
-                {/* Manual ID entry */}
+                {}
                 <div className="px-4 py-3 border-t border-[rgb(var(--color-border))] flex-shrink-0">
                   <input
                     type="text"
@@ -1049,8 +957,7 @@ export default function AntiNukePage() {
                                placeholder:text-[rgb(var(--color-text-tertiary))]"
                   />
                 </div>
-
-                {/* Footer */}
+                {}
                 <div className="flex items-center justify-between px-4 py-3 border-t border-[rgb(var(--color-border))] flex-shrink-0">
                   <button
                     onClick={() => setShowAddModal(false)}
@@ -1072,12 +979,10 @@ export default function AntiNukePage() {
                 </div>
               </>
             )}
-
-
-            {/* ── STEP 2: Permissions ── */}
+            {}
             {modalStep === 'permissions' && (
               <>
-                {/* Selected user summary */}
+                {}
                 {(() => {
                   const u = selectedSearchUser || userMap.get(addUserId);
                   return (
@@ -1103,8 +1008,7 @@ export default function AntiNukePage() {
                     </div>
                   );
                 })()}
-
-                {/* Permissions scroll area */}
+                {}
                 <div className="overflow-y-auto flex-1 p-5 space-y-4">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider">
@@ -1126,7 +1030,6 @@ export default function AntiNukePage() {
                       </button>
                     </div>
                   </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {PERM_GROUPS.map(group => (
                       <div key={group} className="rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] p-3.5">
@@ -1146,8 +1049,7 @@ export default function AntiNukePage() {
                     ))}
                   </div>
                 </div>
-
-                {/* Footer */}
+                {}
                 <div className="flex items-center justify-between px-5 py-3 border-t border-[rgb(var(--color-border))] flex-shrink-0">
                   <button
                     onClick={() => setModalStep('user')}
@@ -1179,4 +1081,3 @@ export default function AntiNukePage() {
     </div>
   );
 }
-

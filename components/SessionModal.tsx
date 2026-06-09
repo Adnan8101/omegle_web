@@ -1,12 +1,9 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { X, Users, Clock, MessageSquare, Mic, MicOff, Video, VideoOff, Monitor, TrendingUp, Calendar, Hash, ArrowRight, LogIn, LogOut } from 'lucide-react';
 import Image from 'next/image';
-
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
-    
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
       if (avatarHash.includes('?size=')) {
         return avatarHash.replace(/\?size=\d+/, `?size=${size}`);
@@ -19,22 +16,18 @@ function buildAvatarUrl(userId: string, avatarHash: string | null, size: number 
   if (!/^\d+$/.test(userId)) {
     return 'https://cdn.discordapp.com/embed/avatars/0.png';
   }
-
   let defaultIndex = 0;
   try {
     defaultIndex = Number(BigInt(userId) >> 22n) % 6;
   } catch {
     defaultIndex = 0;
   }
-
   return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
 }
-
 interface SessionModalProps {
   sessionId: string;
   onClose: () => void;
 }
-
 interface DiscordUser {
   id: string;
   username: string;
@@ -43,7 +36,6 @@ interface DiscordUser {
   tag: string;
   inGuild: boolean;
 }
-
 interface OverlappingUser {
   user_id: string;
   joined_at: string;
@@ -61,7 +53,6 @@ interface OverlappingUser {
   join_order: number | null;
   is_rejoin: boolean;
 }
-
 interface TimelineEvent {
   type: string;
   userId: string;
@@ -70,7 +61,6 @@ interface TimelineEvent {
   joinOrder?: number;
   count?: number;
 }
-
 export default function SessionModal({ sessionId, onClose }: SessionModalProps) {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
@@ -79,27 +69,21 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
   const [channel, setChannel] = useState<any>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'participants' | 'timeline'>('overview');
-
   useEffect(() => {
     fetchSessionDetails();
-    
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [sessionId]);
-
   const fetchSessionDetails = async () => {
     try {
       const sessionRes = await fetch(`/api/vctranscript/session/${sessionId}`);
       const sessionData = await sessionRes.json();
-      
       setSession(sessionData.session);
       setTimeline(sessionData.timeline || []);
       setOverlappingUsers(sessionData.overlappingUsers || []);
-
-      
       let channelData = null;
       try {
         const cachedChRes = await fetch('/api/discord/cached-channels', {
@@ -119,15 +103,11 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
         } catch {}
       }
       setChannel(channelData);
-
-      
       const uniqueUserIds = [...new Set([
         sessionData.session.user_id,
         ...(sessionData.overlappingUsers || []).map((u: any) => u.user_id),
         ...(sessionData.timeline || []).map((e: any) => e.userId),
       ])];
-
-      
       if (uniqueUserIds.length > 0) {
         try {
           const cachedRes = await fetch('/api/discord/cached-users', {
@@ -159,7 +139,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
       setLoading(false);
     }
   };
-
   const formatDuration = (seconds: number) => {
     if (!seconds || seconds <= 0) return '0s';
     const hours = Math.floor(seconds / 3600);
@@ -169,24 +148,20 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
     if (minutes > 0) return `${minutes}m ${secs}s`;
     return `${secs}s`;
   };
-
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
-
   const formatDate = (timestamp: string) => {
-    return new Date(timestamp).toLocaleDateString('en-US', { 
+    return new Date(timestamp).toLocaleDateString('en-US', {
       weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
     });
   };
-
   const formatFullDateTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('en-US', {
       month: 'short', day: 'numeric', year: 'numeric',
       hour: '2-digit', minute: '2-digit', second: '2-digit'
     });
   };
-
   const getEventIcon = (type: string) => {
     switch(type) {
       case 'user_join': return <LogIn className="w-4 h-4 text-green-400" />;
@@ -200,7 +175,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
       default: return <ArrowRight className="w-4 h-4 text-gray-400" />;
     }
   };
-
   const getEventLabel = (type: string, event?: TimelineEvent) => {
     switch(type) {
       case 'user_join': return event?.joinOrder ? `Joined Channel (#${event.joinOrder} to join)` : 'Joined Channel';
@@ -214,7 +188,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
       default: return type.replace(/_/g, ' ');
     }
   };
-
   const getEventColor = (type: string) => {
     switch(type) {
       case 'user_join': return 'border-green-500/30 bg-green-500/5';
@@ -228,7 +201,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
       default: return 'border-[rgb(var(--color-border))]';
     }
   };
-
   const getUserDisplay = (userId: string) => {
     const user = users.get(userId);
     return {
@@ -238,7 +210,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
       inGuild: user?.inGuild ?? false,
     };
   };
-
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
@@ -251,18 +222,14 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
       </div>
     );
   }
-
   if (!session) return null;
-
   const sessionUser = getUserDisplay(session.user_id);
   const otherParticipants = overlappingUsers
     .filter(u => u.user_id !== session.user_id)
     .sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
-
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-[rgb(var(--color-bg-secondary))] rounded-3xl max-w-6xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-[rgb(var(--color-border))] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        
         {}
         <div className="p-4 sm:p-5 border-b border-[rgb(var(--color-border))] flex-shrink-0">
           <div className="flex items-start justify-between">
@@ -302,7 +269,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
             </button>
           </div>
         </div>
-
         {}
         <div className="flex border-b border-[rgb(var(--color-border))] px-4 sm:px-6 flex-shrink-0">
           {(['overview', 'participants', 'timeline'] as const).map((tab) => (
@@ -310,8 +276,8 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-3 py-2 text-xs sm:text-sm font-medium transition-colors relative flex items-center gap-1 ${
-                activeTab === tab 
-                  ? 'text-blue-500' 
+                activeTab === tab
+                  ? 'text-blue-500'
                   : 'text-[rgb(var(--color-text-tertiary))] hover:text-[rgb(var(--color-text-secondary))]'
               }`}
             >
@@ -324,10 +290,8 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
             </button>
           ))}
         </div>
-
         {}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-          
           {}
           {activeTab === 'overview' && (
             <div className="space-y-4">
@@ -356,7 +320,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
                   </div>
                 </div>
               </div>
-
               {}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard icon={<Clock className="w-5 h-5 text-blue-400" />} label="Duration" value={formatDuration(session.duration_seconds || 0)} />
@@ -364,7 +327,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
                 <StatCard icon={<MessageSquare className="w-5 h-5 text-purple-400" />} label="Messages" value={(session.messages_sent || 0).toString()} />
                 <StatCard icon={<TrendingUp className="w-5 h-5 text-orange-400" />} label="Rejoins" value={(session.rejoin_count || 0).toString()} />
               </div>
-
               {}
               <div className="bg-[rgb(var(--color-bg-tertiary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
                 <h3 className="text-sm font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-3">Session Timing</h3>
@@ -391,7 +353,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
                   </div>
                 </div>
               </div>
-
               {}
               <div className="bg-[rgb(var(--color-bg-tertiary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
                 <h3 className="text-sm font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-wider mb-3">Activity During Session</h3>
@@ -406,7 +367,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
               </div>
             </div>
           )}
-
           {}
           {activeTab === 'participants' && (
             <div className="space-y-4">
@@ -415,7 +375,7 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
                 <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-3">
                   Session Owner — Joined #{session.join_order || '?'}
                 </p>
-                <ParticipantCard 
+                <ParticipantCard
                   user={getUserDisplay(session.user_id)}
                   userId={session.user_id}
                   joinedAt={session.joined_at}
@@ -430,7 +390,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
                   muteCount={session.mute_count}
                 />
               </div>
-
               {}
               {otherParticipants.length > 0 ? (
                 <div>
@@ -471,7 +430,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
               )}
             </div>
           )}
-
           {}
           {activeTab === 'timeline' && (
             <div className="space-y-2">
@@ -483,7 +441,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
                   <div className="relative">
                     {}
                     <div className="absolute left-[19px] top-4 bottom-4 w-0.5 bg-[rgb(var(--color-border))]" />
-                    
                     <div className="space-y-1">
                       {timeline.map((event, idx) => {
                         const eventUser = getUserDisplay(event.userId);
@@ -535,7 +492,6 @@ export default function SessionModal({ sessionId, onClose }: SessionModalProps) 
     </div>
   );
 }
-
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="bg-[rgb(var(--color-bg-tertiary))] rounded-xl p-4 border border-[rgb(var(--color-border))]">
@@ -547,7 +503,6 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
     </div>
   );
 }
-
 function ActivityBadge({ icon, label, value }: { icon: React.ReactNode; label: string; value: number | string }) {
   return (
     <div className="bg-[rgb(var(--color-bg-primary))] rounded-lg p-2 text-center">
@@ -559,11 +514,10 @@ function ActivityBadge({ icon, label, value }: { icon: React.ReactNode; label: s
     </div>
   );
 }
-
-function ParticipantCard({ 
+function ParticipantCard({
   user, userId, joinedAt, leftAt, duration, messages, formatTime, formatDuration, isOwner,
   joinPosition, videoOnCount, screenShareCount, muteCount, isRejoin
-}: { 
+}: {
   user: { name: string; avatar: string; username: string; inGuild: boolean };
   userId: string;
   joinedAt: string;
