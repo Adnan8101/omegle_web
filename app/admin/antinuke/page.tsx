@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {
   FiShield, FiPlus, FiTrash2, FiSave, FiX, FiCheck,
   FiAlertTriangle, FiUser, FiSearch, FiRefreshCw, FiLock,
-  FiEye, FiChevronDown,
+  FiEye, FiChevronDown, FiInfo,
 } from 'react-icons/fi';
 const MAIN_OWNER_ID = '929297205796417597';
 const EDITORS = [MAIN_OWNER_ID, '1066281404821930025', '1058043072522489946'];
@@ -118,6 +118,7 @@ export default function AntiNukePage() {
   const [error, setError]             = useState<string | null>(null);
   const [successMsg, setSuccessMsg]   = useState<string | null>(null);
   const [showAddModal, setShowAddModal]       = useState(false);
+  const [showInfoModal, setShowInfoModal]     = useState(false);
   const [modalStep, setModalStep]             = useState<'user' | 'permissions'>('user');
   const [addUserId, setAddUserId]             = useState('');
   const [addUserSearch, setAddUserSearch]     = useState('');
@@ -495,7 +496,17 @@ export default function AntiNukePage() {
             {activeTab === 'whitelist' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base font-semibold">Whitelisted Users</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-semibold">Whitelisted Users</h2>
+                    <button
+                      onClick={() => setShowInfoModal(true)}
+                      className="p-1 rounded-lg hover:bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-tertiary))] hover:text-red-400 transition-colors"
+                      title="Learn how whitelisting works"
+                      type="button"
+                    >
+                      <FiInfo className="w-4 h-4" />
+                    </button>
+                  </div>
                   {canEdit && (
                     <button
                       onClick={() => {
@@ -833,7 +844,14 @@ export default function AntiNukePage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {}
+                <button
+                  onClick={() => setShowInfoModal(true)}
+                  className="p-2 rounded-xl hover:bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] hover:text-red-400 transition-colors mr-1"
+                  title="View system whitelist rules explanation"
+                  type="button"
+                >
+                  <FiInfo className="w-4 h-4" />
+                </button>
                 <div className="flex items-center gap-1 mr-2">
                   <div className={`w-2 h-2 rounded-full ${modalStep === 'user' ? 'bg-red-400' : 'bg-[rgb(var(--color-text-tertiary))]'}`} />
                   <div className={`w-2 h-2 rounded-full ${modalStep === 'permissions' ? 'bg-red-400' : 'bg-[rgb(var(--color-text-tertiary))]'}`} />
@@ -1075,6 +1093,83 @@ export default function AntiNukePage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+      {showInfoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+            onClick={() => setShowInfoModal(false)}
+          />
+          <div className="relative bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))]
+                          shadow-2xl w-full max-w-lg flex flex-col p-6 space-y-6 text-sm"
+               style={{ maxHeight: '85vh' }}>
+            <div className="flex items-center justify-between border-b border-[rgb(var(--color-border))] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
+                  <FiShield className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[rgb(var(--color-text-primary))]">System Protection Guide</h3>
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
+                    How Anti-Nuke whitelisting and bot security works
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowInfoModal(false)}
+                className="p-2 rounded-xl hover:bg-[rgb(var(--color-bg-tertiary))] transition-colors"
+              >
+                <FiX className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-5 overflow-y-auto flex-1 pr-1 font-sans text-[rgb(var(--color-text-secondary))] leading-relaxed">
+              <div className="space-y-2">
+                <h4 className="font-semibold text-red-400 flex items-center gap-2">
+                  🤖 Allowed Bots (No Whitelist Needed)
+                </h4>
+                <p className="text-xs pl-6">
+                  The primary custom bot is automatically allowed. 
+                  Any bot or integration added directly by the <strong>Main Owner</strong> is trusted by the system on join and will not be kicked.
+                  <span className="block mt-1 text-[rgb(var(--color-text-tertiary))] italic">
+                    Note: Any bot added by anyone other than the Main Owner is immediately kicked to prevent backdoors.
+                  </span>
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-semibold text-red-400 flex items-center gap-2">
+                  🛡️ Whitelisting Implications
+                </h4>
+                <p className="text-xs pl-6">
+                  Whitelisting a user/bot grants them exceptions to the Anti-Nuke protections.
+                  By default, any user without the appropriate bypass permissions will have their actions reverted when they perform highly sensitive administrative tasks.
+                </p>
+              </div>
+              <div className="space-y-2 bg-[rgb(var(--color-bg-primary))]/40 border border-[rgb(var(--color-border))] rounded-xl p-4">
+                <h4 className="font-semibold text-red-400 flex items-center gap-2 text-xs uppercase tracking-wider">
+                  🔑 Manage Permission Whitelist
+                </h4>
+                <p className="text-xs mt-1.5 pl-1">
+                  Enabling the <strong>Manage Permission</strong> whitelist option for a user allows them to:
+                </p>
+                <ul className="list-disc list-inside text-xs pl-4 space-y-1 mt-1">
+                  <li>Modify/Update role permissions to contain dangerous flags (like Administrator, Manage Guild, etc.).</li>
+                  <li>Assign or remove roles containing dangerous permissions to/from server members.</li>
+                </ul>
+                <p className="text-xs mt-2 pl-1 text-[rgb(var(--color-text-tertiary))]">
+                  If any un-whitelisted administrator attempts to update a role with dangerous permissions or assign a dangerous role, the bot will block and immediately revert their action.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end border-t border-[rgb(var(--color-border))] pt-4">
+              <button
+                onClick={() => setShowInfoModal(false)}
+                className="px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-white font-medium transition-all duration-200"
+              >
+                Understood
+              </button>
+            </div>
           </div>
         </div>
       )}
