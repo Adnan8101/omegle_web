@@ -321,7 +321,17 @@ export default function AntiNukePage() {
               <FiShield className="w-5 h-5 text-red-400" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight">Anti-Nuke</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold tracking-tight">Anti-Nuke</h1>
+                <button
+                  onClick={() => setShowInfoModal(true)}
+                  className="p-1 rounded-lg hover:bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-tertiary))] hover:text-red-400 transition-colors"
+                  title="Anti-Nuke Protection Guide"
+                  type="button"
+                >
+                  <FiInfo className="w-4 h-4" />
+                </button>
+              </div>
               <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
                 Server protection & whitelist management
               </p>
@@ -456,10 +466,20 @@ export default function AntiNukePage() {
             <p className="font-mono text-sm text-amber-200 break-all">{MAIN_OWNER_ID}</p>
             <p className="text-xs text-amber-400/60 mt-1">Read-only · Always bypassed</p>
           </div>
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <FiShield className="w-4 h-4 text-red-400" />
-              <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">Protection</span>
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5 relative group">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <FiShield className="w-4 h-4 text-red-400" />
+                <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">Protection</span>
+              </div>
+              <button
+                onClick={() => setShowInfoModal(true)}
+                className="p-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
+                title="Anti-Nuke Protection Guide"
+                type="button"
+              >
+                <FiInfo className="w-3.5 h-3.5" />
+              </button>
             </div>
             <p className="text-2xl font-bold text-red-300">Always On</p>
             <p className="text-xs text-red-400/60 mt-1">All events monitored 24/7</p>
@@ -1103,17 +1123,17 @@ export default function AntiNukePage() {
             onClick={() => setShowInfoModal(false)}
           />
           <div className="relative bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))]
-                          shadow-2xl w-full max-w-lg flex flex-col p-6 space-y-6 text-sm"
-               style={{ maxHeight: '85vh' }}>
-            <div className="flex items-center justify-between border-b border-[rgb(var(--color-border))] pb-4">
+                          shadow-2xl w-full max-w-xl flex flex-col p-6 space-y-6 text-sm animate-scale-in"
+               style={{ maxHeight: '90vh' }}>
+            <div className="flex items-center justify-between border-b border-[rgb(var(--color-border))] pb-4 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
                   <FiShield className="w-5 h-5 text-red-400" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-[rgb(var(--color-text-primary))]">System Protection Guide</h3>
+                  <h3 className="font-bold text-base text-[rgb(var(--color-text-primary))]">Anti-Nuke Protection Guide</h3>
                   <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
-                    How Anti-Nuke whitelisting and bot security works
+                    Detailed system behavior, bypass rules, and FAQs
                   </p>
                 </div>
               </div>
@@ -1124,50 +1144,116 @@ export default function AntiNukePage() {
                 <FiX className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-5 overflow-y-auto flex-1 pr-1 font-sans text-[rgb(var(--color-text-secondary))] leading-relaxed">
+            <div className="space-y-6 overflow-y-auto flex-1 pr-1 font-sans text-[rgb(var(--color-text-secondary))] leading-relaxed">
               <div className="space-y-2">
                 <h4 className="font-semibold text-red-400 flex items-center gap-2">
-                  🤖 Allowed Bots (No Whitelist Needed)
+                  👥 Hardcoded Users (System Admin)
                 </h4>
-                <p className="text-xs pl-6">
-                  The primary custom bot is automatically allowed. 
-                  Any bot or integration added directly by the <strong>Main Owner</strong> is trusted by the system on join and will not be kicked.
-                  <span className="block mt-1 text-[rgb(var(--color-text-tertiary))] italic">
-                    Note: Any bot added by anyone other than the Main Owner is immediately kicked to prevent backdoors.
-                  </span>
-                </p>
+                <div className="pl-6 text-xs space-y-2">
+                  <p>For absolute security, the core editors are hardcoded in the application code and cannot be added or deleted dynamically via the database:</p>
+                  <ul className="list-disc list-inside space-y-1 bg-[rgb(var(--color-bg-primary))]/45 p-3 rounded-lg border border-[rgb(var(--color-border))] font-mono text-[11px]">
+                    <li>
+                      <strong className="text-amber-400">Main Owner:</strong> 929297205796417597
+                      <span className="block text-[10px] pl-4 text-[rgb(var(--color-text-tertiary))]">Has absolute system bypass. The only user allowed to invite new bots and modify database tables directly.</span>
+                    </li>
+                    <li className="mt-2">
+                      <strong className="text-red-400">Web Editors:</strong> 1066281404821930025, 1058043072522489946
+                      <span className="block text-[10px] pl-4 text-[rgb(var(--color-text-tertiary))]">Authorized to log in, write/edit whitelist options, and manage configurations on this website panel.</span>
+                    </li>
+                  </ul>
+                  <p className="text-[11px] text-[rgb(var(--color-text-tertiary))] italic">
+                    Other administrators can view the dashboard in Read-Only mode, but cannot make configuration changes.
+                  </p>
+                </div>
               </div>
+
               <div className="space-y-2">
                 <h4 className="font-semibold text-red-400 flex items-center gap-2">
-                  🛡️ Whitelisting Implications
+                  🚫 What is Ignored in Anti-Nuke
                 </h4>
                 <p className="text-xs pl-6">
-                  Whitelisting a user/bot grants them exceptions to the Anti-Nuke protections.
-                  By default, any user without the appropriate bypass permissions will have their actions reverted when they perform highly sensitive administrative tasks.
+                  The system does not monitor or revert modifications to the following features (they can be modified freely by standard server admins):
                 </p>
+                <ul className="list-disc list-inside text-xs pl-8 space-y-1">
+                  <li><strong>Channels & Categories:</strong> Creation, deletion, updates, or permission overrides on text/voice channels and categories are completely ignored.</li>
+                  <li><strong>Webhooks:</strong> Creating, deleting, or updating Discord webhooks will not be blocked or reverted.</li>
+                  <li><strong>Roles Creation/Deletion:</strong> Standard role creation and role deletion events are ignored.</li>
+                </ul>
               </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold text-red-400 flex items-center gap-2">
+                  🛡️ Monitored Actions (Bypass Required)
+                </h4>
+                <p className="text-xs pl-6">
+                  Only highly sensitive, potentially destructive actions are monitored by the Anti-Nuke bot. If a non-whitelisted user executes these, the bot immediately reverts the action:
+                </p>
+                <ul className="list-disc list-inside text-xs pl-8 space-y-1.5">
+                  <li>
+                    <strong>Role Permission Modifications:</strong>
+                    <span className="block text-[11px] pl-4 text-[rgb(var(--color-text-tertiary))]">Updating any role to grant dangerous permissions (Administrator, Manage Guild, Manage Roles, Kick Members, Ban Members, Manage Webhooks, etc.).</span>
+                  </li>
+                  <li>
+                    <strong>Dangerous Member Role Updates:</strong>
+                    <span className="block text-[11px] pl-4 text-[rgb(var(--color-text-tertiary))]">Assigning any role that possesses dangerous permissions to a server member.</span>
+                  </li>
+                </ul>
+              </div>
+
               <div className="space-y-2 bg-[rgb(var(--color-bg-primary))]/40 border border-[rgb(var(--color-border))] rounded-xl p-4">
                 <h4 className="font-semibold text-red-400 flex items-center gap-2 text-xs uppercase tracking-wider">
-                  🔑 Manage Permission Whitelist
+                  🔑 Whitelisting & Bypass Logic
                 </h4>
-                <p className="text-xs mt-1.5 pl-1">
-                  Enabling the <strong>Manage Permission</strong> whitelist option for a user allows them to:
-                </p>
-                <ul className="list-disc list-inside text-xs pl-4 space-y-1 mt-1">
-                  <li>Modify/Update role permissions to contain dangerous flags (like Administrator, Manage Guild, etc.).</li>
-                  <li>Assign or remove roles containing dangerous permissions to/from server members.</li>
-                </ul>
-                <p className="text-xs mt-2 pl-1 text-[rgb(var(--color-text-tertiary))]">
-                  If any un-whitelisted administrator attempts to update a role with dangerous permissions or assign a dangerous role, the bot will block and immediately revert their action.
-                </p>
+                <div className="text-xs space-y-2 pl-1">
+                  <p>
+                    Whitelisting grants bypass status for monitored actions. The whitelist uses a single consolidated permission toggle:
+                  </p>
+                  <p className="bg-[rgb(var(--color-bg-secondary))] px-3 py-2 rounded-lg border border-[rgb(var(--color-border))] font-medium">
+                    ⚡ Manage Permission
+                  </p>
+                  <p className="text-[11px] text-[rgb(var(--color-text-tertiary))]">
+                    Users or bots whitelisted with <strong>Manage Permission</strong> can create or update roles containing dangerous permissions, and assign dangerous roles to server members without being reverted.
+                  </p>
+                  <p className="text-[11px] text-red-300 font-semibold mt-2">
+                    🤖 Automatic Bot Kick:
+                  </p>
+                  <p className="text-[11px] text-[rgb(var(--color-text-tertiary))]">
+                    To prevent malicious integration add-ons, only bots invited directly by the <strong>Main Owner</strong> are allowed. Any bot added by another admin is instantly kicked, even if that admin is whitelisted.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-2 border-t border-[rgb(var(--color-border))]">
+                <h4 className="font-semibold text-red-400">❓ Frequently Asked Questions (FAQ)</h4>
+                <div className="space-y-3 text-xs pl-2">
+                  <div>
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))]">Q: Which actions need a whitelist and which don't?</p>
+                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-0.5">
+                      A: <strong>Need Whitelist:</strong> Adding admin/mod permissions to any role, or assigning an admin/mod role to someone.
+                      <br /><strong>Do NOT Need Whitelist:</strong> Modifying channels, deleting channels/categories, creating standard roles (with normal chat permissions), and assigning standard roles.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))]">Q: Who are the hardcoded users and can we change them?</p>
+                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-0.5">A: The Main Owner (929297205796417597) and Web Editors (1066281404821930025, 1058043072522489946) are hardcoded directly in the codebase for maximum security against database manipulation.</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))]">Q: How does the bot revert unauthorized changes?</p>
+                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-0.5">A: When a role update is detected, the bot checks the executor. If unauthorized, the bot removes the dangerous permissions or strips the role from the member, restoring original security status.</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))]">Q: Can whitelisted users invite helper bots?</p>
+                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-0.5">A: No. Any bot added by a user other than the Main Owner is immediately kicked to prevent rogue bots from bypassing permissions.</p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-end border-t border-[rgb(var(--color-border))] pt-4">
+            <div className="flex items-center justify-end border-t border-[rgb(var(--color-border))] pt-4 flex-shrink-0">
               <button
                 onClick={() => setShowInfoModal(false)}
                 className="px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-white font-medium transition-all duration-200"
               >
-                Understood
+                Close Guide
               </button>
             </div>
           </div>
