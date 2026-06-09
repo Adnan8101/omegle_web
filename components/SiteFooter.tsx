@@ -5,7 +5,7 @@ export default function SiteFooter() {
   const socials = [
     {
       name: 'Instagram',
-      url: 'https://www.instagram.com/omeglee.discord',
+      url: 'https://www.instagram.com/omegleediscord',
       hoverClass: 'hover:bg-gradient-to-tr hover:from-yellow-500/10 hover:via-red-500/10 hover:to-purple-600/10 hover:border-red-500/30 hover:shadow-[0_0_15px_rgba(225,48,108,0.2)]',
       icon: (
         <svg className="w-5 h-5 text-[#E1306C]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
