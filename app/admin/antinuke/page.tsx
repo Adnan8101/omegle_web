@@ -14,26 +14,10 @@ const MAIN_OWNER_ID = '929297205796417597';
 const EDITORS = [MAIN_OWNER_ID, '1066281404821930025', '1058043072522489946'];
 
 const ALL_PERMISSIONS: { key: string; label: string; group: string }[] = [
-  { key: 'CREATE_ROLE',        label: 'Create Role',          group: 'Roles'       },
-  { key: 'DELETE_ROLE',        label: 'Delete Role',          group: 'Roles'       },
-  { key: 'EDIT_ROLE',          label: 'Edit Role',            group: 'Roles'       },
-  { key: 'PERMISSION_UPDATES', label: 'Permission Updates',   group: 'Roles'       },
-  { key: 'CREATE_CHANNEL',     label: 'Create Channel',       group: 'Channels'    },
-  { key: 'DELETE_CHANNEL',     label: 'Delete Channel',       group: 'Channels'    },
-  { key: 'EDIT_CHANNEL',       label: 'Edit Channel',         group: 'Channels'    },
-  { key: 'CREATE_CATEGORY',    label: 'Create Category',      group: 'Channels'    },
-  { key: 'DELETE_CATEGORY',    label: 'Delete Category',      group: 'Channels'    },
-  { key: 'EDIT_CATEGORY',      label: 'Edit Category',        group: 'Channels'    },
-  { key: 'CREATE_WEBHOOK',     label: 'Create Webhook',       group: 'Webhooks'    },
-  { key: 'DELETE_WEBHOOK',     label: 'Delete Webhook',       group: 'Webhooks'    },
-  { key: 'EDIT_WEBHOOK',       label: 'Edit Webhook',         group: 'Webhooks'    },
-  { key: 'UPDATE_MEMBER_ROLE', label: 'Update role ( member role update ( add / remove )', group: 'Roles' },
-  { key: 'TIMEOUT_MEMBER',     label: 'Timeout Member',       group: 'Members'     },
-  { key: 'KICK_MEMBER',        label: 'Kick Member',          group: 'Members'     },
-  { key: 'BAN_MEMBER',         label: 'Ban Member',           group: 'Members'     },
+  { key: 'MANAGE_PERMISSIONS', label: 'Manage Permission', group: 'Roles' },
 ];
 
-const PERM_GROUPS = ['Members', 'Roles', 'Channels', 'Webhooks'];
+const PERM_GROUPS = ['Roles'];
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
   BOT_ADD:            'bg-purple-500/20 text-purple-300 border-purple-500/30',
