@@ -12,8 +12,9 @@ const MAIN_OWNER_ID = '929297205796417597';
 const EDITORS = [MAIN_OWNER_ID, '1066281404821930025', '1058043072522489946'];
 const ALL_PERMISSIONS: { key: string; label: string; group: string }[] = [
   { key: 'MANAGE_PERMISSIONS', label: 'Manage Permission', group: 'Roles' },
+  { key: 'MANAGE_WEBHOOKS', label: 'Manage Webhooks', group: 'Webhooks' },
 ];
-const PERM_GROUPS = ['Roles'];
+const PERM_GROUPS = ['Roles', 'Webhooks'];
 const EVENT_TYPE_COLORS: Record<string, string> = {
   BOT_ADD:            'bg-purple-500/20 text-purple-300 border-purple-500/30',
   ROLE_UPDATE:        'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
@@ -1155,7 +1156,7 @@ export default function AntiNukePage() {
                     </h4>
                     <div className="text-xs space-y-2">
                       <p>For absolute security, the core editors are hardcoded in the application code and cannot be added or deleted dynamically via the database:</p>
-                      <ul className="list-disc list-inside space-y-2 bg-[rgb(var(--color-bg-primary))]/45 p-3 rounded-xl border border-[rgb(var(--color-border))] font-mono text-[11px]">
+                      <ul className="list-disc list-inside space-y-2 bg-[rgb(var(--color-bg-primary))]/45 p-3 rounded-lg border border-[rgb(var(--color-border))] font-mono text-[11px]">
                         <li>
                           <strong className="text-amber-400">Main Owner:</strong> 929297205796417597
                           <span className="block text-[10px] pl-4 text-[rgb(var(--color-text-tertiary))] mt-0.5">Has absolute system bypass. The only user allowed to invite new bots and modify database tables directly.</span>
@@ -1178,14 +1179,18 @@ export default function AntiNukePage() {
                     </h4>
                     <div className="text-xs space-y-2">
                       <p>
-                        Whitelisting grants bypass status for monitored actions. The whitelist uses a single consolidated permission toggle:
+                        Whitelisting grants bypass status for monitored actions. The whitelist uses two consolidated permission toggles:
                       </p>
-                      <p className="bg-[rgb(var(--color-bg-secondary))] px-3 py-2 rounded-lg border border-[rgb(var(--color-border))] font-semibold text-center text-red-400">
-                        ⚡ Manage Permission
-                      </p>
-                      <p className="text-[11px] text-[rgb(var(--color-text-tertiary))]">
-                        Users or bots whitelisted with <strong>Manage Permission</strong> can create or update roles containing dangerous permissions, and assign dangerous roles to server members without being reverted.
-                      </p>
+                      <ul className="space-y-2">
+                        <li className="bg-[rgb(var(--color-bg-secondary))] px-3 py-2 rounded-lg border border-[rgb(var(--color-border))] font-semibold text-red-400 flex justify-between items-center text-xs">
+                          <span>⚡ Manage Permission</span>
+                          <span className="text-[10px] text-[rgb(var(--color-text-tertiary))]">Bypass dangerous role edits/assignments</span>
+                        </li>
+                        <li className="bg-[rgb(var(--color-bg-secondary))] px-3 py-2 rounded-lg border border-[rgb(var(--color-border))] font-semibold text-red-400 flex justify-between items-center text-xs">
+                          <span>⚡ Manage Webhooks</span>
+                          <span className="text-[10px] text-[rgb(var(--color-text-tertiary))]">Bypass webhook creation/deletion/updates</span>
+                        </li>
+                      </ul>
                       <p className="text-[11px] text-red-300 font-semibold mt-2">
                         🤖 Automatic Bot Kick:
                       </p>
@@ -1215,6 +1220,10 @@ export default function AntiNukePage() {
                         <strong className="text-[rgb(var(--color-text-primary))]">Dangerous Member Role Updates:</strong>
                         <span className="block text-[11px] pl-4 text-[rgb(var(--color-text-tertiary))]">Assigning any role that possesses dangerous permissions to a server member.</span>
                       </li>
+                      <li>
+                        <strong className="text-[rgb(var(--color-text-primary))]">Webhook Modifications:</strong>
+                        <span className="block text-[11px] pl-4 text-[rgb(var(--color-text-tertiary))]">Creating, deleting, or editing Discord webhooks in text channels (unauthorized creations are auto-deleted).</span>
+                      </li>
                     </ul>
                   </div>
 
@@ -1228,7 +1237,6 @@ export default function AntiNukePage() {
                     </p>
                     <ul className="list-disc list-inside text-xs pl-2 space-y-1 bg-[rgb(var(--color-bg-primary))]/40 p-3 rounded-2xl border border-[rgb(var(--color-border))]">
                       <li><strong>Channels & Categories:</strong> Creation, deletion, updates, or permission overrides on channels/categories are ignored.</li>
-                      <li><strong>Webhooks:</strong> Creating, deleting, or updating Discord webhooks will not be blocked or reverted.</li>
                       <li><strong>Roles Creation/Deletion:</strong> Standard role creation and role deletion events are ignored.</li>
                     </ul>
                   </div>
@@ -1244,9 +1252,9 @@ export default function AntiNukePage() {
                   <div className="bg-[rgb(var(--color-bg-primary))]/30 p-3.5 rounded-xl border border-[rgb(var(--color-border))]/60">
                     <p className="font-semibold text-[rgb(var(--color-text-primary))]">Q: Which actions need a whitelist and which don't?</p>
                     <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-1">
-                      A: <strong>Need Whitelist:</strong> Adding admin/mod permissions to any role, or assigning an admin/mod role to someone.
+                      A: <strong>Need Whitelist:</strong> Adding admin/mod permissions to a role, assigning an admin/mod role, and creating/editing/deleting webhooks.
                       <br className="mb-1" />
-                      <strong>Do NOT Need Whitelist:</strong> Modifying channels, deleting channels/categories, creating standard roles, and assigning standard roles.
+                      <strong>Do NOT Need Whitelist:</strong> Modifying channels/categories, creating standard roles, and assigning standard roles.
                     </p>
                   </div>
                   <div className="bg-[rgb(var(--color-bg-primary))]/30 p-3.5 rounded-xl border border-[rgb(var(--color-border))]/60">
@@ -1255,7 +1263,7 @@ export default function AntiNukePage() {
                   </div>
                   <div className="bg-[rgb(var(--color-bg-primary))]/30 p-3.5 rounded-xl border border-[rgb(var(--color-border))]/60">
                     <p className="font-semibold text-[rgb(var(--color-text-primary))]">Q: How does the bot revert unauthorized changes?</p>
-                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-1">A: When a role update is detected, the bot checks the executor. If unauthorized, the bot removes the dangerous permissions or strips the role from the member, restoring original security status.</p>
+                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-1">A: It rolls back permission changes on roles, strips dangerous roles from members, and immediately deletes unauthorized webhooks if created.</p>
                   </div>
                   <div className="bg-[rgb(var(--color-bg-primary))]/30 p-3.5 rounded-xl border border-[rgb(var(--color-border))]/60">
                     <p className="font-semibold text-[rgb(var(--color-text-primary))]">Q: Can whitelisted users invite helper bots?</p>

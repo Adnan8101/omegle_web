@@ -5,6 +5,7 @@ import { prismaBot } from '@/lib/prismaBot';
 import { verifyAccess, MAIN_OWNER_ID, EDITORS } from '@/lib/verifyAccess';
 const ALL_PERMISSIONS = [
   'MANAGE_PERMISSIONS',
+  'MANAGE_WEBHOOKS',
 ];
 export async function PATCH(
   request: NextRequest,

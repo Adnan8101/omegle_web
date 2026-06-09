@@ -5,6 +5,7 @@ import { prismaBot } from '@/lib/prismaBot';
 import { verifyAccess, MAIN_OWNER_ID, EDITORS } from '@/lib/verifyAccess';
 const ALL_PERMISSIONS = [
   'MANAGE_PERMISSIONS',
+  'MANAGE_WEBHOOKS',
 ];
 function buildDefaultPermissions(): Record<string, boolean> {
   return Object.fromEntries(ALL_PERMISSIONS.map(p => [p, false]));
