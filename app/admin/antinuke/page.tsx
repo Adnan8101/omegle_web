@@ -1117,14 +1117,14 @@ export default function AntiNukePage() {
         </div>
       )}
       {showInfoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
           <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+            className="absolute inset-0 bg-black/75 backdrop-blur-md transition-opacity duration-300 ease-out animate-fade-in"
             onClick={() => setShowInfoModal(false)}
           />
-          <div className="relative bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))]
-                          shadow-2xl w-full max-w-xl flex flex-col p-6 space-y-6 text-sm animate-scale-in"
-               style={{ maxHeight: '90vh' }}>
+          <div className="relative bg-[rgb(var(--color-bg-secondary))] rounded-3xl border border-[rgb(var(--color-border))]
+                          shadow-2xl w-full max-w-4xl flex flex-col p-6 md:p-8 space-y-6 text-sm animate-scale-in"
+               style={{ maxHeight: '85vh' }}>
             <div className="flex items-center justify-between border-b border-[rgb(var(--color-border))] pb-4 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
@@ -1144,106 +1144,122 @@ export default function AntiNukePage() {
                 <FiX className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-6 overflow-y-auto flex-1 pr-1 font-sans text-[rgb(var(--color-text-secondary))] leading-relaxed">
-              <div className="space-y-2">
-                <h4 className="font-semibold text-red-400 flex items-center gap-2">
-                  👥 Hardcoded Users (System Admin)
-                </h4>
-                <div className="pl-6 text-xs space-y-2">
-                  <p>For absolute security, the core editors are hardcoded in the application code and cannot be added or deleted dynamically via the database:</p>
-                  <ul className="list-disc list-inside space-y-1 bg-[rgb(var(--color-bg-primary))]/45 p-3 rounded-lg border border-[rgb(var(--color-border))] font-mono text-[11px]">
-                    <li>
-                      <strong className="text-amber-400">Main Owner:</strong> 929297205796417597
-                      <span className="block text-[10px] pl-4 text-[rgb(var(--color-text-tertiary))]">Has absolute system bypass. The only user allowed to invite new bots and modify database tables directly.</span>
-                    </li>
-                    <li className="mt-2">
-                      <strong className="text-red-400">Web Editors:</strong> 1066281404821930025, 1058043072522489946
-                      <span className="block text-[10px] pl-4 text-[rgb(var(--color-text-tertiary))]">Authorized to log in, write/edit whitelist options, and manage configurations on this website panel.</span>
-                    </li>
-                  </ul>
-                  <p className="text-[11px] text-[rgb(var(--color-text-tertiary))] italic">
-                    Other administrators can view the dashboard in Read-Only mode, but cannot make configuration changes.
-                  </p>
+            <div className="space-y-6 overflow-y-auto flex-1 pr-2 font-sans text-[rgb(var(--color-text-secondary))] leading-relaxed">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                {/* Left Column */}
+                <div className="space-y-6">
+                  {/* Hardcoded Users */}
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-red-400 flex items-center gap-2 text-sm uppercase tracking-wider">
+                      👥 Hardcoded Users (System Admin)
+                    </h4>
+                    <div className="text-xs space-y-2">
+                      <p>For absolute security, the core editors are hardcoded in the application code and cannot be added or deleted dynamically via the database:</p>
+                      <ul className="list-disc list-inside space-y-2 bg-[rgb(var(--color-bg-primary))]/45 p-3 rounded-xl border border-[rgb(var(--color-border))] font-mono text-[11px]">
+                        <li>
+                          <strong className="text-amber-400">Main Owner:</strong> 929297205796417597
+                          <span className="block text-[10px] pl-4 text-[rgb(var(--color-text-tertiary))] mt-0.5">Has absolute system bypass. The only user allowed to invite new bots and modify database tables directly.</span>
+                        </li>
+                        <li className="border-t border-[rgb(var(--color-border))]/50 pt-2">
+                          <strong className="text-red-400">Web Editors:</strong> 1066281404821930025, 1058043072522489946
+                          <span className="block text-[10px] pl-4 text-[rgb(var(--color-text-tertiary))] mt-0.5">Authorized to log in, write/edit whitelist options, and manage configurations on this website panel.</span>
+                        </li>
+                      </ul>
+                      <p className="text-[11px] text-[rgb(var(--color-text-tertiary))] italic">
+                        Other administrators can view the dashboard in Read-Only mode, but cannot make configuration changes.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Whitelisting & Bypass Logic */}
+                  <div className="space-y-2 bg-[rgb(var(--color-bg-primary))]/40 border border-[rgb(var(--color-border))] rounded-2xl p-4">
+                    <h4 className="font-semibold text-red-400 flex items-center gap-2 text-xs uppercase tracking-wider">
+                      🔑 Whitelisting & Bypass Logic
+                    </h4>
+                    <div className="text-xs space-y-2">
+                      <p>
+                        Whitelisting grants bypass status for monitored actions. The whitelist uses a single consolidated permission toggle:
+                      </p>
+                      <p className="bg-[rgb(var(--color-bg-secondary))] px-3 py-2 rounded-lg border border-[rgb(var(--color-border))] font-semibold text-center text-red-400">
+                        ⚡ Manage Permission
+                      </p>
+                      <p className="text-[11px] text-[rgb(var(--color-text-tertiary))]">
+                        Users or bots whitelisted with <strong>Manage Permission</strong> can create or update roles containing dangerous permissions, and assign dangerous roles to server members without being reverted.
+                      </p>
+                      <p className="text-[11px] text-red-300 font-semibold mt-2">
+                        🤖 Automatic Bot Kick:
+                      </p>
+                      <p className="text-[11px] text-[rgb(var(--color-text-tertiary))]">
+                        To prevent malicious integration add-ons, only bots invited directly by the <strong>Main Owner</strong> are allowed. Any bot added by another admin is instantly kicked, even if that admin is whitelisted.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                  {/* Monitored Actions */}
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-red-400 flex items-center gap-2 text-sm uppercase tracking-wider">
+                      🛡️ Monitored Actions (Bypass Required)
+                    </h4>
+                    <p className="text-xs">
+                      Only highly sensitive, potentially destructive actions are monitored by the Anti-Nuke bot. If a non-whitelisted user executes these, the bot immediately reverts the action:
+                    </p>
+                    <ul className="list-disc list-inside text-xs pl-2 space-y-2 bg-[rgb(var(--color-bg-primary))]/40 p-3 rounded-2xl border border-[rgb(var(--color-border))]">
+                      <li>
+                        <strong className="text-[rgb(var(--color-text-primary))]">Role Permission Modifications:</strong>
+                        <span className="block text-[11px] pl-4 text-[rgb(var(--color-text-tertiary))]">Updating any role to grant dangerous permissions (Administrator, Manage Guild, Manage Roles, Kick Members, Ban Members, Manage Webhooks, etc.).</span>
+                      </li>
+                      <li>
+                        <strong className="text-[rgb(var(--color-text-primary))]">Dangerous Member Role Updates:</strong>
+                        <span className="block text-[11px] pl-4 text-[rgb(var(--color-text-tertiary))]">Assigning any role that possesses dangerous permissions to a server member.</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* What is Ignored */}
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-red-400 flex items-center gap-2 text-sm uppercase tracking-wider">
+                      🚫 What is Ignored in Anti-Nuke
+                    </h4>
+                    <p className="text-xs">
+                      The system does not monitor or revert modifications to the following features (they can be modified freely by standard server admins):
+                    </p>
+                    <ul className="list-disc list-inside text-xs pl-2 space-y-1 bg-[rgb(var(--color-bg-primary))]/40 p-3 rounded-2xl border border-[rgb(var(--color-border))]">
+                      <li><strong>Channels & Categories:</strong> Creation, deletion, updates, or permission overrides on channels/categories are ignored.</li>
+                      <li><strong>Webhooks:</strong> Creating, deleting, or updating Discord webhooks will not be blocked or reverted.</li>
+                      <li><strong>Roles Creation/Deletion:</strong> Standard role creation and role deletion events are ignored.</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <h4 className="font-semibold text-red-400 flex items-center gap-2">
-                  🚫 What is Ignored in Anti-Nuke
+              {/* Full Width Bottom: FAQs */}
+              <div className="space-y-4 pt-6 border-t border-[rgb(var(--color-border))]">
+                <h4 className="font-semibold text-red-400 flex items-center gap-2 text-sm uppercase tracking-wider">
+                  ❓ Frequently Asked Questions (FAQ)
                 </h4>
-                <p className="text-xs pl-6">
-                  The system does not monitor or revert modifications to the following features (they can be modified freely by standard server admins):
-                </p>
-                <ul className="list-disc list-inside text-xs pl-8 space-y-1">
-                  <li><strong>Channels & Categories:</strong> Creation, deletion, updates, or permission overrides on text/voice channels and categories are completely ignored.</li>
-                  <li><strong>Webhooks:</strong> Creating, deleting, or updating Discord webhooks will not be blocked or reverted.</li>
-                  <li><strong>Roles Creation/Deletion:</strong> Standard role creation and role deletion events are ignored.</li>
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-semibold text-red-400 flex items-center gap-2">
-                  🛡️ Monitored Actions (Bypass Required)
-                </h4>
-                <p className="text-xs pl-6">
-                  Only highly sensitive, potentially destructive actions are monitored by the Anti-Nuke bot. If a non-whitelisted user executes these, the bot immediately reverts the action:
-                </p>
-                <ul className="list-disc list-inside text-xs pl-8 space-y-1.5">
-                  <li>
-                    <strong>Role Permission Modifications:</strong>
-                    <span className="block text-[11px] pl-4 text-[rgb(var(--color-text-tertiary))]">Updating any role to grant dangerous permissions (Administrator, Manage Guild, Manage Roles, Kick Members, Ban Members, Manage Webhooks, etc.).</span>
-                  </li>
-                  <li>
-                    <strong>Dangerous Member Role Updates:</strong>
-                    <span className="block text-[11px] pl-4 text-[rgb(var(--color-text-tertiary))]">Assigning any role that possesses dangerous permissions to a server member.</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="space-y-2 bg-[rgb(var(--color-bg-primary))]/40 border border-[rgb(var(--color-border))] rounded-xl p-4">
-                <h4 className="font-semibold text-red-400 flex items-center gap-2 text-xs uppercase tracking-wider">
-                  🔑 Whitelisting & Bypass Logic
-                </h4>
-                <div className="text-xs space-y-2 pl-1">
-                  <p>
-                    Whitelisting grants bypass status for monitored actions. The whitelist uses a single consolidated permission toggle:
-                  </p>
-                  <p className="bg-[rgb(var(--color-bg-secondary))] px-3 py-2 rounded-lg border border-[rgb(var(--color-border))] font-medium">
-                    ⚡ Manage Permission
-                  </p>
-                  <p className="text-[11px] text-[rgb(var(--color-text-tertiary))]">
-                    Users or bots whitelisted with <strong>Manage Permission</strong> can create or update roles containing dangerous permissions, and assign dangerous roles to server members without being reverted.
-                  </p>
-                  <p className="text-[11px] text-red-300 font-semibold mt-2">
-                    🤖 Automatic Bot Kick:
-                  </p>
-                  <p className="text-[11px] text-[rgb(var(--color-text-tertiary))]">
-                    To prevent malicious integration add-ons, only bots invited directly by the <strong>Main Owner</strong> are allowed. Any bot added by another admin is instantly kicked, even if that admin is whitelisted.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3 pt-2 border-t border-[rgb(var(--color-border))]">
-                <h4 className="font-semibold text-red-400">❓ Frequently Asked Questions (FAQ)</h4>
-                <div className="space-y-3 text-xs pl-2">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="bg-[rgb(var(--color-bg-primary))]/30 p-3.5 rounded-xl border border-[rgb(var(--color-border))]/60">
                     <p className="font-semibold text-[rgb(var(--color-text-primary))]">Q: Which actions need a whitelist and which don't?</p>
-                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-0.5">
+                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-1">
                       A: <strong>Need Whitelist:</strong> Adding admin/mod permissions to any role, or assigning an admin/mod role to someone.
-                      <br /><strong>Do NOT Need Whitelist:</strong> Modifying channels, deleting channels/categories, creating standard roles (with normal chat permissions), and assigning standard roles.
+                      <br className="mb-1" />
+                      <strong>Do NOT Need Whitelist:</strong> Modifying channels, deleting channels/categories, creating standard roles, and assigning standard roles.
                     </p>
                   </div>
-                  <div>
+                  <div className="bg-[rgb(var(--color-bg-primary))]/30 p-3.5 rounded-xl border border-[rgb(var(--color-border))]/60">
                     <p className="font-semibold text-[rgb(var(--color-text-primary))]">Q: Who are the hardcoded users and can we change them?</p>
-                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-0.5">A: The Main Owner (929297205796417597) and Web Editors (1066281404821930025, 1058043072522489946) are hardcoded directly in the codebase for maximum security against database manipulation.</p>
+                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-1">A: The Main Owner (929297205796417597) and Web Editors (1066281404821930025, 1058043072522489946) are hardcoded directly in the codebase for maximum security against database manipulation.</p>
                   </div>
-                  <div>
+                  <div className="bg-[rgb(var(--color-bg-primary))]/30 p-3.5 rounded-xl border border-[rgb(var(--color-border))]/60">
                     <p className="font-semibold text-[rgb(var(--color-text-primary))]">Q: How does the bot revert unauthorized changes?</p>
-                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-0.5">A: When a role update is detected, the bot checks the executor. If unauthorized, the bot removes the dangerous permissions or strips the role from the member, restoring original security status.</p>
+                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-1">A: When a role update is detected, the bot checks the executor. If unauthorized, the bot removes the dangerous permissions or strips the role from the member, restoring original security status.</p>
                   </div>
-                  <div>
+                  <div className="bg-[rgb(var(--color-bg-primary))]/30 p-3.5 rounded-xl border border-[rgb(var(--color-border))]/60">
                     <p className="font-semibold text-[rgb(var(--color-text-primary))]">Q: Can whitelisted users invite helper bots?</p>
-                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-0.5">A: No. Any bot added by a user other than the Main Owner is immediately kicked to prevent rogue bots from bypassing permissions.</p>
+                    <p className="text-[11px] text-[rgb(var(--color-text-secondary))] mt-1">A: No. Any bot added by a user other than the Main Owner is immediately kicked to prevent rogue bots from bypassing permissions.</p>
                   </div>
                 </div>
               </div>
