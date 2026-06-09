@@ -38,16 +38,20 @@ export interface UserPermissions {
   isAdmin: boolean;
   hasManageServer: boolean;
   roles: string[];
+  hasSrModAccess: boolean;
 }
 export async function checkUserPermissions(
   accessToken: string,
-  casinoRoleIds: string[] = []
+  casinoRoleIds: string[] = [],
+  srModRoleIds: string[] = [],
+  modRoleIds: string[] = []
 ): Promise<UserPermissions> {
   const defaultPerms: UserPermissions = {
     hasFullAccess: false,
     hasModeratorAccess: false,
     hasViewOnlyAccess: false,
     hasCasinoAccess: false,
+    hasSrModAccess: false,
     hasAnyAccess: false,
     isOwner: false,
     isAdmin: false,
@@ -171,8 +175,9 @@ export async function checkUserPermissions(
       hasAdminRole,
       hasFullAccess,
     });
+    const allModRoles = [...MODERATOR_ROLE_IDS, ...modRoleIds];
     const hasModeratorRole = !hasFullAccess && roles.some((roleId) =>
-      MODERATOR_ROLE_IDS.includes(roleId)
+      allModRoles.includes(roleId)
     );
     const hasViewOnlyRole = !hasFullAccess && !hasModeratorRole && roles.some((roleId) =>
       VIEW_ONLY_ROLE_IDS.includes(roleId)
@@ -182,6 +187,9 @@ export async function checkUserPermissions(
       allCasinoRoles.includes(roleId)
     );
     const hasCasinoAccess = hasFullAccess || hasCasinoRole;
+    const hasSrModRole = !hasFullAccess && roles.some((roleId) =>
+      srModRoleIds.includes(roleId)
+    );
     console.log("✅ Permission check results:", {
       isOwner,
       isAdmin,
@@ -192,6 +200,7 @@ export async function checkUserPermissions(
       hasViewOnlyRole,
       hasCasinoRole,
       hasCasinoAccess,
+      hasSrModRole,
       matchedCasinoRole: roles.find(r => allCasinoRoles.includes(r)),
       matchedViewOnlyRole: roles.find(r => VIEW_ONLY_ROLE_IDS.includes(r)),
       matchedAdminRole: roles.find(r => ADMIN_ROLE_IDS.includes(r))
@@ -201,7 +210,8 @@ export async function checkUserPermissions(
       hasModeratorAccess: hasModeratorRole,
       hasViewOnlyAccess: hasViewOnlyRole,
       hasCasinoAccess,
-      hasAnyAccess: hasFullAccess || hasModeratorRole || hasViewOnlyRole || hasCasinoAccess,
+      hasSrModAccess: hasSrModRole,
+      hasAnyAccess: hasFullAccess || hasModeratorRole || hasViewOnlyRole || hasCasinoAccess || hasSrModRole,
       isOwner,
       isAdmin,
       hasManageServer,

@@ -53,14 +53,14 @@ export default function ModsStatsPage() {
     }
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
-      if (!perms?.hasFullAccess) {
+      if (!perms?.hasFullAccess && !perms?.hasSrModAccess) {
         setHasPermission(false);
-        if (perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
+        if (perms?.hasCasinoAccess) {
           setIsRedirecting(true);
           router.replace('/admin/casino');
-        } else if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
+        } else if (perms?.hasModeratorAccess) {
           setIsRedirecting(true);
-          router.replace('/admin/vctranscript');
+          router.replace('/admin/automod');
         } else {
           setIsRedirecting(true);
           router.replace('/admin');
@@ -119,10 +119,12 @@ export default function ModsStatsPage() {
             <button
               onClick={() => {
                 const perms = session?.user?.permissions;
-                if (perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
+                if (perms?.hasCasinoAccess) {
                   router.replace('/admin/casino');
-                } else if (perms?.hasModeratorAccess || perms?.hasViewOnlyAccess) {
+                } else if (perms?.hasSrModAccess) {
                   router.replace('/admin/vctranscript');
+                } else if (perms?.hasModeratorAccess) {
+                  router.replace('/admin/automod');
                 } else {
                   router.replace('/admin');
                 }

@@ -61,6 +61,7 @@ interface Pagination {
 }
 export default function InvitesPage() {
   const { data: session, status } = useSession();
+  const perms = session?.user?.permissions;
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<InviteConfig>({
@@ -93,7 +94,7 @@ export default function InvitesPage() {
     }
     if (status === 'authenticated' && session?.user) {
       const perms = (session.user as any).permissions;
-      if (!perms?.hasFullAccess) {
+      if (!perms?.hasFullAccess && !perms?.hasSrModAccess) {
         router.push('/admin/casino');
       }
     }
@@ -209,13 +210,15 @@ export default function InvitesPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="flex items-center gap-2 px-4 py-2.5 glass-blue rounded-xl border border-[rgb(var(--color-border))] hover:border-purple-500/50 apple-transition touch-manipulation"
-            >
-              <FiSettings className="w-4 h-4" />
-              <span className="hidden sm:inline">Settings</span>
-            </button>
+            {perms?.hasFullAccess && (
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className="flex items-center gap-2 px-4 py-2.5 glass-blue rounded-xl border border-[rgb(var(--color-border))] hover:border-purple-500/50 apple-transition touch-manipulation"
+              >
+                <FiSettings className="w-4 h-4" />
+                <span className="hidden sm:inline">Settings</span>
+              </button>
+            )}
             <button
               onClick={fetchInvites}
               className="flex items-center gap-2 px-4 py-2.5 glass-blue rounded-xl border border-[rgb(var(--color-border))] hover:border-purple-500/50 apple-transition touch-manipulation"
@@ -243,7 +246,7 @@ export default function InvitesPage() {
           </div>
         )}
         {}
-        {showSettings && (
+        {showSettings && perms?.hasFullAccess && (
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-[var(--shadow-md)]">
             <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-6 flex items-center gap-2">
               <FiSettings className="w-5 h-5" />

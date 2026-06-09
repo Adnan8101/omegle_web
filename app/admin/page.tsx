@@ -13,10 +13,14 @@ export default function AdminLogin() {
     if (status === 'authenticated' && session?.user?.permissions?.hasAnyAccess) {
       setIsRedirecting(true);
       const perms = session?.user?.permissions;
-      if (perms?.hasCasinoAccess && !perms?.hasFullAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess) {
-        router.push('/admin/casino');
-      } else if (perms?.hasFullAccess) {
+      if (perms?.hasFullAccess) {
         router.push('/admin/dashboard');
+      } else if (perms?.hasCasinoAccess) {
+        router.push('/admin/casino');
+      } else if (perms?.hasSrModAccess) {
+        router.push('/admin/vctranscript');
+      } else if (perms?.hasModeratorAccess) {
+        router.push('/admin/automod');
       } else {
         router.push('/admin/vctranscript');
       }

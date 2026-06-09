@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const perms = session.user.permissions;
-    if (!perms?.hasFullAccess) {
+    if (!perms?.hasFullAccess && !perms?.hasSrModAccess) {
       return NextResponse.json({ error: 'Insufficient permissions - Admin only' }, { status: 403 });
     }
     const { searchParams } = new URL(request.url);

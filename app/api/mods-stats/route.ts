@@ -14,7 +14,8 @@ const MOD_ROLE_IDS = [
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.permissions?.hasFullAccess) {
+    const perms = session?.user?.permissions;
+    if (!session || (!perms?.hasFullAccess && !perms?.hasSrModAccess)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const staffUsers = await queryBotDb(`

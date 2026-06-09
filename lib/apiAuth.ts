@@ -14,11 +14,14 @@ export function hasCasinoAccess(permissions?: UserPermissions): boolean {
 export function hasAnyAccess(permissions?: UserPermissions): boolean {
   return permissions?.hasAnyAccess ?? false;
 }
+export function hasSrModAccess(permissions?: UserPermissions): boolean {
+  return permissions?.hasSrModAccess ?? false;
+}
 export function canAccessVCAndChats(permissions?: UserPermissions): boolean {
-  return hasFullAccess(permissions) || hasModeratorAccess(permissions) || hasViewOnlyAccess(permissions);
+  return hasFullAccess(permissions) || hasModeratorAccess(permissions) || hasViewOnlyAccess(permissions) || (permissions?.hasSrModAccess ?? false);
 }
 export function canAccessServerStats(permissions?: UserPermissions): boolean {
-  return hasFullAccess(permissions) || hasModeratorAccess(permissions);
+  return hasFullAccess(permissions) || hasModeratorAccess(permissions) || (permissions?.hasSrModAccess ?? false);
 }
 export function canAccessAdminFeatures(permissions?: UserPermissions): boolean {
   return hasFullAccess(permissions);

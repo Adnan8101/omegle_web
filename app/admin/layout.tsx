@@ -15,6 +15,38 @@ interface AdminLayoutProps {
     children: React.ReactNode;
 }
 QrCodeIcon
+function isPathnameAllowed(pathname: string, perms: any): boolean {
+    if (!perms) return false;
+    if (perms.hasFullAccess) return true;
+    
+    // Casino Admin
+    if (perms.hasCasinoAccess && pathname.startsWith('/admin/casino')) {
+        if (pathname.startsWith('/admin/casino/economy/invites')) {
+            return false;
+        }
+        return true;
+    }
+    
+    // SrMod
+    if (perms.hasSrModAccess) {
+        if (pathname.startsWith('/admin/vctranscript') ||
+            pathname.startsWith('/admin/server-stats') ||
+            pathname.startsWith('/admin/casino/economy/invites') ||
+            pathname.startsWith('/admin/mods-stats')) {
+            return true;
+        }
+    }
+    
+    // Moderator
+    if (perms.hasModeratorAccess) {
+        if (pathname.startsWith('/admin/automod')) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 export default function AdminLayout({ children }: AdminLayoutProps) {
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -32,9 +64,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             router.replace('/admin');
         } else if (status === 'authenticated' && session?.user?.permissions?.hasAnyAccess) {
             const perms = session?.user?.permissions;
-            const hasCasinoOnly = perms?.hasCasinoAccess && !perms?.hasFullAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess;
-            if (hasCasinoOnly && pathname && !pathname.startsWith('/admin/casino') && pathname !== '/admin' && pathname !== '/admin/signin') {
-                router.replace('/admin/casino');
+            if (pathname && pathname !== '/admin' && pathname !== '/admin/signin') {
+                if (!isPathnameAllowed(pathname, perms)) {
+                    if (perms.hasCasinoAccess) {
+                        router.replace('/admin/casino');
+                    } else if (perms.hasSrModAccess) {
+                        router.replace('/admin/vctranscript');
+                    } else if (perms.hasModeratorAccess) {
+                        router.replace('/admin/automod');
+                    } else {
+                        router.replace('/admin');
+                    }
+                }
             }
         }
     }, [status, session, router, pathname]);
@@ -100,140 +141,106 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             href: '/admin/dashboard',
             icon: <FiHome className="w-5 h-5" />,
             requiresFullAccess: true,
-            requiresModeratorAccess: false,
-            requiresCasinoAccess: false,
         },
         {
             name: 'Live Monitor',
             href: '/admin/monitor',
             icon: <FiActivity className="w-5 h-5" />,
             requiresFullAccess: true,
-            requiresModeratorAccess: false,
-            requiresCasinoAccess: false,
         },
         {
             name: 'Staff Applications',
             href: '/admin/dashboard/applications',
             icon: <FiFileText className="w-5 h-5" />,
             requiresFullAccess: true,
-            requiresModeratorAccess: false,
-            requiresCasinoAccess: false,
         },
         {
-            name: 'Casino Economy',
+            name: 'Casino Access',
             href: '/admin/casino',
             icon: <FiDollarSign className="w-5 h-5" />,
-            requiresFullAccess: false,
-            requiresModeratorAccess: false,
             requiresCasinoAccess: true,
         },
         {
-            name: 'Invite System',
+            name: 'Invite Stats',
             href: '/admin/casino/economy/invites',
             icon: <FiUserPlus className="w-5 h-5" />,
-            requiresFullAccess: true,
-            requiresModeratorAccess: false,
-            requiresCasinoAccess: false,
+            requiresSrModAccess: true,
         },
         {
-            name: 'AutoMod',
+            name: 'Moderation',
             href: '/admin/automod',
             icon: <FiShield className="w-5 h-5" />,
-            requiresFullAccess: false,
             requiresModeratorAccess: true,
-            requiresCasinoAccess: false,
         },
         {
             name: 'Donator Plans',
             href: '/admin/donator',
             icon: <FiCreditCard className="w-5 h-5" />,
-            requiresFullAccess: false,
-            requiresModeratorAccess: true,
-            requiresCasinoAccess: false,
+            requiresFullAccess: true,
         },
         {
             name: 'Donator Subs',
             href: '/admin/donator/subscriptions',
             icon: <FiUsers className="w-5 h-5" />,
-            requiresFullAccess: false,
-            requiresModeratorAccess: true,
-            requiresCasinoAccess: false,
+            requiresFullAccess: true,
         },
         {
             name: 'Donator Payments',
             href: '/admin/donator/payments',
             icon: <FiDollarSign className="w-5 h-5" />,
-            requiresFullAccess: false,
-            requiresModeratorAccess: true,
-            requiresCasinoAccess: false,
+            requiresFullAccess: true,
         },
         {
             name: 'Mod Stats',
             href: '/admin/mods-stats',
             icon: <FiUsers className="w-5 h-5" />,
-            requiresFullAccess: true,
-            requiresModeratorAccess: false,
-            requiresCasinoAccess: false,
+            requiresSrModAccess: true,
         },
         {
             name: 'VC Stats',
             href: '/admin/vctranscript',
             icon: <FiMic className="w-5 h-5" />,
-            requiresFullAccess: false,
-            requiresModeratorAccess: false,
-            requiresCasinoAccess: false,
+            requiresSrModAccess: true,
         },
         {
             name: 'VC Automation',
             href: '/admin/vc-automation',
             icon: <FiShield className="w-5 h-5" />,
             requiresFullAccess: true,
-            requiresModeratorAccess: false,
-            requiresCasinoAccess: false,
         },
         {
             name: 'Anti-Nuke',
             href: '/admin/antinuke',
             icon: <FiAlertOctagon className="w-5 h-5" />,
             requiresFullAccess: true,
-            requiresModeratorAccess: false,
-            requiresCasinoAccess: false,
         },
         {
-            name: 'Chat Stats',
+            name: 'Chats Stats',
             href: '/admin/vctranscript/chatlogs',
             icon: <FiMessageSquare className="w-5 h-5" />,
-            requiresFullAccess: false,
-            requiresModeratorAccess: false,
-            requiresCasinoAccess: false,
+            requiresSrModAccess: true,
         },
         {
             name: 'Server Stats',
             href: '/admin/server-stats',
             icon: <FiBarChart2 className="w-5 h-5" />,
-            requiresFullAccess: false,
-            requiresModeratorAccess: true,
-            requiresCasinoAccess: false,
+            requiresSrModAccess: true,
         },
     ].filter(item => {
         const perms = session?.user?.permissions;
         if (perms?.hasFullAccess) {
             return true;
         }
-        const hasCasinoOnly = perms?.hasCasinoAccess && !perms?.hasModeratorAccess && !perms?.hasViewOnlyAccess;
-        if (hasCasinoOnly) {
-            return item.requiresCasinoAccess;
-        }
-        if (item.requiresCasinoAccess && perms?.hasCasinoAccess) {
+        if (perms?.hasCasinoAccess && (item as any).requiresCasinoAccess) {
             return true;
         }
-        if (item.requiresFullAccess) {
-            return perms?.hasFullAccess;
+        if (perms?.hasSrModAccess && (item as any).requiresSrModAccess) {
+            return true;
         }
-        if (item.requiresModeratorAccess) {
-            return perms?.hasModeratorAccess || perms?.hasFullAccess;
+        if (perms?.hasModeratorAccess && (item as any).requiresModeratorAccess) {
+            return true;
         }
-        return perms?.hasModeratorAccess || perms?.hasViewOnlyAccess;
+        return false;
     });
     const isActive = (href: string) => {
         if (href === '/admin/dashboard') {

@@ -66,7 +66,7 @@ export default function UserInviteDetailPage() {
     }
     if (status === 'authenticated' && session?.user) {
       const perms = (session.user as any).permissions;
-      if (!perms?.hasFullAccess) {
+      if (!perms?.hasFullAccess && !perms?.hasSrModAccess) {
         router.push('/admin/casino');
       }
     }

@@ -35,7 +35,8 @@ export async function GET(
   try {
     const { modId } = await params;
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.permissions?.hasFullAccess) {
+    const perms = session?.user?.permissions;
+    if (!session || (!perms?.hasFullAccess && !perms?.hasSrModAccess)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const searchParams = request.nextUrl.searchParams;
