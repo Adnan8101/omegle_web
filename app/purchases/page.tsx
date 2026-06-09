@@ -1,9 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FiArrowLeft, FiPackage, FiClock, FiCheckCircle, FiCopy, FiCheck, FiAlertTriangle, FiExternalLink } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
+import { useEffect,useState } from 'react';
+import { FiAlertTriangle,FiArrowLeft,FiCheck,FiCheckCircle,FiClock,FiCopy,FiExternalLink,FiPackage } from 'react-icons/fi';
 interface Purchase {
   id: string;
   item_id: string;
@@ -21,7 +21,7 @@ interface Purchase {
 }
 const SUPPORT_SERVER_URL = 'https://discord.gg/omeglee';
 export default function PurchasesPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [currencyEmoji, setCurrencyEmoji] = useState('🪙');

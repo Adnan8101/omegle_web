@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { canAccessServerStats } from '@/lib/apiAuth';
 import { authOptions } from '@/lib/auth';
 import { queryBotDb } from '@/lib/botDb';
-import { GUILD_ID, getErrorMessage } from '@/lib/constants';
-import { canAccessServerStats } from '@/lib/apiAuth';
+import { GUILD_ID,getErrorMessage } from '@/lib/constants';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -26,7 +26,6 @@ export async function GET(request: NextRequest) {
       vcParams.push(endDate);
       vcIdx++;
     }
-    const vcDateClause = vcDateParts.length ? ' AND ' + vcDateParts.join(' AND ') : '';
     const chatDateParts: string[] = [];
     const chatParams: unknown[] = [GUILD_ID];
     let chatIdx = 2;
@@ -40,7 +39,6 @@ export async function GET(request: NextRequest) {
       chatParams.push(endDate);
       chatIdx++;
     }
-    const chatDateClause = chatDateParts.length ? ' AND ' + chatDateParts.join(' AND ') : '';
     const combinedParams: unknown[] = [GUILD_ID];
     let paramIdx = 2;
     const vcSubqueryDateParts: string[] = [];

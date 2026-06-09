@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { queryBotDb, getUsersDisplay } from '@/lib/botDb';
-import { getErrorMessage, GUILD_ID } from '@/lib/constants';
+import { getUsersDisplay,queryBotDb } from '@/lib/botDb';
+import { getErrorMessage,GUILD_ID } from '@/lib/constants';
 import { prismaBot } from '@/lib/prismaBot';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

@@ -1,8 +1,7 @@
 'use client';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, ReactNode } from 'react';
-import { UserPermissions } from '@/lib/permissions';
+import { ReactNode,useEffect } from 'react';
 interface AuthGuardProps {
   children: ReactNode;
   requireFullAccess?: boolean;

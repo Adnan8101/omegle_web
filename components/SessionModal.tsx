@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { X, Users, Clock, MessageSquare, Mic, MicOff, Video, VideoOff, Monitor, TrendingUp, Calendar, Hash, ArrowRight, LogIn, LogOut } from 'lucide-react';
+import { ArrowRight,Calendar,Clock,Hash,LogIn,LogOut,MessageSquare,Mic,MicOff,Monitor,TrendingUp,Users,Video,VideoOff,X } from 'lucide-react';
 import Image from 'next/image';
+import { useEffect,useState } from 'react';
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {

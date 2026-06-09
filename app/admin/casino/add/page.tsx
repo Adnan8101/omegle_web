@@ -1,10 +1,10 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { FiArrowLeft, FiSave, FiPackage, FiImage, FiAlertCircle, FiCheck, FiUpload, FiX, FiLoader } from 'react-icons/fi';
 import EntityDropdown from '@/components/ui/entity-dropdown';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect,useRef,useState } from 'react';
+import { FiAlertCircle,FiArrowLeft,FiCheck,FiImage,FiLoader,FiPackage,FiSave,FiUpload,FiX } from 'react-icons/fi';
 interface GuildRole {
   id: string;
   name: string;
@@ -26,7 +26,7 @@ interface FormData {
   expires_in_days: string;
 }
 export default function AddItemPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<FormData>({

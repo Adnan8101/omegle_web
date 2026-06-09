@@ -1,10 +1,10 @@
-import { getErrorMessage } from '@/lib/constants';
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { canAccessAdminFeatures } from '@/lib/apiAuth';
+import { authOptions } from '@/lib/auth';
+import { getErrorMessage } from '@/lib/constants';
 import dbConnect from '@/lib/mongodb';
 import StaffApplication from '@/models/StaffApplication';
+import { getServerSession } from 'next-auth';
+import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);

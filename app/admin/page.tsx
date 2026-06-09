@@ -1,9 +1,8 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { signIn, signOut } from 'next-auth/react';
+import { signIn,signOut,useSession } from 'next-auth/react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useEffect,useState } from 'react';
 import { FiLock } from 'react-icons/fi';
 export default function AdminLogin() {
   const { data: session, status } = useSession();

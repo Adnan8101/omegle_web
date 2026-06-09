@@ -1,12 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { put, del } from '@vercel/blob';
 import { canAccessCasino } from '@/lib/apiAuth';
+import { authOptions } from '@/lib/auth';
+import { del,put } from '@vercel/blob';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 const MAX_FILE_SIZE = 4 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-const MAX_WIDTH = 512;
-const MAX_HEIGHT = 512;
 const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 export async function POST(request: NextRequest) {
   try {

@@ -1,9 +1,4 @@
 const GUILD_ID = "1507458872225566811";
-const MODERATOR_ACCESSIBLE_SECTIONS = [
-  "vc_stats",
-  "chat_stats",
-  "server_stats"
-];
 const PERMISSIONS = {
   ADMINISTRATOR: 0x0000000000000008n,
   MANAGE_GUILD: 0x0000000000000020n,

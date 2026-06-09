@@ -1,22 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import {
-  PDFDocument,
-  StandardFonts,
-  rgb,
-  clip,
-  closePath,
-  endPath,
-  lineTo,
-  moveTo,
-  popGraphicsState,
-  pushGraphicsState,
-} from 'pdf-lib';
 import { authOptions } from '@/lib/auth';
+import { getAvatarUrl,getDiscordGuildInfo,getDiscordUser,getGuildRoleName } from '@/lib/discord';
 import { prismaBot } from '@/lib/prismaBot';
-import { getAvatarUrl, getDiscordGuildInfo, getDiscordUser, getGuildRoleName } from '@/lib/discord';
 import { readFileSync } from 'fs';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 import { join } from 'path';
+import {
+PDFDocument,
+StandardFonts,
+clip,
+closePath,
+endPath,
+lineTo,
+moveTo,
+popGraphicsState,
+pushGraphicsState,
+rgb,
+} from 'pdf-lib';
 function hasAdminAccess(session: any): boolean {
   if (process.env.ADMIN_DEV_BYPASS === 'true') return true;
   const perms = session?.user?.permissions;

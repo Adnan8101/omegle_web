@@ -1,14 +1,14 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
-import { signIn, signOut, useSession } from 'next-auth/react';
-import { FiArrowLeft, FiCheckCircle, FiLock, FiSend, FiUser } from 'react-icons/fi';
-import { FaCalendarAlt, FaGamepad, FaGavel, FaMusic } from 'react-icons/fa';
-import { MdLiveTv } from 'react-icons/md';
-import { IconType } from 'react-icons';
+import { useTheme } from '@/contexts/ThemeContext';
+import { COMMON_QUESTIONS,ROLE_QUESTIONS,STAFF_ROLES,StaffRole,getRoleLabel } from '@/lib/staffApplicationForm';
+import { signIn,signOut,useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useTheme } from '@/contexts/ThemeContext';
-import { COMMON_QUESTIONS, ROLE_QUESTIONS, STAFF_ROLES, StaffRole, getRoleLabel } from '@/lib/staffApplicationForm';
+import { useEffect,useMemo,useState } from 'react';
+import { IconType } from 'react-icons';
+import { FaCalendarAlt,FaGamepad,FaGavel,FaMusic } from 'react-icons/fa';
+import { FiArrowLeft,FiCheckCircle,FiLock,FiSend,FiUser } from 'react-icons/fi';
+import { MdLiveTv } from 'react-icons/md';
 type RoleFormSetting = {
   isOpen: boolean;
   closedMessage?: string;

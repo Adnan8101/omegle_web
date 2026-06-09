@@ -1,14 +1,20 @@
 'use client';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
-import {
-    FiUsers, FiMic, FiMessageSquare, FiTrendingUp,
-    FiClock, FiHash, FiChevronDown, FiChevronUp, FiAward, FiActivity
-} from 'react-icons/fi';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DateRangeFilter from '@/components/DateRangeFilter';
+import { useSession } from 'next-auth/react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useCallback,useEffect,useState } from 'react';
+import {
+FiActivity,
+FiAward,
+FiChevronDown,FiChevronUp,
+FiClock,FiHash,
+FiMessageSquare,
+FiMic,
+FiTrendingUp,
+FiUsers
+} from 'react-icons/fi';
+import { Bar,BarChart,CartesianGrid,Cell,Legend,Pie,PieChart,ResponsiveContainer,Tooltip,XAxis,YAxis } from 'recharts';
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {

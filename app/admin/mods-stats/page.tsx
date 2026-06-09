@@ -1,11 +1,19 @@
 'use client';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useCallback,useEffect,useState } from 'react';
 import {
-  FiUsers, FiShield, FiAlertTriangle, FiSlash, FiUserX, FiClock,
-  FiMic, FiMessageSquare, FiSearch, FiChevronRight, FiActivity
+FiActivity,
+FiAlertTriangle,
+FiChevronRight,
+FiClock,
+FiMessageSquare,
+FiMic,
+FiSearch,
+FiShield,
+FiSlash,
+FiUsers,
+FiUserX
 } from 'react-icons/fi';
 interface ModStats {
   user_id: string;

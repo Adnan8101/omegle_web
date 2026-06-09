@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
-import { verifyAccess, MAIN_OWNER_ID, EDITORS } from '@/lib/verifyAccess';
+import { EDITORS,MAIN_OWNER_ID,verifyAccess } from '@/lib/verifyAccess';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 const ALL_PERMISSIONS = [
   'MANAGE_PERMISSIONS',
   'MANAGE_WEBHOOKS',

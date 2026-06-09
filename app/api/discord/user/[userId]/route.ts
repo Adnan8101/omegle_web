@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getUserDisplay } from '@/lib/botDb';
-import { getDiscordUser, getAvatarUrl, getDisplayName, getUserTag } from '@/lib/discord';
 import { getErrorMessage } from '@/lib/constants';
+import { getAvatarUrl,getDiscordUser,getDisplayName,getUserTag } from '@/lib/discord';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }

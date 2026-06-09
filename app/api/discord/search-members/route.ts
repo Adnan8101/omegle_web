@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 const GUILD_ID = "1507458872225566811";
 export async function GET(request: NextRequest) {
   try {

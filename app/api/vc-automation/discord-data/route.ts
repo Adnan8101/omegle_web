@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
+import { prismaBot } from '@/lib/prismaBot';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || process.env.BOT_TOKEN;
 export async function GET(request: NextRequest) {
     try {

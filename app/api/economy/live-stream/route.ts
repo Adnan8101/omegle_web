@@ -1,12 +1,11 @@
-import { NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { queryBotDb } from '@/lib/botDb';
+import { getServerSession } from 'next-auth';
+import { NextRequest } from 'next/server';
 const GUILD_ID = "1507458872225566811";
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 async function fetchLiveData() {
-  const today = new Date().toISOString().split('T')[0];
   const configResult = await queryBotDb(`
     SELECT * FROM economy_config WHERE guild_id = $1
   `, [GUILD_ID]);

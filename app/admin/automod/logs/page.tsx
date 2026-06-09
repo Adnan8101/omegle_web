@@ -1,13 +1,13 @@
 'use client';
-import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useEffect,useState } from 'react';
 import {
-  FiChevronLeft,
-  FiChevronRight,
-  FiRefreshCw,
-  FiFilter,
-  FiX,
+FiChevronLeft,
+FiChevronRight,
+FiFilter,
+FiRefreshCw,
+FiX,
 } from 'react-icons/fi';
 interface AutoModLog {
   id: string;
@@ -92,7 +92,6 @@ export default function AutoModLogsPage() {
     );
   }
   const totalPages = Math.ceil(total / pageSize);
-  const guild = guilds.find(g => g.id === selectedGuild);
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center gap-3 mb-6">

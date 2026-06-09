@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
-import { GUILD_ID, getErrorMessage } from './constants';
-import { cachedUserToDisplay, getUserDisplay as getUserDisplayFromCache, type CachedUser, type UserDisplay } from './userUtils';
+import { GUILD_ID,getErrorMessage } from './constants';
+import { getUserDisplay as getUserDisplayFromCache,type CachedUser,type UserDisplay } from './userUtils';
 let pool: Pool | null = null;
 function getBotDatabaseConnectionString() {
   return process.env.BOT_DATABASE_URL || process.env.BOT_DATABASE_WRITE_URL || process.env.DATABASE_URL;

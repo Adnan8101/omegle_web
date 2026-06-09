@@ -1,11 +1,18 @@
 'use client';
 import { useSession } from 'next-auth/react';
-import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState, useCallback, use } from 'react';
-import {
-    FiArrowLeft, FiClock, FiUsers, FiTarget, FiActivity, FiMic, FiTag, FiAward, FiInfo
-} from 'react-icons/fi';
 import Image from 'next/image';
+import { useParams,useRouter } from 'next/navigation';
+import { useCallback,useEffect,useState } from 'react';
+import {
+FiActivity,
+FiArrowLeft,
+FiAward,
+FiClock,
+FiInfo,
+FiMic,
+FiTarget,
+FiUsers
+} from 'react-icons/fi';
 interface RuleDetails {
     rule: {
         id: string;

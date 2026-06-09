@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { queryBotDb } from '@/lib/botDb';
-import { GUILD_ID, getErrorMessage } from '@/lib/constants';
+import { GUILD_ID,getErrorMessage } from '@/lib/constants';
+import { NextRequest,NextResponse } from 'next/server';
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string; targetUserId: string }> }

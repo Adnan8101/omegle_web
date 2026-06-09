@@ -1,19 +1,19 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import EntityDropdown from '@/components/ui/entity-dropdown';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect,useMemo,useRef,useState } from 'react';
 import {
-  FiChevronLeft,
-  FiPlus,
-  FiSave,
-  FiTrash2,
-  FiShield,
-  FiSettings,
-  FiList,
-  FiX,
-  FiCheck,
+FiCheck,
+FiChevronLeft,
+FiList,
+FiPlus,
+FiSave,
+FiSettings,
+FiShield,
+FiTrash2,
+FiX,
 } from 'react-icons/fi';
 type RuleModalMode = 'create' | 'edit';
 type RuleType =
@@ -854,18 +854,6 @@ export default function AutoModPage() {
     setIsCreateModalOpen(false);
     setRuleModalMode('create');
     setEditingRuleId(null);
-  };
-  const toggleIgnoredRole = (roleId: string, checked: boolean) => {
-    setConfig((prev) => ({
-      ...prev,
-      ignored_roles: checked ? Array.from(new Set([...prev.ignored_roles, roleId])) : prev.ignored_roles.filter((id) => id !== roleId),
-    }));
-  };
-  const toggleIgnoredChannel = (channelId: string, checked: boolean) => {
-    setConfig((prev) => ({
-      ...prev,
-      ignored_channels: checked ? Array.from(new Set([...prev.ignored_channels, channelId])) : prev.ignored_channels.filter((id) => id !== channelId),
-    }));
   };
   const renderConditionFields = (
     type: RuleType | '',

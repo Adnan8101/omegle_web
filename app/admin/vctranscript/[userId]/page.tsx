@@ -1,17 +1,24 @@
 'use client';
-import { useSession } from 'next-auth/react';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
+import DateRangeFilter from '@/components/DateRangeFilter';
 import SessionModal from '@/components/SessionModal';
 import SharedSessionsModal from '@/components/SharedSessionsModal';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useParams,useRouter } from 'next/navigation';
+import { useCallback,useEffect,useState } from 'react';
 import {
-  FiUsers, FiClock, FiMessageSquare, FiMic, FiTrendingUp, FiActivity,
-  FiHash, FiArrowRight, FiHeart, FiRefreshCw, FiChevronLeft
+FiActivity,
+FiChevronLeft,
+FiClock,
+FiHash,
+FiHeart,
+FiMessageSquare,FiMic,
+FiRefreshCw,
+FiTrendingUp,
+FiUsers
 } from 'react-icons/fi';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import DateRangeFilter from '@/components/DateRangeFilter';
+import { Bar,BarChart,CartesianGrid,Cell,Pie,PieChart,ResponsiveContainer,Tooltip,XAxis,YAxis } from 'recharts';
 function buildAvatarUrl(userId: string, avatarHash: string | null, size: number = 128): string {
   if (avatarHash) {
     if (avatarHash.startsWith('https://cdn.discordapp.com/')) {
@@ -672,7 +679,6 @@ export default function UserTranscriptPage() {
                             <Pie
                               data={(() => {
                                 const stats = data.voiceUserStats;
-                                const totalTime = stats.total_time_in_vc || 0;
                                 return [
                                   { name: 'Speaking', value: stats.total_time_speaking || 0, color: '#10b981' },
                                   { name: 'Muted', value: stats.total_time_muted || 0, color: '#6b7280' },

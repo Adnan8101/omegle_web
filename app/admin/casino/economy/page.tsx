@@ -1,13 +1,26 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback,useEffect,useState } from 'react';
 import {
-  FiDollarSign, FiSettings, FiToggleLeft, FiToggleRight,
-  FiMessageSquare, FiMic, FiLayers, FiSlash, FiShoppingCart,
-  FiChevronLeft, FiSave, FiRefreshCw, FiSearch, FiPlus, FiX,
-  FiChevronDown, FiChevronUp, FiEdit2, FiTrash2, FiCheck, FiAlertCircle
+FiAlertCircle,
+FiCheck,
+FiChevronLeft,
+FiDollarSign,
+FiEdit2,
+FiLayers,
+FiMessageSquare,FiMic,
+FiPlus,
+FiRefreshCw,
+FiSave,
+FiSearch,
+FiSettings,
+FiShoppingCart,
+FiSlash,
+FiToggleLeft,FiToggleRight,
+FiTrash2,
+FiX
 } from 'react-icons/fi';
 interface EconomyConfig {
   guild_id: string;
@@ -118,7 +131,7 @@ export default function EconomyManagementPage() {
   const [searchingMembers, setSearchingMembers] = useState(false);
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopEnabled, setShopEnabled] = useState(true);
-  const [blacklistModal, setBlacklistModal] = useState<{ type: 'channels' | 'categories' | 'roles' } | null>(null);
+  const [] = useState<{ type: 'channels' | 'categories' | 'roles' } | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
   useEffect(() => {

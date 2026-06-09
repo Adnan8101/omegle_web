@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { canAccessVCAndChats } from '@/lib/apiAuth';
+import { authOptions } from '@/lib/auth';
 import { getAllChatMessages } from '@/lib/botDb';
 import { getErrorMessage } from '@/lib/constants';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

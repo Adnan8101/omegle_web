@@ -1,11 +1,11 @@
 'use client';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { Bold, Italic, Underline } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import EntityDropdown, { EntityDropdownOption } from '@/components/ui/entity-dropdown';
+import EntityDropdown,{ EntityDropdownOption } from '@/components/ui/entity-dropdown';
+import { Bold,Italic,Underline } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 interface Plan {
   id: string;
   guild_id: string;
@@ -28,11 +28,6 @@ interface Plan {
 interface GuildInfo {
   id: string;
   name: string;
-}
-interface RoleSearchResult {
-  id: string;
-  name: string;
-  color?: number;
 }
 interface FormData {
   title: string;
@@ -74,11 +69,11 @@ export default function DonatorAdminPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [activePerkIndex, setActivePerkIndex] = useState<number | null>(0);
+  const [, setActivePerkIndex] = useState<number | null>(0);
   const [fontSize, setFontSize] = useState('3');
   const [saving, setSaving] = useState(false);
   const perkEditorRefs = useRef<Record<number, HTMLDivElement | null>>({});
-  const [roleLookup, setRoleLookup] = useState<Record<string, EntityDropdownOption>>({});
+  const [roleLookup] = useState<Record<string, EntityDropdownOption>>({});
   const [selectedRoleOption, setSelectedRoleOption] = useState<EntityDropdownOption | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');

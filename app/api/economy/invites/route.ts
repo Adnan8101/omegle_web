@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getDiscordUser,getDiscordUserAvatar } from '@/lib/discord';
 import { prismaBot } from '@/lib/prismaBot';
-import { getDiscordUser, getDiscordUserAvatar } from '@/lib/discord';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 const GUILD_ID = "1507458872225566811";
 export async function GET(request: NextRequest) {
   try {
@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'coins_earned';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const status = searchParams.get('status');
-    const search = searchParams.get('search') || '';
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });

@@ -1,9 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { queryBotDb } from '@/lib/botDb';
 import { getErrorMessage } from '@/lib/constants';
-import { canAccessVCAndChats } from '@/lib/apiAuth';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }

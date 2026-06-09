@@ -1,7 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FiTrendingUp, FiRefreshCw, FiArrowLeft, FiClock } from 'react-icons/fi';
+import { useEffect,useState } from 'react';
+import { FiArrowLeft,FiClock,FiRefreshCw,FiTrendingUp } from 'react-icons/fi';
 interface LeaderboardEntry {
   rank: number;
   user_id: string;

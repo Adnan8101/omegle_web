@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { prismaBot } from '@/lib/prismaBot';
+import { NextRequest,NextResponse } from 'next/server';
 const GUILD_ID = "1507458872225566811";
 export async function GET(request: NextRequest) {
   try {

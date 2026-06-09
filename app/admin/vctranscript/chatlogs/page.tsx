@@ -1,12 +1,12 @@
 'use client';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { FiMessageSquare, FiTrendingUp, FiUsers, FiClock, FiActivity, FiSearch, FiChevronLeft } from 'react-icons/fi';
-import { BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DateRangeFilter from '@/components/DateRangeFilter';
+import { useSession } from 'next-auth/react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback,useEffect,useState } from 'react';
+import { FiActivity,FiChevronLeft,FiMessageSquare,FiSearch,FiTrendingUp,FiUsers } from 'react-icons/fi';
+import { Area,AreaChart,CartesianGrid,Cell,Pie,PieChart,ResponsiveContainer,Tooltip,XAxis,YAxis } from 'recharts';
 interface ChatMessage {
   id: string;
   user_id: string;
@@ -24,12 +24,6 @@ interface DiscordUserInfo {
   avatar: string;
   inGuild: boolean;
   nickname: string | null;
-}
-interface UserStats {
-  userId: string;
-  messageCount: number;
-  channelCount: number;
-  inVcCount: number;
 }
 export default function ChatLogsPage() {
   const { data: session, status } = useSession();

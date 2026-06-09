@@ -1,8 +1,8 @@
 'use client';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { FiAlertTriangle, FiArrowLeft, FiRefreshCw } from 'react-icons/fi';
+import { FiAlertTriangle,FiArrowLeft,FiRefreshCw } from 'react-icons/fi';
 function ErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');

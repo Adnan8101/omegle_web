@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { X, Clock, Hash, Users, Calendar, ArrowRight } from 'lucide-react';
+import { ArrowRight,Calendar,Clock,Hash,Users,X } from 'lucide-react';
 import Image from 'next/image';
+import { useEffect,useState } from 'react';
 interface SharedSessionsModalProps {
   userId: string;
   targetUserId: string;

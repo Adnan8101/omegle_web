@@ -1,6 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
-import { checkUserPermissions, UserPermissions } from "./permissions";
+import { checkUserPermissions,UserPermissions } from "./permissions";
 import { prismaBot } from "./prismaBot";
 const ACCESS_CHECK_INTERVAL = 60 * 1000;
 const CASINO_ROLE_DB_RETRY_MS = 5 * 60 * 1000;

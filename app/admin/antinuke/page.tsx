@@ -1,12 +1,23 @@
 'use client';
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import {
-  FiShield, FiPlus, FiTrash2, FiSave, FiX, FiCheck,
-  FiAlertTriangle, FiUser, FiSearch, FiRefreshCw, FiLock,
-  FiEye, FiChevronDown, FiInfo,
+FiAlertTriangle,
+FiCheck,
+FiChevronDown,
+FiEye,
+FiInfo,
+FiLock,
+FiPlus,
+FiRefreshCw,
+FiSave,
+FiSearch,
+FiShield,
+FiTrash2,
+FiUser,
+FiX,
 } from 'react-icons/fi';
 const MAIN_OWNER_ID = '929297205796417597';
 const EDITORS = [MAIN_OWNER_ID, '1066281404821930025', '1058043072522489946'];
@@ -302,15 +313,6 @@ export default function AntiNukePage() {
       return true;
     });
   }, [logs, logEventFilter, logSearch]);
-  const filteredUsers = useMemo(() => {
-    const q = addUserSearch.trim().toLowerCase();
-    if (!q) return guildUsers.slice(0, 50);
-    return guildUsers.filter(u =>
-      u.name.toLowerCase().includes(q) ||
-      u.username.toLowerCase().includes(q) ||
-      u.id.includes(q)
-    ).slice(0, 30);
-  }, [guildUsers, addUserSearch]);
   const userMap = useMemo(() => new Map(guildUsers.map(u => [u.id, u])), [guildUsers]);
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] text-[rgb(var(--color-text-primary))]">

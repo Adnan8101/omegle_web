@@ -1,10 +1,10 @@
-import type { Metadata, Viewport } from "next";
-import { Manrope, Sora } from 'next/font/google';
-import "./globals.css";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { Providers } from "./providers";
-import FrontendNavbarMount from '@/components/FrontendNavbarMount';
 import FrontendFooterMount from '@/components/FrontendFooterMount';
+import FrontendNavbarMount from '@/components/FrontendNavbarMount';
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import type { Metadata,Viewport } from "next";
+import { Manrope,Sora } from 'next/font/google';
+import "./globals.css";
+import { Providers } from "./providers";
 const displayFont = Sora({
   subsets: ['latin'],
   variable: '--font-display',

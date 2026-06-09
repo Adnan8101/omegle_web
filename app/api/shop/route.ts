@@ -1,11 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getDiscordUser,getGuildRoleName,sendDM } from '@/lib/discord';
 import { prismaBot } from '@/lib/prismaBot';
-import { sendDM } from '@/lib/discord';
-import { getDiscordUser } from '@/lib/discord';
-import { getGuildRoleName } from '@/lib/discord';
 import crypto from 'crypto';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 const GUILD_ID = "1507458872225566811";
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

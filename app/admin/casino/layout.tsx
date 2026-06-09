@@ -1,12 +1,12 @@
 'use client';
-import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useEffect,useState } from 'react';
 interface CasinoLayoutProps {
   children: React.ReactNode;
 }
 export default function CasinoLayout({ children }: CasinoLayoutProps) {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);

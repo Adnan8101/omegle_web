@@ -1,11 +1,11 @@
-import { getErrorMessage, GUILD_ID } from '@/lib/constants';
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { canAccessAdminFeatures } from '@/lib/apiAuth';
+import { authOptions } from '@/lib/auth';
+import { getUsersDisplay,queryBotDb } from '@/lib/botDb';
+import { getErrorMessage,GUILD_ID } from '@/lib/constants';
 import dbConnect from '@/lib/mongodb';
 import StaffApplication from '@/models/StaffApplication';
-import { queryBotDb, getUsersDisplay } from '@/lib/botDb';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 type ApplicationStatus = 'pending' | 'considered' | 'denied';
 const VALID_APPLICATION_STATUSES = new Set<ApplicationStatus>([
   'pending',

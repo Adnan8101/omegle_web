@@ -1,11 +1,11 @@
-import { getErrorMessage, GUILD_ID } from '@/lib/constants';
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/mongodb';
-import StaffApplication from '@/models/StaffApplication';
 import { queryBotDb } from '@/lib/botDb';
+import { getErrorMessage,GUILD_ID } from '@/lib/constants';
+import dbConnect from '@/lib/mongodb';
 import { STAFF_ROLES } from '@/lib/staffApplicationForm';
+import StaffApplication from '@/models/StaffApplication';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();

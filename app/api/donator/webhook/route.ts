@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 import { prismaBot } from '@/lib/prismaBot';
+import crypto from 'crypto';
+import { NextRequest,NextResponse } from 'next/server';
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || process.env.DISCORD_TOKEN || '';
 const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || '';
 interface RazorpayWebhookEvent {
@@ -186,17 +186,6 @@ export async function POST(request: NextRequest) {
         console.error('Missing required notes in payment:', payment.notes);
         return NextResponse.json({ error: 'Invalid payment notes' }, { status: 400 });
       }
-      const updatedPayment = await (prismaBot as any).razorpayPayment.update({
-        where: { razorpay_order_id: orderId },
-        data: {
-          status: event.event === 'payment.captured' ? 'captured' : 'authorized',
-          razorpay_id: payment.id,
-          method: payment.method || null,
-          webhook_data: event,
-          updated_at: new Date()
-        },
-        include: { plan: true }
-      });
       let subscription = await (prismaBot as any).donatorSubscription.findFirst({
         where: {
           payment_id: payment.id

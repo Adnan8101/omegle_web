@@ -1,11 +1,19 @@
 'use client';
-import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect,useState } from 'react';
 import {
-  FiArrowLeft, FiSearch, FiClock, FiCheckCircle, FiCopy,
-  FiRefreshCw, FiCheck, FiX, FiExternalLink, FiUser, FiPackage
+FiArrowLeft,
+FiCheck,
+FiCheckCircle,
+FiClock,
+FiCopy,
+FiExternalLink,
+FiPackage,
+FiRefreshCw,
+FiSearch,
+FiUser
 } from 'react-icons/fi';
 interface Purchase {
   id: string;
@@ -22,7 +30,7 @@ interface Purchase {
   redeemer?: { username: string; avatar: string | null };
 }
 export default function PurchasesPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [currencyEmoji, setCurrencyEmoji] = useState('🪙');

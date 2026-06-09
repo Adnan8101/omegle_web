@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { removeGuildMemberRole,sendDM } from "@/lib/discord";
 import { prismaBot } from "@/lib/prismaBot";
-import { removeGuildMemberRole, sendDM } from "@/lib/discord";
+import { NextResponse } from "next/server";
 export async function GET(req: Request) {
   try {
     const authHeader = req.headers.get("authorization");

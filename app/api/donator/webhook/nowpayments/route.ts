@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { addGuildRole,sendDirectMessage } from '@/lib/discord';
 import { prismaBot } from '@/lib/prismaBot';
-import { getDiscordUser, addGuildRole, sendDirectMessage } from '@/lib/discord';
+import { NextRequest,NextResponse } from 'next/server';
 const API_KEY = process.env.NOWPAYMENTS_API_KEY || 'CBD5QR0-ZFD4RNX-JMHZ6CW-60GRKH3';
 const processingLocks = new Set<string>();
 export async function POST(request: NextRequest) {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
-    const { payment_id, order_id, payment_status } = body;
+    const { payment_id, order_id } = body;
     if (!payment_id || !order_id) {
       return NextResponse.json({ error: 'Missing payment_id or order_id' }, { status: 400 });
     }

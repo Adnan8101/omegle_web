@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { prismaBot } from '@/lib/prismaBot';
 import { GUILD_ID } from '@/lib/constants';
+import { prismaBot } from '@/lib/prismaBot';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ ruleId: string }> }
@@ -83,7 +83,6 @@ export async function PATCH(
         }
         const newTargetType = target_type ?? existing.target_type;
         const newTargetId = target_id ?? existing.target_id;
-        const newExcluded = excluded_channel_ids ?? existing.excluded_channel_ids;
         if (newTargetType === 'channel' && newTargetId !== existing.target_id) {
             const channelInfo = await prismaBot.discordChannelCache.findUnique({
                 where: { channel_id: newTargetId },

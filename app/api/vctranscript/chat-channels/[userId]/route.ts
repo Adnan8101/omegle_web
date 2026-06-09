@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { canAccessVCAndChats } from '@/lib/apiAuth';
+import { authOptions } from '@/lib/auth';
 import { queryBotDb } from '@/lib/botDb';
-import { GUILD_ID, getErrorMessage } from '@/lib/constants';
+import { GUILD_ID,getErrorMessage } from '@/lib/constants';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }

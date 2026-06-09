@@ -1,11 +1,11 @@
-import { getErrorMessage } from '@/lib/constants';
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { canAccessAdminFeatures } from '@/lib/apiAuth';
+import { authOptions } from '@/lib/auth';
+import { getErrorMessage } from '@/lib/constants';
 import dbConnect from '@/lib/mongodb';
+import { STAFF_ROLES,StaffRole } from '@/lib/staffApplicationForm';
 import ApplicationSettings from '@/models/ApplicationSettings';
-import { STAFF_ROLES, StaffRole } from '@/lib/staffApplicationForm';
+import { getServerSession } from 'next-auth';
+import { NextRequest,NextResponse } from 'next/server';
 type RoleFormSetting = {
   isOpen: boolean;
   closedMessage?: string;

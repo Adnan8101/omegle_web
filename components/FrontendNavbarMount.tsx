@@ -1,6 +1,6 @@
 'use client';
-import { usePathname } from 'next/navigation';
 import SiteNavbar from '@/components/SiteNavbar';
+import { usePathname } from 'next/navigation';
 export default function FrontendNavbarMount() {
   const pathname = usePathname();
   if (!pathname) return null;
