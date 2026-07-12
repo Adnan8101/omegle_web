@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FiAlertCircle, FiCheck, FiCopy, FiMessageCircle, FiPackage, FiVolume2, FiVolumeX } from 'react-icons/fi';
+import { FiAlertCircle, FiCheck, FiCopy, FiMessageCircle, FiPackage, FiVolume2, FiVolumeX, FiExternalLink, FiArrowRight } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
 
 // Procedural sound synth utilizing Web Audio API
 class AudioSynth {
@@ -22,7 +23,6 @@ class AudioSynth {
       const gain = this.ctx.createGain();
       
       osc.type = 'triangle';
-      // Low frequency rumble
       osc.frequency.setValueAtTime(45, this.ctx.currentTime);
       osc.frequency.linearRampToValueAtTime(75, this.ctx.currentTime + 0.12);
       
@@ -44,8 +44,8 @@ class AudioSynth {
       if (!this.ctx) return;
       const t = this.ctx.currentTime;
       
-      // Beautiful gold-rarity triumphant major chord chime
-      const freqs = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]; // C major extended
+      // Beautiful gold-rarity chime chord
+      const freqs = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]; 
       freqs.forEach((freq, idx) => {
         const osc = this.ctx!.createOscillator();
         const gain = this.ctx!.createGain();
@@ -64,7 +64,7 @@ class AudioSynth {
         osc.stop(t + 1.8);
       });
 
-      // Ambient sweep whoosh
+      // Whoosh noise sweep
       const bufferSize = this.ctx.sampleRate * 1.2;
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
@@ -125,49 +125,69 @@ export default function CrateReveal({
   const [showCode, setShowCode] = useState(false);
   const [copied, setCopied] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [countdown, setCountdown] = useState(10);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioSynthRef = useRef<AudioSynth | null>(null);
+  const router = useRouter();
 
   // Initialize audio synth on mount
   useEffect(() => {
     audioSynthRef.current = new AudioSynth();
   }, []);
 
-  // Control animation timing
+  // 1. Audio vibration effect loop (only during shake)
   useEffect(() => {
-    // 1. Shake phase triggers sound effects periodically
-    let shakeAudioInterval: NodeJS.Timeout;
-    if (stage === 'shake' && audioEnabled) {
-      shakeAudioInterval = setInterval(() => {
-        audioSynthRef.current?.playVibration();
-      }, 180);
+    if (stage !== 'shake' || !audioEnabled) return;
+    
+    const shakeInterval = setInterval(() => {
+      audioSynthRef.current?.playVibration();
+    }, 180);
+
+    return () => clearInterval(shakeInterval);
+  }, [stage, audioEnabled]);
+
+  // 2. Stage transitions sequence
+  useEffect(() => {
+    if (stage === 'shake') {
+      const timer = setTimeout(() => {
+        setStage('open');
+        if (audioEnabled) {
+          audioSynthRef.current?.playOpenChime();
+        }
+      }, 2500);
+      return () => clearTimeout(timer);
     }
 
-    // 2. Transits to Open phase after 2.5s
-    const openTimer = setTimeout(() => {
-      clearInterval(shakeAudioInterval);
-      setStage('open');
-      if (audioEnabled) {
-        audioSynthRef.current?.playOpenChime();
-      }
-    }, 2500);
-
-    // 3. Transits to final Reveal phase after 1.2s of open/flare burst
-    const revealTimer = setTimeout(() => {
-      setStage('reveal');
-    }, 3700);
-
-    return () => {
-      clearInterval(shakeAudioInterval);
-      clearTimeout(openTimer);
-      clearTimeout(revealTimer);
-    };
+    if (stage === 'open') {
+      const timer = setTimeout(() => {
+        setStage('reveal');
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
   }, [stage, audioEnabled]);
+
+  // 3. Auto redirect countdown timer (only during reveal)
+  useEffect(() => {
+    if (stage !== 'reveal') return;
+
+    const redirectInterval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(redirectInterval);
+          window.location.href = 'https://www.omegleecommunity.com/purchases';
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(redirectInterval);
+  }, [stage]);
 
   // Particle explosion canvas logic
   useEffect(() => {
-    if (stage !== 'open') return;
+    if (stage !== 'open' && stage !== 'reveal') return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -184,23 +204,25 @@ export default function CrateReveal({
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
-    // Build particle pool
-    for (let i = 0; i < 180; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 9 + 4;
-      particles.push({
-        x: centerX,
-        y: centerY - 30,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - (Math.random() * 4), // upwards bias
-        size: Math.random() * 8 + 4,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        alpha: 1,
-        decay: Math.random() * 0.012 + 0.008,
-        rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.15,
-        shape: Math.random() > 0.65 ? 'star' : Math.random() > 0.4 ? 'square' : 'circle',
-      });
+    // Build particle pool (only trigger burst on enter 'open')
+    if (stage === 'open') {
+      for (let i = 0; i < 180; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 9 + 4;
+        particles.push({
+          x: centerX,
+          y: centerY - 30,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - (Math.random() * 4), // upwards bias
+          size: Math.random() * 8 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: 1,
+          decay: Math.random() * 0.012 + 0.008,
+          rotation: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.15,
+          shape: Math.random() > 0.65 ? 'star' : Math.random() > 0.4 ? 'square' : 'circle',
+        });
+      }
     }
 
     const drawStar = (c: CanvasRenderingContext2D, cx: number, cy: number, spikes: number, outer: number, inner: number) => {
@@ -262,20 +284,20 @@ export default function CrateReveal({
       }
 
       // Add soft lingering sparkles
-      if (particles.length < 70) {
+      if (particles.length < 50) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 2 + 0.6;
+        const speed = Math.random() * 1.5 + 0.4;
         particles.push({
-          x: centerX + (Math.random() - 0.5) * 80,
-          y: centerY + (Math.random() - 0.5) * 80 - 30,
+          x: centerX + (Math.random() - 0.5) * 120,
+          y: centerY + (Math.random() - 0.5) * 120 - 30,
           vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - 1.2,
-          size: Math.random() * 4 + 2,
+          vy: Math.sin(angle) * speed - 0.8,
+          size: Math.random() * 3 + 1.5,
           color: '#fbbf24',
           alpha: 1,
-          decay: Math.random() * 0.015 + 0.005,
+          decay: Math.random() * 0.01 + 0.004,
           rotation: Math.random() * Math.PI * 2,
-          rotationSpeed: (Math.random() - 0.5) * 0.08,
+          rotationSpeed: (Math.random() - 0.5) * 0.06,
           shape: 'circle',
         });
       }
@@ -313,14 +335,14 @@ export default function CrateReveal({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-md overflow-hidden select-none p-4">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[rgb(var(--color-bg-primary))]/95 backdrop-blur-md overflow-hidden select-none p-4">
       {/* Sound toggle */}
       <button
         onClick={() => setAudioEnabled(!audioEnabled)}
-        className="absolute top-6 right-6 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white transition-all duration-300"
+        className="absolute top-6 right-6 z-50 p-3 rounded-full bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] shadow-sm hover:scale-105 transition-all duration-300"
         title={audioEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
       >
-        {audioEnabled ? <FiVolume2 className="w-6 h-6" /> : <FiVolumeX className="w-6 h-6" />}
+        {audioEnabled ? <FiVolume2 className="w-5 h-5" /> : <FiVolumeX className="w-5 h-5" />}
       </button>
 
       {/* Burst Canvas */}
@@ -328,9 +350,9 @@ export default function CrateReveal({
         <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-20" />
       )}
 
-      {/* Light Flare Flare Burst */}
+      {/* Light Flare Burst when opening */}
       {stage === 'open' && (
-        <div className="absolute w-64 h-64 rounded-full bg-radial-gradient from-white via-amber-300/40 to-transparent pointer-events-none z-30 blur-sm flare-animation" />
+        <div className="absolute w-72 h-72 rounded-full bg-radial-gradient from-white via-amber-300/40 to-transparent pointer-events-none z-30 blur-sm flare-animation" />
       )}
 
       {/* Ambient beams background */}
@@ -349,8 +371,8 @@ export default function CrateReveal({
             </g>
             <defs>
               <radialGradient id="ray-gradient" cx="50%" cy="100%" r="100%">
-                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                <stop offset="0%" stopColor="rgb(var(--color-accent))" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="rgb(var(--color-accent))" stopOpacity="0" />
               </radialGradient>
             </defs>
           </svg>
@@ -359,7 +381,23 @@ export default function CrateReveal({
 
       {/* 3D Chest Stage */}
       {stage !== 'reveal' && (
-        <div className="crate-perspective flex items-center justify-center w-80 h-80 z-10">
+        <div className="crate-perspective flex items-center justify-center w-80 h-80 z-10 relative">
+          
+          {/* Rising Item Animation when Crate opens */}
+          {stage === 'open' && (
+            <div className="absolute z-40 animate-item-rise flex flex-col items-center">
+              <div className="w-24 h-24 bg-gradient-to-b from-[rgba(var(--color-bg-secondary),0.9)] to-[rgba(var(--color-bg-primary),0.9)] border-2 border-yellow-500 rounded-2xl p-1 shadow-[0_0_40px_rgba(234,179,8,0.7)] flex items-center justify-center">
+                {itemThumbnail ? (
+                  <img src={itemThumbnail} alt={itemName} className="w-full h-full object-cover rounded-xl" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
+                    <FiPackage className="w-10 h-10 text-[rgb(var(--color-text-tertiary))]" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="crate-wrapper">
             <div
               className={`crate-3d ${stage === 'shake' ? 'crate-shaking' : ''}`}
@@ -376,7 +414,7 @@ export default function CrateReveal({
               <div className={`crate-face crate-face-top ${stage === 'open' ? 'crate-lid-open' : ''}`} />
               {/* Front with Lock Details */}
               <div className="crate-face crate-face-front flex items-center justify-center">
-                <div className="w-12 h-12 bg-slate-900 border-2 border-yellow-500 rounded-lg flex items-center justify-center shadow-lg shadow-yellow-500/20">
+                <div className="w-12 h-12 bg-[rgb(var(--color-bg-primary))] border-2 border-yellow-500 rounded-lg flex items-center justify-center shadow-lg shadow-yellow-500/20">
                   <FiPackage className="w-6 h-6 text-yellow-500" />
                 </div>
               </div>
@@ -393,14 +431,14 @@ export default function CrateReveal({
 
           {/* Success Title */}
           <div className="mb-6 animate-slide-down">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/5">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/5">
               <FiCheck className="w-3.5 h-3.5" />
               Successfully Obtained
             </div>
           </div>
 
-          {/* Majestic Glow Reveal Card */}
-          <div className="relative w-full bg-slate-900/60 border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-xl shadow-2xl hover:border-yellow-500/20 transition-all duration-500 group overflow-hidden mb-6 z-10">
+          {/* Majestic Theme-Synced Card */}
+          <div className="relative w-full glass-blue rounded-3xl p-6 md:p-8 shadow-apple-lg hover:border-yellow-500/20 transition-all duration-500 group overflow-hidden mb-6 z-10">
             {/* Ambient card back light */}
             <div className="absolute -top-32 -left-32 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/15 transition-colors duration-500" />
             <div className="absolute -bottom-32 -right-32 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl group-hover:bg-amber-500/15 transition-colors duration-500" />
@@ -408,34 +446,34 @@ export default function CrateReveal({
             {/* Inner Content */}
             <div className="relative flex flex-col items-center">
               {/* Item Thumbnail */}
-              <div className="relative w-28 h-28 mb-5 flex items-center justify-center bg-gradient-to-b from-slate-800 to-slate-950 border border-white/10 rounded-2xl p-1 shadow-2xl">
+              <div className="relative w-28 h-28 mb-5 flex items-center justify-center bg-gradient-to-b from-[rgb(var(--color-bg-secondary))] to-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-2xl p-1 shadow-2xl">
                 {itemThumbnail ? (
                   <img src={itemThumbnail} alt={itemName} className="w-full h-full object-cover rounded-xl" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-slate-800/40 rounded-xl">
-                    <FiPackage className="w-12 h-12 text-slate-500" />
+                  <div className="w-full h-full flex items-center justify-center bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
+                    <FiPackage className="w-12 h-12 text-[rgb(var(--color-text-tertiary))]" />
                   </div>
                 )}
                 {/* Glow ring */}
-                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-blue-500/20 via-transparent to-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-blue-500/10 via-transparent to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
               </div>
 
               {/* Item Name */}
-              <h2 className="text-2xl font-black text-white mb-2 tracking-tight group-hover:text-yellow-400 transition-colors">
+              <h2 className="text-2xl font-black text-[rgb(var(--color-text-primary))] mb-2 tracking-tight group-hover:text-yellow-500 transition-colors">
                 {itemName}
               </h2>
 
               {/* Price Paid */}
-              <div className="flex items-center gap-1.5 mb-6 text-sm text-slate-400 font-semibold bg-white/5 px-3 py-1 rounded-full border border-white/5">
+              <div className="flex items-center gap-1.5 mb-6 text-sm text-[rgb(var(--color-text-secondary))] font-semibold bg-[rgb(var(--color-bg-tertiary))]/60 px-3 py-1 rounded-full border border-[rgb(var(--color-border))]">
                 <span>Cost:</span>
                 {getEmojiDisplay(currencyEmoji, 'w-4 h-4')}
                 <span className="text-yellow-500">{pricePaid.toLocaleString()}</span>
               </div>
 
-              {/* Spoiler redeem code */}
-              <div className="w-full p-4 bg-slate-950/80 border border-white/5 rounded-2xl mb-6">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Redeem Code</p>
-                <div className="relative flex items-center justify-center min-h-[50px] bg-slate-900 border border-white/5 rounded-xl px-4 py-2 overflow-hidden">
+              {/* Spoiler redeem code with blur */}
+              <div className="w-full p-4 bg-[rgb(var(--color-bg-tertiary))]/70 border border-[rgb(var(--color-border))] rounded-2xl mb-6">
+                <p className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] uppercase tracking-widest mb-3">Redeem Code</p>
+                <div className="relative flex items-center justify-center min-h-[52px] bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-2 overflow-hidden">
                   
                   {/* Blurred Code Text */}
                   <code
@@ -450,7 +488,7 @@ export default function CrateReveal({
                   {!showCode && (
                     <button
                       onClick={() => setShowCode(true)}
-                      className="absolute inset-0 w-full h-full bg-slate-950/20 hover:bg-slate-950/40 transition-colors flex items-center justify-center text-xs font-bold text-slate-300 tracking-wider hover:text-white"
+                      className="absolute inset-0 w-full h-full bg-[rgb(var(--color-bg-secondary))]/30 hover:bg-[rgb(var(--color-bg-secondary))]/60 transition-colors flex items-center justify-center text-xs font-bold text-[rgb(var(--color-text-secondary))] tracking-wider hover:text-[rgb(var(--color-text-primary))]"
                     >
                       SHOW CODE
                     </button>
@@ -460,13 +498,13 @@ export default function CrateReveal({
                   {showCode && (
                     <button
                       onClick={handleCopy}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/5"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors border border-transparent hover:border-[rgb(var(--color-border))]"
                       title="Copy Code"
                     >
                       {copied ? (
-                        <FiCheck className="w-5 h-5 text-emerald-400" />
+                        <FiCheck className="w-5 h-5 text-emerald-500" />
                       ) : (
-                        <FiCopy className="w-5 h-5 text-slate-400 hover:text-white" />
+                        <FiCopy className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] hover:text-[rgb(var(--color-text-primary))]" />
                       )}
                     </button>
                   )}
@@ -474,7 +512,7 @@ export default function CrateReveal({
 
                 {/* Expiry Details */}
                 {expiresAt && (
-                  <p className="mt-3 text-[11px] text-slate-500 font-light">
+                  <p className="mt-3 text-[11px] text-[rgb(var(--color-text-tertiary))] font-light">
                     Expires on {new Date(expiresAt).toLocaleString('en-US', {
                       month: 'short',
                       day: 'numeric',
@@ -486,56 +524,76 @@ export default function CrateReveal({
                 )}
               </div>
 
-              {/* Bot response or DM status info */}
+              {/* Bot response message */}
               {replyMessage && (
-                <p className="text-sm text-slate-300 mb-5 p-3 bg-white/5 border border-white/5 rounded-xl text-left w-full font-light leading-relaxed">
+                <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-5 p-3 bg-[rgb(var(--color-bg-tertiary))]/40 border border-[rgb(var(--color-border))] rounded-xl text-left w-full font-light leading-relaxed">
                   {replyMessage.replace(/<@\d+>/g, '')}
                 </p>
               )}
 
               {dmSent ? (
                 <div className="w-full p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl mb-6 flex items-center gap-2 justify-center">
-                  <FiCheck className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs font-semibold text-emerald-400">Receipt sent to your Discord DMs!</span>
+                  <FiCheck className="w-4 h-4 text-emerald-500" />
+                  <span className="text-xs font-semibold text-emerald-500">Receipt sent to your Discord DMs!</span>
                 </div>
               ) : (
                 <div className="w-full p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl mb-6 flex items-center gap-2 justify-center">
-                  <FiAlertCircle className="w-4 h-4 text-rose-400" />
-                  <span className="text-xs font-semibold text-rose-400">Could not DM you. Please open your DMs!</span>
+                  <FiAlertCircle className="w-4 h-4 text-rose-500" />
+                  <span className="text-xs font-semibold text-rose-500">Could not DM you. Please open your DMs!</span>
                 </div>
               )}
 
               {/* Discord Redeem Guide */}
               <div className="w-full p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl text-left">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                <p className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] uppercase tracking-widest mb-2 flex items-center gap-2">
                   <FiMessageCircle className="w-4 h-4 text-[#5865F2]" />
                   How to Redeem
                 </p>
-                <ol className="text-xs text-slate-400 space-y-1.5 list-decimal list-inside font-light">
+                <ol className="text-xs text-[rgb(var(--color-text-tertiary))] space-y-1.5 list-decimal list-inside font-light">
                   <li>Open Discord & DM <span className="text-[#5865F2] font-semibold">Omeglee Bot</span></li>
-                  <li>Send your code: <code className="bg-slate-950 px-1.5 py-0.5 rounded text-yellow-500 font-mono text-[11px]">{redeemCode}</code></li>
+                  <li>Send your code: <code className="bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] px-1.5 py-0.5 rounded text-yellow-500 font-mono text-[11px]">{redeemCode}</code></li>
                 </ol>
               </div>
 
             </div>
           </div>
 
-          {/* User info & Close button */}
-          <div className="flex flex-col items-center gap-4 w-full animate-slide-up z-10">
-            <div className="flex items-center gap-2.5">
-              <img
-                src={userAvatar || `https://cdn.discordapp.com/embed/avatars/0.png`}
-                alt="User Avatar"
-                className="w-7 h-7 rounded-full border border-white/20 shadow-md"
-              />
-              <span className="text-xs text-slate-500 font-light">Connected Account</span>
+          {/* Connected account metadata */}
+          <div className="flex items-center gap-2.5 mb-6 animate-slide-up">
+            <img
+              src={userAvatar || `https://cdn.discordapp.com/embed/avatars/0.png`}
+              alt="User Avatar"
+              className="w-7 h-7 rounded-full border border-[rgb(var(--color-border))] shadow-md"
+            />
+            <span className="text-xs text-[rgb(var(--color-text-tertiary))] font-light">Connected Account</span>
+          </div>
+
+          {/* Action buttons & Redirect message */}
+          <div className="flex flex-col gap-3 w-full animate-slide-up z-10">
+            
+            {/* Redirect Countdown Alert */}
+            <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-medium mb-1 animate-pulse">
+              Redirecting to purchases page in <span className="text-yellow-500 font-bold">{countdown}</span> seconds...
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              {/* Go to my purchases */}
+              <a
+                href="https://www.omegleecommunity.com/purchases"
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all duration-300 font-bold tracking-wide text-sm shadow-xl shadow-blue-600/10 hover:shadow-blue-600/20 active:scale-[0.98]"
+              >
+                Go to My Purchases
+                <FiArrowRight className="w-4 h-4" />
+              </a>
+
+              {/* Close / Keep Shopping */}
+              <button
+                onClick={onClose}
+                className="flex-1 py-3.5 bg-[rgb(var(--color-bg-secondary))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] border border-[rgb(var(--color-border))] rounded-xl transition-all duration-300 font-bold tracking-wide text-sm active:scale-[0.98]"
+              >
+                Keep Shopping
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all duration-300 font-bold tracking-wide text-sm shadow-xl shadow-blue-600/10 hover:shadow-blue-600/20 active:scale-[0.98]"
-            >
-              Continue
-            </button>
           </div>
         </div>
       )}
