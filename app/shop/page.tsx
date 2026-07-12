@@ -1,6 +1,7 @@
 'use client';
 import { signIn,useSession } from 'next-auth/react';
 import Link from 'next/link';
+import CrateReveal from '@/components/CrateReveal';
 import { useRouter } from 'next/navigation';
 import { useEffect,useRef,useState } from 'react';
 import {
@@ -389,85 +390,18 @@ export default function ShopPage() {
       )}
       {}
       {purchaseResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 max-w-md w-full border border-green-500/30 shadow-xl">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-green-500/20 rounded-full flex items-center justify-center">
-                <FiCheck className="w-8 h-8 text-green-500" />
-              </div>
-              <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-2">Purchase Successful!</h3>
-              <p className="text-[rgb(var(--color-text-secondary))] mb-4 flex items-center justify-center gap-1.5 flex-wrap">
-                You purchased <strong>{purchaseResult.itemName}</strong> for
-                {getEmojiDisplay(currencyEmoji, 'w-5 h-5')}
-                <strong>{formatNumber(purchaseResult.pricePaid)}</strong>
-              </p>
-              {}
-              <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl mb-4">
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mb-2">Your Redeem Code</p>
-                <div className="flex items-center justify-center gap-2">
-                  <code className="text-2xl font-mono font-bold text-yellow-500 tracking-wider">
-                    {purchaseResult.redeemCode}
-                  </code>
-                  <button
-                    onClick={() => copyCode(purchaseResult.redeemCode)}
-                    className="p-2 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                  >
-                    {copiedCode === purchaseResult.redeemCode ? (
-                      <FiCheck className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <FiCopy className="w-5 h-5 text-[rgb(var(--color-text-tertiary))]" />
-                    )}
-                  </button>
-                </div>
-                {purchaseResult.expiresAt && (
-                  <p className="mt-2 text-xs text-[rgb(var(--color-text-tertiary))]">
-                    Expires on {new Date(purchaseResult.expiresAt).toLocaleString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
-                )}
-              </div>
-              {purchaseResult.replyMessage && (
-                <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-4 p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
-                  {purchaseResult.replyMessage.replace(/<@\d+>/g, '')}
-                </p>
-              )}
-              {}
-              {purchaseResult.dmSent ? (
-                <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl mb-4 flex items-center gap-2">
-                  <FiCheck className="w-4 h-4 text-green-500" />
-                  <span className="text-sm text-green-500">Receipt sent to your Discord DMs!</span>
-                </div>
-              ) : (
-                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl mb-4 flex items-center gap-2">
-                  <FiAlertCircle className="w-4 h-4 text-yellow-500" />
-                  <span className="text-sm text-yellow-500">Could not DM you. Make sure your DMs are open!</span>
-                </div>
-              )}
-              {}
-              <div className="p-4 bg-[#5865F2]/10 border border-[#5865F2]/30 rounded-xl mb-4 text-left">
-                <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] mb-2 flex items-center gap-2">
-                  <FiMessageCircle className="w-4 h-4 text-[#5865F2]" />
-                  How to Redeem
-                </p>
-                <ol className="text-sm text-[rgb(var(--color-text-secondary))] space-y-1 list-decimal list-inside">
-                  <li>DM <span className="text-[#5865F2] font-semibold">Omeglee Bot</span></li>
-                  <li>Send your code: <code className="bg-[rgb(var(--color-bg-tertiary))] px-1.5 py-0.5 rounded text-yellow-500 font-mono">{purchaseResult.redeemCode}</code></li>
-                </ol>
-              </div>
-              <button
-                onClick={() => setPurchaseResult(null)}
-                className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] rounded-xl transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <CrateReveal
+          itemName={purchaseResult.itemName}
+          itemThumbnail={items.find(i => i.name === purchaseResult.itemName)?.thumbnail || null}
+          pricePaid={purchaseResult.pricePaid}
+          currencyEmoji={currencyEmoji}
+          redeemCode={purchaseResult.redeemCode}
+          expiresAt={purchaseResult.expiresAt}
+          replyMessage={purchaseResult.replyMessage}
+          dmSent={purchaseResult.dmSent || false}
+          userAvatar={session?.user?.image || null}
+          onClose={() => setPurchaseResult(null)}
+        />
       )}
       {}
       {showPurchases && pendingPurchases.length > 0 && (

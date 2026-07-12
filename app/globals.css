@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
 
 /* Modern Blue Design System */
 :root {
@@ -359,4 +357,140 @@ html:not(.dark) .text-gray-600 {
 .recharts-pie-label-text {
   fill: rgb(var(--color-text-primary)) !important;
   font-weight: 600 !important;
+}
+
+/* 3D Crate Reveal Styles */
+.crate-perspective {
+  perspective: 1200px;
+}
+
+.crate-wrapper {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
+}
+
+.crate-3d {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  transform-style: preserve-3d;
+  animation: crate-float 3s ease-in-out infinite;
+}
+
+/* 3D Faces */
+.crate-face {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  border: 4px solid #3b82f6;
+  box-shadow: inset 0 0 35px rgba(59, 130, 246, 0.5), 0 0 15px rgba(59, 130, 246, 0.2);
+  transform-style: preserve-3d;
+}
+
+/* Front face */
+.crate-face-front {
+  transform: rotateY(0deg) translateZ(90px);
+}
+
+/* Back face */
+.crate-face-back {
+  transform: rotateY(180deg) translateZ(90px);
+}
+
+/* Left face */
+.crate-face-left {
+  transform: rotateY(-90deg) translateZ(90px);
+}
+
+/* Right face */
+.crate-face-right {
+  transform: rotateY(90deg) translateZ(90px);
+}
+
+/* Top face (Lid) */
+.crate-face-top {
+  transform: rotateX(90deg) translateZ(90px);
+  transform-origin: top;
+  border-color: #f59e0b;
+  box-shadow: inset 0 0 35px rgba(245, 158, 11, 0.5), 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+/* Bottom face */
+.crate-face-bottom {
+  transform: rotateX(-90deg) translateZ(90px);
+  background: #090d16;
+}
+
+/* Floating animation */
+@keyframes crate-float {
+  0%, 100% {
+    transform: translateY(0) rotateY(20deg) rotateX(12deg);
+  }
+  50% {
+    transform: translateY(-12px) rotateY(25deg) rotateX(15deg);
+  }
+}
+
+/* Shaking animation classes */
+.crate-shaking {
+  animation: crate-shake 0.1s infinite linear !important;
+}
+
+@keyframes crate-shake {
+  0% { transform: translate(3px, 1px) rotate(1deg) rotateY(20deg) rotateX(12deg); }
+  20% { transform: translate(-2px, -3px) rotate(-1.5deg) rotateY(30deg) rotateX(8deg); }
+  40% { transform: translate(-4px, 0px) rotate(1.5deg) rotateY(10deg) rotateX(16deg); }
+  60% { transform: translate(0px, 3px) rotate(0deg) rotateY(25deg) rotateX(18deg); }
+  80% { transform: translate(2px, -2px) rotate(1.5deg) rotateY(15deg) rotateX(10deg); }
+  100% { transform: translate(1px, 2px) rotate(-1deg) rotateY(20deg) rotateX(12deg); }
+}
+
+/* Crate lid open animation */
+.crate-lid-open {
+  animation: crate-open-lid 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+  transform-origin: top center;
+}
+
+@keyframes crate-open-lid {
+  0% {
+    transform: rotateX(90deg) translateZ(90px);
+  }
+  100% {
+    transform: rotateX(220deg) translateZ(90px);
+  }
+}
+
+/* Burst light flare effect */
+@keyframes flare-grow {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4.5);
+    opacity: 0;
+  }
+}
+
+.flare-animation {
+  animation: flare-grow 1.5s cubic-bezier(0.1, 0.8, 0.1, 1) forwards;
+}
+
+/* Rays animation */
+@keyframes rays-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-rays-spin {
+  animation: rays-spin 20s linear infinite;
 }
