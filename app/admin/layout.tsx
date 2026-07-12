@@ -56,13 +56,6 @@ function isPathnameAllowed(pathname: string, perms: any): boolean {
         }
     }
     
-    // Moderator
-    if (perms.hasModeratorAccess) {
-        if (pathname.startsWith('/admin/automod')) {
-            return true;
-        }
-    }
-    
     return false;
 }
 
@@ -90,7 +83,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     } else if (perms.hasSrModAccess) {
                         router.replace('/admin/vctranscript');
                     } else if (perms.hasModeratorAccess) {
-                        router.replace('/admin/automod');
+                        router.replace('/admin/dashboard');
                     } else {
                         router.replace('/admin');
                     }
@@ -185,12 +178,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             icon: <FiUserPlus className="w-5 h-5" />,
             requiresSrModAccess: true,
         },
-        {
-            name: 'Moderation',
-            href: '/admin/automod',
-            icon: <FiShield className="w-5 h-5" />,
-            requiresModeratorAccess: true,
-        },
+
         {
             name: 'Donator Plans',
             href: '/admin/donator',
@@ -227,12 +215,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             icon: <FiShield className="w-5 h-5" />,
             requiresFullAccess: true,
         },
-        {
-            name: 'Anti-Nuke',
-            href: '/admin/antinuke',
-            icon: <FiAlertOctagon className="w-5 h-5" />,
-            requiresFullAccess: true,
-        },
+
         {
             name: 'Chats Stats',
             href: '/admin/vctranscript/chatlogs',
@@ -297,9 +280,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         }
         if (href === '/admin/vc-automation') {
             return pathname.startsWith('/admin/vc-automation');
-        }
-        if (href === '/admin/antinuke') {
-            return pathname.startsWith('/admin/antinuke');
         }
         return pathname.startsWith(href);
     };

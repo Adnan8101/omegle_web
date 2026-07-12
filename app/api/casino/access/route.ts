@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
       });
     }
     try {
-      const casinoRoles = await prismaBot.casinoAdminRole.findMany({
-        where: { guild_id: GUILD_ID }
+      const casinoRoles = await prismaBot.modRole.findMany({
+        where: { guild_id: GUILD_ID, economy: true }
       });
       const dbRoleIds = casinoRoles.map((r: any) => r.role_id);
       const allCasinoRoleIds = [...new Set(dbRoleIds)];

@@ -567,7 +567,7 @@ export default function AddItemPage() {
             <button
               type="submit"
               disabled={saving || !formData.name || !formData.price}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-hover))] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium apple-transition"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-hover))] disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-black rounded-xl font-medium apple-transition"
             >
               {saving ? (
                 <>

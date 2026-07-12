@@ -72,16 +72,13 @@ export const authOptions: NextAuthOptions = {
           const shouldSkipDbFetch = casinoRoleDbFailedAt > 0 && (nowMs - casinoRoleDbFailedAt < CASINO_ROLE_DB_RETRY_MS);
           try {
             if (!shouldSkipDbFetch) {
-              const [casinoRoles, srModRoles, modRoles, staffRoles] = await Promise.all([
-                prismaBot.casinoAdminRole.findMany({ where: { guild_id: GUILD_ID } }).catch(() => []),
-                prismaBot.srModRole.findMany({ where: { guild_id: GUILD_ID } }).catch(() => []),
-                prismaBot.modRole.findMany({ where: { guild_id: GUILD_ID } }).catch(() => []),
-                prismaBot.staffRole.findMany({ where: { guild_id: GUILD_ID } }).catch(() => [])
-              ]);
-              casinoRoleIds = casinoRoles.map((r: any) => r.role_id);
-              srModRoleIds = srModRoles.map((r: any) => r.role_id);
+              const modRoles = await prismaBot.modRole.findMany({
+                where: { guild_id: GUILD_ID }
+              }).catch(() => []);
               modRoleIds = modRoles.map((r: any) => r.role_id);
-              staffRoleIds = staffRoles.map((r: any) => r.role_id);
+              casinoRoleIds = modRoles.filter((r: any) => r.economy === true).map((r: any) => r.role_id);
+              srModRoleIds = modRoleIds;
+              staffRoleIds = modRoleIds;
               casinoRoleDbFailedAt = 0;
               console.log('[Auth] Fetched roles from DB:', { casinoRoleIds, srModRoleIds, modRoleIds, staffRoleIds });
             } else {

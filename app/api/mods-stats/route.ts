@@ -11,15 +11,11 @@ export async function GET(request: NextRequest) {
     if (!session || (!perms?.hasFullAccess && !perms?.hasSrModAccess)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const [staffRoles, modRoles, srModRoles] = await Promise.all([
-      prismaBot.staffRole.findMany({ where: { guild_id: GUILD_ID } }),
-      prismaBot.modRole.findMany({ where: { guild_id: GUILD_ID } }),
-      prismaBot.srModRole.findMany({ where: { guild_id: GUILD_ID } })
-    ]);
-    const staffRoleIds = staffRoles.map((r: any) => r.role_id);
+    const modRoles = await prismaBot.modRole.findMany({ where: { guild_id: GUILD_ID } });
     const modRoleIds = modRoles.map((r: any) => r.role_id);
-    const srModRoleIds = srModRoles.map((r: any) => r.role_id);
-    const allStaffRoleIds = [...new Set([...staffRoleIds, ...modRoleIds, ...srModRoleIds])];
+    const staffRoleIds: string[] = [];
+    const srModRoleIds: string[] = [];
+    const allStaffRoleIds = modRoleIds;
 
     const staffUsers = await queryBotDb(`
       SELECT

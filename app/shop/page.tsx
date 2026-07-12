@@ -258,18 +258,18 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))]">
       <section className="max-w-7xl mx-auto px-4 pt-5 pb-2">
-        <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] px-4 py-4 flex items-center justify-between gap-4">
+        <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Omeglee Shop</h1>
             <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Casino Economy Store</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
             {session ? (
               <>
-                <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+                <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl whitespace-nowrap flex-shrink-0">
                   {getEmojiDisplay(currencyEmoji)}
                   <span className="font-bold text-yellow-500">{formatNumber(userBalance)}</span>
-                  <span className="text-xs text-yellow-500/70">{currencyName}</span>
+                  <span className="hidden sm:inline text-xs text-yellow-500/70">{currencyName}</span>
                 </div>
                 <Link
                   href="/purchases"
