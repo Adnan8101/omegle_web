@@ -179,6 +179,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresSrModAccess: true,
         },
 
+        /*
         {
             name: 'Donator Plans',
             href: '/admin/donator',
@@ -197,6 +198,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             icon: <FiDollarSign className="w-5 h-5" />,
             requiresFullAccess: true,
         },
+        */
         {
             name: 'Mod Stats',
             href: '/admin/mods-stats',
