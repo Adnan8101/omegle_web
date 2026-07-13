@@ -20,7 +20,8 @@ export async function checkUserPermissions(
   casinoRoleIds: string[] = [],
   srModRoleIds: string[] = [],
   modRoleIds: string[] = [],
-  staffRoleIds: string[] = []
+  staffRoleIds: string[] = [],
+  adminRoleId: string | null = null
 ): Promise<UserPermissions> {
   const defaultPerms: UserPermissions = {
     hasFullAccess: false,
@@ -138,11 +139,13 @@ export async function checkUserPermissions(
         console.error('Failed to check guild ownership:', guildError);
       }
     }
-    const hasFullAccess = isAdmin || hasManageServer || isOwner;
+    const hasAdminRole = adminRoleId ? roles.includes(adminRoleId) : false;
+    const hasFullAccess = isAdmin || hasManageServer || isOwner || hasAdminRole;
     console.log("🔐 Permission results:", {
       isAdmin,
       hasManageServer,
       isOwner,
+      hasAdminRole,
       hasFullAccess,
     });
     const allModRoles = [...modRoleIds];

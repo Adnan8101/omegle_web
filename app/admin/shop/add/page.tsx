@@ -3,13 +3,15 @@ import EntityDropdown from '@/components/ui/entity-dropdown';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect,useRef,useState } from 'react';
-import { FiAlertCircle,FiArrowLeft,FiCheck,FiImage,FiLoader,FiPackage,FiSave,FiUpload,FiX } from 'react-icons/fi';
+import { useEffect, useRef, useState } from 'react';
+import { FiAlertCircle, FiArrowLeft, FiCheck, FiImage, FiLoader, FiPackage, FiSave, FiUpload, FiX } from 'react-icons/fi';
+
 interface GuildRole {
   id: string;
   name: string;
   color: number;
 }
+
 interface FormData {
   name: string;
   price: string;
@@ -25,6 +27,7 @@ interface FormData {
   reply_message: string;
   expires_in_days: string;
 }
+
 export default function AddItemPage() {
   const { status } = useSession();
   const router = useRouter();
@@ -51,6 +54,7 @@ export default function AddItemPage() {
   const [success, setSuccess] = useState(false);
   const [roles, setRoles] = useState<GuildRole[]>([]);
   const [selectedRequiredRoles, setSelectedRequiredRoles] = useState<string[]>([]);
+
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -74,11 +78,13 @@ export default function AddItemPage() {
     }
     return <span className="inline-block">{emoji}</span>;
   };
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin');
     }
   }, [status, router]);
+
   useEffect(() => {
     fetch('/api/casino/shop')
       .then(res => res.json())
@@ -88,12 +94,15 @@ export default function AddItemPage() {
       })
       .catch(() => {});
   }, []);
+
   useEffect(() => {
     setFormData((prev) => ({ ...prev, role_required_id: selectedRequiredRoles.join(',') }));
   }, [selectedRequiredRoles]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
@@ -136,6 +145,7 @@ export default function AddItemPage() {
       img.src = URL.createObjectURL(file);
     });
   };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -174,6 +184,7 @@ export default function AddItemPage() {
       }
     }
   };
+
   const removeImage = async () => {
     if (!formData.thumbnail) return;
     if (formData.thumbnail.includes('blob.vercel-storage.com')) {
@@ -189,6 +200,7 @@ export default function AddItemPage() {
     }
     setFormData(prev => ({ ...prev, thumbnail: '' }));
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -204,13 +216,14 @@ export default function AddItemPage() {
         throw new Error(data.error || 'Failed to create item');
       }
       setSuccess(true);
-      setTimeout(() => router.push('/admin/casino'), 1500);
+      setTimeout(() => router.push('/admin/shop'), 1500);
     } catch (err: any) {
       setError(err.message || 'Failed to create item');
     } finally {
       setSaving(false);
     }
   };
+
   if (status === 'loading') {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
@@ -227,13 +240,13 @@ export default function AddItemPage() {
       </div>
     );
   }
+
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-4xl mx-auto">
-        {}
         <div className="flex items-center gap-4 mb-6 sm:mb-8">
           <Link
-            href="/admin/casino"
+            href="/admin/shop"
             className="p-2.5 glass-blue rounded-xl border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] apple-transition"
           >
             <FiArrowLeft className="w-5 h-5" />
@@ -247,22 +260,22 @@ export default function AddItemPage() {
             </p>
           </div>
         </div>
-        {}
+
         {success && (
           <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-2xl flex items-center gap-3">
             <FiCheck className="w-5 h-5 text-green-500" />
             <span className="text-green-500 font-medium">Item created successfully! Redirecting...</span>
           </div>
         )}
-        {}
+
         {error && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
             <FiAlertCircle className="w-5 h-5 text-red-500" />
             <span className="text-red-500">{error}</span>
           </div>
         )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          {}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
               <FiPackage className="w-5 h-5 text-[rgb(var(--color-accent))]" />
@@ -327,14 +340,13 @@ export default function AddItemPage() {
               </div>
             </div>
           </div>
-          {}
+
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
               <FiImage className="w-5 h-5 text-[rgb(var(--color-accent))]" />
               Thumbnail
             </h2>
             <div className="space-y-4">
-              {}
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Upload Image
@@ -369,13 +381,13 @@ export default function AddItemPage() {
                   Supported: JPEG, PNG, GIF, WebP. Max 10MB. Images are automatically compressed and optimized.
                 </p>
               </div>
-              {}
+
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]"></div>
                 <span className="text-xs text-[rgb(var(--color-text-tertiary))]">OR</span>
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]"></div>
               </div>
-              {}
+
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Image URL
@@ -389,7 +401,7 @@ export default function AddItemPage() {
                   className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
                 />
               </div>
-              {}
+
               {formData.thumbnail && (
                 <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
                   <div className="flex items-start justify-between mb-2">
@@ -424,7 +436,7 @@ export default function AddItemPage() {
               )}
             </div>
           </div>
-          {}
+
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               Income Settings
@@ -460,7 +472,7 @@ export default function AddItemPage() {
               </div>
             </div>
           </div>
-          {}
+
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               Role Settings
@@ -507,7 +519,7 @@ export default function AddItemPage() {
               </div>
             </div>
           </div>
-          {}
+
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               Advanced Settings
@@ -556,10 +568,10 @@ export default function AddItemPage() {
               </div>
             </div>
           </div>
-          {}
+
           <div className="flex gap-4">
             <Link
-              href="/admin/casino"
+              href="/admin/shop"
               className="flex-1 sm:flex-none px-6 py-3 text-center bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] rounded-xl font-medium apple-transition"
             >
               Cancel

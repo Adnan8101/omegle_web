@@ -21,6 +21,7 @@ FiMessageSquare,
 FiMic,
 FiMoon,
 FiShield,
+FiShoppingCart,
 FiSun,
 FiUserPlus,
 FiUsers,
@@ -39,7 +40,7 @@ function isPathnameAllowed(pathname: string, perms: any): boolean {
     }
     
     // Casino Admin
-    if (perms.hasCasinoAccess && pathname.startsWith('/admin/casino')) {
+    if (perms.hasCasinoAccess && (pathname.startsWith('/admin/casino') || pathname.startsWith('/admin/shop'))) {
         if (pathname.startsWith('/admin/casino/economy/invites')) {
             return false;
         }
@@ -167,6 +168,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresFullAccess: true,
         },
         {
+            name: 'Shop',
+            href: '/admin/shop',
+            icon: <FiShoppingCart className="w-5 h-5" />,
+            requiresCasinoAccess: true,
+        },
+        {
             name: 'Casino Access',
             href: '/admin/casino',
             icon: <FiDollarSign className="w-5 h-5" />,
@@ -255,6 +262,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         }
         if (href === '/admin/dashboard/applications') {
             return pathname.startsWith('/admin/dashboard/applications');
+        }
+        if (href === '/admin/shop') {
+            return pathname.startsWith('/admin/shop');
         }
         if (href === '/admin/casino') {
             return pathname === '/admin/casino';

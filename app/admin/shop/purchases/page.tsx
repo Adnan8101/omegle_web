@@ -2,19 +2,20 @@
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-FiArrowLeft,
-FiCheck,
-FiCheckCircle,
-FiClock,
-FiCopy,
-FiExternalLink,
-FiPackage,
-FiRefreshCw,
-FiSearch,
-FiUser
+  FiArrowLeft,
+  FiCheck,
+  FiCheckCircle,
+  FiClock,
+  FiCopy,
+  FiExternalLink,
+  FiPackage,
+  FiRefreshCw,
+  FiSearch,
+  FiUser
 } from 'react-icons/fi';
+
 interface Purchase {
   id: string;
   user_id: string;
@@ -29,6 +30,7 @@ interface Purchase {
   user?: { username: string; avatar: string | null };
   redeemer?: { username: string; avatar: string | null };
 }
+
 export default function PurchasesPage() {
   const { status } = useSession();
   const router = useRouter();
@@ -38,6 +40,7 @@ export default function PurchasesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'redeemed'>('all');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -61,16 +64,19 @@ export default function PurchasesPage() {
     }
     return <span className="inline-block">{emoji}</span>;
   };
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin');
     }
   }, [status, router]);
+
   useEffect(() => {
     if (status === 'authenticated') {
       fetchPurchases();
     }
   }, [status]);
+
   const fetchPurchases = async () => {
     setLoading(true);
     try {
@@ -86,11 +92,13 @@ export default function PurchasesPage() {
       setLoading(false);
     }
   };
+
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
   };
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
@@ -100,7 +108,9 @@ export default function PurchasesPage() {
       minute: '2-digit'
     });
   };
+
   const formatNumber = (n: number) => n.toLocaleString();
+
   const filteredPurchases = purchases.filter(purchase => {
     const matchesSearch =
       purchase.item_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -112,8 +122,10 @@ export default function PurchasesPage() {
       (statusFilter === 'redeemed' && purchase.status === 'redeemed');
     return matchesSearch && matchesStatus;
   });
+
   const pendingCount = purchases.filter(p => p.status === 'pending').length;
   const redeemedCount = purchases.filter(p => p.status === 'redeemed').length;
+
   if (status === 'loading' || loading) {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
@@ -128,13 +140,13 @@ export default function PurchasesPage() {
       </div>
     );
   }
+
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-6xl mx-auto">
-        {}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 sm:mb-8">
           <Link
-            href="/admin/casino"
+            href="/admin/shop"
             className="self-start p-2.5 glass-blue rounded-xl border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] apple-transition"
           >
             <FiArrowLeft className="w-5 h-5" />
@@ -155,7 +167,7 @@ export default function PurchasesPage() {
             <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
-        {}
+
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
           <button
             onClick={() => setStatusFilter('all')}
@@ -193,7 +205,7 @@ export default function PurchasesPage() {
             <div className="text-sm text-[rgb(var(--color-text-tertiary))]">Redeemed</div>
           </button>
         </div>
-        {}
+
         <div className="mb-6">
           <div className="relative">
             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[rgb(var(--color-text-tertiary))]" />
@@ -206,7 +218,7 @@ export default function PurchasesPage() {
             />
           </div>
         </div>
-        {}
+
         {filteredPurchases.length === 0 ? (
           <div className="glass-blue rounded-3xl p-12 border border-[rgb(var(--color-border))] text-center">
             <FiPackage className="w-12 h-12 mx-auto text-[rgb(var(--color-text-tertiary))] mb-4" />
@@ -227,7 +239,6 @@ export default function PurchasesPage() {
                 className="glass-blue rounded-2xl p-4 sm:p-5 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/50 apple-transition"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  {}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
@@ -265,7 +276,6 @@ export default function PurchasesPage() {
                       </span>
                     </div>
                   </div>
-                  {}
                   <div className="flex items-center gap-3">
                     <div className="px-4 py-2 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
                       <code className="text-sm font-mono font-bold text-[rgb(var(--color-accent))]">
@@ -285,7 +295,6 @@ export default function PurchasesPage() {
                     </button>
                   </div>
                 </div>
-                {}
                 {purchase.status === 'redeemed' && (
                   <div className="mt-4 pt-4 border-t border-[rgb(var(--color-border))] flex flex-wrap items-center gap-4 text-sm">
                     <span className="text-[rgb(var(--color-text-tertiary))]">

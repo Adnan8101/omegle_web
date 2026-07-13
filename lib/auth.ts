@@ -69,18 +69,21 @@ export const authOptions: NextAuthOptions = {
           let srModRoleIds: string[] = [];
           let modRoleIds: string[] = [];
           let staffRoleIds: string[] = [];
+          let adminRoleId: string | null = null;
           const shouldSkipDbFetch = casinoRoleDbFailedAt > 0 && (nowMs - casinoRoleDbFailedAt < CASINO_ROLE_DB_RETRY_MS);
           try {
             if (!shouldSkipDbFetch) {
-              const modRoles = await prismaBot.modRole.findMany({
-                where: { guild_id: GUILD_ID }
-              }).catch(() => []);
+              const [modRoles, adminRoleRecord] = await Promise.all([
+                prismaBot.modRole.findMany({ where: { guild_id: GUILD_ID } }).catch(() => []),
+                prismaBot.adminRole.findUnique({ where: { guild_id: GUILD_ID } }).catch(() => null)
+              ]);
               modRoleIds = modRoles.map((r: any) => r.role_id);
               casinoRoleIds = modRoles.filter((r: any) => r.economy === true).map((r: any) => r.role_id);
               srModRoleIds = modRoleIds;
               staffRoleIds = modRoleIds;
+              adminRoleId = adminRoleRecord?.role_id || null;
               casinoRoleDbFailedAt = 0;
-              console.log('[Auth] Fetched roles from DB:', { casinoRoleIds, srModRoleIds, modRoleIds, staffRoleIds });
+              console.log('[Auth] Fetched roles from DB:', { casinoRoleIds, srModRoleIds, modRoleIds, staffRoleIds, adminRoleId });
             } else {
               casinoRoleIds = [];
               srModRoleIds = [];
@@ -96,7 +99,7 @@ export const authOptions: NextAuthOptions = {
             staffRoleIds = [];
           }
           const previousPermissions = token.permissions as UserPermissions | undefined;
-          const permissions = await checkUserPermissions(token.accessToken, casinoRoleIds, srModRoleIds, modRoleIds, staffRoleIds);
+          const permissions = await checkUserPermissions(token.accessToken, casinoRoleIds, srModRoleIds, modRoleIds, staffRoleIds, adminRoleId);
           const lostAccessTransiently =
             Boolean(previousPermissions?.hasAnyAccess) &&
             !permissions.hasAnyAccess &&
