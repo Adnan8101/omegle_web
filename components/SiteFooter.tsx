@@ -72,11 +72,6 @@ export default function SiteFooter() {
                   Join Discord
                 </a>
               </li>
-              <li>
-                <span className="text-[rgb(var(--color-text-secondary))] select-none">
-                  Support Server
-                </span>
-              </li>
             </ul>
           </div>
         </div>
