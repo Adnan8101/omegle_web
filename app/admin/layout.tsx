@@ -218,6 +218,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             icon: <FiShield className="w-5 h-5" />,
             requiresFullAccess: true,
         },
+        {
+            name: 'Team Management',
+            href: '/admin/team',
+            icon: <FiUsers className="w-5 h-5" />,
+            requiresFullAccess: true,
+        },
 
         {
             name: 'Chats Stats',

@@ -1558,3 +1558,14 @@ model WVAllowedRole {
   @@index([guild_id])
 }
 
+model TeamMember {
+  id              String   @id @default(uuid())
+  discord_user_id String   @unique
+  designation     String   // "Founder" | "Bot Developer" | "Management"
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@map("team_members")
+}
+
+
