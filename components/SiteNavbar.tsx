@@ -42,7 +42,6 @@ export default function SiteNavbar() {
       // { label: 'Subscription', href: '/donator' },
       { label: 'Shop', href: '/shop' },
       { label: 'Staff Application', href: '/staff-application' },
-      { label: 'About Us', href: '/about-us' },
     ],
     []
   );

@@ -54,11 +54,6 @@ export default function SiteFooter() {
                   Staff Application
                 </Link>
               </li>
-              <li>
-                <Link href="/about-us" className="text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-accent))] transition-colors">
-                  About Us
-                </Link>
-              </li>
             </ul>
           </div>
           {}
