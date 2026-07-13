@@ -463,16 +463,18 @@ export default function ShopPage() {
       {}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {budget && (
-          <div className="mb-8 p-6 bg-gradient-to-r from-blue-600/20 via-indigo-600/10 to-transparent border border-blue-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-lg backdrop-blur-md">
+          <div className="mb-8 p-6 bg-[rgb(var(--color-bg-secondary))]/30 border border-[rgb(var(--color-border))] rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 backdrop-blur-md">
             <div className="space-y-1">
-              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Community Reward Pool</span>
-              <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
+              <div className="text-xs font-bold tracking-wider text-[rgb(var(--color-text-secondary))] uppercase">
+                COMMUNITY REWARD POOL
+              </div>
+              <div className="text-xl font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
                 Available Reward Budget: <span className="text-2xl text-blue-400 font-extrabold">₹{formatNumber(budget.available)}</span>
-              </h2>
+              </div>
             </div>
-            <div className="text-xs text-[rgb(var(--color-text-tertiary))] text-left sm:text-right">
-              <p>Total Spent: ₹{formatNumber(budget.total_spent)}</p>
-              <p>Last Updated: {new Date().toLocaleDateString()}</p>
+            <div className="flex flex-col sm:items-end gap-1 text-xs text-[rgb(var(--color-text-tertiary))] font-medium">
+              <div>Total Spent: <span className="font-semibold text-[rgb(var(--color-text-primary))]">₹{formatNumber(budget.total_spent)}</span></div>
+              <div>Last Updated: <span className="font-semibold text-[rgb(var(--color-text-primary))]">{new Date().toLocaleDateString('en-GB')}</span></div>
             </div>
           </div>
         )}
@@ -617,7 +619,7 @@ export default function ShopPage() {
                         ) : isDisabled ? (
                           'Unavailable'
                         ) : isInsufficientBudget ? (
-                          'Low Budget'
+                          'Temporary Unavailable'
                         ) : missingRequiredRole ? (
                           'Role Required'
                         ) : !session ? (
@@ -636,12 +638,7 @@ export default function ShopPage() {
                         Requires {getEmojiDisplay(currencyEmoji, 'w-3.5 h-3.5')}{formatNumber(item.required_balance)} minimum balance
                       </div>
                     )}
-                    {session && isInsufficientBudget && (
-                      <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
-                        <FiAlertCircle className="w-3 h-3" />
-                        This item is currently out of budget
-                      </div>
-                    )}
+
                     {session && missingRequiredRole && (
                       <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
                         <FiLock className="w-3 h-3" />
