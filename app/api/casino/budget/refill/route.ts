@@ -20,7 +20,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const amount = Number(body.amount);
-    if (isNaN(amount) || amount <= 0 || !Number.isInteger(amount)) {
+    const action = body.action || 'refill'; // 'refill' or 'set'
+
+    if (isNaN(amount) || amount < 0 || !Number.isInteger(amount)) {
+      return NextResponse.json({ error: 'Amount must be a non-negative integer' }, { status: 400 });
+    }
+    if (action === 'refill' && amount <= 0) {
       return NextResponse.json({ error: 'Refill amount must be a positive integer' }, { status: 400 });
     }
 
@@ -35,20 +40,26 @@ export async function POST(request: NextRequest) {
       }
 
       const oldAvailable = budget.available;
-      const newAvailable = budget.available + amount;
+      let newAvailable = oldAvailable;
+
+      if (action === 'set') {
+        newAvailable = amount;
+      } else {
+        newAvailable = oldAvailable + amount;
+      }
 
       const updatedBudget = await tx.shopBudget.update({
         where: { guild_id: GUILD_ID },
         data: {
           available: newAvailable,
-          total_added: { increment: amount }
+          total_added: action === 'set' ? undefined : { increment: amount }
         }
       });
 
       const log = await tx.shopBudgetLog.create({
         data: {
           guild_id: GUILD_ID,
-          type: 'REFILL',
+          type: action === 'set' ? 'EDIT' : 'REFILL',
           inr_cost: amount,
           budget_before: oldAvailable,
           budget_after: newAvailable,
@@ -70,7 +81,7 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Error refilling budget:', error);
+    console.error('Error refilling/updating budget:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
