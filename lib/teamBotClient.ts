@@ -23,8 +23,8 @@ function getAvatarUrl(userId: string, avatarHash: string | null): string | null 
 
 function getBannerUrl(userId: string, bannerHash: string | null): string | null {
   if (!bannerHash) return null;
-  const extension = bannerHash.startsWith('a_') ? 'gif' : 'png';
-  return `https://cdn.discordapp.com/banners/${userId}/${bannerHash}.${extension}?size=512`;
+  // Always use webp format for banners to avoid Discord CDN 415 Unsupported Media Type errors on animated GIFs
+  return `https://cdn.discordapp.com/banners/${userId}/${bannerHash}.webp?size=512`;
 }
 
 /**
