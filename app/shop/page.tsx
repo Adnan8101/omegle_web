@@ -592,11 +592,6 @@ export default function ShopPage() {
                             {formatNumber(item.price)}
                           </span>
                         </div>
-                        {item.price_inr !== undefined && item.price_inr > 0 && (
-                          <span className="text-xs text-[rgb(var(--color-text-secondary))] font-medium mt-0.5">
-                            Value: ₹{formatNumber(item.price_inr)}
-                          </span>
-                        )}
                       </div>
                       <button
                         onClick={() => handlePurchase(item)}
@@ -644,7 +639,7 @@ export default function ShopPage() {
                     {session && isInsufficientBudget && (
                       <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
                         <FiAlertCircle className="w-3 h-3" />
-                        Requires ₹{formatNumber(item.price_inr || 0)} from budget (₹{formatNumber(budget?.available || 0)} available)
+                        This item is currently out of budget
                       </div>
                     )}
                     {session && missingRequiredRole && (

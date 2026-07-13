@@ -61,7 +61,7 @@ export default function CasinoDashboard() {
   const [refillLoading, setRefillLoading] = useState(false);
   const [refillSuccess, setRefillSuccess] = useState(false);
   const [setAmount, setSetAmount] = useState('');
-  const [setLoading, setSetLoading] = useState(false);
+  const [budgetLoading, setBudgetLoading] = useState(false);
   const [setSuccess, setSetSuccess] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
@@ -193,8 +193,8 @@ export default function CasinoDashboard() {
   };
   const handleSetBudget = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!setAmount || setLoading) return;
-    setSetLoading(true);
+    if (!setAmount || budgetLoading) return;
+    setBudgetLoading(true);
     setError(null);
     setSetSuccess(false);
     try {
@@ -213,7 +213,8 @@ export default function CasinoDashboard() {
     } catch (err: any) {
       setError(err.message || 'Failed to update budget');
     } finally {
-      setSetLoading(false);
+      setBudgetLoading(false);
+    }
   };
   const filteredItems = items.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -690,10 +691,10 @@ export default function CasinoDashboard() {
                 </div>
                 <button
                   type="submit"
-                  disabled={setLoading || setAmount === ''}
+                  disabled={budgetLoading || setAmount === ''}
                   className="w-full py-3 bg-purple-500 hover:bg-purple-600 disabled:opacity-50 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
                 >
-                  {setLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : 'Update Available Budget'}
+                  {budgetLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : 'Update Available Budget'}
                 </button>
               </form>
             </div>
