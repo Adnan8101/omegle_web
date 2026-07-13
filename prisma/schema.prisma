@@ -1568,4 +1568,13 @@ model TeamMember {
   @@map("team_members")
 }
 
+model LiveReaction {
+  id         String   @id @default("heart")
+  count      Int      @default(0)
+  updated_at DateTime @updatedAt
+
+  @@map("live_reactions")
+}
+
+
 

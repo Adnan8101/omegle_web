@@ -4,7 +4,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { FiArrowRight, FiDisc, FiTrendingUp, FiLayers, FiMessageSquare } from 'react-icons/fi';
+import { FiArrowRight, FiDisc, FiTrendingUp, FiLayers, FiHeart } from 'react-icons/fi';
 
 interface TeamMember {
   id: string;
@@ -31,17 +31,12 @@ export default function Home() {
   const [team, setTeam] = useState<TeamData | null>(null);
   const [teamLoading, setTeamLoading] = useState(true);
 
-  // Reaction Counter State (persisted in localStorage)
-  const [reactions, setReactions] = useState<{ [key: string]: number }>({
-    '👀': 1845,
-    '🔥': 1432,
-    '🎉': 1204,
-    '🚀': 953,
-    '❤️': 786,
-  });
-  const [userReaction, setUserReaction] = useState<string | null>(null);
+  // Live DB-backed Reaction State
+  const [heartCount, setHeartCount] = useState<number>(0);
+  const [hasReacted, setHasReacted] = useState<boolean>(false);
+  const [reactionsLoading, setReactionsLoading] = useState(true);
 
-  // Fetch Team Data
+  // Fetch Team and Reactions Data
   useEffect(() => {
     async function fetchTeam() {
       try {
@@ -56,40 +51,54 @@ export default function Home() {
         setTeamLoading(false);
       }
     }
-    fetchTeam();
 
-    // Load persisted reaction selection
-    const savedReaction = localStorage.getItem('omegle_user_reaction');
-    if (savedReaction) {
-      setUserReaction(savedReaction);
-      // Increment locally if already reacted
-      setReactions(prev => ({
-        ...prev,
-        [savedReaction]: prev[savedReaction] + 1
-      }));
+    async function fetchReactions() {
+      try {
+        const response = await fetch('/api/reactions', { cache: 'no-store' });
+        const resData = await response.json();
+        if (response.ok && resData.success) {
+          setHeartCount(resData.count);
+        }
+      } catch (err) {
+        console.error('Error fetching reactions:', err);
+      } finally {
+        setReactionsLoading(false);
+      }
     }
+
+    fetchTeam();
+    fetchReactions();
+
+    // Check if user has already reacted (persisted in localStorage)
+    const reacted = localStorage.getItem('omegle_user_reacted_heart') === 'true';
+    setHasReacted(reacted);
   }, []);
 
-  const handleReact = (emoji: string) => {
-    if (userReaction === emoji) {
-      // Toggle off
-      localStorage.removeItem('omegle_user_reaction');
-      setUserReaction(null);
-      setReactions(prev => ({
-        ...prev,
-        [emoji]: Math.max(0, prev[emoji] - 1)
-      }));
+  const handleReactHeart = async () => {
+    const action = hasReacted ? 'decrement' : 'increment';
+    
+    // Optimistic UI updates
+    setHasReacted(!hasReacted);
+    setHeartCount(prev => Math.max(0, action === 'decrement' ? prev - 1 : prev + 1));
+    
+    if (action === 'increment') {
+      localStorage.setItem('omegle_user_reacted_heart', 'true');
     } else {
-      // If already reacted to something else, decrease its count first
-      const updated = { ...reactions };
-      if (userReaction) {
-        updated[userReaction] = Math.max(0, updated[userReaction] - 1);
+      localStorage.removeItem('omegle_user_reacted_heart');
+    }
+
+    try {
+      const response = await fetch('/api/reactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const resData = await response.json();
+      if (response.ok && resData.success) {
+        setHeartCount(resData.count);
       }
-      // Set new reaction
-      updated[emoji] = updated[emoji] + 1;
-      localStorage.setItem('omegle_user_reaction', emoji);
-      setUserReaction(emoji);
-      setReactions(updated);
+    } catch (err) {
+      console.error('Error updating reaction:', err);
     }
   };
 
@@ -107,7 +116,7 @@ export default function Home() {
     }
   };
 
-  // Compact Team Card Renderer
+  // Extra Compact, Clean, and Sexy Team Card Renderer
   const renderMemberCard = (member: TeamMember) => {
     const { profile, designation } = member;
     const accentColor = profile.accentColor;
@@ -115,7 +124,7 @@ export default function Home() {
     return (
       <div
         key={member.id}
-        className="glass-blue rounded-[1.5rem] overflow-hidden border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-md hover:shadow-apple-xl hover:scale-[1.03] hover:border-blue-500/35 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col group relative w-full max-w-[240px] min-h-[260px]"
+        className="glass-blue rounded-[1.25rem] overflow-hidden border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-md hover:shadow-apple-xl hover:scale-[1.03] hover:border-blue-500/35 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col group relative w-full max-w-[190px] min-h-[210px]"
         style={{
           ...getAccentColorStyle(accentColor, 'shadow'),
           backfaceVisibility: 'hidden',
@@ -124,7 +133,7 @@ export default function Home() {
         }}
       >
         {/* Discord Banner Section */}
-        <div className="relative w-full h-16 bg-gradient-to-br from-blue-900/40 via-indigo-950/30 to-black/20 overflow-hidden">
+        <div className="relative w-full h-12 bg-gradient-to-br from-blue-900/40 via-indigo-950/30 to-black/20 overflow-hidden">
           {profile.banner ? (
             <img
               src={profile.banner}
@@ -148,10 +157,10 @@ export default function Home() {
         </div>
 
         {/* Profile Avatar Container */}
-        <div className="relative px-4 -mt-7 flex justify-start z-10">
+        <div className="relative px-3.5 -mt-5 flex justify-start z-10">
           <div className="relative group/avatar">
             {/* Avatar Border */}
-            <div className="relative w-14 h-14 border-[3px] rounded-full overflow-hidden border-[rgb(var(--color-bg-primary))] bg-[rgb(var(--color-bg-secondary))] flex-shrink-0 shadow-apple-md transition-transform duration-500">
+            <div className="relative w-11 h-11 border-[2.5px] rounded-full overflow-hidden border-[rgb(var(--color-bg-primary))] bg-[rgb(var(--color-bg-secondary))] flex-shrink-0 shadow-apple-md transition-transform duration-500">
               {profile.avatar ? (
                 <img
                   src={profile.avatar}
@@ -165,33 +174,33 @@ export default function Home() {
                   }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-blue-500/10 text-base font-bold text-blue-500">
+                <div className="w-full h-full flex items-center justify-center bg-blue-500/10 text-sm font-bold text-blue-500">
                   {profile.username.substring(0, 2).toUpperCase()}
                 </div>
               )}
             </div>
             {/* Live Online Badge */}
-            <span className="absolute bottom-0.5 right-0.5 flex h-3 w-3">
+            <span className="absolute bottom-0 right-0 flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-[rgb(var(--color-bg-primary))]"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500 border border-[rgb(var(--color-bg-primary))]"></span>
             </span>
           </div>
         </div>
 
         {/* Member Details */}
-        <div className="flex-grow flex flex-col justify-between p-4 pt-2 relative z-10">
+        <div className="flex-grow flex flex-col justify-between p-3.5 pt-1.5 relative z-10">
           <div>
-            <h3 className="font-[var(--font-display)] font-semibold text-[rgb(var(--color-text-primary))] group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-sm truncate">
+            <h3 className="font-[var(--font-display)] font-semibold text-[rgb(var(--color-text-primary))] group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-xs truncate">
               {profile.displayName}
             </h3>
-            <p className="text-[10px] font-mono text-[rgb(var(--color-text-tertiary))] tracking-tight truncate">
+            <p className="text-[9px] font-mono text-[rgb(var(--color-text-tertiary))] tracking-tight truncate">
               @{profile.username}
             </p>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-2.5">
             <span
-              className={`px-2 py-0.5 text-[9px] font-semibold rounded-full border ${
+              className={`px-1.5 py-0.5 text-[8px] font-semibold rounded-full border ${
                 designation === 'Founder'
                   ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-500 border-amber-500/25'
                   : designation === 'Bot Developer'
@@ -208,7 +217,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition relative overflow-hidden">
+    <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition relative overflow-hidden flex flex-col items-center">
       {/* BACKGROUND EFFECTS */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <video
@@ -231,8 +240,8 @@ export default function Home() {
       )}
 
       {/* HERO SECTION */}
-      <section className="relative min-h-[90vh] flex flex-col items-center justify-center pt-24 pb-12">
-        <div className="relative z-10 max-w-6xl w-full px-4 sm:px-6 text-center space-y-8 animate-fade-in">
+      <section className="relative w-full max-w-6xl z-10 flex flex-col items-center justify-center pt-24 pb-12">
+        <div className="w-full px-4 sm:px-6 text-center space-y-8 animate-fade-in">
           {/* Logo animation */}
           <div className="flex justify-center animate-slide-down">
             <div className="relative group cursor-pointer">
@@ -270,23 +279,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TEAM SECTION (ABOUT US REPLACED) */}
-      <section className="relative py-16 border-t border-[rgb(var(--color-border))]/30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="glass-blue rounded-3xl p-8 sm:p-10 border border-[rgb(var(--color-border))] dark:border-white/10 shadow-apple-lg backdrop-blur-xl">
-            <div className="text-center space-y-2 mb-10">
-              <div className="inline-flex items-center justify-center px-4 py-1 bg-blue-500/10 rounded-full border border-blue-500/20 mb-2">
-                <span className="text-blue-400 font-bold text-xs uppercase tracking-wider">Meet Our Team</span>
+      {/* TEAM SECTION */}
+      <section className="relative w-full max-w-6xl z-10 py-12">
+        <div className="w-full px-4 sm:px-6">
+          <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg backdrop-blur-xl">
+            <div className="text-center space-y-2 mb-8">
+              <div className="inline-flex items-center justify-center px-3.5 py-0.5 bg-blue-500/10 rounded-full border border-blue-500/20 mb-2">
+                <span className="text-blue-400 font-bold text-[10px] uppercase tracking-wider">Meet Our Team</span>
               </div>
-              <h2 className="text-3xl font-bold text-[rgb(var(--color-text-primary))]">Behind the Scenes</h2>
-              <p className="text-xs text-[rgb(var(--color-text-tertiary))] max-w-md mx-auto">
+              <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">Behind the Scenes</h2>
+              <p className="text-[11px] text-[rgb(var(--color-text-tertiary))] max-w-xs mx-auto">
                 The founders, developers, and management teams maintaining our community portal.
               </p>
             </div>
 
             {teamLoading ? (
               <div className="py-8 flex justify-center">
-                <div className="relative w-8 h-8">
+                <div className="relative w-6 h-6">
                   <div className="absolute inset-0 rounded-full border-2 border-blue-500/20" />
                   <div className="absolute inset-0 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
                 </div>
@@ -294,11 +303,11 @@ export default function Home() {
             ) : !team || (team.founders.length === 0 && team.developers.length === 0 && team.management.length === 0) ? (
               <p className="text-center text-xs text-[rgb(var(--color-text-tertiary))]">No members added yet.</p>
             ) : (
-              <div className="space-y-10 flex flex-col items-center">
+              <div className="space-y-8 flex flex-col items-center">
                 {/* Founders */}
                 {team.founders.length > 0 && (
                   <div className="w-full flex flex-col items-center">
-                    <div className="flex flex-wrap justify-center gap-6">
+                    <div className="flex flex-wrap justify-center gap-5">
                       {team.founders.map(renderMemberCard)}
                     </div>
                   </div>
@@ -306,9 +315,9 @@ export default function Home() {
 
                 {/* Developers */}
                 {team.developers.length > 0 && (
-                  <div className="w-full flex flex-col items-center border-t border-[rgb(var(--color-border))]/10 pt-8">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-6">Developers</h3>
-                    <div className="flex flex-wrap justify-center gap-6">
+                  <div className="w-full flex flex-col items-center border-t border-[rgb(var(--color-border))]/10 pt-6">
+                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-4">Developers</h3>
+                    <div className="flex flex-wrap justify-center gap-5">
                       {team.developers.map(renderMemberCard)}
                     </div>
                   </div>
@@ -316,9 +325,9 @@ export default function Home() {
 
                 {/* Management */}
                 {team.management.length > 0 && (
-                  <div className="w-full flex flex-col items-center border-t border-[rgb(var(--color-border))]/10 pt-8">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-6">Management Team</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center w-full max-w-4xl">
+                  <div className="w-full flex flex-col items-center border-t border-[rgb(var(--color-border))]/10 pt-6">
+                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-4">Management Team</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 justify-items-center w-full max-w-3xl">
                       {team.management.map(renderMemberCard)}
                     </div>
                   </div>
@@ -330,9 +339,9 @@ export default function Home() {
       </section>
 
       {/* OZY SECTION */}
-      <section className="relative py-16 border-t border-[rgb(var(--color-border))]/30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="glass-blue rounded-3xl p-8 sm:p-10 border border-[rgb(var(--color-border))] dark:border-white/10 shadow-apple-lg backdrop-blur-xl flex flex-col md:flex-row items-center gap-8 md:gap-12">
+      <section className="relative w-full max-w-6xl z-10 py-12">
+        <div className="w-full px-4 sm:px-6">
+          <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg backdrop-blur-xl flex flex-col md:flex-row items-center gap-8 md:gap-12">
             <div className="flex-1 space-y-4">
               <div className="inline-flex items-center justify-center px-4 py-1.5 bg-blue-500/10 rounded-full border border-blue-500/20">
                 <span className="text-blue-400 font-bold text-xs uppercase tracking-wider">Introducing Ozy</span>
@@ -396,9 +405,9 @@ export default function Home() {
       </section>
 
       {/* SUBSCRIPTION plans SECTION (COMING SOON) */}
-      <section className="relative py-16 border-t border-[rgb(var(--color-border))]/30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="glass-blue rounded-3xl p-8 sm:p-10 border border-[rgb(var(--color-border))] dark:border-white/10 shadow-apple-lg backdrop-blur-xl relative overflow-hidden">
+      <section className="relative w-full max-w-6xl z-10 py-12">
+        <div className="w-full px-4 sm:px-6">
+          <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg backdrop-blur-xl relative overflow-hidden">
             {/* Blurry background accents */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-500/10 rounded-full filter blur-3xl pointer-events-none" />
 
@@ -480,9 +489,9 @@ export default function Home() {
       </section>
 
       {/* JOIN DISCORD SECTION */}
-      <section className="relative py-16 border-t border-[rgb(var(--color-border))]/30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="glass-blue rounded-3xl p-8 sm:p-10 border border-[rgb(var(--color-border))] dark:border-white/10 shadow-apple-lg backdrop-blur-xl">
+      <section className="relative w-full max-w-6xl z-10 py-12">
+        <div className="w-full px-4 sm:px-6">
+          <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg backdrop-blur-xl">
             <div className="max-w-2xl mx-auto text-center space-y-6">
               <div className="flex justify-center">
                 <div className="p-4 bg-blue-500/10 rounded-2xl text-blue-500 border border-blue-500/20">
@@ -512,43 +521,41 @@ export default function Home() {
       </section>
 
       {/* LIVE REACTION COUNTER SECTION */}
-      <section className="relative py-12 border-t border-[rgb(var(--color-border))]/30 pb-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))] dark:border-white/10 shadow-apple-lg text-center space-y-6">
+      <section className="relative w-full max-w-4xl z-10 py-12 pb-20">
+        <div className="w-full px-4 sm:px-6">
+          <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg text-center space-y-5">
             <div className="space-y-2">
-              <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 bg-green-500/10 rounded-full border border-green-500/20 mb-2">
-                <FiMessageSquare className="w-3 h-3 text-green-400" />
-                <span className="text-green-400 font-bold text-[10px] uppercase tracking-wider">Live Interaction</span>
+              <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 bg-red-500/10 rounded-full border border-red-500/20 mb-2">
+                <FiHeart className="w-3 h-3 text-red-500 fill-red-500" />
+                <span className="text-red-500 font-bold text-[10px] uppercase tracking-wider">Live Reaction</span>
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))]">Have you checked it out?</h3>
               <p className="text-[11px] sm:text-xs text-[rgb(var(--color-text-secondary))] max-w-lg mx-auto">
-                React here to let us know! We may launch early supporter rewards/offers later for users who react here.
+                React here so that we know! We may launch early supporter offers later for those who react here.
               </p>
             </div>
 
-            {/* Clickable reactions layout */}
-            <div className="flex flex-wrap justify-center gap-4 pt-2">
-              {Object.keys(reactions).map((emoji) => {
-                const isSelected = userReaction === emoji;
-                return (
-                  <button
-                    key={emoji}
-                    onClick={() => handleReact(emoji)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold transition-all duration-300 ${
-                      isSelected
-                        ? 'bg-blue-500/15 border-blue-500 text-blue-500 scale-105 shadow-md shadow-blue-500/10'
-                        : 'border-[rgb(var(--color-border))]/60 hover:border-blue-500/40 bg-[rgb(var(--color-bg-secondary))]/30 text-[rgb(var(--color-text-secondary))] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95'
-                    }`}
-                  >
-                    <span className={`text-lg transition-transform duration-300 ${isSelected ? 'scale-125 animate-bounce' : 'group-hover:scale-110'}`}>
-                      {emoji}
-                    </span>
-                    <span className="text-[11px] font-mono tracking-tight select-none">
-                      {reactions[emoji]}
-                    </span>
-                  </button>
-                );
-              })}
+            {/* Clickable Heart Reaction */}
+            <div className="flex justify-center pt-2">
+              {reactionsLoading ? (
+                <div className="w-6 h-6 border-2 border-red-500/20 border-t-red-500 rounded-full animate-spin" />
+              ) : (
+                <button
+                  onClick={handleReactHeart}
+                  className={`flex items-center gap-2.5 px-6 py-3 rounded-2xl border text-sm font-semibold transition-all duration-300 ${
+                    hasReacted
+                      ? 'bg-red-500/15 border-red-500 text-red-500 scale-105 shadow-md shadow-red-500/15'
+                      : 'border-[rgb(var(--color-border))]/65 hover:border-red-500/40 bg-[rgb(var(--color-bg-secondary))]/30 text-[rgb(var(--color-text-secondary))] hover:bg-red-500/5 active:scale-95'
+                  }`}
+                >
+                  <span className={`text-xl transition-transform duration-300 ${hasReacted ? 'scale-125 animate-pulse text-red-500' : 'group-hover:scale-110'}`}>
+                    ❤️
+                  </span>
+                  <span className="text-xs font-mono tracking-tight select-none">
+                    {heartCount}
+                  </span>
+                </button>
+              )}
             </div>
           </div>
         </div>
