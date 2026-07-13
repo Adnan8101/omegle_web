@@ -439,7 +439,7 @@ export default function EconomyManagementPage() {
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center gap-3 mb-4">
           <Link
-            href="/admin/casino"
+            href="/admin/shop"
             className="p-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
           >
             <FiChevronLeft className="w-5 h-5" />
@@ -453,7 +453,7 @@ export default function EconomyManagementPage() {
             </p>
           </div>
           <Link
-            href="/admin/casino/economy/invites"
+            href="/admin/shop/economy/invites"
             className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors text-sm"
           >
             🎯 Invites

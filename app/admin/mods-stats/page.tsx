@@ -65,7 +65,7 @@ export default function ModsStatsPage() {
         setHasPermission(false);
         if (perms?.hasCasinoAccess) {
           setIsRedirecting(true);
-          router.replace('/admin/casino');
+          router.replace('/admin/shop');
         } else if (perms?.hasModeratorAccess) {
           setIsRedirecting(true);
           router.replace('/admin/automod');
@@ -128,7 +128,7 @@ export default function ModsStatsPage() {
               onClick={() => {
                 const perms = session?.user?.permissions;
                 if (perms?.hasCasinoAccess) {
-                  router.replace('/admin/casino');
+                  router.replace('/admin/shop');
                 } else if (perms?.hasSrModAccess) {
                   router.replace('/admin/vctranscript');
                 } else if (perms?.hasModeratorAccess) {

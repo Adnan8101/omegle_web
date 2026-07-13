@@ -15,7 +15,7 @@ export default function AdminLogin() {
       if (perms?.hasFullAccess) {
         router.push('/admin/dashboard');
       } else if (perms?.hasCasinoAccess) {
-        router.push('/admin/casino');
+        router.push('/admin/shop');
       } else if (perms?.hasSrModAccess) {
         router.push('/admin/vctranscript');
       } else if (perms?.hasModeratorAccess) {

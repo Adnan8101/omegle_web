@@ -125,7 +125,7 @@ export default function VCTranscriptPage() {
         setHasPermission(false);
         if (perms?.hasCasinoAccess) {
           setIsRedirecting(true);
-          router.replace('/admin/casino');
+          router.replace('/admin/shop');
         } else {
           setIsRedirecting(true);
           router.replace('/admin');
@@ -166,7 +166,7 @@ export default function VCTranscriptPage() {
               onClick={() => {
                 const perms = session?.user?.permissions;
                 if (perms?.hasCasinoAccess) {
-                  router.replace('/admin/casino');
+                  router.replace('/admin/shop');
                 } else {
                   router.replace('/admin');
                 }

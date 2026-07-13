@@ -75,7 +75,7 @@ export default function UserInviteDetailPage() {
     if (status === 'authenticated' && session?.user) {
       const perms = (session.user as any).permissions;
       if (!perms?.hasFullAccess && !perms?.hasSrModAccess) {
-        router.push('/admin/casino');
+        router.push('/admin/shop');
       }
     }
   }, [status, session, router]);
@@ -140,7 +140,7 @@ export default function UserInviteDetailPage() {
       <div className="max-w-6xl mx-auto">
         {}
         <Link
-          href="/admin/casino/economy/invites"
+          href="/admin/shop/economy/invites"
           className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 mb-6 apple-transition"
         >
           <FiArrowLeft className="w-4 h-4" />

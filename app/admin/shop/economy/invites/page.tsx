@@ -107,7 +107,7 @@ export default function InvitesPage() {
     if (status === 'authenticated' && session?.user) {
       const perms = (session.user as any).permissions;
       if (!perms?.hasFullAccess && !perms?.hasSrModAccess) {
-        router.push('/admin/casino');
+        router.push('/admin/shop');
       }
     }
   }, [status, session, router]);
@@ -336,7 +336,7 @@ export default function InvitesPage() {
               {searchResults.map((result) => (
                 <Link
                   key={result.user_id}
-                  href={`/admin/casino/economy/invites/${result.user_id}`}
+                  href={`/admin/shop/economy/invites/${result.user_id}`}
                   onClick={() => {
                     setShowSearch(false);
                     setSearchQuery('');
@@ -446,7 +446,7 @@ export default function InvitesPage() {
               leaderboard.map((inviter, idx) => (
                 <Link
                   key={inviter.user_id}
-                  href={`/admin/casino/economy/invites/${inviter.user_id}`}
+                  href={`/admin/shop/economy/invites/${inviter.user_id}`}
                   className="flex items-center gap-4 p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-2xl hover:bg-[rgb(var(--color-hover))] apple-transition group"
                 >
                   {}
@@ -592,7 +592,7 @@ export default function InvitesPage() {
                       {invite.invited_username}
                     </p>
                     <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
-                      Invited by <Link href={`/admin/casino/economy/invites/${invite.inviter_id}`} className="text-purple-500 hover:underline">{invite.inviter_username}</Link>
+                      Invited by <Link href={`/admin/shop/economy/invites/${invite.inviter_id}`} className="text-purple-500 hover:underline">{invite.inviter_username}</Link>
                     </p>
                   </div>
                   {}

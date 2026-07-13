@@ -59,7 +59,7 @@ export default function AdminDashboard() {
         setLoading(false);
       }
       router.prefetch('/admin/monitor');
-      router.prefetch('/admin/casino');
+      router.prefetch('/admin/shop');
       router.prefetch('/admin/dashboard/applications');
     }
   }, [status, session, router]);
@@ -250,7 +250,7 @@ export default function AdminDashboard() {
 
           {(perms?.hasFullAccess || perms?.hasCasinoAccess) && (
             <Link
-              href="/admin/casino"
+              href="/admin/shop"
               className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] active:scale-95 rounded-apple border border-[rgb(var(--color-border))] apple-transition group shadow-apple-sm touch-manipulation"
             >
               <div className="p-2.5 sm:p-3 bg-[rgb(var(--color-bg-primary))] rounded-apple group-hover:scale-110 apple-transition shrink-0">

@@ -99,7 +99,7 @@ export default function ServerStatsPage() {
             setHasPermission(false);
             if (perms?.hasCasinoAccess && !perms?.hasViewOnlyAccess) {
               setIsRedirecting(true);
-              router.replace('/admin/casino');
+              router.replace('/admin/shop');
             } else if (perms?.hasViewOnlyAccess) {
               setIsRedirecting(true);
               router.replace('/admin/vctranscript');
@@ -265,7 +265,7 @@ export default function ServerStatsPage() {
                             onClick={() => {
                                 const perms = session?.user?.permissions;
                                 if (perms?.hasCasinoAccess && !perms?.hasViewOnlyAccess) {
-                                    router.replace('/admin/casino');
+                                    router.replace('/admin/shop');
                                 } else if (perms?.hasViewOnlyAccess) {
                                     router.replace('/admin/vctranscript');
                                 } else {

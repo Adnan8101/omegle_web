@@ -40,8 +40,8 @@ function isPathnameAllowed(pathname: string, perms: any): boolean {
     }
     
     // Casino Admin
-    if (perms.hasCasinoAccess && (pathname.startsWith('/admin/casino') || pathname.startsWith('/admin/shop'))) {
-        if (pathname.startsWith('/admin/casino/economy/invites')) {
+    if (perms.hasCasinoAccess && pathname.startsWith('/admin/shop')) {
+        if (pathname.startsWith('/admin/shop/economy/invites')) {
             return false;
         }
         return true;
@@ -51,7 +51,7 @@ function isPathnameAllowed(pathname: string, perms: any): boolean {
     if (perms.hasSrModAccess) {
         if (pathname.startsWith('/admin/vctranscript') ||
             pathname.startsWith('/admin/server-stats') ||
-            pathname.startsWith('/admin/casino/economy/invites') ||
+            pathname.startsWith('/admin/shop/economy/invites') ||
             pathname.startsWith('/admin/mods-stats')) {
             return true;
         }
@@ -80,7 +80,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             if (pathname && pathname !== '/admin' && pathname !== '/admin/signin') {
                 if (!isPathnameAllowed(pathname, perms)) {
                     if (perms.hasCasinoAccess) {
-                        router.replace('/admin/casino');
+                        router.replace('/admin/shop');
                     } else if (perms.hasSrModAccess) {
                         router.replace('/admin/vctranscript');
                     } else if (perms.hasModeratorAccess) {
@@ -174,14 +174,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresCasinoAccess: true,
         },
         {
-            name: 'Casino Access',
-            href: '/admin/casino',
-            icon: <FiDollarSign className="w-5 h-5" />,
-            requiresCasinoAccess: true,
-        },
-        {
             name: 'Invite Stats',
-            href: '/admin/casino/economy/invites',
+            href: '/admin/shop/economy/invites',
             icon: <FiUserPlus className="w-5 h-5" />,
             requiresSrModAccess: true,
         },
@@ -263,14 +257,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         if (href === '/admin/dashboard/applications') {
             return pathname.startsWith('/admin/dashboard/applications');
         }
+        if (href === '/admin/shop/economy/invites') {
+            return pathname.startsWith('/admin/shop/economy/invites');
+        }
         if (href === '/admin/shop') {
-            return pathname.startsWith('/admin/shop');
-        }
-        if (href === '/admin/casino') {
-            return pathname === '/admin/casino';
-        }
-        if (href === '/admin/casino/economy/invites') {
-            return pathname.startsWith('/admin/casino/economy/invites');
+            return pathname.startsWith('/admin/shop') && !pathname.startsWith('/admin/shop/economy/invites');
         }
         if (href === '/admin/mods-stats') {
             return pathname.startsWith('/admin/mods-stats');
