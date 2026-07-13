@@ -140,7 +140,7 @@ export default function Home() {
               <div className="pt-4">
                 <Link
                   href="/shop"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-hover))] text-white rounded-xl font-bold transition-all text-sm group hover:gap-3"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold transition-all text-sm shadow-lg shadow-blue-500/20 group hover:gap-3"
                 >
                   <span>Visit Rewards Shop</span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,11 +150,11 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex-shrink-0 w-48 h-48 md:w-64 md:h-64 relative flex items-center justify-center bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full border border-blue-500/20 shadow-blue-glow overflow-hidden">
+            <div className="flex-shrink-0 flex items-center justify-center">
               <img
-                src="https://cdn.discordapp.com/emojis/1525594143135633539.gif"
+                src="https://cdn.discordapp.com/emojis/1525594143135633539.gif?size=256"
                 alt="Ozy Coin"
-                className="w-32 h-32 md:w-44 md:h-44 object-contain select-none animate-bounce duration-[1500ms]"
+                className="w-24 h-24 sm:w-28 sm:h-28 object-contain select-none animate-bounce duration-[1500ms]"
               />
             </div>
           </div>
