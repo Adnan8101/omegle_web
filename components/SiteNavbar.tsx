@@ -39,7 +39,7 @@ export default function SiteNavbar() {
   }, [mobileOpen]);
   const links = useMemo(
     () => [
-      { label: 'Subscription', href: '/donator' },
+      // { label: 'Subscription', href: '/donator' },
       { label: 'Shop', href: '/shop' },
       { label: 'Staff Application', href: '/staff-application' },
     ],
