@@ -75,8 +75,13 @@ export default function AboutUs() {
     return (
       <div
         key={member.id}
-        className={`glass-blue rounded-[2rem] overflow-hidden border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg hover:shadow-apple-xl hover:scale-[1.03] hover:border-blue-500/35 transition-all duration-500 flex flex-col group relative ${cardSizeClass}`}
-        style={getAccentColorStyle(accentColor, 'shadow')}
+        className={`glass-blue rounded-[2rem] overflow-hidden border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg hover:shadow-apple-xl hover:scale-[1.03] hover:border-blue-500/35 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col group relative ${cardSizeClass}`}
+        style={{
+          ...getAccentColorStyle(accentColor, 'shadow'),
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
+          transform: 'translate3d(0,0,0)',
+        }}
       >
         {/* Card Border Glow on Hover */}
         <div 

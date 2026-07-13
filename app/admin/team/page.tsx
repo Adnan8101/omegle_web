@@ -510,7 +510,16 @@ export default function TeamManagement() {
                 <div className="p-3 bg-[rgb(var(--color-bg-tertiary))]/50 rounded-xl flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-full overflow-hidden bg-[rgb(var(--color-bg-tertiary))]">
                     {selectedMember.profile?.avatar ? (
-                      <img src={selectedMember.profile.avatar} className="object-cover w-full h-full" />
+                      <img
+                        src={selectedMember.profile.avatar}
+                        className="object-cover w-full h-full"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (target.src.includes('.gif')) {
+                            target.src = target.src.replace('.gif', '.webp');
+                          }
+                        }}
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs text-[rgb(var(--color-text-tertiary))] font-semibold">?</div>
                     )}
