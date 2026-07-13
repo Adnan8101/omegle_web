@@ -93,6 +93,12 @@ export default function AboutUs() {
               src={profile.banner}
               alt="Banner"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src.includes('.gif')) {
+                  target.src = target.src.replace('.gif', '.webp');
+                }
+              }}
             />
           ) : (
             <div
@@ -123,6 +129,12 @@ export default function AboutUs() {
                   src={profile.avatar}
                   alt={profile.displayName}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src.includes('.gif')) {
+                      target.src = target.src.replace('.gif', '.webp');
+                    }
+                  }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-blue-500/10 text-xl font-bold text-blue-500">

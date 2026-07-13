@@ -17,14 +17,14 @@ const CACHE_TTL_MS = 10 * 1000; // 10 seconds cache to prevent rate-limiting dur
    */
 function getAvatarUrl(userId: string, avatarHash: string | null): string | null {
   if (!avatarHash) return null;
-  const extension = avatarHash.startsWith('a_') ? 'gif' : 'png';
+  const extension = avatarHash.startsWith('a_') ? 'gif' : 'webp';
   return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=256`;
 }
 
 function getBannerUrl(userId: string, bannerHash: string | null): string | null {
   if (!bannerHash) return null;
-  // Always use webp format for banners to avoid Discord CDN 415 Unsupported Media Type errors on animated GIFs
-  return `https://cdn.discordapp.com/banners/${userId}/${bannerHash}.webp?size=512`;
+  const extension = bannerHash.startsWith('a_') ? 'gif' : 'webp';
+  return `https://cdn.discordapp.com/banners/${userId}/${bannerHash}.${extension}?size=512`;
 }
 
 /**

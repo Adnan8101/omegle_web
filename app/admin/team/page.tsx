@@ -339,6 +339,12 @@ export default function TeamManagement() {
                               src={member.profile.avatar}
                               alt={member.profile.displayName}
                               className="object-cover w-full h-full"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                if (target.src.includes('.gif')) {
+                                  target.src = target.src.replace('.gif', '.webp');
+                                }
+                              }}
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-xs font-semibold text-[rgb(var(--color-text-tertiary))]">
