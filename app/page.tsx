@@ -35,6 +35,7 @@ export default function Home() {
   const [heartCount, setHeartCount] = useState<number>(0);
   const [hasReacted, setHasReacted] = useState<boolean>(false);
   const [reactionsLoading, setReactionsLoading] = useState(true);
+  const [showSubscriptionOverlay, setShowSubscriptionOverlay] = useState(true);
 
   // Fetch Team and Reactions Data
   useEffect(() => {
@@ -473,17 +474,19 @@ export default function Home() {
             </div>
 
             {/* Frosty Overlay Container with Coming Soon Message */}
-            <div className="absolute inset-0 bg-black/10 dark:bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
-              <div className="glass-blue border border-white/20 p-6 rounded-2xl max-w-sm text-center shadow-2xl scale-95 md:scale-100">
-                <h4 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">Subscriptions Coming Soon</h4>
-                <p className="text-[10px] text-[rgb(var(--color-text-tertiary))] mb-4">
-                  We are testing payment processors to ensure secure checkout flows.
-                </p>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 rounded-lg border border-amber-500/25 text-amber-500 text-[10px] font-semibold">
-                  <span>Launching Q3 2026</span>
+            {showSubscriptionOverlay && (
+              <div className="absolute inset-0 bg-black/10 dark:bg-black/40 backdrop-blur-[2px] flex items-center justify-center transition-all duration-500">
+                <div className="glass-blue border border-white/20 p-6 rounded-2xl max-w-sm text-center shadow-2xl scale-95 md:scale-100">
+                  <h4 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-4">Launching Soon</h4>
+                  <button
+                    onClick={() => setShowSubscriptionOverlay(false)}
+                    className="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-500/10 transition-colors"
+                  >
+                    Got it
+                  </button>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
