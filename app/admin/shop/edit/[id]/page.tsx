@@ -5,13 +5,11 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { FiAlertCircle, FiArrowLeft, FiCheck, FiImage, FiLoader, FiPackage, FiSave, FiUpload, FiX } from 'react-icons/fi';
-
 interface GuildRole {
   id: string;
   name: string;
   color: number;
 }
-
 interface FormData {
   name: string;
   price: string;
@@ -27,7 +25,6 @@ interface FormData {
   reply_message: string;
   expires_in_days: string;
 }
-
 export default function EditItemPage() {
   const params = useParams();
   const itemId = params.id as string;
@@ -57,7 +54,6 @@ export default function EditItemPage() {
   const [success, setSuccess] = useState(false);
   const [roles, setRoles] = useState<GuildRole[]>([]);
   const [selectedRequiredRoles, setSelectedRequiredRoles] = useState<string[]>([]);
-
   const parseRoleIds = (roleRef: string | null | undefined): string[] => {
     if (!roleRef) return [];
     const unique = new Set<string>();
@@ -72,7 +68,6 @@ export default function EditItemPage() {
     }
     return Array.from(unique);
   };
-
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -96,13 +91,11 @@ export default function EditItemPage() {
     }
     return <span className="inline-block">{emoji}</span>;
   };
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin');
     }
   }, [status, router]);
-
   useEffect(() => {
     if (status === 'authenticated' && itemId) {
       fetchItem();
@@ -114,11 +107,9 @@ export default function EditItemPage() {
         .catch(() => {});
     }
   }, [status, itemId]);
-
   useEffect(() => {
     setFormData((prev) => ({ ...prev, role_required_id: selectedRequiredRoles.join(',') }));
   }, [selectedRequiredRoles]);
-
   const fetchItem = async () => {
     try {
       const res = await fetch(`/api/casino/shop/${itemId}`, { cache: 'no-store' });
@@ -152,11 +143,9 @@ export default function EditItemPage() {
       setLoading(false);
     }
   };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
@@ -199,7 +188,6 @@ export default function EditItemPage() {
       img.src = URL.createObjectURL(file);
     });
   };
-
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -234,7 +222,6 @@ export default function EditItemPage() {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
-
   const removeImage = async () => {
     if (!formData.thumbnail) return;
     if (formData.thumbnail.includes('blob.vercel-storage.com')) {
@@ -250,7 +237,6 @@ export default function EditItemPage() {
     }
     setFormData(prev => ({ ...prev, thumbnail: '' }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -273,7 +259,6 @@ export default function EditItemPage() {
       setSaving(false);
     }
   };
-
   if (status === 'loading' || loading) {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
@@ -290,7 +275,6 @@ export default function EditItemPage() {
       </div>
     );
   }
-
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="max-w-4xl mx-auto">
@@ -310,21 +294,18 @@ export default function EditItemPage() {
             </p>
           </div>
         </div>
-
         {success && (
           <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-2xl flex items-center gap-3">
             <FiCheck className="w-5 h-5 text-green-500" />
             <span className="text-green-500 font-medium">Item updated successfully! Redirecting...</span>
           </div>
         )}
-
         {error && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
             <FiAlertCircle className="w-5 h-5 text-red-500" />
             <span className="text-red-500">{error}</span>
           </div>
         )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
@@ -390,7 +371,6 @@ export default function EditItemPage() {
               </div>
             </div>
           </div>
-
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4 flex items-center gap-2">
               <FiImage className="w-5 h-5 text-[rgb(var(--color-accent))]" />
@@ -431,13 +411,11 @@ export default function EditItemPage() {
                   Supported: JPEG, PNG, GIF, WebP. Max 10MB. Images are automatically compressed.
                 </p>
               </div>
-
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]"></div>
                 <span className="text-xs text-[rgb(var(--color-text-tertiary))]">OR</span>
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]"></div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Image URL
@@ -451,7 +429,6 @@ export default function EditItemPage() {
                   placeholder="https://example.com/image.png"
                 />
               </div>
-
               {formData.thumbnail && (
                 <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl">
                   <div className="flex items-start justify-between mb-2">
@@ -483,7 +460,6 @@ export default function EditItemPage() {
               )}
             </div>
           </div>
-
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               💰 Income Settings
@@ -522,7 +498,6 @@ export default function EditItemPage() {
               </div>
             </div>
           </div>
-
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               🎭 Role Settings
@@ -569,7 +544,6 @@ export default function EditItemPage() {
               </div>
             </div>
           </div>
-
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] mb-4">
               ⚙️ Advanced Settings
@@ -618,7 +592,6 @@ export default function EditItemPage() {
               </div>
             </div>
           </div>
-
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
               href="/admin/shop"

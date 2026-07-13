@@ -3,11 +3,9 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
-
 const GUILD_ID = "1507458872225566811";
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,7 +16,6 @@ export async function GET(request: NextRequest) {
     if (!hasAccess) {
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }
-
     let budget = await prismaBot.shopBudget.findUnique({
       where: { guild_id: GUILD_ID }
     });
@@ -27,13 +24,10 @@ export async function GET(request: NextRequest) {
         data: { guild_id: GUILD_ID, available: 0, total_added: 0, total_spent: 0 }
       });
     }
-
     const logs = await prismaBot.shopBudgetLog.findMany({
       where: { guild_id: GUILD_ID },
       orderBy: { created_at: 'desc' }
     });
-
-    // Fetch manual coin logs from EconomyPointLog
     const coinLogs = await prismaBot.economyPointLog.findMany({
       where: {
         guild_id: GUILD_ID,
@@ -41,22 +35,18 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { created_at: 'desc' }
     });
-
     const userIdsToFetch = new Set<string>();
     coinLogs.forEach(log => {
       if (log.user_id) userIdsToFetch.add(log.user_id);
       if (log.admin_id) userIdsToFetch.add(log.admin_id);
     });
-
     const userCaches = userIdsToFetch.size > 0
       ? await prismaBot.discordUserCache.findMany({
           where: { user_id: { in: Array.from(userIdsToFetch) } },
           select: { user_id: true, username: true, display_name: true }
         })
       : [];
-
     const userCacheMap = new Map(userCaches.map(u => [u.user_id, u.display_name || u.username]));
-
     const mappedBudgetLogs = logs.map(log => ({
       id: log.id,
       type: log.type,
@@ -71,7 +61,6 @@ export async function GET(request: NextRequest) {
       status: log.status,
       created_at: log.created_at.toISOString()
     }));
-
     const mappedCoinLogs = coinLogs.map(log => {
       const adminName = userCacheMap.get(log.admin_id || '') || log.admin_id || 'System';
       const userName = userCacheMap.get(log.user_id) || log.user_id || 'Unknown';
@@ -90,11 +79,9 @@ export async function GET(request: NextRequest) {
         created_at: log.created_at.toISOString()
       };
     });
-
     const combinedLogs = [...mappedBudgetLogs, ...mappedCoinLogs].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-
     return NextResponse.json({
       success: true,
       budget: {

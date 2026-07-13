@@ -1,5 +1,4 @@
 'use client';
-
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -15,7 +14,6 @@ import {
   FiX,
   FiCopy,
 } from 'react-icons/fi';
-
 interface TeamMember {
   id: string;
   discord_user_id: string;
@@ -30,37 +28,29 @@ interface TeamMember {
     accentColor: string | null;
   } | null;
 }
-
 export default function TeamManagement() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-
-  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
-
-  // Form states
   const [discordUserId, setDiscordUserId] = useState('');
   const [designation, setDesignation] = useState('Founder');
   const [submitting, setSubmitting] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
   useEffect(() => {
     if (status === 'loading') return;
     if (status === 'unauthenticated') {
       router.push('/admin');
       return;
     }
-
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
       const canAccess = perms?.hasFullAccess;
@@ -76,13 +66,11 @@ export default function TeamManagement() {
       setHasPermission(true);
     }
   }, [status, session, router]);
-
   useEffect(() => {
     if (hasPermission) {
       fetchMembers();
     }
   }, [hasPermission]);
-
   const fetchMembers = async () => {
     setLoading(true);
     setError(null);
@@ -101,13 +89,11 @@ export default function TeamManagement() {
       setLoading(false);
     }
   };
-
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
     setSubmitting(true);
-
     try {
       const response = await fetch('/api/admin/team', {
         method: 'POST',
@@ -115,7 +101,6 @@ export default function TeamManagement() {
         body: JSON.stringify({ discord_user_id: discordUserId, designation }),
       });
       const data = await response.json();
-
       if (response.ok) {
         setSuccessMsg('Team member added successfully!');
         setDiscordUserId('');
@@ -131,14 +116,12 @@ export default function TeamManagement() {
       setSubmitting(false);
     }
   };
-
   const handleEditMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMember) return;
     setError(null);
     setSuccessMsg(null);
     setSubmitting(true);
-
     try {
       const response = await fetch(`/api/admin/team/${selectedMember.id}`, {
         method: 'PUT',
@@ -146,7 +129,6 @@ export default function TeamManagement() {
         body: JSON.stringify({ designation }),
       });
       const data = await response.json();
-
       if (response.ok) {
         setSuccessMsg('Designation updated successfully!');
         setIsEditModalOpen(false);
@@ -161,19 +143,16 @@ export default function TeamManagement() {
       setSubmitting(false);
     }
   };
-
   const handleDeleteMember = async () => {
     if (!deleteConfirmId) return;
     setError(null);
     setSuccessMsg(null);
     setSubmitting(true);
-
     try {
       const response = await fetch(`/api/admin/team/${deleteConfirmId}`, {
         method: 'DELETE',
       });
       const data = await response.json();
-
       if (response.ok) {
         setSuccessMsg('Team member deleted successfully.');
         setDeleteConfirmId(null);
@@ -187,14 +166,11 @@ export default function TeamManagement() {
       setSubmitting(false);
     }
   };
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(text);
     setTimeout(() => setCopiedId(null), 2000);
   };
-
-  // Filter members based on search
   const filteredMembers = members.filter((member) => {
     const query = searchQuery.toLowerCase();
     const discordId = member.discord_user_id.toLowerCase();
@@ -208,7 +184,6 @@ export default function TeamManagement() {
       displayName.includes(query)
     );
   });
-
   const getDesignationBadgeClass = (role: string) => {
     switch (role) {
       case 'Founder':
@@ -221,7 +196,6 @@ export default function TeamManagement() {
         return 'bg-gray-500/10 text-gray-400 border border-gray-400/20';
     }
   };
-
   if (hasPermission === null || loading && members.length === 0) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -235,14 +209,12 @@ export default function TeamManagement() {
       </div>
     );
   }
-
   if (hasPermission === false) {
     return null;
   }
-
   return (
     <div className="space-y-6 max-w-6xl mx-auto px-4 py-6">
-      {/* Alert Banners */}
+      {}
       {error && (
         <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl animate-fade-in">
           <FiAlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -252,7 +224,6 @@ export default function TeamManagement() {
           </button>
         </div>
       )}
-
       {successMsg && (
         <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 text-green-500 rounded-2xl animate-fade-in">
           <FiCheck className="w-5 h-5 flex-shrink-0" />
@@ -262,8 +233,7 @@ export default function TeamManagement() {
           </button>
         </div>
       )}
-
-      {/* Header section */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
@@ -286,8 +256,7 @@ export default function TeamManagement() {
           Add Member
         </button>
       </div>
-
-      {/* Search & Refresh */}
+      {}
       <div className="flex gap-3">
         <div className="relative flex-grow">
           <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-tertiary))] w-4 h-4" />
@@ -307,8 +276,7 @@ export default function TeamManagement() {
           <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
-
-      {/* Members table */}
+      {}
       <div className="glass-blue rounded-3xl border border-[rgb(var(--color-border))] overflow-hidden shadow-apple-lg">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
@@ -419,8 +387,7 @@ export default function TeamManagement() {
           </table>
         </div>
       </div>
-
-      {/* Add Modal */}
+      {}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="glass-blue w-full max-w-md rounded-3xl border border-[rgb(var(--color-border))] p-6 shadow-apple-2xl animate-scale-in">
@@ -433,7 +400,6 @@ export default function TeamManagement() {
                 <FiX className="w-5 h-5" />
               </button>
             </div>
-
             <form onSubmit={handleAddMember} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1.5">
@@ -448,7 +414,6 @@ export default function TeamManagement() {
                   className="w-full px-4 py-2.5 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))]/50 focus:outline-none focus:border-blue-500 text-sm"
                 />
               </div>
-
               <div>
                 <label className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1.5">
                   Designation
@@ -463,7 +428,6 @@ export default function TeamManagement() {
                   <option value="Management">Management</option>
                 </select>
               </div>
-
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
@@ -484,8 +448,7 @@ export default function TeamManagement() {
           </div>
         </div>
       )}
-
-      {/* Edit Modal */}
+      {}
       {isEditModalOpen && selectedMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="glass-blue w-full max-w-md rounded-3xl border border-[rgb(var(--color-border))] p-6 shadow-apple-2xl animate-scale-in">
@@ -501,7 +464,6 @@ export default function TeamManagement() {
                 <FiX className="w-5 h-5" />
               </button>
             </div>
-
             <form onSubmit={handleEditMember} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1.5">
@@ -530,7 +492,6 @@ export default function TeamManagement() {
                   </div>
                 </div>
               </div>
-
               <div>
                 <label className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1.5">
                   Designation
@@ -545,7 +506,6 @@ export default function TeamManagement() {
                   <option value="Management">Management</option>
                 </select>
               </div>
-
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
@@ -569,8 +529,7 @@ export default function TeamManagement() {
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
+      {}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="glass-blue w-full max-w-sm rounded-3xl border border-[rgb(var(--color-border))] p-6 shadow-apple-2xl animate-scale-in">

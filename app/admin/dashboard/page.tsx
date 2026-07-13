@@ -15,14 +15,12 @@ FiShield,
 FiUsers,
 FiXCircle
 } from 'react-icons/fi';
-
 interface Stats {
   total: number;
   pending: number;
   considered: number;
   denied: number;
 }
-
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -35,7 +33,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const DASHBOARD_CACHE_KEY = 'admin_dashboard_stats_v1';
   const DASHBOARD_CACHE_TTL_MS = 60_000;
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.replace('/admin');
@@ -63,7 +60,6 @@ export default function AdminDashboard() {
       router.prefetch('/admin/dashboard/applications');
     }
   }, [status, session, router]);
-
   const fetchStats = async () => {
     try {
       const response = await fetch('/api/applications/stats');
@@ -84,7 +80,6 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
-
   const statCards = [
     {
       title: 'Total Applications',
@@ -115,7 +110,6 @@ export default function AdminDashboard() {
       bgColor: 'bg-red-500/20',
     },
   ];
-
   if (status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -148,16 +142,13 @@ export default function AdminDashboard() {
       </div>
     );
   }
-
   const perms = session?.user?.permissions;
-
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[rgb(var(--color-text-primary))] mb-2 tracking-tight">Dashboard Overview</h1>
         <p className="text-sm sm:text-base text-[rgb(var(--color-text-secondary))] font-light">Monitor and manage community staff panel</p>
       </div>
-
       {perms?.hasFullAccess ? (
         loading ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
@@ -200,7 +191,6 @@ export default function AdminDashboard() {
           </p>
         </div>
       )}
-
       <div className="glass-blue rounded-3xl p-5 sm:p-6 md:p-8 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-apple-md">
         <h2 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-4 sm:mb-6">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -232,7 +222,6 @@ export default function AdminDashboard() {
               </Link>
             </>
           )}
-
           {perms?.hasFullAccess && (
             <Link
               href="/admin/monitor"
@@ -247,7 +236,6 @@ export default function AdminDashboard() {
               </div>
             </Link>
           )}
-
           {(perms?.hasFullAccess || perms?.hasCasinoAccess) && (
             <Link
               href="/admin/shop"
@@ -262,7 +250,6 @@ export default function AdminDashboard() {
               </div>
             </Link>
           )}
-
           {(perms?.hasFullAccess || perms?.hasSrModAccess) && (
             <>
               <Link
@@ -291,7 +278,6 @@ export default function AdminDashboard() {
               </Link>
             </>
           )}
-
           {(perms?.hasFullAccess || perms?.hasModeratorAccess) && (
             <Link
               href="/admin/automod"
@@ -308,7 +294,6 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
-
       <div className="glass-blue rounded-3xl p-5 sm:p-6 md:p-8 border border-[rgb(var(--color-border))] shadow-apple-md">
         <h2 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-4 sm:mb-6">System Information</h2>
         <div className="space-y-3 sm:space-y-4 text-[rgb(var(--color-text-secondary))]">

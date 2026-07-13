@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
     const staffRoleIds: string[] = [];
     const srModRoleIds: string[] = [];
     const allStaffRoleIds = modRoleIds;
-
     const staffUsers = await queryBotDb(`
       SELECT
         user_id,

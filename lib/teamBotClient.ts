@@ -1,5 +1,4 @@
 import { getErrorMessage } from './constants';
-
 export interface DiscordUserProfile {
   id: string;
   username: string;
@@ -8,39 +7,27 @@ export interface DiscordUserProfile {
   banner: string | null;
   accentColor: string | null;
 }
-
 const cache = new Map<string, { profile: DiscordUserProfile; expiresAt: number }>();
-const CACHE_TTL_MS = 10 * 1000; // 10 seconds cache to prevent rate-limiting during concurrent re-renders
-
-/**
-   * Helper to construct appropriate Discord CDN URLs
-   */
+const CACHE_TTL_MS = 10 * 1000; 
 function getAvatarUrl(userId: string, avatarHash: string | null): string | null {
   if (!avatarHash) return null;
   const extension = avatarHash.startsWith('a_') ? 'gif' : 'webp';
   return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=256`;
 }
-
 function getBannerUrl(userId: string, bannerHash: string | null): string | null {
   if (!bannerHash) return null;
   const extension = bannerHash.startsWith('a_') ? 'gif' : 'webp';
   return `https://cdn.discordapp.com/banners/${userId}/${bannerHash}.${extension}?size=512`;
 }
-
-/**
- * Fetch a single live profile, first trying the Bot API, and falling back to direct Discord fetch.
- */
 export async function getLiveUserProfile(userId: string): Promise<DiscordUserProfile | null> {
   const cached = cache.get(userId);
   if (cached && Date.now() < cached.expiresAt) {
     return cached.profile;
   }
-
-  // 1. Try fetching from Bot API
   try {
     const botApiPort = process.env.BOT_API_PORT || '3002';
     const response = await fetch(`http://localhost:${botApiPort}/api/user/${userId}`, {
-      signal: AbortSignal.timeout(3000), // 3s timeout
+      signal: AbortSignal.timeout(3000), 
     });
     if (response.ok) {
       const data = await response.json();
@@ -52,25 +39,20 @@ export async function getLiveUserProfile(userId: string): Promise<DiscordUserPro
   } catch (error) {
     console.warn(`[teamBotClient] Failed to fetch from bot HTTP API on port ${process.env.BOT_API_PORT || '3002'}, falling back to direct Discord API:`, getErrorMessage(error));
   }
-
-  // 2. Fallback to direct Discord REST API
   const botToken = process.env.DISCORD_BOT_TOKEN || process.env.BOT_TOKEN;
   if (!botToken) {
     console.warn('[teamBotClient] No DISCORD_BOT_TOKEN or BOT_TOKEN configured, cannot query Discord API directly.');
     return null;
   }
-
   try {
     const response = await fetch(`https://discord.com/api/v10/users/${userId}`, {
       headers: {
         Authorization: `Bot ${botToken}`,
       },
     });
-
     if (!response.ok) {
       throw new Error(`Discord API responded with status ${response.status}`);
     }
-
     const user = await response.json();
     const profile: DiscordUserProfile = {
       id: user.id,
@@ -80,7 +62,6 @@ export async function getLiveUserProfile(userId: string): Promise<DiscordUserPro
       banner: getBannerUrl(user.id, user.banner),
       accentColor: user.accent_color ? `#${user.accent_color.toString(16).padStart(6, '0')}` : null,
     };
-
     cache.set(userId, { profile, expiresAt: Date.now() + CACHE_TTL_MS });
     return profile;
   } catch (error) {
@@ -88,24 +69,17 @@ export async function getLiveUserProfile(userId: string): Promise<DiscordUserPro
     return null;
   }
 }
-
-/**
- * Fetch profiles for a list of user IDs in parallel.
- */
 export async function getLiveUserProfiles(userIds: string[]): Promise<Map<string, DiscordUserProfile | null>> {
   const result = new Map<string, DiscordUserProfile | null>();
   if (userIds.length === 0) return result;
-
   const profiles = await Promise.all(
     userIds.map(async (id) => {
       const profile = await getLiveUserProfile(id);
       return { id, profile };
     })
   );
-
   profiles.forEach(({ id, profile }) => {
     result.set(id, profile);
   });
-
   return result;
 }

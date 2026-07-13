@@ -27,6 +27,7 @@ export const authOptions: NextAuthOptions = {
         token.discordId = profile.id;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at;
+        token.error = undefined; 
         token.permissions = {
           hasFullAccess: false,
           hasModeratorAccess: false,
@@ -36,6 +37,7 @@ export const authOptions: NextAuthOptions = {
           isOwner: false,
           isAdmin: false,
           hasManageServer: false,
+          hasSrModAccess: false, 
           roles: [],
         };
         token.accessCheckedAt = 0;
@@ -58,8 +60,16 @@ export const authOptions: NextAuthOptions = {
             token.accessToken = tokens.access_token;
             token.expiresAt = now + tokens.expires_in;
             token.refreshToken = tokens.refresh_token ?? token.refreshToken;
+            token.error = undefined; 
+          } else {
+            console.error('[Auth] Token refresh rejected by Discord, status:', response.status);
+            token.error = 'RefreshAccessTokenError';
+            return token; 
           }
         } catch (error) {
+          console.error('[Auth] Token refresh network error:', error);
+          token.error = 'RefreshAccessTokenError';
+          return token; 
         }
       }
       const nowMs = Date.now();
@@ -100,8 +110,12 @@ export const authOptions: NextAuthOptions = {
           }
           const previousPermissions = token.permissions as UserPermissions | undefined;
           const permissions = await checkUserPermissions(token.accessToken, casinoRoleIds, srModRoleIds, modRoleIds, staffRoleIds, adminRoleId);
-          const lostAccessTransiently =
+          const previousHadRealRoles =
             Boolean(previousPermissions?.hasAnyAccess) &&
+            Array.isArray(previousPermissions?.roles) &&
+            previousPermissions!.roles.length > 0;
+          const lostAccessTransiently =
+            previousHadRealRoles &&
             !permissions.hasAnyAccess &&
             Array.isArray(permissions.roles) &&
             permissions.roles.length === 0;
@@ -146,6 +160,7 @@ export const authOptions: NextAuthOptions = {
       session.user.id = token.discordId;
       session.accessToken = token.accessToken;
       session.user.hasAccess = token.hasAccess ?? false;
+      session.error = token.error;
       session.user.permissions = token.permissions || {
         hasFullAccess: false,
         hasModeratorAccess: false,
@@ -155,6 +170,7 @@ export const authOptions: NextAuthOptions = {
         isOwner: false,
         isAdmin: false,
         hasManageServer: false,
+        hasSrModAccess: false,
         roles: [],
       };
       return session;

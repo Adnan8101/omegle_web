@@ -19,7 +19,6 @@ import {
   FiTrendingUp,
   FiUsers
 } from 'react-icons/fi';
-
 interface ShopItem {
   id: string;
   name: string;
@@ -30,7 +29,6 @@ interface ShopItem {
   stock: number | null;
   created_at: string;
 }
-
 interface Stats {
   totalItems: number;
   totalPurchases: number;
@@ -39,13 +37,11 @@ interface Stats {
   totalUsers: number;
   totalPoints: number;
 }
-
 interface TopItem {
   name: string;
   purchaseCount: number;
   totalRevenue: number;
 }
-
 export default function ShopDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -59,8 +55,6 @@ export default function ShopDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
-
-  // Budget & Logs states
   const [activeTab, setActiveTab] = useState<'items' | 'budget' | 'logs'>('items');
   const [budget, setBudget] = useState<{ available: number; totalAdded: number; totalSpent: number } | null>(null);
   const [budgetLogs, setBudgetLogs] = useState<any[]>([]);
@@ -70,7 +64,6 @@ export default function ShopDashboard() {
   const [setAmount, setSetAmount] = useState('');
   const [budgetLoading, setBudgetLoading] = useState(false);
   const [setSuccess, setSetSuccess] = useState(false);
-
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -95,7 +88,6 @@ export default function ShopDashboard() {
     }
     return <span className="inline-block">{emoji}</span>;
   };
-
   useEffect(() => {
     if (status === 'loading') return;
     if (status === 'unauthenticated') {
@@ -103,7 +95,6 @@ export default function ShopDashboard() {
       router.push('/admin');
       return;
     }
-
     if (status === 'authenticated') {
       const perms = session?.user?.permissions;
       const canAccess = perms?.hasFullAccess || perms?.hasCasinoAccess;
@@ -121,13 +112,11 @@ export default function ShopDashboard() {
       setHasPermission(true);
     }
   }, [status, session, router]);
-
   useEffect(() => {
     if (status === 'authenticated') {
       fetchData();
     }
   }, [status]);
-
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -137,23 +126,19 @@ export default function ShopDashboard() {
         fetch('/api/casino/stats', { cache: 'no-store' }),
         fetch('/api/casino/budget', { cache: 'no-store' })
       ]);
-
       const itemsData = await itemsRes.json();
       const statsData = await statsRes.json();
       const budgetData = await budgetRes.json();
-
       if (itemsRes.ok) {
         setItems(itemsData.items || []);
         setCurrencyEmoji(itemsData.currencyEmoji || '🪙');
       } else {
         setError(itemsData.error || 'Failed to load shop items');
       }
-
       if (statsRes.ok) {
         setStats(statsData.stats || null);
         setTopItems(statsData.topItems || []);
       }
-
       if (budgetRes.ok) {
         setBudget(budgetData.budget || null);
         setBudgetLogs(budgetData.logs || []);
@@ -165,14 +150,13 @@ export default function ShopDashboard() {
       setLoading(false);
     }
   };
-
   const handleDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/casino/shop/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setItems(items.filter(item => item.id !== id));
         setDeleteConfirm(null);
-        fetchData(); // refresh stats
+        fetchData(); 
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to delete item');
@@ -182,7 +166,6 @@ export default function ShopDashboard() {
       setError('Failed to delete item');
     }
   };
-
   const handleRefill = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!refillAmount || refillLoading) return;
@@ -208,7 +191,6 @@ export default function ShopDashboard() {
       setRefillLoading(false);
     }
   };
-
   const handleSetBudget = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!setAmount || budgetLoading) return;
@@ -234,13 +216,10 @@ export default function ShopDashboard() {
       setBudgetLoading(false);
     }
   };
-
   const filteredItems = items.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   const formatNumber = (n: number) => n.toLocaleString();
-
   const statCards = [
     {
       title: 'Total Items',
@@ -272,7 +251,6 @@ export default function ShopDashboard() {
       showCurrency: true,
     },
   ];
-
   const budgetStatCards = [
     {
       title: 'Available Budget',
@@ -296,7 +274,6 @@ export default function ShopDashboard() {
       bgColor: 'bg-purple-500/20',
     },
   ];
-
   if (status === 'loading' || hasPermission === null || isRedirecting) {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen flex items-center justify-center">
@@ -309,7 +286,6 @@ export default function ShopDashboard() {
       </div>
     );
   }
-
   if (hasPermission === false) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
@@ -342,7 +318,6 @@ export default function ShopDashboard() {
       </div>
     );
   }
-
   if (loading) {
     return (
       <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
@@ -360,7 +335,6 @@ export default function ShopDashboard() {
       </div>
     );
   }
-
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-[rgb(var(--color-bg-primary))] min-h-screen">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
@@ -389,15 +363,13 @@ export default function ShopDashboard() {
           </Link>
         </div>
       </div>
-
       {error && (
         <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
           <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <span className="text-red-500">{error}</span>
         </div>
       )}
-
-      {/* Stats Cards */}
+      {}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         {statCards.map((card, index) => (
           <div
@@ -421,8 +393,7 @@ export default function ShopDashboard() {
           </div>
         ))}
       </div>
-
-      {/* Action Links Grid */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
         <Link
           href="/admin/shop/economy"
@@ -439,7 +410,6 @@ export default function ShopDashboard() {
           </div>
           <FiChevronRight className="w-4 h-4 text-[rgb(var(--color-text-tertiary))] group-hover:text-yellow-500 group-hover:translate-x-1 apple-transition" />
         </Link>
-
         {session?.user?.permissions?.hasFullAccess && (
           <Link
             href="/admin/shop/economy/invites"
@@ -457,7 +427,6 @@ export default function ShopDashboard() {
             <FiChevronRight className="w-4 h-4 text-[rgb(var(--color-text-tertiary))] group-hover:text-purple-500 group-hover:translate-x-1 apple-transition" />
           </Link>
         )}
-
         <Link
           href="/admin/shop/purchases"
           className="glass-blue rounded-2xl p-4 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] apple-transition flex items-center justify-between group"
@@ -473,7 +442,6 @@ export default function ShopDashboard() {
           </div>
           <FiChevronRight className="w-4 h-4 text-[rgb(var(--color-text-tertiary))] group-hover:text-[rgb(var(--color-accent))] group-hover:translate-x-1 apple-transition" />
         </Link>
-
         <Link
           href="/shop"
           target="_blank"
@@ -491,8 +459,7 @@ export default function ShopDashboard() {
           <FiChevronRight className="w-4 h-4 text-[rgb(var(--color-text-tertiary))] group-hover:text-[rgb(var(--color-accent))] group-hover:translate-x-1 apple-transition" />
         </Link>
       </div>
-
-      {/* Tabs Switcher */}
+      {}
       <div className="flex border-b border-[rgb(var(--color-border))] mb-6 sm:mb-8">
         <button
           onClick={() => setActiveTab('items')}
@@ -525,7 +492,6 @@ export default function ShopDashboard() {
           Logs
         </button>
       </div>
-
       {activeTab === 'items' && (
         <>
           {topItems.length > 0 && (
@@ -558,7 +524,6 @@ export default function ShopDashboard() {
               </div>
             </div>
           )}
-
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Shop Items</h2>
@@ -573,7 +538,6 @@ export default function ShopDashboard() {
                 />
               </div>
             </div>
-
             {filteredItems.length === 0 ? (
               <div className="text-center py-12">
                 <FiPackage className="w-12 h-12 text-[rgb(var(--color-text-tertiary))] mx-auto mb-4" />
@@ -611,7 +575,6 @@ export default function ShopDashboard() {
                           </p>
                         </div>
                       </div>
-
                       <div className="grid grid-cols-2 gap-2 py-3 border-t border-[rgb(var(--color-border))]/50 text-xs text-[rgb(var(--color-text-secondary))]">
                         <div>
                           <span className="text-[rgb(var(--color-text-tertiary))] block">Price:</span>
@@ -634,7 +597,6 @@ export default function ShopDashboard() {
                         </div>
                       </div>
                     </div>
-
                     <div className="flex gap-2 mt-4 pt-3 border-t border-[rgb(var(--color-border))]/50">
                       <Link
                         href={`/admin/shop/edit/${item.id}`}
@@ -658,10 +620,9 @@ export default function ShopDashboard() {
           </div>
         </>
       )}
-
       {activeTab === 'budget' && (
         <div className="space-y-6 animate-fadeIn">
-          {/* Budget stats cards */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6">
             {budgetStatCards.map((card, index) => (
               <div
@@ -684,9 +645,8 @@ export default function ShopDashboard() {
               </div>
             ))}
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Refill Budget */}
+            {}
             <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))]">
               <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">Refill INR Budget</h3>
               {refillSuccess && (
@@ -719,8 +679,7 @@ export default function ShopDashboard() {
                 </button>
               </form>
             </div>
-
-            {/* Set Available Budget */}
+            {}
             <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))]">
               <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">Set Available Budget</h3>
               {setSuccess && (
@@ -756,7 +715,6 @@ export default function ShopDashboard() {
           </div>
         </div>
       )}
-
       {activeTab === 'logs' && (
         <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] overflow-x-auto animate-fadeIn">
           <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">Budget & Coin Transaction Logs</h3>
@@ -817,7 +775,6 @@ export default function ShopDashboard() {
           )}
         </div>
       )}
-
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="glass-blue rounded-3xl p-6 max-w-sm w-full border border-[rgb(var(--color-border))] shadow-[var(--shadow-xl)]">

@@ -1,11 +1,9 @@
 'use client';
-
 import { useTheme } from '@/contexts/ThemeContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { FiArrowRight, FiDisc, FiTrendingUp, FiLayers, FiHeart } from 'react-icons/fi';
-
 interface TeamMember {
   id: string;
   discord_user_id: string;
@@ -19,25 +17,19 @@ interface TeamMember {
     accentColor: string | null;
   };
 }
-
 interface TeamData {
   founders: TeamMember[];
   developers: TeamMember[];
   management: TeamMember[];
 }
-
 export default function Home() {
   const { theme } = useTheme();
   const [team, setTeam] = useState<TeamData | null>(null);
   const [teamLoading, setTeamLoading] = useState(true);
-
-  // Live DB-backed Reaction State
   const [heartCount, setHeartCount] = useState<number>(0);
   const [hasReacted, setHasReacted] = useState<boolean>(false);
   const [reactionsLoading, setReactionsLoading] = useState(true);
   const [showSubscriptionOverlay, setShowSubscriptionOverlay] = useState(true);
-
-  // Fetch Team and Reactions Data
   useEffect(() => {
     async function fetchTeam() {
       try {
@@ -52,7 +44,6 @@ export default function Home() {
         setTeamLoading(false);
       }
     }
-
     async function fetchReactions() {
       try {
         const response = await fetch('/api/reactions', { cache: 'no-store' });
@@ -66,28 +57,20 @@ export default function Home() {
         setReactionsLoading(false);
       }
     }
-
     fetchTeam();
     fetchReactions();
-
-    // Check if user has already reacted (persisted in localStorage)
     const reacted = localStorage.getItem('omegle_user_reacted_heart') === 'true';
     setHasReacted(reacted);
   }, []);
-
   const handleReactHeart = async () => {
     const action = hasReacted ? 'decrement' : 'increment';
-    
-    // Optimistic UI updates
     setHasReacted(!hasReacted);
     setHeartCount(prev => Math.max(0, action === 'decrement' ? prev - 1 : prev + 1));
-    
     if (action === 'increment') {
       localStorage.setItem('omegle_user_reacted_heart', 'true');
     } else {
       localStorage.removeItem('omegle_user_reacted_heart');
     }
-
     try {
       const response = await fetch('/api/reactions', {
         method: 'POST',
@@ -102,7 +85,6 @@ export default function Home() {
       console.error('Error updating reaction:', err);
     }
   };
-
   const getAccentColorStyle = (accentHex: string | null, type: 'border' | 'shadow' | 'bg') => {
     const color = accentHex || '#3b82f6';
     switch (type) {
@@ -116,12 +98,9 @@ export default function Home() {
         return {};
     }
   };
-
-  // Extra Compact, Clean, and Sexy Team Card Renderer
   const renderMemberCard = (member: TeamMember) => {
     const { profile, designation } = member;
     const accentColor = profile.accentColor;
-
     return (
       <div
         key={member.id}
@@ -133,7 +112,7 @@ export default function Home() {
           transform: 'translate3d(0,0,0)',
         }}
       >
-        {/* Discord Banner Section */}
+        {}
         <div className="relative w-full h-12 bg-gradient-to-br from-blue-900/40 via-indigo-950/30 to-black/20 overflow-hidden">
           {profile.banner ? (
             <img
@@ -156,11 +135,10 @@ export default function Home() {
             />
           )}
         </div>
-
-        {/* Profile Avatar Container */}
+        {}
         <div className="relative px-3.5 -mt-5 flex justify-start z-10">
           <div className="relative group/avatar">
-            {/* Avatar Border */}
+            {}
             <div className="relative w-11 h-11 border-[2.5px] rounded-full overflow-hidden border-[rgb(var(--color-bg-primary))] bg-[rgb(var(--color-bg-secondary))] flex-shrink-0 shadow-apple-md transition-transform duration-500">
               {profile.avatar ? (
                 <img
@@ -180,15 +158,14 @@ export default function Home() {
                 </div>
               )}
             </div>
-            {/* Live Online Badge */}
+            {}
             <span className="absolute bottom-0 right-0 flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500 border border-[rgb(var(--color-bg-primary))]"></span>
             </span>
           </div>
         </div>
-
-        {/* Member Details */}
+        {}
         <div className="flex-grow flex flex-col justify-between p-3.5 pt-1.5 relative z-10">
           <div>
             <h3 className="font-[var(--font-display)] font-semibold text-[rgb(var(--color-text-primary))] group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-xs truncate">
@@ -198,7 +175,6 @@ export default function Home() {
               @{profile.username}
             </p>
           </div>
-
           <div className="mt-2.5">
             <span
               className={`px-1.5 py-0.5 text-[8px] font-semibold rounded-full border ${
@@ -216,10 +192,9 @@ export default function Home() {
       </div>
     );
   };
-
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition relative overflow-hidden flex flex-col items-center">
-      {/* BACKGROUND EFFECTS */}
+      {}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <video
           className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2 object-cover opacity-20 dark:opacity-10"
@@ -232,18 +207,16 @@ export default function Home() {
         </video>
         <div className="absolute inset-0 bg-gradient-to-b from-[rgb(var(--color-bg-primary))]/80 via-[rgb(var(--color-bg-primary))]/50 to-[rgb(var(--color-bg-primary))]" />
       </div>
-
       {theme === 'light' && (
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 -left-4 w-[500px] h-[500px] bg-sky-300/10 rounded-full filter blur-3xl opacity-55 animate-float" />
           <div className="absolute top-0 -right-4 w-[600px] h-[600px] bg-blue-300/10 rounded-full filter blur-3xl opacity-55 animate-float" style={{ animationDelay: '2s' }} />
         </div>
       )}
-
-      {/* HERO SECTION */}
+      {}
       <section className="relative w-full max-w-6xl z-10 flex flex-col items-center justify-center pt-24 pb-12">
         <div className="w-full px-4 sm:px-6 text-center space-y-8 animate-fade-in">
-          {/* Logo animation */}
+          {}
           <div className="flex justify-center animate-slide-down">
             <div className="relative group cursor-pointer">
               <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-full blur-2xl opacity-60 group-hover:opacity-85 transition-opacity duration-500 animate-pulse" />
@@ -263,7 +236,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-
           <div className="space-y-4">
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-[rgb(var(--color-text-primary))] dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-gray-200 dark:to-white animate-slide-up">
               Omeglee
@@ -279,8 +251,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* TEAM SECTION */}
+      {}
       <section className="relative w-full max-w-6xl z-10 py-12">
         <div className="w-full px-4 sm:px-6">
           <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg backdrop-blur-xl">
@@ -293,7 +264,6 @@ export default function Home() {
                 The founders, developers, and management teams maintaining our community portal.
               </p>
             </div>
-
             {teamLoading ? (
               <div className="py-8 flex justify-center">
                 <div className="relative w-6 h-6">
@@ -305,7 +275,7 @@ export default function Home() {
               <p className="text-center text-xs text-[rgb(var(--color-text-tertiary))]">No members added yet.</p>
             ) : (
               <div className="space-y-8 flex flex-col items-center">
-                {/* Founders */}
+                {}
                 {team.founders.length > 0 && (
                   <div className="w-full flex flex-col items-center">
                     <div className="flex flex-wrap justify-center gap-5">
@@ -313,8 +283,7 @@ export default function Home() {
                     </div>
                   </div>
                 )}
-
-                {/* Developers */}
+                {}
                 {team.developers.length > 0 && (
                   <div className="w-full flex flex-col items-center border-t border-[rgb(var(--color-border))]/10 pt-6">
                     <h3 className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-4">Developers</h3>
@@ -323,8 +292,7 @@ export default function Home() {
                     </div>
                   </div>
                 )}
-
-                {/* Management */}
+                {}
                 {team.management.length > 0 && (
                   <div className="w-full flex flex-col items-center border-t border-[rgb(var(--color-border))]/10 pt-6">
                     <h3 className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-4">Management Team</h3>
@@ -338,8 +306,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* OZY SECTION */}
+      {}
       <section className="relative w-full max-w-6xl z-10 py-12">
         <div className="w-full px-4 sm:px-6">
           <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg backdrop-blur-xl flex flex-col md:flex-row items-center gap-8 md:gap-12">
@@ -353,7 +320,6 @@ export default function Home() {
               <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed text-sm">
                 Ozy is the heart of the Omeglee economy. Earn tokens dynamically through interactions, server activity, and contributions, then claim and redeem them for exclusive benefits and premium rewards.
               </p>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
@@ -380,7 +346,6 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-
               <div className="pt-4">
                 <Link
                   href="/shop"
@@ -393,7 +358,6 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-
             <div className="flex-shrink-0 flex items-center justify-center">
               <img
                 src="https://cdn.discordapp.com/emojis/1525594143135633539.gif?size=256"
@@ -404,14 +368,12 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* SUBSCRIPTION plans SECTION (COMING SOON) */}
+      {}
       <section className="relative w-full max-w-6xl z-10 py-12">
         <div className="w-full px-4 sm:px-6">
           <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg backdrop-blur-xl relative overflow-hidden">
-            {/* Blurry background accents */}
+            {}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-500/10 rounded-full filter blur-3xl pointer-events-none" />
-
             <div className="text-center space-y-2 mb-10">
               <div className="inline-flex items-center justify-center px-4 py-1 bg-amber-500/10 rounded-full border border-amber-500/20 mb-2">
                 <span className="text-amber-500 font-bold text-xs uppercase tracking-wider">Coming Soon</span>
@@ -421,10 +383,9 @@ export default function Home() {
                 Gain premium perks, multipliers, custom profile customizations, and support the community.
               </p>
             </div>
-
-            {/* Mock Subscriptions display under Frosted overlay */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 opacity-40 blur-[1px] pointer-events-none select-none">
-              {/* Silver Plan */}
+              {}
               <div className="border border-[rgb(var(--color-border))]/65 rounded-2xl p-6 flex flex-col justify-between h-48 bg-black/5 dark:bg-white/5">
                 <div>
                   <div className="flex justify-between items-center mb-4">
@@ -438,8 +399,7 @@ export default function Home() {
                   <p>• Custom name color role</p>
                 </div>
               </div>
-
-              {/* Gold Plan */}
+              {}
               <div className="border border-blue-500/30 rounded-2xl p-6 flex flex-col justify-between h-48 bg-blue-500/5 relative overflow-hidden">
                 <div className="absolute top-0 right-0 px-2 py-0.5 bg-blue-500 text-white text-[8px] font-bold uppercase rounded-bl-lg">Popular</div>
                 <div>
@@ -455,8 +415,7 @@ export default function Home() {
                   <p>• Priority server support</p>
                 </div>
               </div>
-
-              {/* Diamond Plan */}
+              {}
               <div className="border border-amber-500/30 rounded-2xl p-6 flex flex-col justify-between h-48 bg-amber-500/5">
                 <div>
                   <div className="flex justify-between items-center mb-4">
@@ -472,8 +431,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
-            {/* Frosty Overlay Container with Coming Soon Message */}
+            {}
             {showSubscriptionOverlay && (
               <div className="absolute inset-0 bg-black/10 dark:bg-black/40 backdrop-blur-[2px] flex items-center justify-center transition-all duration-500">
                 <div className="glass-blue border border-white/20 p-6 rounded-2xl max-w-sm text-center shadow-2xl scale-95 md:scale-100">
@@ -490,8 +448,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* JOIN DISCORD SECTION */}
+      {}
       <section className="relative w-full max-w-6xl z-10 py-12">
         <div className="w-full px-4 sm:px-6">
           <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg backdrop-blur-xl">
@@ -522,8 +479,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* LIVE REACTION COUNTER SECTION */}
+      {}
       <section className="relative w-full max-w-4xl z-10 py-12 pb-20">
         <div className="w-full px-4 sm:px-6">
           <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg text-center space-y-5">
@@ -537,8 +493,7 @@ export default function Home() {
                 React here so that we know! We may launch early supporter offers later for those who react here.
               </p>
             </div>
-
-            {/* Clickable Heart Reaction */}
+            {}
             <div className="flex justify-center pt-2">
               {reactionsLoading ? (
                 <div className="w-6 h-6 border-2 border-red-500/20 border-t-red-500 rounded-full animate-spin" />

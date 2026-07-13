@@ -19,7 +19,7 @@ export default function AdminLogin() {
       } else if (perms?.hasSrModAccess) {
         router.push('/admin/vctranscript');
       } else if (perms?.hasModeratorAccess) {
-        router.push('/admin/automod');
+        router.push('/admin/dashboard');
       } else {
         router.push('/admin/vctranscript');
       }
@@ -84,7 +84,7 @@ export default function AdminLogin() {
             </p>
             {status === 'unauthenticated' && (
               <button
-                onClick={() => signIn('discord', { callbackUrl: '/admin/dashboard' })}
+              onClick={() => signIn('discord', { callbackUrl: '/admin' })}
                 className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">

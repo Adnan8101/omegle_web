@@ -105,11 +105,9 @@ export async function GET(request: NextRequest) {
       userRoleIds = member?._fromGuild ? (member.roles || []) : [];
       userPurchases = pendingPurchases;
     }
-
     const budget = await prismaBot.shopBudget.findUnique({
       where: { guild_id: GUILD_ID }
     }) || { available: 0, total_added: 0, total_spent: 0 };
-
     const mappedItems = await Promise.all(items.map(async (item: any) => ({
         id: item.id,
         name: item.name,
@@ -208,8 +206,6 @@ export async function POST(request: NextRequest) {
       if (item.stock !== null && item.stock !== -1 && item.stock <= 0) {
         throw new Error('OUT_OF_STOCK');
       }
-
-      // Check available budget!
       let budget = await tx.shopBudget.findUnique({
         where: { guild_id: GUILD_ID }
       });
@@ -221,7 +217,6 @@ export async function POST(request: NextRequest) {
       if (budget.available < item.price_inr) {
         throw new Error(`INSUFFICIENT_BUDGET:${item.price_inr}:${budget.available}`);
       }
-
       const economyUser = await tx.economyUser.findUnique({
         where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
       });
@@ -252,8 +247,6 @@ export async function POST(request: NextRequest) {
           throw new Error('OUT_OF_STOCK');
         }
       }
-
-      // Deduct budget
       const oldAvailable = budget.available;
       const newAvailable = budget.available - item.price_inr;
       await tx.shopBudget.update({
@@ -263,8 +256,6 @@ export async function POST(request: NextRequest) {
           total_spent: { increment: item.price_inr }
         }
       });
-
-      // Create budget log
       const userName = member ? getDisplayName(member) : userId;
       await tx.shopBudgetLog.create({
         data: {
@@ -281,7 +272,6 @@ export async function POST(request: NextRequest) {
           status: 'SUCCESS'
         }
       });
-
       const leaderboardSync = config?.leaderboard_sync ?? true;
       const pointsUpdate = await tx.economyUser.updateMany({
         where: {

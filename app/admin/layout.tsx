@@ -34,20 +34,15 @@ QrCodeIcon
 function isPathnameAllowed(pathname: string, perms: any): boolean {
     if (!perms) return false;
     if (perms.hasFullAccess) return true;
-    
     if (pathname === '/admin/dashboard') {
         return perms.hasAnyAccess;
     }
-    
-    // Casino Admin
     if (perms.hasCasinoAccess && pathname.startsWith('/admin/shop')) {
         if (pathname.startsWith('/admin/shop/economy/invites')) {
             return false;
         }
         return true;
     }
-    
-    // SrMod
     if (perms.hasSrModAccess) {
         if (pathname.startsWith('/admin/vctranscript') ||
             pathname.startsWith('/admin/server-stats') ||
@@ -56,10 +51,15 @@ function isPathnameAllowed(pathname: string, perms: any): boolean {
             return true;
         }
     }
-    
+    if (perms.hasModeratorAccess) {
+        if (pathname.startsWith('/admin/dashboard') ||
+            pathname.startsWith('/admin/vctranscript') ||
+            pathname.startsWith('/admin/server-stats')) {
+            return true;
+        }
+    }
     return false;
 }
-
 export default function AdminLayout({ children }: AdminLayoutProps) {
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -73,20 +73,28 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     useEffect(() => {
         if (status === 'unauthenticated') {
             router.replace('/admin');
-        } else if (status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess) {
-            router.replace('/admin');
-        } else if (status === 'authenticated' && session?.user?.permissions?.hasAnyAccess) {
-            const perms = session?.user?.permissions;
-            if (pathname && pathname !== '/admin' && pathname !== '/admin/signin') {
-                if (!isPathnameAllowed(pathname, perms)) {
-                    if (perms.hasCasinoAccess) {
-                        router.replace('/admin/shop');
-                    } else if (perms.hasSrModAccess) {
-                        router.replace('/admin/vctranscript');
-                    } else if (perms.hasModeratorAccess) {
-                        router.replace('/admin/dashboard');
-                    } else {
-                        router.replace('/admin');
+        } else if (status === 'authenticated') {
+            if ((session as any)?.error === 'RefreshAccessTokenError') {
+                console.warn('[AdminLayout] Token refresh failed, signing out...');
+                try { localStorage.clear(); sessionStorage.clear(); } catch (e) { }
+                signOut({ callbackUrl: '/admin' });
+                return;
+            }
+            if (!session?.user?.permissions?.hasAnyAccess) {
+                router.replace('/admin');
+            } else {
+                const perms = session?.user?.permissions;
+                if (pathname && pathname !== '/admin' && pathname !== '/admin/signin') {
+                    if (!isPathnameAllowed(pathname, perms)) {
+                        if (perms.hasCasinoAccess) {
+                            router.replace('/admin/shop');
+                        } else if (perms.hasSrModAccess) {
+                            router.replace('/admin/vctranscript');
+                        } else if (perms.hasModeratorAccess) {
+                            router.replace('/admin/dashboard');
+                        } else {
+                            router.replace('/admin');
+                        }
                     }
                 }
             }
@@ -179,27 +187,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             icon: <FiUserPlus className="w-5 h-5" />,
             requiresSrModAccess: true,
         },
-
-        /*
-        {
-            name: 'Donator Plans',
-            href: '/admin/donator',
-            icon: <FiCreditCard className="w-5 h-5" />,
-            requiresFullAccess: true,
-        },
-        {
-            name: 'Donator Subs',
-            href: '/admin/donator/subscriptions',
-            icon: <FiUsers className="w-5 h-5" />,
-            requiresFullAccess: true,
-        },
-        {
-            name: 'Donator Payments',
-            href: '/admin/donator/payments',
-            icon: <FiDollarSign className="w-5 h-5" />,
-            requiresFullAccess: true,
-        },
-        */
         {
             name: 'Mod Stats',
             href: '/admin/mods-stats',
@@ -224,7 +211,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             icon: <FiUsers className="w-5 h-5" />,
             requiresFullAccess: true,
         },
-
         {
             name: 'Chats Stats',
             href: '/admin/vctranscript/chatlogs',

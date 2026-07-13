@@ -2,7 +2,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 export default function SiteFooter() {
-
   return (
     <footer className="w-full border-t border-black/10 dark:border-white/10 bg-[rgba(245,245,247,0.4)] dark:bg-[rgba(22,22,23,0.4)] backdrop-blur-md pt-12 pb-8 mt-auto">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -26,7 +25,6 @@ export default function SiteFooter() {
             <p className="text-sm text-[rgb(var(--color-text-secondary))] leading-relaxed max-w-sm">
               Where connections become conversations. Join the Omeglee Community - A vibrant space with thousands of active members.
             </p>
-
           </div>
           {}
           <div className="space-y-3">

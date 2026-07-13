@@ -11,11 +11,18 @@ declare module "next-auth" {
       permissions?: UserPermissions;
     };
     accessToken?: string;
+    error?: "RefreshAccessTokenError" | string;
   }
 }
 declare module "next-auth/jwt" {
   interface JWT {
     accessToken?: string;
     discordId?: string;
+    refreshToken?: string;
+    expiresAt?: number;
+    error?: string;
+    permissions?: UserPermissions;
+    hasAccess?: boolean;
+    accessCheckedAt?: number;
   }
 }
