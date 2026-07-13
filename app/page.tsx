@@ -96,6 +96,71 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <section className="relative bg-[rgb(var(--color-bg-primary))] py-12 md:py-16 border-b border-[rgb(var(--color-border))]/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+          <div className="glass-blue rounded-3xl p-8 sm:p-10 border border-[rgb(var(--color-border))] dark:border-white/10 shadow-apple-lg backdrop-blur-xl hover:border-[rgb(var(--color-accent))] dark:hover:border-white/20 apple-transition flex flex-col md:flex-row items-center gap-8 md:gap-12">
+            <div className="flex-1 space-y-4">
+              <div className="inline-flex items-center justify-center px-4 py-1.5 bg-blue-500/10 rounded-full border border-blue-500/20">
+                <span className="text-blue-400 font-bold text-xs uppercase tracking-wider">Introducing Ozy</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-[rgb(var(--color-text-primary))] leading-tight">
+                Omeglee's Own Digital Currency
+              </h2>
+              <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed text-sm sm:text-base">
+                Ozy is the heart of the Omeglee economy. Earn tokens dynamically through interactions, server activity, and contributions, then claim and redeem them for exclusive benefits and premium rewards.
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                    <img
+                      src="https://cdn.discordapp.com/emojis/1525594143135633539.gif"
+                      alt="Ozy"
+                      className="w-5 h-5 object-contain select-none"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm text-[rgb(var(--color-text-primary))]">How to Earn</h4>
+                    <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Automatically added while active in server text chats and voice channels, or won via community giveaways.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 flex-shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm0 0H4v13a2 2 0 002 2h12a2 2 0 002-2V8H12z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm text-[rgb(var(--color-text-primary))]">How to Claim</h4>
+                    <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Redeem and claim your earned rewards directly in our rewards shop for Discord roles, perks, and custom items.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <Link
+                  href="/shop"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-hover))] text-white rounded-xl font-bold transition-all text-sm group hover:gap-3"
+                >
+                  <span>Visit Rewards Shop</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+
+            <div className="flex-shrink-0 w-48 h-48 md:w-64 md:h-64 relative flex items-center justify-center bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full border border-blue-500/20 shadow-blue-glow overflow-hidden">
+              <img
+                src="https://cdn.discordapp.com/emojis/1525594143135633539.gif"
+                alt="Ozy Coin"
+                className="w-32 h-32 md:w-44 md:h-44 object-contain select-none animate-bounce duration-[1500ms]"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="relative bg-[rgb(var(--color-bg-primary))] py-16 sm:py-20 md:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
           <div className="glass-blue rounded-3xl p-8 sm:p-10 md:p-12 lg:p-16 border border-[rgb(var(--color-border))] dark:border-white/10 shadow-apple-lg animate-scale-in backdrop-blur-xl hover:border-[rgb(var(--color-accent))] dark:hover:border-white/20 apple-transition will-change-transform">
