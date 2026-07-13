@@ -1,5 +1,5 @@
 import { authOptions } from '@/lib/auth';
-import { getDiscordUser,getGuildRoleName,sendDM } from '@/lib/discord';
+import { getDiscordUser,getGuildRoleName,sendDM,getDisplayName } from '@/lib/discord';
 import { prismaBot } from '@/lib/prismaBot';
 import crypto from 'crypto';
 import { getServerSession } from 'next-auth';
@@ -265,7 +265,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Create budget log
-      const userName = member?.display_name || member?.username || userId;
+      const userName = member ? getDisplayName(member) : userId;
       await tx.shopBudgetLog.create({
         data: {
           guild_id: GUILD_ID,
