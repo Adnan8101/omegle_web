@@ -105,10 +105,16 @@ export async function GET(request: NextRequest) {
       userRoleIds = member?._fromGuild ? (member.roles || []) : [];
       userPurchases = pendingPurchases;
     }
+
+    const budget = await prismaBot.shopBudget.findUnique({
+      where: { guild_id: GUILD_ID }
+    }) || { available: 0, total_added: 0, total_spent: 0 };
+
     const mappedItems = await Promise.all(items.map(async (item: any) => ({
         id: item.id,
         name: item.name,
         price: item.price,
+        price_inr: item.price_inr,
         description: item.description,
         thumbnail: item.thumbnail,
         stock: item.stock,
@@ -134,6 +140,11 @@ export async function GET(request: NextRequest) {
       config: {
         currencyEmoji: config?.currency_emoji || 'OZY',
         currencyName: config?.currency_name || 'Ozy'
+      },
+      budget: {
+        available: budget.available,
+        total_added: budget.total_added,
+        total_spent: budget.total_spent
       },
       user: userId ? {
         id: userId,
@@ -197,6 +208,20 @@ export async function POST(request: NextRequest) {
       if (item.stock !== null && item.stock !== -1 && item.stock <= 0) {
         throw new Error('OUT_OF_STOCK');
       }
+
+      // Check available budget!
+      let budget = await tx.shopBudget.findUnique({
+        where: { guild_id: GUILD_ID }
+      });
+      if (!budget) {
+        budget = await tx.shopBudget.create({
+          data: { guild_id: GUILD_ID, available: 0, total_added: 0, total_spent: 0 }
+        });
+      }
+      if (budget.available < item.price_inr) {
+        throw new Error(`INSUFFICIENT_BUDGET:${item.price_inr}:${budget.available}`);
+      }
+
       const economyUser = await tx.economyUser.findUnique({
         where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
       });
@@ -227,6 +252,36 @@ export async function POST(request: NextRequest) {
           throw new Error('OUT_OF_STOCK');
         }
       }
+
+      // Deduct budget
+      const oldAvailable = budget.available;
+      const newAvailable = budget.available - item.price_inr;
+      await tx.shopBudget.update({
+        where: { guild_id: GUILD_ID },
+        data: {
+          available: newAvailable,
+          total_spent: { increment: item.price_inr }
+        }
+      });
+
+      // Create budget log
+      const userName = member?.display_name || member?.username || userId;
+      await tx.shopBudgetLog.create({
+        data: {
+          guild_id: GUILD_ID,
+          type: 'PURCHASE',
+          inr_cost: item.price_inr,
+          coin_cost: item.price,
+          budget_before: oldAvailable,
+          budget_after: newAvailable,
+          user_id: userId,
+          user_name: userName,
+          item_id: item.id,
+          item_name: item.name,
+          status: 'SUCCESS'
+        }
+      });
+
       const leaderboardSync = config?.leaderboard_sync ?? true;
       const pointsUpdate = await tx.economyUser.updateMany({
         where: {
@@ -310,6 +365,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     if (error instanceof Error) {
+      if (error.message.startsWith('INSUFFICIENT_BUDGET:')) {
+        const [, required, current] = error.message.split(':');
+        return NextResponse.json({
+          error: `Insufficient reward budget to complete this purchase. Item costs ₹${Number(required).toLocaleString()} but only ₹${Number(current).toLocaleString()} remains.`
+        }, { status: 400 });
+      }
       if (error.message === 'ITEM_NOT_FOUND') {
         return NextResponse.json({ error: 'Item not found' }, { status: 404 });
       }

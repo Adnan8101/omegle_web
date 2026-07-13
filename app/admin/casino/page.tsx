@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect,useState } from 'react';
 import {
 FiAlertCircle,
+FiCheck,
 FiChevronRight,
 FiClock,
 FiDollarSign,
@@ -22,6 +23,7 @@ interface ShopItem {
   id: string;
   name: string;
   price: number;
+  price_inr?: number;
   description: string | null;
   thumbnail: string | null;
   stock: number | null;
@@ -52,6 +54,12 @@ export default function CasinoDashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [activeTab, setActiveTab] = useState<'items' | 'budget' | 'logs'>('items');
+  const [budget, setBudget] = useState<{ available: number; totalAdded: number; totalSpent: number } | null>(null);
+  const [budgetLogs, setBudgetLogs] = useState<any[]>([]);
+  const [refillAmount, setRefillAmount] = useState('');
+  const [refillLoading, setRefillLoading] = useState(false);
+  const [refillSuccess, setRefillSuccess] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
@@ -110,9 +118,10 @@ export default function CasinoDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const [itemsRes, statsRes] = await Promise.all([
+      const [itemsRes, statsRes, budgetRes] = await Promise.all([
         fetch('/api/casino/shop', { cache: 'no-store' }),
-        fetch('/api/casino/stats', { cache: 'no-store' })
+        fetch('/api/casino/stats', { cache: 'no-store' }),
+        fetch('/api/casino/budget', { cache: 'no-store' })
       ]);
       const itemsData = await itemsRes.json();
       const statsData = await statsRes.json();
@@ -131,6 +140,11 @@ export default function CasinoDashboard() {
       } else {
         console.error('Stats error:', statsData);
       }
+      if (budgetRes.ok) {
+        const budgetData = await budgetRes.json();
+        setBudget(budgetData.budget || null);
+        setBudgetLogs(budgetData.logs || []);
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load casino data');
@@ -147,6 +161,31 @@ export default function CasinoDashboard() {
       }
     } catch (err) {
       console.error('Error deleting item:', err);
+    }
+  };
+  const handleRefill = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!refillAmount || refillLoading) return;
+    setRefillLoading(true);
+    setError(null);
+    setRefillSuccess(false);
+    try {
+      const res = await fetch('/api/casino/budget/refill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: parseInt(refillAmount) })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to refill budget');
+      }
+      setRefillSuccess(true);
+      setRefillAmount('');
+      fetchData();
+    } catch (err: any) {
+      setError(err.message || 'Failed to refill budget');
+    } finally {
+      setRefillLoading(false);
     }
   };
   const filteredItems = items.filter(item =>
@@ -379,144 +418,274 @@ export default function CasinoDashboard() {
         </Link>
       </div>
       {}
-      {topItems.length > 0 && (
-        <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8">
-          <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
-            Top Selling Items
-          </h2>
-          <div className="space-y-3">
-            {topItems.map((item, index) => (
-              <div
-                key={item.name}
-                className="flex items-center justify-between p-3 sm:p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 flex items-center justify-center bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))] rounded-lg font-bold text-sm">
-                    #{index + 1}
-                  </span>
-                  <span className="font-medium text-[rgb(var(--color-text-primary))]">{item.name}</span>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold text-[rgb(var(--color-text-primary))]">
-                    {item.purchaseCount} sales
+      {/* Tabs Switcher */}
+      <div className="flex border-b border-[rgb(var(--color-border))] mb-6 sm:mb-8">
+        <button
+          onClick={() => setActiveTab('items')}
+          className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 -mb-[2px] ${
+            activeTab === 'items'
+              ? 'border-blue-500 text-blue-500'
+              : 'border-transparent text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
+          }`}
+        >
+          Items
+        </button>
+        <button
+          onClick={() => setActiveTab('budget')}
+          className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 -mb-[2px] ${
+            activeTab === 'budget'
+              ? 'border-blue-500 text-blue-500'
+              : 'border-transparent text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
+          }`}
+        >
+          Budget
+        </button>
+        <button
+          onClick={() => setActiveTab('logs')}
+          className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 -mb-[2px] ${
+            activeTab === 'logs'
+              ? 'border-blue-500 text-blue-500'
+              : 'border-transparent text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
+          }`}
+        >
+          Logs
+        </button>
+      </div>
+
+      {activeTab === 'items' && (
+        <>
+          {topItems.length > 0 && (
+            <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] mb-6 sm:mb-8">
+              <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-4">
+                Top Selling Items
+              </h2>
+              <div className="space-y-3">
+                {topItems.map((item, index) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center justify-between p-3 sm:p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-xl"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 flex items-center justify-center bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))] rounded-lg font-bold text-sm">
+                        #{index + 1}
+                      </span>
+                      <span className="font-medium text-[rgb(var(--color-text-primary))]">{item.name}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-[rgb(var(--color-text-primary))]">
+                        {item.purchaseCount} sales
+                      </div>
+                      <div className="text-sm text-[rgb(var(--color-text-tertiary))] flex items-center justify-end gap-1">
+                        {getEmojiDisplay(currencyEmoji, 'w-4 h-4')}
+                        {formatNumber(item.totalRevenue)}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-sm text-[rgb(var(--color-text-tertiary))] flex items-center justify-end gap-1">
-                    {getEmojiDisplay(currencyEmoji, 'w-4 h-4')}
-                    {formatNumber(item.totalRevenue)}
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
+            </div>
+          )}
+
+          <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))]">
+                Shop Items ({items.length})
+              </h2>
+              <div className="relative">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
+                <input
+                  type="text"
+                  placeholder="Search items..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full sm:w-64 pl-10 pr-4 py-2.5 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                />
+              </div>
+            </div>
+            {filteredItems.length === 0 ? (
+              <div className="text-center py-12">
+                <FiPackage className="w-12 h-12 mx-auto text-[rgb(var(--color-text-tertiary))] mb-4" />
+                <h3 className="text-lg font-medium text-[rgb(var(--color-text-primary))] mb-2">
+                  {searchQuery ? 'No items found' : 'No shop items yet'}
+                </h3>
+                <p className="text-[rgb(var(--color-text-tertiary))] mb-4">
+                  {searchQuery ? 'Try a different search' : 'Create your first shop item to get started'}
+                </p>
+                {!searchQuery && (
+                  <Link
+                    href="/admin/casino/add"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-hover))] text-white rounded-xl font-medium apple-transition"
+                  >
+                    <FiPlus className="w-4 h-4" />
+                    Add First Item
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-[rgb(var(--color-bg-tertiary))] rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/50 apple-transition group hover:shadow-lg"
+                  >
+                    <div className="aspect-[4/3] bg-[rgb(var(--color-bg-secondary))] relative overflow-hidden">
+                      {item.thumbnail ? (
+                        <img
+                          src={item.thumbnail}
+                          alt={item.name}
+                          className="w-full h-full object-cover object-center group-hover:scale-105 apple-transition duration-300"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <FiPackage className="w-12 h-12 text-[rgb(var(--color-text-tertiary))]" />
+                        </div>
+                      )}
+                      {item.price_inr !== undefined && (
+                        <div className="absolute top-3 right-3 px-2 py-1 rounded-lg text-xs font-semibold bg-[rgb(var(--color-bg-secondary))]/90 text-[rgb(var(--color-text-primary))] shadow-sm">
+                          ₹{formatNumber(item.price_inr)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-1 truncate">
+                        {item.name}
+                      </h3>
+                      {item.description && (
+                        <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 line-clamp-2">
+                          {item.description}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-1">
+                          {getEmojiDisplay(currencyEmoji, 'w-5 h-5')}
+                          {formatNumber(item.price)}
+                        </span>
+                        <div className="flex gap-2">
+                          <Link
+                            href={`/admin/casino/edit/${item.id}`}
+                            className="p-2 rounded-lg bg-[rgb(var(--color-bg-secondary))] hover:bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-accent))] apple-transition"
+                          >
+                            <FiEdit2 className="w-4 h-4" />
+                          </Link>
+                          <button
+                            onClick={() => setDeleteConfirm(item.id)}
+                            className="p-2 rounded-lg bg-[rgb(var(--color-bg-secondary))] hover:bg-red-500/10 text-[rgb(var(--color-text-secondary))] hover:text-red-500 apple-transition"
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {activeTab === 'budget' && (
+        <div className="space-y-8 animate-fadeIn">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))]">
+              <div className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] mb-1">Available Reward Budget</div>
+              <div className="text-3xl font-extrabold text-blue-400">₹{formatNumber(budget?.available ?? 0)}</div>
+            </div>
+            <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))]">
+              <div className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] mb-1">Total Refilled</div>
+              <div className="text-3xl font-extrabold text-green-400">₹{formatNumber(budget?.totalAdded ?? 0)}</div>
+            </div>
+            <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))]">
+              <div className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] mb-1">Total Spent</div>
+              <div className="text-3xl font-extrabold text-red-400">₹{formatNumber(budget?.totalSpent ?? 0)}</div>
+            </div>
+          </div>
+
+          <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] max-w-md">
+            <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">Refill Reward Budget</h3>
+            {refillSuccess && (
+              <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center gap-2 text-green-500 text-sm">
+                <FiCheck className="w-4 h-4" />
+                <span>Budget refilled successfully!</span>
+              </div>
+            )}
+            <form onSubmit={handleRefill} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Refill Amount (INR) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  placeholder="e.g., 5000"
+                  value={refillAmount}
+                  onChange={(e) => setRefillAmount(e.target.value)}
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={refillLoading || !refillAmount}
+                className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
+              >
+                {refillLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : 'Refill Budget'}
+              </button>
+            </form>
           </div>
         </div>
       )}
-      {}
-      <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h2 className="text-lg sm:text-xl font-semibold text-[rgb(var(--color-text-primary))]">
-            Shop Items ({items.length})
-          </h2>
-          <div className="relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--color-text-tertiary))]" />
-            <input
-              type="text"
-              placeholder="Search items..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-64 pl-10 pr-4 py-2.5 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
-            />
-          </div>
+
+      {activeTab === 'logs' && (
+        <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] overflow-x-auto animate-fadeIn">
+          <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">Budget Transaction Logs</h3>
+          {budgetLogs.length === 0 ? (
+            <p className="text-[rgb(var(--color-text-secondary))] text-center py-8">No budget logs found.</p>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[rgb(var(--color-border))] text-sm text-[rgb(var(--color-text-tertiary))]">
+                  <th className="pb-3 font-semibold">Date</th>
+                  <th className="pb-3 font-semibold">Type</th>
+                  <th className="pb-3 font-semibold">User</th>
+                  <th className="pb-3 font-semibold">Item</th>
+                  <th className="pb-3 font-semibold">INR Cost</th>
+                  <th className="pb-3 font-semibold">Coin Cost</th>
+                  <th className="pb-3 font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[rgb(var(--color-border))]/50">
+                {budgetLogs.map((log) => (
+                  <tr key={log.id} className="text-sm text-[rgb(var(--color-text-secondary))]">
+                    <td className="py-4 whitespace-nowrap">
+                      {new Date(log.created_at).toLocaleString()}
+                    </td>
+                    <td className="py-4">
+                      <span className={`px-2 py-0.5 rounded-lg text-xs font-semibold ${
+                        log.type === 'REFILL' ? 'bg-green-500/10 text-green-500' : 'bg-blue-500/10 text-blue-500'
+                      }`}>
+                        {log.type}
+                      </span>
+                    </td>
+                    <td className="py-4">{log.user_name || log.user_id || 'N/A'}</td>
+                    <td className="py-4">{log.item_name || 'N/A'}</td>
+                    <td className="py-4 font-semibold text-[rgb(var(--color-text-primary))]">
+                      {log.type === 'REFILL' ? '+' : '-'}₹{log.inr_cost.toLocaleString()}
+                    </td>
+                    <td className="py-4">
+                      {log.coin_cost ? `${log.coin_cost.toLocaleString()} Coins` : 'N/A'}
+                    </td>
+                    <td className="py-4">
+                      <span className="text-xs text-green-500">{log.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-        {filteredItems.length === 0 ? (
-          <div className="text-center py-12">
-            <FiPackage className="w-12 h-12 mx-auto text-[rgb(var(--color-text-tertiary))] mb-4" />
-            <h3 className="text-lg font-medium text-[rgb(var(--color-text-primary))] mb-2">
-              {searchQuery ? 'No items found' : 'No shop items yet'}
-            </h3>
-            <p className="text-[rgb(var(--color-text-tertiary))] mb-4">
-              {searchQuery ? 'Try a different search' : 'Create your first shop item to get started'}
-            </p>
-            {!searchQuery && (
-              <Link
-                href="/admin/casino/add"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-hover))] text-white rounded-xl font-medium apple-transition"
-              >
-                <FiPlus className="w-4 h-4" />
-                Add First Item
-              </Link>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="bg-[rgb(var(--color-bg-tertiary))] rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/50 apple-transition group hover:shadow-lg"
-              >
-                {}
-                <div className="aspect-[4/3] bg-[rgb(var(--color-bg-secondary))] relative overflow-hidden">
-                  {item.thumbnail ? (
-                    <img
-                      src={item.thumbnail}
-                      alt={item.name}
-                      className="w-full h-full object-cover object-center group-hover:scale-105 apple-transition duration-300"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <FiPackage className="w-12 h-12 text-[rgb(var(--color-text-tertiary))]" />
-                    </div>
-                  )}
-                  {item.stock !== null && (
-                    <div className={`absolute top-3 right-3 px-2 py-1 rounded-lg text-xs font-medium ${
-                      item.stock === -1
-                        ? 'bg-green-500/90 text-white'
-                        : item.stock === 0
-                        ? 'bg-red-500/90 text-white'
-                        : item.stock <= 5
-                        ? 'bg-yellow-500/90 text-black'
-                        : 'bg-[rgb(var(--color-bg-secondary))]/90 text-[rgb(var(--color-text-primary))]'
-                    }`}>
-                      {item.stock === -1 ? 'Unlimited' : item.stock === 0 ? 'Sold Out' : `${item.stock} left`}
-                    </div>
-                  )}
-                </div>
-                {}
-                <div className="p-4">
-                  <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-1 truncate">
-                    {item.name}
-                  </h3>
-                  {item.description && (
-                    <p className="text-sm text-[rgb(var(--color-text-tertiary))] mb-3 line-clamp-2">
-                      {item.description}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-1">
-                      {getEmojiDisplay(currencyEmoji, 'w-5 h-5')}
-                      {formatNumber(item.price)}
-                    </span>
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/admin/casino/edit/${item.id}`}
-                        className="p-2 rounded-lg bg-[rgb(var(--color-bg-secondary))] hover:bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-accent))] apple-transition"
-                      >
-                        <FiEdit2 className="w-4 h-4" />
-                      </Link>
-                      <button
-                        onClick={() => setDeleteConfirm(item.id)}
-                        className="p-2 rounded-lg bg-[rgb(var(--color-bg-secondary))] hover:bg-red-500/10 text-[rgb(var(--color-text-secondary))] hover:text-red-500 apple-transition"
-                      >
-                        <FiTrash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
       {}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">

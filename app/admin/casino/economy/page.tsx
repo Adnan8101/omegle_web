@@ -96,6 +96,7 @@ interface ShopItem {
   id: string;
   name: string;
   price: number;
+  price_inr?: number;
   description: string | null;
   thumbnail: string | null;
   stock: number | null;
@@ -1608,10 +1609,10 @@ export default function EconomyManagementPage() {
                           <div className="flex items-center gap-2 text-sm text-[rgb(var(--color-text-tertiary))]">
                             <FiDollarSign className="w-4 h-4" />
                             <span>{item.price.toLocaleString()}</span>
-                            {item.stock !== null && (
+                            {item.price_inr !== undefined && item.price_inr > 0 && (
                               <>
                                 <span>•</span>
-                                <span>Stock: {item.stock}</span>
+                                <span>Price: ₹{item.price_inr.toLocaleString()}</span>
                               </>
                             )}
                           </div>

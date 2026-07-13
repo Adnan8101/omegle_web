@@ -15,7 +15,7 @@ interface FormData {
   price: string;
   description: string;
   thumbnail: string;
-  stock: string;
+  price_inr: string;
   income_amount: string;
   time_hours: string;
   role_required_id: string;
@@ -34,7 +34,7 @@ export default function AddItemPage() {
     price: '',
     description: '',
     thumbnail: '',
-    stock: '',
+    price_inr: '',
     income_amount: '',
     time_hours: '',
     role_required_id: '',
@@ -300,15 +300,15 @@ export default function AddItemPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Stock (leave empty for unlimited)
+                  Price (INR)
                 </label>
                 <input
                   type="number"
-                  name="stock"
-                  value={formData.stock}
+                  name="price_inr"
+                  value={formData.price_inr}
                   onChange={handleChange}
                   min="0"
-                  placeholder="Unlimited"
+                  placeholder="e.g., 500"
                   className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
                 />
               </div>

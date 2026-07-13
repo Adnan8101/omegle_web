@@ -352,30 +352,34 @@ export default function CrateReveal({
 
       {/* Light Flare Burst when opening */}
       {stage === 'open' && (
-        <div className="absolute w-72 h-72 rounded-full bg-radial-gradient from-white via-amber-300/40 to-transparent pointer-events-none z-30 blur-sm flare-animation" />
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-30">
+          <div className="w-72 h-72 rounded-full bg-radial-gradient from-white via-amber-300/40 to-transparent blur-sm flare-animation" />
+        </div>
       )}
 
       {/* Ambient beams background */}
       {stage !== 'reveal' && (
-        <div className="absolute w-[800px] h-[800px] pointer-events-none opacity-40 z-0">
-          <svg className="w-full h-full animate-rays-spin" viewBox="0 0 100 100">
-            <g transform="translate(50, 50)">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <path
-                  key={i}
-                  d="M 0 0 L -10 -50 L 10 -50 Z"
-                  fill="url(#ray-gradient)"
-                  transform={`rotate(${i * 30})`}
-                />
-              ))}
-            </g>
-            <defs>
-              <radialGradient id="ray-gradient" cx="50%" cy="100%" r="100%">
-                <stop offset="0%" stopColor="rgb(var(--color-accent))" stopOpacity="0.45" />
-                <stop offset="100%" stopColor="rgb(var(--color-accent))" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-          </svg>
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-40 z-0">
+          <div className="w-[800px] h-[800px] flex-shrink-0">
+            <svg className="w-full h-full animate-rays-spin" viewBox="0 0 100 100">
+              <g transform="translate(50, 50)">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <path
+                    key={i}
+                    d="M 0 0 L -10 -50 L 10 -50 Z"
+                    fill="url(#ray-gradient)"
+                    transform={`rotate(${i * 30})`}
+                  />
+                ))}
+              </g>
+              <defs>
+                <radialGradient id="ray-gradient" cx="50%" cy="100%" r="100%">
+                  <stop offset="0%" stopColor="rgb(var(--color-accent))" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="rgb(var(--color-accent))" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+            </svg>
+          </div>
         </div>
       )}
 

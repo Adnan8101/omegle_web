@@ -104,14 +104,14 @@ export async function PUT(
     const body = await request.json();
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     const price = parseOptionalInt(body.price);
-    const rawStock = parseOptionalInt(body.stock);
+    const priceInr = parseOptionalInt(body.price_inr);
     const incomeAmount = parseOptionalInt(body.income_amount);
     const timeHours = parseOptionalInt(body.time_hours);
     const requiredBalance = parseOptionalInt(body.required_balance);
     const expiresInDays = parseOptionalInt(body.expires_in_days);
     if (
       price === 'INVALID' ||
-      rawStock === 'INVALID' ||
+      priceInr === 'INVALID' ||
       incomeAmount === 'INVALID' ||
       timeHours === 'INVALID' ||
       requiredBalance === 'INVALID' ||
@@ -119,7 +119,6 @@ export async function PUT(
     ) {
       return NextResponse.json({ error: 'One or more numeric fields are invalid' }, { status: 400 });
     }
-    const stock = rawStock === null || rawStock === -1 ? null : rawStock;
     const requiredRoleIds = parseRoleIds(body.role_required_id);
     if (!name) {
       return NextResponse.json({ error: 'Item name is required' }, { status: 400 });
@@ -127,8 +126,8 @@ export async function PUT(
     if (price === null || price < 0) {
       return NextResponse.json({ error: 'Price must be a non-negative number' }, { status: 400 });
     }
-    if (stock !== null && stock < 0) {
-      return NextResponse.json({ error: 'Stock must be 0 or greater' }, { status: 400 });
+    if (priceInr !== null && priceInr < 0) {
+      return NextResponse.json({ error: 'Price (INR) must be 0 or greater' }, { status: 400 });
     }
     let expiresAt = null;
     if (expiresInDays && expiresInDays > 0) {
@@ -140,9 +139,10 @@ export async function PUT(
       data: {
         name,
         price,
+        price_inr: priceInr || 0,
+        stock: null,
         description: body.description || null,
         thumbnail: body.thumbnail || null,
-        stock,
         income_amount: incomeAmount,
         time_hours: timeHours,
         role_required_id: serializeRoleIds(requiredRoleIds),

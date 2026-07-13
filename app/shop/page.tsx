@@ -21,6 +21,7 @@ interface ShopItem {
   id: string;
   name: string;
   price: number;
+  price_inr?: number;
   description: string | null;
   thumbnail: string | null;
   stock: number | null;
@@ -68,6 +69,7 @@ export default function ShopPage() {
   const [showPurchases, setShowPurchases] = useState(false);
   const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null);
   const [shopDisabled, setShopDisabled] = useState(false);
+  const [budget, setBudget] = useState<{ available: number; total_added: number; total_spent: number } | null>(null);
   const purchaseInFlightRef = useRef(false);
   useEffect(() => {
   }, [status, router]);
@@ -148,6 +150,9 @@ export default function ShopPage() {
           setItems(data.items || []);
           setCurrencyEmoji(data.config?.currencyEmoji || '🪙');
           setCurrencyName(data.config?.currencyName || 'Ozy');
+          if (data.budget) {
+            setBudget(data.budget);
+          }
           if (data.user) {
             setUserBalance(data.user.balance || 0);
             setPendingPurchases(data.user.pendingPurchases || []);
@@ -457,7 +462,20 @@ export default function ShopPage() {
       )}
       {}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {}
+        {budget && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-blue-600/20 via-indigo-600/10 to-transparent border border-blue-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-lg backdrop-blur-md">
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Community Reward Pool</span>
+              <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
+                Available Reward Budget: <span className="text-2xl text-blue-400 font-extrabold">₹{formatNumber(budget.available)}</span>
+              </h2>
+            </div>
+            <div className="text-xs text-[rgb(var(--color-text-tertiary))] text-left sm:text-right">
+              <p>Total Spent: ₹{formatNumber(budget.total_spent)}</p>
+              <p>Last Updated: {new Date().toLocaleDateString()}</p>
+            </div>
+          </div>
+        )}
         {!session && (
           <div className="mb-8 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center gap-3">
             <FiLock className="w-5 h-5 text-blue-500" />
@@ -479,6 +497,7 @@ export default function ShopPage() {
               const canAfford = session ? userBalance >= item.price : false;
               const isOutOfStock = item.out_of_stock || (item.stock !== null && item.stock !== -1 && item.stock <= 0);
               const isDisabled = !item.enabled;
+              const isInsufficientBudget = Boolean(budget && item.price_inr && budget.available < item.price_inr);
               const missingRequiredRole = Boolean(session && item.role_required_ids?.length > 0 && item.has_required_role === false);
               const isUnavailable = isOutOfStock || isDisabled;
               const daysLeft = item.expires_at
@@ -490,6 +509,8 @@ export default function ShopPage() {
                   className={`bg-[rgb(var(--color-bg-secondary))] rounded-2xl border overflow-hidden transition-all hover:shadow-lg ${
                     isUnavailable
                       ? 'border-red-500/30 opacity-75 hover:border-red-500/50 hover:shadow-red-500/10'
+                      : isInsufficientBudget
+                      ? 'border-orange-500/30 opacity-75 hover:border-orange-500/50 hover:shadow-orange-500/10'
                       : 'border-[rgb(var(--color-border))] hover:border-yellow-500/30 hover:shadow-yellow-500/10'
                   }`}
                 >
@@ -499,7 +520,7 @@ export default function ShopPage() {
                       <img
                         src={item.thumbnail}
                         alt={item.name}
-                        className={`w-full h-full object-cover object-center ${isUnavailable ? 'grayscale' : ''}`}
+                        className={`w-full h-full object-cover object-center ${isUnavailable || isInsufficientBudget ? 'grayscale' : ''}`}
                         loading="lazy"
                       />
                     ) : (
@@ -520,6 +541,14 @@ export default function ShopPage() {
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <div className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold text-lg transform -rotate-12 shadow-lg">
                           UNAVAILABLE
+                        </div>
+                      </div>
+                    )}
+                    {}
+                    {isInsufficientBudget && !isDisabled && !isOutOfStock && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <div className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold text-lg transform -rotate-12 shadow-lg">
+                          LOW BUDGET
                         </div>
                       </div>
                     )}
@@ -556,18 +585,27 @@ export default function ShopPage() {
                     )}
                     {}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        {getEmojiDisplay(currencyEmoji)}
-                        <span className="text-xl font-bold text-[rgb(var(--color-text-primary))]">
-                          {formatNumber(item.price)}
-                        </span>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1.5">
+                          {getEmojiDisplay(currencyEmoji)}
+                          <span className="text-xl font-bold text-[rgb(var(--color-text-primary))]">
+                            {formatNumber(item.price)}
+                          </span>
+                        </div>
+                        {item.price_inr !== undefined && item.price_inr > 0 && (
+                          <span className="text-xs text-[rgb(var(--color-text-secondary))] font-medium mt-0.5">
+                            Value: ₹{formatNumber(item.price_inr)}
+                          </span>
+                        )}
                       </div>
                       <button
                         onClick={() => handlePurchase(item)}
-                        disabled={purchasing === item.id || (session && !canAfford) || isUnavailable || missingRequiredRole}
+                        disabled={purchasing === item.id || (session && !canAfford) || isUnavailable || missingRequiredRole || isInsufficientBudget}
                         className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors ${
                           isUnavailable
                             ? 'bg-red-500/20 text-red-400 cursor-not-allowed'
+                            : isInsufficientBudget
+                            ? 'bg-orange-500/20 text-orange-400 cursor-not-allowed'
                             : missingRequiredRole
                             ? 'bg-orange-500/20 text-orange-400 cursor-not-allowed'
                             : !session
@@ -583,6 +621,8 @@ export default function ShopPage() {
                           'Sold Out'
                         ) : isDisabled ? (
                           'Unavailable'
+                        ) : isInsufficientBudget ? (
+                          'Low Budget'
                         ) : missingRequiredRole ? (
                           'Role Required'
                         ) : !session ? (
@@ -599,6 +639,12 @@ export default function ShopPage() {
                       <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
                         <FiAlertCircle className="w-3 h-3" />
                         Requires {getEmojiDisplay(currencyEmoji, 'w-3.5 h-3.5')}{formatNumber(item.required_balance)} minimum balance
+                      </div>
+                    )}
+                    {session && isInsufficientBudget && (
+                      <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
+                        <FiAlertCircle className="w-3 h-3" />
+                        Requires ₹{formatNumber(item.price_inr || 0)} from budget (₹{formatNumber(budget?.available || 0)} available)
                       </div>
                     )}
                     {session && missingRequiredRole && (
