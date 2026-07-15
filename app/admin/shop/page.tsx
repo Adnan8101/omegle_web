@@ -15,6 +15,8 @@ import {
   FiRefreshCw,
   FiSearch,
   FiShoppingCart,
+  FiToggleLeft,
+  FiToggleRight,
   FiTrash2,
   FiTrendingUp,
   FiUsers
@@ -27,6 +29,7 @@ interface ShopItem {
   description: string | null;
   thumbnail: string | null;
   stock: number | null;
+  enabled: boolean;
   created_at: string;
 }
 interface Stats {
@@ -214,6 +217,27 @@ export default function ShopDashboard() {
       setError(err.message || 'Failed to update budget');
     } finally {
       setBudgetLoading(false);
+    }
+  };
+  const toggleShopItem = async (itemId: string, enabled: boolean) => {
+    try {
+      const res = await fetch('/api/economy/shop-toggle', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'item', itemId, enabled })
+      });
+      if (res.ok) {
+        setItems(prevItems =>
+          prevItems.map(item =>
+            item.id === itemId ? { ...item, enabled } : item
+          )
+        );
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to toggle item');
+      }
+    } catch (err) {
+      setError('Failed to toggle item');
     }
   };
   const filteredItems = items.filter(item =>
@@ -554,26 +578,39 @@ export default function ShopDashboard() {
                     className="bg-[rgb(var(--color-bg-tertiary))]/50 border border-[rgb(var(--color-border))] rounded-2xl p-4 flex flex-col justify-between hover:border-[rgb(var(--color-border-hover))] transition-colors"
                   >
                     <div>
-                      <div className="flex items-start gap-4 mb-3">
-                        {item.thumbnail ? (
-                          <img
-                            src={item.thumbnail}
-                            alt={item.name}
-                            className="w-16 h-16 rounded-xl object-cover border border-[rgb(var(--color-border))]"
-                          />
-                        ) : (
-                          <div className="w-16 h-16 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 font-bold border border-blue-500/20">
-                            {item.name[0]?.toUpperCase()}
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div className="flex items-start gap-4 min-w-0">
+                          {item.thumbnail ? (
+                            <img
+                              src={item.thumbnail}
+                              alt={item.name}
+                              className="w-16 h-16 rounded-xl object-cover border border-[rgb(var(--color-border))]"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 font-bold border border-blue-500/20 flex-shrink-0">
+                              {item.name[0]?.toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-[rgb(var(--color-text-primary))] truncate mb-1">
+                              {item.name}
+                            </h3>
+                            <p className="text-xs text-[rgb(var(--color-text-tertiary))] line-clamp-2">
+                              {item.description || 'No description provided'}
+                            </p>
                           </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-[rgb(var(--color-text-primary))] truncate mb-1">
-                            {item.name}
-                          </h3>
-                          <p className="text-xs text-[rgb(var(--color-text-tertiary))] line-clamp-2">
-                            {item.description || 'No description provided'}
-                          </p>
                         </div>
+                        <button
+                          onClick={() => toggleShopItem(item.id, !item.enabled)}
+                          className={`p-1.5 rounded-lg border transition-all flex-shrink-0 ${
+                            item.enabled
+                              ? 'bg-green-500/20 text-green-500 border-green-500/30'
+                              : 'bg-red-500/20 text-red-500 border-red-500/30'
+                          }`}
+                          title={item.enabled ? 'Enabled (Click to disable)' : 'Disabled (Click to enable)'}
+                        >
+                          {item.enabled ? <FiToggleRight className="w-5 h-5" /> : <FiToggleLeft className="w-5 h-5" />}
+                        </button>
                       </div>
                       <div className="grid grid-cols-2 gap-2 py-3 border-t border-[rgb(var(--color-border))]/50 text-xs text-[rgb(var(--color-text-secondary))]">
                         <div>

@@ -600,7 +600,7 @@ export default function ShopPage() {
                           </span>
                         </div>
                         {item.price_inr !== undefined && item.price_inr !== null && (
-                          <span className="text-xs text-[rgb(var(--color-text-tertiary))] mt-0.5">
+                          <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded-lg mt-1 w-fit block shadow-sm">
                             Value: ₹{formatNumber(item.price_inr)}
                           </span>
                         )}
