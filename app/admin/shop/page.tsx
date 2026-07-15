@@ -25,7 +25,8 @@ import {
   FiSave,
   FiUpload,
   FiImage,
-  FiLoader
+  FiLoader,
+  FiMove
 } from 'react-icons/fi';
 interface ShopItem {
   id: string;
@@ -78,6 +79,50 @@ export default function ShopDashboard() {
   const [adjustSuccess, setAdjustSuccess] = useState(false);
   
   const [roles, setRoles] = useState<any[]>([]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    const reorderedItems = [...items];
+    const [removed] = reorderedItems.splice(draggedIndex, 1);
+    reorderedItems.splice(targetIndex, 0, removed);
+
+    setItems(reorderedItems);
+    setDraggedIndex(null);
+
+    setIsReordering(true);
+    try {
+      const orderedIds = reorderedItems.map((item) => item.id);
+      const res = await fetch('/api/casino/shop/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderedIds })
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to save new order');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Failed to save new items order');
+      fetchData();
+    } finally {
+      setIsReordering(false);
+    }
+  };
   const [editingItem, setEditingItem] = useState<any>(null);
   const [editFormData, setEditFormData] = useState<any>({
     name: '',
@@ -737,7 +782,14 @@ export default function ShopDashboard() {
           )}
           <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))]">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Shop Items</h2>
+              <div>
+                <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Shop Items</h2>
+                {!searchQuery && (
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                    Drag and drop cards to reorder how they display in the shop
+                  </p>
+                )}
+              </div>
               <div className="relative w-full sm:w-72">
                 <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-tertiary))] w-4 h-4" />
                 <input
@@ -759,86 +811,101 @@ export default function ShopDashboard() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-[rgb(var(--color-bg-tertiary))]/50 border border-[rgb(var(--color-border))] rounded-2xl p-4 flex flex-col justify-between hover:border-[rgb(var(--color-border-hover))] transition-colors"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-4 mb-3">
-                        <div className="flex items-start gap-4 min-w-0">
-                          {item.thumbnail ? (
-                            <img
-                              src={item.thumbnail}
-                              alt={item.name}
-                              className="w-16 h-16 rounded-xl object-cover border border-[rgb(var(--color-border))]"
-                            />
-                          ) : (
-                            <div className="w-16 h-16 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 font-bold border border-blue-500/20 flex-shrink-0">
-                              {item.name[0]?.toUpperCase()}
+                {filteredItems.map((item) => {
+                  const index = items.findIndex((i) => i.id === item.id);
+                  const isDragging = draggedIndex === index;
+                  return (
+                    <div
+                      key={item.id}
+                      draggable={!searchQuery && !isReordering}
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, index)}
+                      className={`bg-[rgb(var(--color-bg-tertiary))]/50 border border-[rgb(var(--color-border))] rounded-2xl p-4 flex flex-col justify-between hover:border-[rgb(var(--color-border-hover))] transition-all duration-200 ${
+                        isDragging ? 'opacity-40 border-dashed border-blue-500 scale-95' : ''
+                      } ${!searchQuery ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div className="flex items-start gap-4 min-w-0">
+                            {item.thumbnail ? (
+                              <img
+                                src={item.thumbnail}
+                                alt={item.name}
+                                className="w-16 h-16 rounded-xl object-cover border border-[rgb(var(--color-border))]"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 font-bold border border-blue-500/20 flex-shrink-0">
+                                {item.name[0]?.toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                {!searchQuery && (
+                                  <FiMove className="w-3.5 h-3.5 text-[rgb(var(--color-text-tertiary))] cursor-grab flex-shrink-0" />
+                                )}
+                                <h3 className="font-semibold text-[rgb(var(--color-text-primary))] truncate">
+                                  {item.name}
+                                </h3>
+                              </div>
+                              <p className="text-xs text-[rgb(var(--color-text-tertiary))] line-clamp-2">
+                                {item.description || 'No description provided'}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => toggleShopItem(item.id, !item.enabled)}
+                            className={`p-1.5 rounded-lg border transition-all flex-shrink-0 ${
+                              item.enabled
+                                ? 'bg-green-500/20 text-green-500 border-green-500/30'
+                                : 'bg-red-500/20 text-red-500 border-red-500/30'
+                            }`}
+                            title={item.enabled ? 'Enabled (Click to disable)' : 'Disabled (Click to enable)'}
+                          >
+                            {item.enabled ? <FiToggleRight className="w-5 h-5" /> : <FiToggleLeft className="w-5 h-5" />}
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 py-3 border-t border-[rgb(var(--color-border))]/50 text-xs text-[rgb(var(--color-text-secondary))]">
+                          <div>
+                            <span className="text-[rgb(var(--color-text-tertiary))] block">Price:</span>
+                            <span className="font-medium flex items-center gap-1 mt-0.5">
+                              {getEmojiDisplay(currencyEmoji, 'w-4 h-4')}
+                              {formatNumber(item.price)}
+                            </span>
+                          </div>
+                          {item.price_inr !== undefined && (
+                            <div>
+                              <span className="text-[rgb(var(--color-text-tertiary))] block">INR Cost:</span>
+                              <span className="font-medium mt-0.5 block">₹{formatNumber(item.price_inr)}</span>
                             </div>
                           )}
-                          <div className="min-w-0">
-                            <h3 className="font-semibold text-[rgb(var(--color-text-primary))] truncate mb-1">
-                              {item.name}
-                            </h3>
-                            <p className="text-xs text-[rgb(var(--color-text-tertiary))] line-clamp-2">
-                              {item.description || 'No description provided'}
-                            </p>
+                          <div>
+                            <span className="text-[rgb(var(--color-text-tertiary))] block">Stock:</span>
+                            <span className={`font-medium mt-0.5 block ${item.stock === 0 ? 'text-red-500' : ''}`}>
+                              {item.stock === null ? 'Unlimited' : formatNumber(item.stock)}
+                            </span>
                           </div>
                         </div>
+                      </div>
+                      <div className="flex gap-2 mt-4 pt-3 border-t border-[rgb(var(--color-border))]/50">
                         <button
-                          onClick={() => toggleShopItem(item.id, !item.enabled)}
-                          className={`p-1.5 rounded-lg border transition-all flex-shrink-0 ${
-                            item.enabled
-                              ? 'bg-green-500/20 text-green-500 border-green-500/30'
-                              : 'bg-red-500/20 text-red-500 border-red-500/30'
-                          }`}
-                          title={item.enabled ? 'Enabled (Click to disable)' : 'Disabled (Click to enable)'}
+                          onClick={() => startEdit(item)}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] rounded-xl text-xs font-semibold text-[rgb(var(--color-text-secondary))] border border-[rgb(var(--color-border))] transition-colors"
                         >
-                          {item.enabled ? <FiToggleRight className="w-5 h-5" /> : <FiToggleLeft className="w-5 h-5" />}
+                          <FiEdit2 className="w-3.5 h-3.5" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(item.id)}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-xs font-semibold border border-red-500/20 transition-colors"
+                        >
+                          <FiTrash2 className="w-3.5 h-3.5" />
+                          Delete
                         </button>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 py-3 border-t border-[rgb(var(--color-border))]/50 text-xs text-[rgb(var(--color-text-secondary))]">
-                        <div>
-                          <span className="text-[rgb(var(--color-text-tertiary))] block">Price:</span>
-                          <span className="font-medium flex items-center gap-1 mt-0.5">
-                            {getEmojiDisplay(currencyEmoji, 'w-4 h-4')}
-                            {formatNumber(item.price)}
-                          </span>
-                        </div>
-                        {item.price_inr !== undefined && (
-                          <div>
-                            <span className="text-[rgb(var(--color-text-tertiary))] block">INR Cost:</span>
-                            <span className="font-medium mt-0.5 block">₹{formatNumber(item.price_inr)}</span>
-                          </div>
-                        )}
-                        <div>
-                          <span className="text-[rgb(var(--color-text-tertiary))] block">Stock:</span>
-                          <span className={`font-medium mt-0.5 block ${item.stock === 0 ? 'text-red-500' : ''}`}>
-                            {item.stock === null ? 'Unlimited' : formatNumber(item.stock)}
-                          </span>
-                        </div>
-                      </div>
                     </div>
-                    <div className="flex gap-2 mt-4 pt-3 border-t border-[rgb(var(--color-border))]/50">
-                      <button
-                        onClick={() => startEdit(item)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] rounded-xl text-xs font-semibold text-[rgb(var(--color-text-secondary))] border border-[rgb(var(--color-border))] transition-colors"
-                      >
-                        <FiEdit2 className="w-3.5 h-3.5" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(item.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-xs font-semibold border border-red-500/20 transition-colors"
-                      >
-                        <FiTrash2 className="w-3.5 h-3.5" />
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

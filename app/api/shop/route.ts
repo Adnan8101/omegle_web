@@ -52,17 +52,28 @@ export async function GET(request: NextRequest) {
       });
     }
     const now = new Date();
-    const items = await prismaBot.shopItem.findMany({
-      where: {
-        guild_id: GUILD_ID,
-        enabled: true,
-        OR: [
-          { expires_at: null },
-          { expires_at: { gt: now } }
-        ]
-      },
-      orderBy: { price: 'asc' }
-    });
+    const [items, purchaseCounts] = await Promise.all([
+      prismaBot.shopItem.findMany({
+        where: {
+          guild_id: GUILD_ID,
+          enabled: true,
+          OR: [
+            { expires_at: null },
+            { expires_at: { gt: now } }
+          ]
+        },
+        orderBy: { sort_order: 'asc' }
+      }),
+      prismaBot.shopPurchase.groupBy({
+        by: ['item_id'],
+        where: { guild_id: GUILD_ID },
+        _count: { id: true }
+      })
+    ]);
+    const purchaseMap = new Map<string, number>();
+    for (const p of purchaseCounts) {
+      purchaseMap.set(p.item_id, p._count.id);
+    }
     let userBalance = 0;
     let userPurchases: any[] = [];
     let userRoleIds: string[] = [];
@@ -119,6 +130,8 @@ export async function GET(request: NextRequest) {
         stock: item.stock,
         income_amount: item.income_amount,
         time_hours: item.time_hours,
+        sort_order: item.sort_order ?? 0,
+        purchase_count: purchaseMap.get(item.id) || 0,
         role_required_id: normalizeRoleId(item.role_required_id),
         role_required_ids: parseRoleIds(item.role_required_id),
         role_required_name: await resolveRoleName(item.role_required_id),

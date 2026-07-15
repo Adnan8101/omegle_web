@@ -34,6 +34,8 @@ interface ShopItem {
   expires_at: string | null;
   out_of_stock?: boolean;
   enabled: boolean;
+  sort_order?: number;
+  purchase_count?: number;
 }
 interface PendingPurchase {
   id: string;
@@ -70,52 +72,19 @@ export default function ShopPage() {
   const [confirmItem, setConfirmItem] = useState<ShopItem | null>(null);
   const [shopDisabled, setShopDisabled] = useState(false);
   const [budget, setBudget] = useState<{ available: number; total_added: number; total_spent: number } | null>(null);
+  const [sortMode, setSortMode] = useState<'default' | 'low' | 'high' | 'popular'>('default');
   const purchaseInFlightRef = useRef(false);
+  // Load shop on mount — NO LOGIN REQUIRED to view
+  useEffect(() => {
+    fetchShop();
+  }, []);
+
+  // Re-fetch when session changes (after login: load user balance/purchases)
   useEffect(() => {
     if (status === 'authenticated') {
       fetchShop();
     }
   }, [status]);
-  if (status === 'unauthenticated') {
-    return (
-      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6">
-        <div className="glass-blue rounded-3xl p-10 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
-          <div className="text-center space-y-6">
-            <div className="p-5 bg-blue-500/10 rounded-full border border-blue-500/30 inline-block">
-              <FiLock className="w-10 h-10 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">
-                Shop Access Required
-              </h2>
-              <p className="text-[rgb(var(--color-text-secondary))]">
-                Please sign in with Discord to access the shop
-              </p>
-            </div>
-            <button
-              onClick={() => signIn('discord')}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 0 0-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 0 0-5.487 0 12.36 12.36 0 0 0-.617-1.23A.077.077 0 0 0 8.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 0 0-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 0 0 .031.055 20.03 20.03 0 0 0 5.993 2.98.078.078 0 0 0 .084-.026 13.83 13.83 0 0 0 1.226-1.963.074.074 0 0 0-.041-.104 13.201 13.201 0 0 1-1.872-.878.075.075 0 0 1-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 0 1 .078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 0 1 .079.009c.12.098.245.195.372.288a.075.075 0 0 1-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 0 0-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 0 0 .084.028 19.963 19.963 0 0 0 6.002-2.981.076.076 0 0 0 .032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 0 0-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.946 2.38-2.157 2.38z" />
-              </svg>
-              Sign in with Discord
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-[rgb(var(--color-text-secondary))]">Loading shop...</p>
-        </div>
-      </div>
-    );
-  }
   const getEmojiDisplay = (emoji: string, size: string = 'w-6 h-6') => {
     const emojiMatch = emoji.match(/<a?:([\w_]+):(\d+)>/);
     if (emojiMatch) {
@@ -164,8 +133,9 @@ export default function ShopPage() {
     }
   };
   const handlePurchase = async (item: ShopItem) => {
+    // Not logged in → trigger Discord login and come back to /shop after
     if (!session) {
-      signIn('discord');
+      signIn('discord', { callbackUrl: '/shop' });
       return;
     }
     if (userBalance < item.price) {
@@ -232,7 +202,7 @@ export default function ShopPage() {
       </div>
     );
   }
-  if (shopDisabled) {
+  if (!loading && shopDisabled) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6">
         <div className="glass-blue rounded-3xl p-10 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
@@ -303,7 +273,7 @@ export default function ShopPage() {
               </>
             ) : (
               <button
-                onClick={() => signIn('discord')}
+                onClick={() => signIn('discord', { callbackUrl: '/shop' })}
                 className="px-4 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold rounded-xl transition-colors"
               >
                 Login with Discord
@@ -481,16 +451,91 @@ export default function ShopPage() {
             </div>
           </div>
         )}
-        {!session && (
-          <div className="mb-8 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center gap-3">
-            <FiLock className="w-5 h-5 text-blue-500" />
-            <p className="text-[rgb(var(--color-text-secondary))]">
-              Login with Discord to view your balance and make purchases
-            </p>
+        {/* Login nudge — informational, not a blocker */}
+        {status !== 'authenticated' && (
+          <div className="mb-8 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <FiLock className="w-5 h-5 text-blue-400 flex-shrink-0" />
+              <p className="text-[rgb(var(--color-text-secondary))] text-sm">
+                Sign in with Discord to see your balance and purchase items
+              </p>
+            </div>
+            <button
+              onClick={() => signIn('discord', { callbackUrl: '/shop' })}
+              className="px-4 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap"
+            >
+              Sign In
+            </button>
           </div>
         )}
-        {}
-        {items.length === 0 ? (
+        
+        {/* Sort Filter Bar */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))]/50 backdrop-blur-md">
+          <div className="text-sm font-semibold text-[rgb(var(--color-text-secondary))]">
+            Sort Items:
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSortMode('default')}
+              className={`px-4 py-2 text-xs font-semibold rounded-xl border transition-all ${
+                sortMode === 'default'
+                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-sm'
+                  : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
+              }`}
+            >
+              Default
+            </button>
+            <button
+              onClick={() => setSortMode('low')}
+              className={`px-4 py-2 text-xs font-semibold rounded-xl border transition-all ${
+                sortMode === 'low'
+                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-sm'
+                  : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
+              }`}
+            >
+              Lowest to Highest
+            </button>
+            <button
+              onClick={() => setSortMode('high')}
+              className={`px-4 py-2 text-xs font-semibold rounded-xl border transition-all ${
+                sortMode === 'high'
+                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-sm'
+                  : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
+              }`}
+            >
+              Highest to Lowest
+            </button>
+            <button
+              onClick={() => setSortMode('popular')}
+              className={`px-4 py-2 text-xs font-semibold rounded-xl border transition-all ${
+                sortMode === 'popular'
+                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-sm'
+                  : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
+              }`}
+            >
+              Most Purchased
+            </button>
+          </div>
+        </div>
+
+        {/* Loading skeleton */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))] overflow-hidden animate-pulse">
+                <div className="aspect-[4/3] bg-[rgb(var(--color-bg-tertiary))]" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-[rgb(var(--color-bg-tertiary))] rounded w-3/4" />
+                  <div className="h-3 bg-[rgb(var(--color-bg-tertiary))] rounded w-1/2" />
+                  <div className="flex justify-between items-center pt-1">
+                    <div className="h-6 bg-[rgb(var(--color-bg-tertiary))] rounded w-1/3" />
+                    <div className="h-9 bg-[rgb(var(--color-bg-tertiary))] rounded-xl w-16" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : items.length === 0 ? (
           <div className="text-center py-20">
             <FiPackage className="w-16 h-16 mx-auto text-[rgb(var(--color-text-tertiary))] mb-4" />
             <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">No Items Available</h2>
@@ -498,12 +543,20 @@ export default function ShopPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {items.map((item) => {
-              const canAfford = session ? userBalance >= item.price : false;
+            {[...items]
+              .sort((a, b) => {
+                if (sortMode === 'low') return a.price - b.price;
+                if (sortMode === 'high') return b.price - a.price;
+                if (sortMode === 'popular') return (b.purchase_count || 0) - (a.purchase_count || 0);
+                return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+              })
+              .map((item) => {
+              const isLoggedIn = status === 'authenticated';
+              const canAfford = isLoggedIn ? userBalance >= item.price : true;
               const isOutOfStock = item.out_of_stock || (item.stock !== null && item.stock !== -1 && item.stock <= 0);
               const isDisabled = !item.enabled;
               const isInsufficientBudget = Boolean(budget && budget.available < item.price);
-              const missingRequiredRole = Boolean(session && item.role_required_ids?.length > 0 && item.has_required_role === false);
+              const missingRequiredRole = Boolean(isLoggedIn && item.role_required_ids?.length > 0 && item.has_required_role === false);
               const isUnavailable = isOutOfStock || isDisabled || isInsufficientBudget;
               const daysLeft = item.expires_at
                 ? Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -605,15 +658,15 @@ export default function ShopPage() {
                       </div>
                       <button
                         onClick={() => handlePurchase(item)}
-                        disabled={purchasing === item.id || (session && !canAfford) || isUnavailable || missingRequiredRole}
-                        className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors ${
+                        disabled={purchasing === item.id || isUnavailable || (isLoggedIn && (!canAfford || missingRequiredRole))}
+                        className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors flex items-center gap-1.5 ${
                           isOutOfStock || isDisabled
                             ? 'bg-red-500/20 text-red-400 cursor-not-allowed'
                             : isInsufficientBudget
                             ? 'bg-orange-500/20 text-orange-400 cursor-not-allowed'
-                            : missingRequiredRole
+                            : isLoggedIn && missingRequiredRole
                             ? 'bg-orange-500/20 text-orange-400 cursor-not-allowed'
-                            : !session
+                            : !isLoggedIn
                             ? 'bg-[#5865F2] hover:bg-[#4752C4] text-white'
                             : canAfford
                             ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
@@ -628,10 +681,10 @@ export default function ShopPage() {
                           'Unavailable'
                         ) : isInsufficientBudget ? (
                           'Unavailable'
-                        ) : missingRequiredRole ? (
+                        ) : isLoggedIn && missingRequiredRole ? (
                           'Role Required'
-                        ) : !session ? (
-                          'Login'
+                        ) : !isLoggedIn ? (
+                          'Buy'
                         ) : canAfford ? (
                           'Buy'
                         ) : (
@@ -640,13 +693,13 @@ export default function ShopPage() {
                       </button>
                     </div>
                     {}
-                    {session && item.required_balance && userBalance < item.required_balance && (
+                    {isLoggedIn && item.required_balance && userBalance < item.required_balance && (
                       <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
                         <FiAlertCircle className="w-3 h-3" />
                         Requires {getEmojiDisplay(currencyEmoji, 'w-3.5 h-3.5')}{formatNumber(item.required_balance)} minimum balance
                       </div>
                     )}
-                    {session && missingRequiredRole && (
+                    {isLoggedIn && missingRequiredRole && (
                       <div className="text-xs text-orange-500 mt-2 flex items-center gap-1.5">
                         <FiLock className="w-3 h-3" />
                         Requires any role: {item.role_required_names?.length ? item.role_required_names.join(', ') : 'Required role'}

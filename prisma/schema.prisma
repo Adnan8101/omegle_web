@@ -1233,6 +1233,7 @@ model ShopItem {
   role_given_id    String?
   role_removed_id  String?
   role_required_id String?
+  sort_order       Int       @default(0)
   stock            Int?
   thumbnail        String?
   time_hours       Int?
@@ -1240,6 +1241,7 @@ model ShopItem {
   @@map("shop_items")
   @@unique([guild_id, name])
   @@index([guild_id])
+  @@index([guild_id, sort_order])
 }
 
 model ShopItemToggle {

@@ -72,19 +72,30 @@ export async function GET(request: NextRequest) {
     if (!hasAccess) {
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }
-    const [items, roles] = await Promise.all([
+    const [items, roles, purchaseCounts] = await Promise.all([
       prismaBot.shopItem.findMany({
       where: { guild_id: GUILD_ID },
-      orderBy: { created_at: 'desc' }
+      orderBy: { sort_order: 'asc' }
       }),
-      fetchGuildRoles()
+      fetchGuildRoles(),
+      prismaBot.shopPurchase.groupBy({
+        by: ['item_id'],
+        where: { guild_id: GUILD_ID },
+        _count: { id: true }
+      })
     ]);
+    const purchaseMap = new Map<string, number>();
+    for (const p of purchaseCounts) {
+      purchaseMap.set(p.item_id, p._count.id);
+    }
     const config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
     return NextResponse.json({
       items: items.map((item: any) => ({
         ...item,
+        sort_order: item.sort_order ?? 0,
+        purchase_count: purchaseMap.get(item.id) || 0,
         role_required_ids: parseRoleIds(item.role_required_id),
         created_at: item.created_at.toISOString(),
         expires_at: item.expires_at?.toISOString() || null
