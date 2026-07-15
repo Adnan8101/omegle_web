@@ -69,15 +69,14 @@ export default function ShopDashboard() {
   const [setSuccess, setSetSuccess] = useState(false);
   const [editAvailable, setEditAvailable] = useState('');
   const [editTotalAdded, setEditTotalAdded] = useState('');
-  const [editTotalSpent, setEditTotalSpent] = useState('');
   const [adjustSuccess, setAdjustSuccess] = useState(false);
   useEffect(() => {
     if (budget) {
       setEditAvailable(budget.available.toString());
       setEditTotalAdded(budget.totalAdded.toString());
-      setEditTotalSpent(budget.totalSpent.toString());
     }
   }, [budget]);
+  const calculatedSpent = Math.max(0, (parseInt(editTotalAdded) || 0) - (parseInt(editAvailable) || 0));
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -194,7 +193,7 @@ export default function ShopDashboard() {
           action: 'adjust',
           available: parseInt(editAvailable),
           totalAdded: parseInt(editTotalAdded),
-          totalSpent: parseInt(editTotalSpent)
+          totalSpent: calculatedSpent
         })
       });
       const data = await res.json();
@@ -712,15 +711,13 @@ export default function ShopDashboard() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                      Total Spent (Ozy) *
+                      Total Spent (Ozy) (Calculated)
                     </label>
                     <input
                       type="number"
-                      required
-                      min="0"
-                      value={editTotalSpent}
-                      onChange={(e) => setEditTotalSpent(e.target.value)}
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-blue-500 focus:outline-none transition-colors"
+                      disabled
+                      value={calculatedSpent}
+                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))]/50 rounded-xl border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-tertiary))] cursor-not-allowed"
                     />
                   </div>
                 </div>
