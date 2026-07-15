@@ -16,8 +16,65 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No casino access' }, { status: 403 });
     }
     const body = await request.json();
-    const amount = Number(body.amount);
     const action = body.action || 'refill'; 
+
+    if (action === 'adjust') {
+      const available = Number(body.available);
+      const totalAdded = Number(body.totalAdded);
+      const totalSpent = Number(body.totalSpent);
+      
+      if (
+        isNaN(available) || available < 0 || !Number.isInteger(available) ||
+        isNaN(totalAdded) || totalAdded < 0 || !Number.isInteger(totalAdded) ||
+        isNaN(totalSpent) || totalSpent < 0 || !Number.isInteger(totalSpent)
+      ) {
+        return NextResponse.json({ error: 'All values must be non-negative integers' }, { status: 400 });
+      }
+      
+      const result = await prismaBot.$transaction(async (tx) => {
+        let budget = await tx.shopBudget.findUnique({
+          where: { guild_id: GUILD_ID }
+        });
+        if (!budget) {
+          budget = await tx.shopBudget.create({
+            data: { guild_id: GUILD_ID, available: 0, total_added: 0, total_spent: 0 }
+          });
+        }
+        const oldAvailable = budget.available;
+        const updatedBudget = await tx.shopBudget.update({
+          where: { guild_id: GUILD_ID },
+          data: {
+            available: available,
+            total_added: totalAdded,
+            total_spent: totalSpent
+          }
+        });
+        const log = await tx.shopBudgetLog.create({
+          data: {
+            guild_id: GUILD_ID,
+            type: 'EDIT',
+            inr_cost: available,
+            coin_cost: available,
+            budget_before: oldAvailable,
+            budget_after: available,
+            user_id: session.user.id,
+            user_name: session.user.name || session.user.email || 'Admin',
+            status: 'SUCCESS'
+          }
+        });
+        return { updatedBudget, log };
+      });
+      return NextResponse.json({
+        success: true,
+        budget: {
+          available: result.updatedBudget.available,
+          totalAdded: result.updatedBudget.total_added,
+          totalSpent: result.updatedBudget.total_spent
+        }
+      });
+    }
+
+    const amount = Number(body.amount);
     if (isNaN(amount) || amount < 0 || !Number.isInteger(amount)) {
       return NextResponse.json({ error: 'Amount must be a non-negative integer' }, { status: 400 });
     }

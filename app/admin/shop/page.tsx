@@ -67,6 +67,17 @@ export default function ShopDashboard() {
   const [setAmount, setSetAmount] = useState('');
   const [budgetLoading, setBudgetLoading] = useState(false);
   const [setSuccess, setSetSuccess] = useState(false);
+  const [editAvailable, setEditAvailable] = useState('');
+  const [editTotalAdded, setEditTotalAdded] = useState('');
+  const [editTotalSpent, setEditTotalSpent] = useState('');
+  const [adjustSuccess, setAdjustSuccess] = useState(false);
+  useEffect(() => {
+    if (budget) {
+      setEditAvailable(budget.available.toString());
+      setEditTotalAdded(budget.totalAdded.toString());
+      setEditTotalSpent(budget.totalSpent.toString());
+    }
+  }, [budget]);
   const getEmojiDisplay = (emoji: string, size: string = 'w-5 h-5') => {
     const match = emoji.match(/<a?:(\w+):(\d+)>/);
     if (match) {
@@ -169,52 +180,32 @@ export default function ShopDashboard() {
       setError('Failed to delete item');
     }
   };
-  const handleRefill = async (e: React.FormEvent) => {
+  const handleAdjustBudget = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!refillAmount || refillLoading) return;
-    setRefillLoading(true);
-    setError(null);
-    setRefillSuccess(false);
-    try {
-      const res = await fetch('/api/casino/budget/refill', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: parseInt(refillAmount), action: 'refill' })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to refill budget');
-      }
-      setRefillSuccess(true);
-      setRefillAmount('');
-      fetchData();
-    } catch (err: any) {
-      setError(err.message || 'Failed to refill budget');
-    } finally {
-      setRefillLoading(false);
-    }
-  };
-  const handleSetBudget = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!setAmount || budgetLoading) return;
+    if (budgetLoading) return;
     setBudgetLoading(true);
     setError(null);
-    setSetSuccess(false);
+    setAdjustSuccess(false);
     try {
       const res = await fetch('/api/casino/budget/refill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: parseInt(setAmount), action: 'set' })
+        body: JSON.stringify({
+          action: 'adjust',
+          available: parseInt(editAvailable),
+          totalAdded: parseInt(editTotalAdded),
+          totalSpent: parseInt(editTotalSpent)
+        })
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to update budget');
+        throw new Error(data.error || 'Failed to update budget stats');
       }
-      setSetSuccess(true);
-      setSetAmount('');
+      setAdjustSuccess(true);
       fetchData();
+      setTimeout(() => setAdjustSuccess(false), 3000);
     } catch (err: any) {
-      setError(err.message || 'Failed to update budget');
+      setError(err.message || 'Failed to update budget stats');
     } finally {
       setBudgetLoading(false);
     }
@@ -682,70 +673,63 @@ export default function ShopDashboard() {
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {}
+          <div className="w-full">
             <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))]">
-              <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">Refill Ozy Budget</h3>
-              {refillSuccess && (
+              <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">Edit Budget Stats</h3>
+              {adjustSuccess && (
                 <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center gap-2 text-green-500 text-sm">
                   <FiCheck className="w-4 h-4" />
-                  <span>Ozy Budget refilled successfully!</span>
+                  <span>Budget stats updated successfully!</span>
                 </div>
               )}
-              <form onSubmit={handleRefill} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    Amount to Add (Ozy) *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    placeholder="e.g., 5000"
-                    value={refillAmount}
-                    onChange={(e) => setRefillAmount(e.target.value)}
-                    className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-blue-500 focus:outline-none transition-colors"
-                  />
+              <form onSubmit={handleAdjustBudget} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                      Available Budget (Ozy) *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={editAvailable}
+                      onChange={(e) => setEditAvailable(e.target.value)}
+                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-blue-500 focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                      Total Added (Ozy) *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={editTotalAdded}
+                      onChange={(e) => setEditTotalAdded(e.target.value)}
+                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-blue-500 focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                      Total Spent (Ozy) *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={editTotalSpent}
+                      onChange={(e) => setEditTotalSpent(e.target.value)}
+                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-blue-500 focus:outline-none transition-colors"
+                    />
+                  </div>
                 </div>
                 <button
                   type="submit"
-                  disabled={refillLoading || refillAmount === ''}
-                  className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
-                >
-                  {refillLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : 'Refill Budget'}
-                </button>
-              </form>
-            </div>
-            {}
-            <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))]">
-              <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">Set Available Budget</h3>
-              {setSuccess && (
-                <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center gap-2 text-green-500 text-sm">
-                  <FiCheck className="w-4 h-4" />
-                  <span>Available budget updated successfully!</span>
-                </div>
-              )}
-              <form onSubmit={handleSetBudget} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    New Budget Amount (Ozy) *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="0"
-                    placeholder="e.g., 10000"
-                    value={setAmount}
-                    onChange={(e) => setSetAmount(e.target.value)}
-                    className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-blue-500 focus:outline-none transition-colors"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={budgetLoading || setAmount === ''}
+                  disabled={budgetLoading}
                   className="w-full py-3 bg-purple-500 hover:bg-purple-600 disabled:opacity-50 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
                 >
-                  {budgetLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : 'Update Available Budget'}
+                  {budgetLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : 'Update Budget Stats'}
                 </button>
               </form>
             </div>
