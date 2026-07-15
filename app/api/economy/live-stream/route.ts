@@ -135,7 +135,7 @@ async function fetchLiveData() {
     const isAdvanced = config?.advanced_mode && catReward;
     const minutesPerPoint = isAdvanced ? catReward.vc_minutes_per_point : (config?.minutes_per_point || 5);
     const ozyAmount = isAdvanced ? (catReward.vc_ozy_amount || 1) : (config?.vc_ozy_amount || 1);
-    const vcEnabled = isAdvanced ? catReward.vc_enabled : true;
+    const vcEnabled = (config?.vc_enabled ?? true) && (isAdvanced ? catReward.vc_enabled : true);
     const minMembers = isAdvanced ? (catReward.vc_min_members || 1) : (config?.require_two_members || 1);
     const countBots = isAdvanced ? (catReward.vc_count_bots ?? false) : (config?.count_bots ?? false);
     const sessionDuration = Math.floor((Date.now() - new Date(session.joined_at).getTime()) / 1000);

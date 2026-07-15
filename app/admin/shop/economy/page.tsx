@@ -40,6 +40,8 @@ interface EconomyConfig {
   enabled: boolean;
   advanced_mode: boolean;
   shop_enabled: boolean;
+  vc_enabled: boolean;
+  message_enabled: boolean;
 }
 interface CategoryReward {
   id: string;
@@ -519,223 +521,253 @@ export default function EconomyManagementPage() {
           </div>
           {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-purple-500/20 rounded-xl">
-                <FiMic className="w-6 h-6 text-purple-500" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-500/20 rounded-xl">
+                  <FiMic className="w-6 h-6 text-purple-500" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Voice Chat Rewards</h2>
+                  <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Configure VC-based currency earning (accumulates across sessions)</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Voice Chat Rewards</h2>
-                <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Configure VC-based currency earning (accumulates across sessions)</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setConfig({ ...config, vc_enabled: !config.vc_enabled })}
+                className={`p-3 rounded-xl transition-all ${
+                  config.vc_enabled
+                    ? 'bg-green-500/20 text-green-500 border border-green-500/30'
+                    : 'bg-red-500/20 text-red-500 border border-red-500/30'
+                }`}
+              >
+                {config.vc_enabled ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+              </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Time Required (minutes)
-                </label>
-                <div className="flex items-center gap-3">
+            <div className={`transition-all duration-300 ${!config.vc_enabled ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Time Required (minutes)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      value={config.minutes_per_point}
+                      onChange={(e) => setConfig({ ...config, minutes_per_point: parseInt(e.target.value) || 5 })}
+                      className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                    />
+                    <span className="text-[rgb(var(--color-text-tertiary))]">minutes in VC</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    {config.currency_name} Amount
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      value={config.vc_ozy_amount || 1}
+                      onChange={(e) => setConfig({ ...config, vc_ozy_amount: parseInt(e.target.value) || 1 })}
+                      className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                    />
+                    <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} earned</span>
+                  </div>
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                    = {config.vc_ozy_amount || 1} {config.currency_name} per {config.minutes_per_point} min
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Minimum Members in VC
+                  </label>
                   <input
                     type="number"
                     min="1"
-                    value={config.minutes_per_point}
-                    onChange={(e) => setConfig({ ...config, minutes_per_point: parseInt(e.target.value) || 5 })}
-                    className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                    value={config.require_two_members}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 1;
+                      setConfig({ ...config, require_two_members: value });
+                    }}
+                    className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                    placeholder="1"
                   />
-                  <span className="text-[rgb(var(--color-text-tertiary))]">minutes in VC</span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Count Bots in Member Count
+                  </label>
+                  <button
+                    onClick={() => setConfig({ ...config, count_bots: !config.count_bots })}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                      config.count_bots
+                        ? 'bg-green-500/10 border-green-500/30 text-green-500'
+                        : 'bg-gray-500/10 border-gray-500/30 text-gray-400'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{config.count_bots ? '✓' : '✗'}</span>
+                      <div className="text-left">
+                        <div className="font-semibold">{config.count_bots ? 'ON' : 'OFF'}</div>
+                        <div className="text-xs opacity-80">{config.count_bots ? 'Bots Counted' : 'Bots Not Counted'}</div>
+                      </div>
+                    </div>
+                    {config.count_bots ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+                  </button>
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                    {config.count_bots ? 'Bots are included in minimum member requirement' : 'Only real users count toward minimum members'}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Ignore Muted Users
+                  </label>
+                  <button
+                    onClick={() => setConfig({ ...config, ignore_self_muted: !config.ignore_self_muted })}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                      config.ignore_self_muted
+                        ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                        : 'bg-green-500/10 border-green-500/30 text-green-500'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{config.ignore_self_muted ? '✓' : '✗'}</span>
+                      <div className="text-left">
+                        <div className="font-semibold">{config.ignore_self_muted ? 'ON (Ignoring)' : 'OFF (Counting)'}</div>
+                        <div className="text-xs opacity-80">{config.ignore_self_muted ? 'Muted users NOT earning' : 'Muted users earning'}</div>
+                      </div>
+                    </div>
+                    {config.ignore_self_muted ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+                  </button>
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                    {config.ignore_self_muted ? 'Muted users will NOT earn coins' : 'Muted users will still earn coins'}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Ignore Deafened Users
+                  </label>
+                  <button
+                    onClick={() => setConfig({ ...config, ignore_deafened: !config.ignore_deafened })}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                      config.ignore_deafened
+                        ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                        : 'bg-green-500/10 border-green-500/30 text-green-500'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{config.ignore_deafened ? '✓' : '✗'}</span>
+                      <div className="text-left">
+                        <div className="font-semibold">{config.ignore_deafened ? 'ON (Ignoring)' : 'OFF (Counting)'}</div>
+                        <div className="text-xs opacity-80">{config.ignore_deafened ? 'Deafened users NOT earning' : 'Deafened users earning'}</div>
+                      </div>
+                    </div>
+                    {config.ignore_deafened ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+                  </button>
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                    {config.ignore_deafened ? 'Deafened users will NOT earn coins' : 'Deafened users will still earn coins'}
+                  </p>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  {config.currency_name} Amount
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    min="1"
-                    value={config.vc_ozy_amount || 1}
-                    onChange={(e) => setConfig({ ...config, vc_ozy_amount: parseInt(e.target.value) || 1 })}
-                    className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
-                  />
-                  <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} earned</span>
-                </div>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
-                  = {config.vc_ozy_amount || 1} {config.currency_name} per {config.minutes_per_point} min
+              <div className="mt-4 p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                <p className="text-sm text-purple-300">
+                  <strong>How it works:</strong> Time accumulates across sessions. When a user reaches {config.minutes_per_point} min total (even across multiple joins), they earn {config.vc_ozy_amount || 1} {config.currency_name} and progress continues.
                 </p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Minimum Members in VC
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={config.require_two_members}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value) || 1;
-                    setConfig({ ...config, require_two_members: value });
-                  }}
-                  className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                  placeholder="1"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Count Bots in Member Count
-                </label>
-                <button
-                  onClick={() => setConfig({ ...config, count_bots: !config.count_bots })}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                    config.count_bots
-                      ? 'bg-green-500/10 border-green-500/30 text-green-500'
-                      : 'bg-gray-500/10 border-gray-500/30 text-gray-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{config.count_bots ? '✓' : '✗'}</span>
-                    <div className="text-left">
-                      <div className="font-semibold">{config.count_bots ? 'ON' : 'OFF'}</div>
-                      <div className="text-xs opacity-80">{config.count_bots ? 'Bots Counted' : 'Bots Not Counted'}</div>
-                    </div>
-                  </div>
-                  {config.count_bots ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
-                </button>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
-                  {config.count_bots ? 'Bots are included in minimum member requirement' : 'Only real users count toward minimum members'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Ignore Muted Users
-                </label>
-                <button
-                  onClick={() => setConfig({ ...config, ignore_self_muted: !config.ignore_self_muted })}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                    config.ignore_self_muted
-                      ? 'bg-red-500/10 border-red-500/30 text-red-500'
-                      : 'bg-green-500/10 border-green-500/30 text-green-500'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{config.ignore_self_muted ? '✓' : '✗'}</span>
-                    <div className="text-left">
-                      <div className="font-semibold">{config.ignore_self_muted ? 'ON (Ignoring)' : 'OFF (Counting)'}</div>
-                      <div className="text-xs opacity-80">{config.ignore_self_muted ? 'Muted users NOT earning' : 'Muted users earning'}</div>
-                    </div>
-                  </div>
-                  {config.ignore_self_muted ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
-                </button>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
-                  {config.ignore_self_muted ? 'Muted users will NOT earn coins' : 'Muted users will still earn coins'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Ignore Deafened Users
-                </label>
-                <button
-                  onClick={() => setConfig({ ...config, ignore_deafened: !config.ignore_deafened })}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                    config.ignore_deafened
-                      ? 'bg-red-500/10 border-red-500/30 text-red-500'
-                      : 'bg-green-500/10 border-green-500/30 text-green-500'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{config.ignore_deafened ? '✓' : '✗'}</span>
-                    <div className="text-left">
-                      <div className="font-semibold">{config.ignore_deafened ? 'ON (Ignoring)' : 'OFF (Counting)'}</div>
-                      <div className="text-xs opacity-80">{config.ignore_deafened ? 'Deafened users NOT earning' : 'Deafened users earning'}</div>
-                    </div>
-                  </div>
-                  {config.ignore_deafened ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
-                </button>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
-                  {config.ignore_deafened ? 'Deafened users will NOT earn coins' : 'Deafened users will still earn coins'}
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
-              <p className="text-sm text-purple-300">
-                <strong>How it works:</strong> Time accumulates across sessions. When a user reaches {config.minutes_per_point} min total (even across multiple joins), they earn {config.vc_ozy_amount || 1} {config.currency_name} and progress continues.
-              </p>
             </div>
           </div>
           {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-blue-500/20 rounded-xl">
-                <FiMessageSquare className="w-6 h-6 text-blue-500" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-500/20 rounded-xl">
+                  <FiMessageSquare className="w-6 h-6 text-blue-500" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Message Rewards</h2>
+                  <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Configure message-based currency earning (accumulates towards threshold)</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Message Rewards</h2>
-                <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Configure message-based currency earning (accumulates towards threshold)</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setConfig({ ...config, message_enabled: !config.message_enabled })}
+                className={`p-3 rounded-xl transition-all ${
+                  config.message_enabled
+                    ? 'bg-green-500/20 text-green-500 border border-green-500/30'
+                    : 'bg-red-500/20 text-red-500 border border-red-500/30'
+                }`}
+              >
+                {config.message_enabled ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+              </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Messages Required
-                </label>
-                <div className="flex items-center gap-3">
+            <div className={`transition-all duration-300 ${!config.message_enabled ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Messages Required
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      value={config.messages_per_point}
+                      onChange={(e) => setConfig({ ...config, messages_per_point: parseInt(e.target.value) || 25 })}
+                      className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                    />
+                    <span className="text-[rgb(var(--color-text-tertiary))]">messages to earn</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    {config.currency_name} Amount
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      value={config.msg_ozy_amount || 1}
+                      onChange={(e) => setConfig({ ...config, msg_ozy_amount: parseInt(e.target.value) || 1 })}
+                      className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                    />
+                    <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} earned</span>
+                  </div>
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                    = {config.msg_ozy_amount || 1} {config.currency_name} per {config.messages_per_point} msgs
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Min Message Length
+                  </label>
                   <input
                     type="number"
                     min="1"
-                    value={config.messages_per_point}
-                    onChange={(e) => setConfig({ ...config, messages_per_point: parseInt(e.target.value) || 25 })}
-                    className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                    value={config.min_message_length}
+                    onChange={(e) => setConfig({ ...config, min_message_length: parseInt(e.target.value) || 5 })}
+                    className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                    placeholder="5"
                   />
-                  <span className="text-[rgb(var(--color-text-tertiary))]">messages to earn</span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Cooldown (seconds)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={config.message_cooldown}
+                    onChange={(e) => setConfig({ ...config, message_cooldown: parseInt(e.target.value) || 5 })}
+                    className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                    placeholder="5"
+                  />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  {config.currency_name} Amount
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    min="1"
-                    value={config.msg_ozy_amount || 1}
-                    onChange={(e) => setConfig({ ...config, msg_ozy_amount: parseInt(e.target.value) || 1 })}
-                    className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
-                  />
-                  <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} earned</span>
-                </div>
-                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
-                  = {config.msg_ozy_amount || 1} {config.currency_name} per {config.messages_per_point} msgs
+              <div className="mt-4 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                <p className="text-sm text-blue-300">
+                  <strong>How it works:</strong> Messages accumulate. After {config.messages_per_point} valid messages, user earns {config.msg_ozy_amount || 1} {config.currency_name}. Progress persists until reward is earned.
                 </p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Min Message Length
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={config.min_message_length}
-                  onChange={(e) => setConfig({ ...config, min_message_length: parseInt(e.target.value) || 5 })}
-                  className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                  placeholder="5"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Cooldown (seconds)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={config.message_cooldown}
-                  onChange={(e) => setConfig({ ...config, message_cooldown: parseInt(e.target.value) || 5 })}
-                  className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                  placeholder="5"
-                />
-              </div>
-            </div>
-            <div className="mt-4 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
-              <p className="text-sm text-blue-300">
-                <strong>How it works:</strong> Messages accumulate. After {config.messages_per_point} valid messages, user earns {config.msg_ozy_amount || 1} {config.currency_name}. Progress persists until reward is earned.
-              </p>
             </div>
           </div>
           {}

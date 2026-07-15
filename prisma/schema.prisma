@@ -646,6 +646,8 @@ model EconomyConfig {
   shop_enabled        Boolean  @default(true)
   updated_at          DateTime @updatedAt
   vc_ozy_amount         Int      @default(1)     // Coins per cycle
+  vc_enabled          Boolean  @default(true)
+  message_enabled     Boolean  @default(true)
   @@map("economy_config")
 }
 

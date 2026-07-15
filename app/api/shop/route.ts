@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
     const items = await prismaBot.shopItem.findMany({
       where: {
         guild_id: GUILD_ID,
+        enabled: true,
         OR: [
           { expires_at: null },
           { expires_at: { gt: now } }
@@ -167,6 +168,7 @@ export async function GET(request: NextRequest) {
   }
 }
 export async function POST(request: NextRequest) {
+  let config: any = null;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -180,7 +182,7 @@ export async function POST(request: NextRequest) {
     if (!itemId) {
       return NextResponse.json({ error: 'Item ID is required' }, { status: 400 });
     }
-    const config = await prismaBot.economyConfig.findUnique({
+    config = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
     if (config?.shop_enabled === false) {
@@ -214,8 +216,8 @@ export async function POST(request: NextRequest) {
           data: { guild_id: GUILD_ID, available: 0, total_added: 0, total_spent: 0 }
         });
       }
-      if (budget.available < item.price_inr) {
-        throw new Error(`INSUFFICIENT_BUDGET:${item.price_inr}:${budget.available}`);
+      if (budget.available < item.price) {
+        throw new Error(`INSUFFICIENT_BUDGET:${item.price}:${budget.available}`);
       }
       const economyUser = await tx.economyUser.findUnique({
         where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
@@ -248,12 +250,12 @@ export async function POST(request: NextRequest) {
         }
       }
       const oldAvailable = budget.available;
-      const newAvailable = budget.available - item.price_inr;
+      const newAvailable = budget.available - item.price;
       await tx.shopBudget.update({
         where: { guild_id: GUILD_ID },
         data: {
           available: newAvailable,
-          total_spent: { increment: item.price_inr }
+          total_spent: { increment: item.price }
         }
       });
       const userName = member ? getDisplayName(member) : userId;
@@ -357,8 +359,9 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error) {
       if (error.message.startsWith('INSUFFICIENT_BUDGET:')) {
         const [, required, current] = error.message.split(':');
+        const currencyName = config?.currency_name || 'Ozy';
         return NextResponse.json({
-          error: `Insufficient reward budget to complete this purchase. Item costs ₹${Number(required).toLocaleString()} but only ₹${Number(current).toLocaleString()} remains.`
+          error: `Insufficient reward budget to complete this purchase. Item costs ${Number(required).toLocaleString()} ${currencyName} but only ${Number(current).toLocaleString()} ${currencyName} remains.`
         }, { status: 400 });
       }
       if (error.message === 'ITEM_NOT_FOUND') {

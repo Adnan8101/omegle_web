@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
           guild_id: GUILD_ID,
           type: action === 'set' ? 'EDIT' : 'REFILL',
           inr_cost: amount,
+          coin_cost: amount,
           budget_before: oldAvailable,
           budget_after: newAvailable,
           user_id: session.user.id,

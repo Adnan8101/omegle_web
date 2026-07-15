@@ -254,21 +254,21 @@ export default function ShopDashboard() {
   const budgetStatCards = [
     {
       title: 'Available Budget',
-      value: '₹' + formatNumber(budget?.available || 0),
+      value: formatNumber(budget?.available || 0) + ' Ozy',
       icon: <FiDollarSign className="w-6 h-6 sm:w-8 sm:h-8" />,
       iconColor: 'text-green-500',
       bgColor: 'bg-green-500/20',
     },
     {
       title: 'Total Added',
-      value: '₹' + formatNumber(budget?.totalAdded || 0),
+      value: formatNumber(budget?.totalAdded || 0) + ' Ozy',
       icon: <FiPlus className="w-6 h-6 sm:w-8 sm:h-8" />,
       iconColor: 'text-blue-500',
       bgColor: 'bg-blue-500/20',
     },
     {
       title: 'Total Spent',
-      value: '₹' + formatNumber(budget?.totalSpent || 0),
+      value: formatNumber(budget?.totalSpent || 0) + ' Ozy',
       icon: <FiTrendingUp className="w-6 h-6 sm:w-8 sm:h-8" />,
       iconColor: 'text-purple-500',
       bgColor: 'bg-purple-500/20',
@@ -648,17 +648,17 @@ export default function ShopDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {}
             <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))]">
-              <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">Refill INR Budget</h3>
+              <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-4">Refill Ozy Budget</h3>
               {refillSuccess && (
                 <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center gap-2 text-green-500 text-sm">
                   <FiCheck className="w-4 h-4" />
-                  <span>INR Budget refilled successfully!</span>
+                  <span>Ozy Budget refilled successfully!</span>
                 </div>
               )}
               <form onSubmit={handleRefill} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    Amount to Add (INR) *
+                    Amount to Add (Ozy) *
                   </label>
                   <input
                     type="number"
@@ -691,7 +691,7 @@ export default function ShopDashboard() {
               <form onSubmit={handleSetBudget} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    New Budget Amount (INR) *
+                    New Budget Amount (Ozy) *
                   </label>
                   <input
                     type="number"
@@ -752,18 +752,22 @@ export default function ShopDashboard() {
                     <td className="py-4">{log.user_name || log.user_id || 'N/A'}</td>
                     <td className="py-4">{log.item_name || 'N/A'}</td>
                     <td className="py-4 font-semibold text-[rgb(var(--color-text-primary))]">
-                      {log.inr_cost !== null && log.inr_cost !== undefined ? (
+                      {log.type === 'REFILL' || log.type === 'EDIT' ? (
+                        '—'
+                      ) : log.inr_cost !== null && log.inr_cost !== undefined ? (
                         `${log.type === 'REFILL' ? '+' : '-'}₹${log.inr_cost.toLocaleString()}`
                       ) : (
                         '—'
                       )}
                     </td>
                     <td className="py-4 font-semibold">
-                      {log.coin_cost !== null && log.coin_cost !== undefined ? (
-                        `${log.type === 'COIN_REMOVE' ? '-' : log.type === 'COIN_ADD' ? '+' : ''}${log.coin_cost.toLocaleString()} Coins`
-                      ) : (
-                        'N/A'
-                      )}
+                      {(() => {
+                        const cost = log.coin_cost !== null && log.coin_cost !== undefined ? log.coin_cost : ((log.type === 'REFILL' || log.type === 'EDIT') ? log.inr_cost : null);
+                        if (cost !== null && cost !== undefined) {
+                          return `${log.type === 'COIN_REMOVE' ? '-' : log.type === 'COIN_ADD' || log.type === 'REFILL' || log.type === 'EDIT' ? '+' : ''}${cost.toLocaleString()} Coins`;
+                        }
+                        return 'N/A';
+                      })()}
                     </td>
                     <td className="py-4">
                       <span className="text-xs text-green-500">{log.status}</span>

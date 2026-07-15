@@ -38,7 +38,9 @@ export async function GET(request: NextRequest) {
         leaderboard_sync: true,
         enabled: false,
         advanced_mode: false,
-        shop_enabled: true
+        shop_enabled: true,
+        vc_enabled: true,
+        message_enabled: true
       },
       categoryRewards
     });
@@ -74,7 +76,9 @@ export async function PATCH(request: NextRequest) {
       enabled,
       advanced_mode,
       shop_enabled,
-      afk_channel_id
+      afk_channel_id,
+      vc_enabled,
+      message_enabled
     } = body;
     const config = await prismaBot.economyConfig.upsert({
       where: { guild_id: GUILD_ID },
@@ -95,7 +99,9 @@ export async function PATCH(request: NextRequest) {
         enabled: enabled ?? false,
         advanced_mode: advanced_mode ?? false,
         shop_enabled: shop_enabled ?? true,
-        afk_channel_id: afk_channel_id ?? null
+        afk_channel_id: afk_channel_id ?? null,
+        vc_enabled: vc_enabled ?? true,
+        message_enabled: message_enabled ?? true
       },
       update: {
         ...(messages_per_point !== undefined && { messages_per_point }),
@@ -113,7 +119,9 @@ export async function PATCH(request: NextRequest) {
         ...(enabled !== undefined && { enabled }),
         ...(advanced_mode !== undefined && { advanced_mode }),
         ...(shop_enabled !== undefined && { shop_enabled }),
-        ...(afk_channel_id !== undefined && { afk_channel_id })
+        ...(afk_channel_id !== undefined && { afk_channel_id }),
+        ...(vc_enabled !== undefined && { vc_enabled }),
+        ...(message_enabled !== undefined && { message_enabled })
       }
     });
     return NextResponse.json({ success: true, config });

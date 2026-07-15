@@ -468,12 +468,17 @@ export default function ShopPage() {
               <div className="text-xs font-bold tracking-wider text-[rgb(var(--color-text-secondary))] uppercase">
                 COMMUNITY REWARD POOL
               </div>
-              <div className="text-xl font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
-                Available Reward Budget: <span className="text-2xl text-blue-400 font-extrabold">₹{formatNumber(budget.available)}</span>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-1">
+                <div className="text-lg font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
+                  Total {currencyName}: <span className="text-2xl text-yellow-500 font-extrabold">{formatNumber(budget.total_added)}</span>
+                </div>
+                <div className="text-lg font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
+                  Available: <span className="text-2xl text-blue-400 font-extrabold">{formatNumber(budget.available)}</span>
+                </div>
               </div>
             </div>
             <div className="flex flex-col sm:items-end gap-1 text-xs text-[rgb(var(--color-text-tertiary))] font-medium">
-              <div>Total Spent: <span className="font-semibold text-[rgb(var(--color-text-primary))]">₹{formatNumber(budget.total_spent)}</span></div>
+              <div>Total Spent: <span className="font-semibold text-[rgb(var(--color-text-primary))]">{formatNumber(budget.total_spent)} {currencyName}</span></div>
               <div>Last Updated: <span className="font-semibold text-[rgb(var(--color-text-primary))]">{new Date().toLocaleDateString('en-GB')}</span></div>
             </div>
           </div>
@@ -499,9 +504,9 @@ export default function ShopPage() {
               const canAfford = session ? userBalance >= item.price : false;
               const isOutOfStock = item.out_of_stock || (item.stock !== null && item.stock !== -1 && item.stock <= 0);
               const isDisabled = !item.enabled;
-              const isInsufficientBudget = Boolean(budget && item.price_inr && budget.available < item.price_inr);
+              const isInsufficientBudget = Boolean(budget && budget.available < item.price);
               const missingRequiredRole = Boolean(session && item.role_required_ids?.length > 0 && item.has_required_role === false);
-              const isUnavailable = isOutOfStock || isDisabled;
+              const isUnavailable = isOutOfStock || isDisabled || isInsufficientBudget;
               const daysLeft = item.expires_at
                 ? Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
                 : null;
@@ -509,7 +514,7 @@ export default function ShopPage() {
                 <div
                   key={item.id}
                   className={`bg-[rgb(var(--color-bg-secondary))] rounded-2xl border overflow-hidden transition-all hover:shadow-lg ${
-                    isUnavailable
+                    isOutOfStock || isDisabled
                       ? 'border-red-500/30 opacity-75 hover:border-red-500/50 hover:shadow-red-500/10'
                       : isInsufficientBudget
                       ? 'border-orange-500/30 opacity-75 hover:border-orange-500/50 hover:shadow-orange-500/10'
@@ -522,7 +527,7 @@ export default function ShopPage() {
                       <img
                         src={item.thumbnail}
                         alt={item.name}
-                        className={`w-full h-full object-cover object-center ${isUnavailable || isInsufficientBudget ? 'grayscale' : ''}`}
+                        className={`w-full h-full object-cover object-center ${isUnavailable ? 'grayscale' : ''}`}
                         loading="lazy"
                       />
                     ) : (
@@ -550,7 +555,7 @@ export default function ShopPage() {
                     {isInsufficientBudget && !isDisabled && !isOutOfStock && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <div className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold text-lg transform -rotate-12 shadow-lg">
-                          LOW BUDGET
+                          UNAVAILABLE
                         </div>
                       </div>
                     )}
@@ -594,12 +599,17 @@ export default function ShopPage() {
                             {formatNumber(item.price)}
                           </span>
                         </div>
+                        {item.price_inr !== undefined && item.price_inr !== null && (
+                          <span className="text-xs text-[rgb(var(--color-text-tertiary))] mt-0.5">
+                            Value: ₹{formatNumber(item.price_inr)}
+                          </span>
+                        )}
                       </div>
                       <button
                         onClick={() => handlePurchase(item)}
-                        disabled={purchasing === item.id || (session && !canAfford) || isUnavailable || missingRequiredRole || isInsufficientBudget}
+                        disabled={purchasing === item.id || (session && !canAfford) || isUnavailable || missingRequiredRole}
                         className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors ${
-                          isUnavailable
+                          isOutOfStock || isDisabled
                             ? 'bg-red-500/20 text-red-400 cursor-not-allowed'
                             : isInsufficientBudget
                             ? 'bg-orange-500/20 text-orange-400 cursor-not-allowed'
@@ -619,7 +629,7 @@ export default function ShopPage() {
                         ) : isDisabled ? (
                           'Unavailable'
                         ) : isInsufficientBudget ? (
-                          'Temporary Unavailable'
+                          'Unavailable'
                         ) : missingRequiredRole ? (
                           'Role Required'
                         ) : !session ? (
