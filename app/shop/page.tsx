@@ -551,6 +551,29 @@ export default function ShopPage() {
               <div className="space-y-3">
                 {(() => {
                   const percent = budget.total_added > 0 ? Math.min(100, Math.max(0, Math.round((budget.available / budget.total_added) * 100))) : 0;
+                  
+                  let barColorClass = '';
+                  let textHighlightClass = '';
+                  let glowShadowStyle = '';
+
+                  if (percent >= 70) {
+                    barColorClass = 'bg-gradient-to-r from-emerald-500 to-green-400';
+                    textHighlightClass = 'text-green-400';
+                    glowShadowStyle = 'rgba(52,211,153,0.4)';
+                  } else if (percent >= 40) {
+                    barColorClass = 'bg-gradient-to-r from-yellow-500 to-amber-400';
+                    textHighlightClass = 'text-yellow-400';
+                    glowShadowStyle = 'rgba(245,158,11,0.4)';
+                  } else if (percent >= 15) {
+                    barColorClass = 'bg-gradient-to-r from-orange-500 to-amber-500';
+                    textHighlightClass = 'text-orange-400';
+                    glowShadowStyle = 'rgba(249,115,22,0.4)';
+                  } else {
+                    barColorClass = 'bg-gradient-to-r from-rose-600 to-red-500';
+                    textHighlightClass = 'text-red-500';
+                    glowShadowStyle = 'rgba(239,68,68,0.5)';
+                  }
+
                   return (
                     <>
                       <div className="grid grid-cols-2 gap-4">
@@ -563,10 +586,10 @@ export default function ShopPage() {
                         </div>
                         <div className="p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
                           <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Remaining Budget</span>
-                          <span className="text-xl font-black text-blue-400 mt-1 flex items-center gap-1.5">
+                          <span className={`text-xl font-black mt-1 flex items-center gap-1.5 ${textHighlightClass}`}>
                             {getEmojiDisplay(currencyEmoji, 'w-4 h-4', 'text-xs')}
                             {formatNumber(budget.available)}
-                            <span className="text-xs font-semibold text-blue-400/70 ml-1">({percent}%)</span>
+                            <span className="text-xs font-semibold opacity-80 ml-1">({percent}%)</span>
                           </span>
                         </div>
                       </div>
@@ -575,8 +598,8 @@ export default function ShopPage() {
                       {budget.total_added > 0 && (
                         <div className="w-full bg-[rgb(var(--color-bg-tertiary))] rounded-full h-1.5 overflow-hidden">
                           <div
-                            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(59,130,246,0.35)]"
-                            style={{ width: `${percent}%` }}
+                            className={`h-full rounded-full transition-all duration-500 ${barColorClass}`}
+                            style={{ width: `${percent}%`, boxShadow: `0 0 10px ${glowShadowStyle}` }}
                           />
                         </div>
                       )}
