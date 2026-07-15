@@ -249,27 +249,33 @@ export default function ShopPage() {
           <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
             {session ? (
               <>
-                <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl whitespace-nowrap flex-shrink-0">
-                  {getEmojiDisplay(currencyEmoji)}
-                  <span className="font-bold text-yellow-500">{formatNumber(userBalance)}</span>
-                  <span className="hidden sm:inline text-xs text-yellow-500/70">{currencyName}</span>
+                <div className="flex items-center gap-2.5 px-4 py-2 bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-yellow-500/5 border border-amber-500/25 rounded-2xl shadow-[0_0_12px_rgba(245,158,11,0.12)] whitespace-nowrap flex-shrink-0 select-none">
+                  <div className="flex items-center justify-center p-1 bg-amber-500/15 rounded-lg border border-amber-500/20">
+                    {getEmojiDisplay(currencyEmoji, 'w-4.5 h-4.5')}
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-[9px] font-bold text-amber-500/70 uppercase tracking-wider leading-none">Your Balance</span>
+                    <span className="font-extrabold text-yellow-500 text-sm leading-tight mt-0.5">
+                      {formatNumber(userBalance)} <span className="text-[10px] font-semibold text-yellow-500/80">{currencyName}</span>
+                    </span>
+                  </div>
                 </div>
                 <Link
                   href="/purchases"
-                  className="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-colors text-sm"
+                  className="hidden sm:inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-[rgb(var(--color-bg-tertiary))]/80 hover:bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] transition-all text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] shadow-sm"
                   title="See all your stuff"
                 >
-                  <FiPackage className="w-4 h-4" />
+                  <FiPackage className="w-4 h-4 text-blue-400" />
                   <span>My Stuff</span>
                 </Link>
                 <Link
                   href="/purchases"
-                  className="relative p-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                  className="relative p-2.5 rounded-2xl bg-[rgb(var(--color-bg-tertiary))]/80 hover:bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] transition-all shadow-sm"
                   title="My Purchases"
                 >
-                  <FiShoppingCart className="w-5 h-5" />
+                  <FiShoppingCart className="w-4 h-4 text-blue-400" />
                   {pendingPurchases.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 text-black text-xs font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg border border-[rgb(var(--color-bg-secondary))] animate-pulse">
                       {pendingPurchases.length}
                     </span>
                   )}
@@ -277,11 +283,11 @@ export default function ShopPage() {
                 <img
                   src={session.user?.image || `https://cdn.discordapp.com/embed/avatars/0.png`}
                   alt="Avatar"
-                  className="w-8 h-8 rounded-full"
+                  className="w-9 h-9 rounded-2xl border-2 border-blue-500/20 hover:border-blue-500/50 transition-all cursor-pointer shadow-sm"
                 />
               </>
             ) : (
-              <span className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] bg-[rgb(var(--color-bg-tertiary))] px-3 py-1.5 rounded-xl border border-[rgb(var(--color-border))]">
+              <span className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] bg-[rgb(var(--color-bg-tertiary))]/80 px-3.5 py-2 rounded-xl border border-[rgb(var(--color-border))] shadow-sm">
                 Guest Visitor
               </span>
             )}
