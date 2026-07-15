@@ -236,9 +236,15 @@ export default function ShopPage() {
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))]">
       <section className="max-w-7xl mx-auto px-4 pt-5 pb-2">
         <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Omeglee Shop</h1>
-            <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Casino Economy Store</p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
+            <div>
+              <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Omeglee Shop</h1>
+              <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Casino Economy Store</p>
+            </div>
+            <nav className="flex items-center gap-4 text-xs font-semibold text-[rgb(var(--color-text-secondary))] border-l border-[rgb(var(--color-border))] pl-0 sm:pl-8">
+              <Link href="/" className="hover:text-[rgb(var(--color-text-primary))] transition-colors">Home</Link>
+              <Link href="/staff-application" className="hover:text-[rgb(var(--color-text-primary))] transition-colors">Staff Application</Link>
+            </nav>
           </div>
           <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
             {session ? (
