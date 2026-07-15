@@ -72,12 +72,10 @@ export default function ShopPage() {
   const [budget, setBudget] = useState<{ available: number; total_added: number; total_spent: number } | null>(null);
   const purchaseInFlightRef = useRef(false);
   useEffect(() => {
-  }, [status, router]);
-  useEffect(() => {
-    if (session) {
+    if (status === 'authenticated') {
       fetchShop();
     }
-  }, [session]);
+  }, [status]);
   if (status === 'unauthenticated') {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6">
