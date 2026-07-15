@@ -515,31 +515,75 @@ export default function ShopPage() {
       {}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {budget && (
-          <div className="mb-8 p-6 bg-[rgb(var(--color-bg-secondary))]/30 border border-[rgb(var(--color-border))] rounded-2xl flex flex-row items-center justify-between gap-6 backdrop-blur-md">
-            <div className="space-y-1">
-              <div className="text-xs font-bold tracking-wider text-[rgb(var(--color-text-secondary))] uppercase">
-                COMMUNITY REWARD POOL
+          <div className="mb-8 p-6 bg-[rgb(var(--color-bg-secondary))]/40 border border-[rgb(var(--color-border))] rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 backdrop-blur-lg">
+            <div className="flex-1 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold tracking-wider text-[rgb(var(--color-text-tertiary))] uppercase">
+                    Reward Pool
+                  </div>
+                  <h2 className="text-xl font-extrabold text-[rgb(var(--color-text-primary))] mt-0.5">
+                    Community Reward Pool
+                  </h2>
+                </div>
+                {/* Mobile Filter Button */}
+                <div className="md:hidden">
+                  <button
+                    onClick={() => {
+                      setTempSortMode(sortMode);
+                      setIsFilterOpen(true);
+                    }}
+                    className="flex items-center gap-2 px-3.5 py-2 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] border border-[rgb(var(--color-border))] rounded-xl transition-all shadow-sm"
+                  >
+                    <FiFilter className="w-3.5 h-3.5 text-blue-400" />
+                    <span className="text-xs font-semibold">Filter</span>
+                  </button>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-1">
-                <div className="text-lg font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
-                  Total {currencyName}: <span className="text-2xl text-yellow-500 font-extrabold">{formatNumber(budget.total_added)}</span>
+
+              {/* Stat Cards Row */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
+                    <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Total Distributed</span>
+                    <span className="text-xl font-black text-yellow-500 mt-1 flex items-center gap-1.5">
+                      {getEmojiDisplay(currencyEmoji, 'w-5 h-5')}
+                      {formatNumber(budget.total_added)}
+                    </span>
+                  </div>
+                  <div className="p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
+                    <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Remaining Budget</span>
+                    <span className="text-xl font-black text-blue-400 mt-1 flex items-center gap-1.5">
+                      {getEmojiDisplay(currencyEmoji, 'w-5 h-5')}
+                      {formatNumber(budget.available)}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-lg font-bold text-[rgb(var(--color-text-primary))] flex items-center gap-2">
-                  Available: <span className="text-2xl text-blue-400 font-extrabold">{formatNumber(budget.available)}</span>
-                </div>
+
+                {/* Progress bar */}
+                {budget.total_added > 0 && (
+                  <div className="w-full bg-[rgb(var(--color-bg-tertiary))] rounded-full h-2 overflow-hidden border border-[rgb(var(--color-border))]/30">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, Math.max(0, (budget.available / budget.total_added) * 100))}%` }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
-            <div className="flex items-center gap-3">
+
+            {/* Desktop Filter Button */}
+            <div className="hidden md:flex items-center gap-3">
               <button
                 onClick={() => {
                   setTempSortMode(sortMode);
                   setIsFilterOpen(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] border border-[rgb(var(--color-border))] rounded-xl transition-all shadow-sm flex-shrink-0"
+                className="flex items-center gap-2 px-5 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] border border-[rgb(var(--color-border))] rounded-2xl transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 title="Sort & Filter Items"
               >
                 <FiFilter className="w-4 h-4 text-blue-400" />
-                <span className="text-xs font-semibold">Filter</span>
+                <span className="text-sm font-bold">Sort & Filter</span>
               </button>
             </div>
           </div>
