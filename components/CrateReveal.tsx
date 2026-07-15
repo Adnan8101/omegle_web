@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { FiAlertCircle, FiCheck, FiCopy, FiMessageCircle, FiPackage, FiVolume2, FiVolumeX, FiExternalLink, FiArrowRight } from 'react-icons/fi';
+import { FiAlertCircle, FiCheck, FiCopy, FiMessageCircle, FiPackage, FiVolume2, FiVolumeX, FiExternalLink, FiArrowRight, FiX } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 class AudioSynth {
   private ctx: AudioContext | null = null;
@@ -100,8 +100,7 @@ export default function CrateReveal({
   const [stage, setStage] = useState<'shake' | 'open' | 'reveal'>('shake');
   const [showCode, setShowCode] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [audioEnabled, setAudioEnabled] = useState(true);
-  const [countdown, setCountdown] = useState(10);
+  const [audioEnabled, setAudioEnabled] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioSynthRef = useRef<AudioSynth | null>(null);
   const router = useRouter();
@@ -132,20 +131,6 @@ export default function CrateReveal({
       return () => clearTimeout(timer);
     }
   }, [stage, audioEnabled]);
-  useEffect(() => {
-    if (stage !== 'reveal') return;
-    const redirectInterval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(redirectInterval);
-          window.location.href = 'https://www.omegleecommunity.com/purchases';
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(redirectInterval);
-  }, [stage]);
   useEffect(() => {
     if (stage !== 'open' && stage !== 'reveal') return;
     const canvas = canvasRef.current;
@@ -274,15 +259,7 @@ export default function CrateReveal({
     return <span className="inline-block">{emoji}</span>;
   };
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[rgb(var(--color-bg-primary))]/95 backdrop-blur-md overflow-hidden select-none p-4">
-      {}
-      <button
-        onClick={() => setAudioEnabled(!audioEnabled)}
-        className="absolute top-6 right-6 z-50 p-3 rounded-full bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] shadow-sm hover:scale-105 transition-all duration-300"
-        title={audioEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
-      >
-        {audioEnabled ? <FiVolume2 className="w-5 h-5" /> : <FiVolumeX className="w-5 h-5" />}
-      </button>
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-start md:justify-center bg-[rgb(var(--color-bg-primary))]/95 backdrop-blur-md overflow-y-auto select-none p-4 py-8 md:py-12">
       {}
       {stage !== 'reveal' && (
         <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-20" />
@@ -377,6 +354,13 @@ export default function CrateReveal({
             <div className="absolute -top-32 -left-32 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/15 transition-colors duration-500" />
             <div className="absolute -bottom-32 -right-32 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl group-hover:bg-amber-500/15 transition-colors duration-500" />
             {}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 z-20 p-2 rounded-full bg-[rgb(var(--color-bg-secondary))]/50 hover:bg-[rgb(var(--color-bg-secondary))] text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-all border border-[rgb(var(--color-border))] cursor-pointer"
+              title="Close"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
             <div className="relative flex flex-col items-center">
               {}
               <div className="relative w-28 h-28 mb-5 flex items-center justify-center bg-gradient-to-b from-[rgb(var(--color-bg-secondary))] to-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] rounded-2xl p-1 shadow-2xl">
@@ -490,23 +474,10 @@ export default function CrateReveal({
           </div>
           {}
           <div className="flex flex-col gap-3 w-full animate-slide-up z-10">
-            {}
-            <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-medium mb-1 animate-pulse">
-              Redirecting to purchases page in <span className="text-yellow-500 font-bold">{countdown}</span> seconds...
-            </p>
             <div className="flex flex-col sm:flex-row gap-3 w-full">
-              {}
-              <a
-                href="https://www.omegleecommunity.com/purchases"
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all duration-300 font-bold tracking-wide text-sm shadow-xl shadow-blue-600/10 hover:shadow-blue-600/20 active:scale-[0.98]"
-              >
-                Go to My Purchases
-                <FiArrowRight className="w-4 h-4" />
-              </a>
-              {}
               <button
                 onClick={onClose}
-                className="flex-1 py-3.5 bg-[rgb(var(--color-bg-secondary))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] border border-[rgb(var(--color-border))] rounded-xl transition-all duration-300 font-bold tracking-wide text-sm active:scale-[0.98]"
+                className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all duration-300 font-bold tracking-wide text-sm active:scale-[0.98] shadow-lg shadow-blue-600/10 hover:shadow-blue-600/20"
               >
                 Keep Shopping
               </button>
