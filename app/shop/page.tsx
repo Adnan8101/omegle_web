@@ -596,11 +596,21 @@ export default function ShopPage() {
 
                       {/* Progress bar */}
                       {budget.total_added > 0 && (
-                        <div className="w-full bg-[rgb(var(--color-bg-tertiary))] rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${barColorClass}`}
-                            style={{ width: `${percent}%`, boxShadow: `0 0 10px ${glowShadowStyle}` }}
-                          />
+                        <div className="space-y-2 mt-2">
+                          <div className="relative w-full bg-[rgb(var(--color-bg-tertiary))] rounded-full h-1.5">
+                            <div
+                              className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${barColorClass}`}
+                              style={{ width: `${percent}%`, boxShadow: `0 0 10px ${glowShadowStyle}` }}
+                            />
+                            <div
+                              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white rounded-full border border-blue-500/50 shadow-[0_0_8px_rgba(255,255,255,0.9)] transition-all duration-500"
+                              style={{ left: `${percent}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] font-bold text-[rgb(var(--color-text-tertiary))] px-0.5 select-none">
+                            <span>0</span>
+                            <span>{formatNumber(budget.total_added)}</span>
+                          </div>
                         </div>
                       )}
                     </>
