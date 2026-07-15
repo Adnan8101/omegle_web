@@ -40,7 +40,7 @@ async function fetchLiveData() {
   let vcProgress: any[] = [];
   if (activeUserIds.length > 0) {
     vcProgress = await queryBotDb(`
-      SELECT user_id, category_id, accumulated_seconds
+      SELECT user_id, category_id, accumulated_seconds, updated_at
       FROM economy_vc_progress
       WHERE guild_id = $1 AND user_id = ANY($2)
     `, [GUILD_ID, activeUserIds]);
@@ -50,6 +50,7 @@ async function fetchLiveData() {
     categoryRewards = await queryBotDb(`
       SELECT category_id, category_name, vc_enabled, vc_minutes_per_point,
              vc_ozy_amount, vc_min_members, vc_count_bots,
+             vc_ignore_self_muted, vc_ignore_deafened,
              message_enabled, messages_per_point, msg_ozy_amount
       FROM economy_category_rewards
       WHERE guild_id = $1
@@ -142,11 +143,21 @@ async function fetchLiveData() {
     const thresholdSeconds = minutesPerPoint * 60;
     const currentMemberCount = memberCountMap.get(session.channel_id) || 1;
     const hasEnoughMembers = countBots ? true : currentMemberCount >= minMembers;
+    const ignoreSelfMuted = isAdvanced ? (catReward.vc_ignore_self_muted ?? false) : (config?.ignore_self_muted ?? false);
+    const ignoreDeafened = isAdvanced ? (catReward.vc_ignore_deafened ?? false) : (config?.ignore_deafened ?? false);
+    const isMutedAndIgnored = session.was_muted && ignoreSelfMuted;
+    const isDeafenedAndIgnored = session.was_deafened && ignoreDeafened;
+
     const dbProgress = userProg?.accumulated_seconds || 0;
     let liveProgress = dbProgress;
-    if (hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false)) {
-      const estimatedElapsed = Math.min(sessionDuration % 10, 10);
-      liveProgress = (dbProgress + estimatedElapsed) % thresholdSeconds;
+    const canEarn = hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false) && !isMutedAndIgnored && !isDeafenedAndIgnored;
+    if (canEarn) {
+      let elapsedSinceSync = sessionDuration;
+      if (userProg && userProg.updated_at) {
+        const timeSinceUpdate = Math.floor((Date.now() - new Date(userProg.updated_at).getTime()) / 1000);
+        elapsedSinceSync = Math.min(sessionDuration, Math.max(0, timeSinceUpdate));
+      }
+      liveProgress = (dbProgress + elapsedSinceSync) % thresholdSeconds;
     }
     const progressPercent = Math.round((liveProgress / thresholdSeconds) * 100);
     return {
@@ -159,7 +170,7 @@ async function fetchLiveData() {
       duration: sessionDuration,
       muted: session.was_muted,
       deafened: session.was_deafened,
-      isEarning: !isBlacklisted && vcEnabled && (config?.enabled ?? false) && hasEnoughMembers,
+      isEarning: canEarn,
       isBlacklisted,
       memberCount: currentMemberCount,
       minMembers: minMembers,

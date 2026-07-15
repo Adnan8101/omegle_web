@@ -70,7 +70,7 @@ function ErrorContent() {
               💡 {errorInfo.suggestion}
             </p>
           </div>
-          {error && (
+          {error && error !== 'undefined' && (
             <div className="bg-[rgb(var(--color-bg-tertiary))] rounded-lg p-3 mb-6">
               <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-mono">
                 Error code: {error}
