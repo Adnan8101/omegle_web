@@ -162,17 +162,21 @@ export async function GET(request: NextRequest) {
       const isDeafenedAndIgnored = session.was_deafened && ignoreDeafened;
 
       const dbProgress = userProg?.accumulated_seconds || 0;
-      let liveProgress = dbProgress;
       const canEarn = hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false) && !isMutedAndIgnored && !isDeafenedAndIgnored;
+      // Compute live progress: dbProgress + seconds elapsed since last DB write
+      let liveProgress = dbProgress;
       if (canEarn) {
         let elapsedSinceSync = sessionDuration;
         if (userProg && userProg.updated_at) {
           const timeSinceUpdate = Math.floor((Date.now() - new Date(userProg.updated_at).getTime()) / 1000);
           elapsedSinceSync = Math.min(sessionDuration, Math.max(0, timeSinceUpdate));
         }
-        liveProgress = (dbProgress + elapsedSinceSync) % thresholdSeconds;
+        // Do NOT apply modulo here — show true accumulated progress so the display doesn't flash to 0
+        liveProgress = dbProgress + elapsedSinceSync;
       }
-      const progressPercent = Math.round((liveProgress / thresholdSeconds) * 100);
+      const cycleProgress = liveProgress % thresholdSeconds;
+      const progressPercent = Math.round((cycleProgress / thresholdSeconds) * 100);
+      const nextIn = thresholdSeconds - cycleProgress;
       return {
         id: session.user_id,
         name: session.display_name || session.username || session.user_id,
@@ -188,10 +192,10 @@ export async function GET(request: NextRequest) {
         memberCount: currentMemberCount,
         minMembers: minMembers,
         trackingDisabled: !hasEnoughMembers && !countBots,
-        totalProgress: liveProgress,
+        totalProgress: cycleProgress,
         progress: progressPercent,
         threshold: thresholdSeconds,
-        nextIn: thresholdSeconds - liveProgress,
+        nextIn: nextIn,
         rate: `${minutesPerPoint}m = ${ozyAmount}`,
         ozyAmount,
         mode: isAdvanced ? 'category' : 'global'
