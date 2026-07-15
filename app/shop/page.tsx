@@ -275,12 +275,9 @@ export default function ShopPage() {
                 />
               </>
             ) : (
-              <button
-                onClick={() => signIn('discord', { callbackUrl: '/shop' })}
-                className="px-4 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold rounded-xl transition-colors"
-              >
-                Login with Discord
-              </button>
+              <span className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] bg-[rgb(var(--color-bg-tertiary))] px-3 py-1.5 rounded-xl border border-[rgb(var(--color-border))]">
+                Guest Visitor
+              </span>
             )}
           </div>
         </div>
