@@ -578,7 +578,7 @@ export default function ShopPage() {
                     <>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
-                          <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Total Distributed</span>
+                          <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Total Budget</span>
                           <span className="text-xl font-black text-yellow-500 mt-1 flex items-center gap-1.5">
                             {getEmojiDisplay(currencyEmoji, 'w-4 h-4', 'text-xs')}
                             {formatNumber(budget.total_added)}
@@ -586,10 +586,10 @@ export default function ShopPage() {
                         </div>
                         <div className="p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
                           <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Remaining Budget</span>
-                          <span className={`text-xl font-black mt-1 flex items-center gap-1.5 ${textHighlightClass}`}>
+                          <span className="text-xl font-black text-blue-400 mt-1 flex items-center gap-1.5">
                             {getEmojiDisplay(currencyEmoji, 'w-4 h-4', 'text-xs')}
                             {formatNumber(budget.available)}
-                            <span className="text-xs font-semibold opacity-80 ml-1">({percent}%)</span>
+                            <span className="text-xs font-semibold text-blue-400/70 ml-1">({percent}%)</span>
                           </span>
                         </div>
                       </div>
