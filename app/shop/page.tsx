@@ -547,19 +547,11 @@ export default function ShopPage() {
 
         {/* Login nudge — informational, not a blocker */}
         {status !== 'authenticated' && (
-          <div className="mb-8 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-3">
-              <FiLock className="w-5 h-5 text-blue-400 flex-shrink-0" />
-              <p className="text-[rgb(var(--color-text-secondary))] text-sm">
-                Sign in with Discord to see your balance and purchase items
-              </p>
-            </div>
-            <button
-              onClick={() => signIn('discord', { callbackUrl: '/shop' })}
-              className="px-4 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap"
-            >
-              Sign In
-            </button>
+          <div className="mb-8 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center gap-3">
+            <FiLock className="w-5 h-5 text-blue-400 flex-shrink-0" />
+            <p className="text-[rgb(var(--color-text-secondary))] text-sm">
+              Login to view your balance and buy items
+            </p>
           </div>
         )}
 
