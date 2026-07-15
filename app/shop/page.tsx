@@ -88,7 +88,7 @@ export default function ShopPage() {
       fetchShop();
     }
   }, [status]);
-  const getEmojiDisplay = (emoji: string, size: string = 'w-6 h-6') => {
+  const getEmojiDisplay = (emoji: string, size: string = 'w-6 h-6', textClass: string = 'text-xl') => {
     const emojiMatch = emoji.match(/<a?:([\w_]+):(\d+)>/);
     if (emojiMatch) {
       const [, name, id] = emojiMatch;
@@ -103,7 +103,7 @@ export default function ShopPage() {
         />
       );
     }
-    return <span className="text-xl">{emoji}</span>;
+    return <span className={textClass} style={{ verticalAlign: 'middle' }}>{emoji}</span>;
   };
   const fetchShop = async () => {
     setLoading(true);
@@ -249,9 +249,9 @@ export default function ShopPage() {
           <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
             {session ? (
               <>
-                <div className="flex items-center gap-2.5 px-4 py-2 bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-yellow-500/5 border border-amber-500/25 rounded-2xl shadow-[0_0_12px_rgba(245,158,11,0.12)] whitespace-nowrap flex-shrink-0 select-none">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-yellow-500/5 border border-amber-500/25 rounded-2xl shadow-[0_0_12px_rgba(245,158,11,0.12)] whitespace-nowrap flex-shrink-0 select-none">
                   <div className="flex items-center justify-center p-1 bg-amber-500/15 rounded-lg border border-amber-500/20">
-                    {getEmojiDisplay(currencyEmoji, 'w-4.5 h-4.5')}
+                    {getEmojiDisplay(currencyEmoji, 'w-4 h-4', 'text-xs')}
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="text-[9px] font-bold text-amber-500/70 uppercase tracking-wider leading-none">Your Balance</span>
@@ -549,32 +549,40 @@ export default function ShopPage() {
 
               {/* Stat Cards Row */}
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
-                    <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Total Distributed</span>
-                    <span className="text-xl font-black text-yellow-500 mt-1 flex items-center gap-1.5">
-                      {getEmojiDisplay(currencyEmoji, 'w-5 h-5')}
-                      {formatNumber(budget.total_added)}
-                    </span>
-                  </div>
-                  <div className="p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
-                    <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Remaining Budget</span>
-                    <span className="text-xl font-black text-blue-400 mt-1 flex items-center gap-1.5">
-                      {getEmojiDisplay(currencyEmoji, 'w-5 h-5')}
-                      {formatNumber(budget.available)}
-                    </span>
-                  </div>
-                </div>
+                {(() => {
+                  const percent = budget.total_added > 0 ? Math.min(100, Math.max(0, Math.round((budget.available / budget.total_added) * 100))) : 0;
+                  return (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
+                          <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Total Distributed</span>
+                          <span className="text-xl font-black text-yellow-500 mt-1 flex items-center gap-1.5">
+                            {getEmojiDisplay(currencyEmoji, 'w-4 h-4', 'text-xs')}
+                            {formatNumber(budget.total_added)}
+                          </span>
+                        </div>
+                        <div className="p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
+                          <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Remaining Budget</span>
+                          <span className="text-xl font-black text-blue-400 mt-1 flex items-center gap-1.5">
+                            {getEmojiDisplay(currencyEmoji, 'w-4 h-4', 'text-xs')}
+                            {formatNumber(budget.available)}
+                            <span className="text-xs font-semibold text-blue-400/70 ml-1">({percent}%)</span>
+                          </span>
+                        </div>
+                      </div>
 
-                {/* Progress bar */}
-                {budget.total_added > 0 && (
-                  <div className="w-full bg-[rgb(var(--color-bg-tertiary))] rounded-full h-2 overflow-hidden border border-[rgb(var(--color-border))]/30">
-                    <div
-                      className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min(100, Math.max(0, (budget.available / budget.total_added) * 100))}%` }}
-                    />
-                  </div>
-                )}
+                      {/* Progress bar */}
+                      {budget.total_added > 0 && (
+                        <div className="w-full bg-[rgb(var(--color-bg-tertiary))] rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(59,130,246,0.35)]"
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
 
