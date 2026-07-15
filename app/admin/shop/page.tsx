@@ -1093,7 +1093,7 @@ export default function ShopDashboard() {
         </div>
       )}
       {editingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="glass-blue rounded-3xl p-6 max-w-4xl w-full border border-[rgb(var(--color-border))] shadow-[var(--shadow-2xl)] my-8 max-h-[90vh] overflow-y-auto animate-fadeIn text-left">
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-[rgb(var(--color-border))]/50">
               <div>
