@@ -15,7 +15,8 @@ FiMessageCircle,
 FiPackage,
 FiRefreshCw,
 FiShoppingCart,
-FiX
+FiX,
+FiFilter
 } from 'react-icons/fi';
 interface ShopItem {
   id: string;
@@ -73,6 +74,8 @@ export default function ShopPage() {
   const [shopDisabled, setShopDisabled] = useState(false);
   const [budget, setBudget] = useState<{ available: number; total_added: number; total_spent: number } | null>(null);
   const [sortMode, setSortMode] = useState<'default' | 'low' | 'high' | 'popular'>('default');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [tempSortMode, setTempSortMode] = useState<'default' | 'low' | 'high' | 'popular'>('default');
   const purchaseInFlightRef = useRef(false);
   // Load shop on mount — NO LOGIN REQUIRED to view
   useEffect(() => {
@@ -361,7 +364,85 @@ export default function ShopPage() {
           </div>
         </div>
       )}
-      {}
+      {/* Premium Filter & Sort Panel Overlay */}
+      {isFilterOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 max-w-md w-full border border-[rgb(var(--color-border))] shadow-xl">
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 mx-auto mb-3 bg-blue-500/15 rounded-full flex items-center justify-center">
+                <FiFilter className="w-6 h-6 text-blue-400" />
+              </div>
+              <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">Sort & Filter</h3>
+              <p className="text-xs text-[rgb(var(--color-text-secondary))]">Choose how you want to sort the items in the shop</p>
+            </div>
+
+            <div className="space-y-2 mb-6">
+              <button
+                onClick={() => setTempSortMode('default')}
+                className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between ${
+                  tempSortMode === 'default'
+                    ? 'bg-blue-500/10 border-blue-500 text-blue-400 font-semibold'
+                    : 'bg-[rgb(var(--color-bg-tertiary))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                }`}
+              >
+                <span className="text-sm">Default Order</span>
+                {tempSortMode === 'default' && <FiCheck className="w-4 h-4 text-blue-400" />}
+              </button>
+              <button
+                onClick={() => setTempSortMode('low')}
+                className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between ${
+                  tempSortMode === 'low'
+                    ? 'bg-blue-500/10 border-blue-500 text-blue-400 font-semibold'
+                    : 'bg-[rgb(var(--color-bg-tertiary))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                }`}
+              >
+                <span className="text-sm">Lowest to Highest Price</span>
+                {tempSortMode === 'low' && <FiCheck className="w-4 h-4 text-blue-400" />}
+              </button>
+              <button
+                onClick={() => setTempSortMode('high')}
+                className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between ${
+                  tempSortMode === 'high'
+                    ? 'bg-blue-500/10 border-blue-500 text-blue-400 font-semibold'
+                    : 'bg-[rgb(var(--color-bg-tertiary))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                }`}
+              >
+                <span className="text-sm">Highest to Lowest Price</span>
+                {tempSortMode === 'high' && <FiCheck className="w-4 h-4 text-blue-400" />}
+              </button>
+              <button
+                onClick={() => setTempSortMode('popular')}
+                className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between ${
+                  tempSortMode === 'popular'
+                    ? 'bg-blue-500/10 border-blue-500 text-blue-400 font-semibold'
+                    : 'bg-[rgb(var(--color-bg-tertiary))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                }`}
+              >
+                <span className="text-sm">Most Purchased</span>
+                {tempSortMode === 'popular' && <FiCheck className="w-4 h-4 text-blue-400" />}
+              </button>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsFilterOpen(false)}
+                className="flex-1 px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] rounded-xl transition-colors font-medium text-sm text-[rgb(var(--color-text-secondary))]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setSortMode(tempSortMode);
+                  setIsFilterOpen(false);
+                }}
+                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-semibold text-sm"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {purchaseResult && (
         <CrateReveal
           itemName={purchaseResult.itemName}
@@ -431,7 +512,7 @@ export default function ShopPage() {
       {}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {budget && (
-          <div className="mb-8 p-6 bg-[rgb(var(--color-bg-secondary))]/30 border border-[rgb(var(--color-border))] rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 backdrop-blur-md">
+          <div className="mb-8 p-6 bg-[rgb(var(--color-bg-secondary))]/30 border border-[rgb(var(--color-border))] rounded-2xl flex flex-row items-center justify-between gap-6 backdrop-blur-md">
             <div className="space-y-1">
               <div className="text-xs font-bold tracking-wider text-[rgb(var(--color-text-secondary))] uppercase">
                 COMMUNITY REWARD POOL
@@ -445,12 +526,22 @@ export default function ShopPage() {
                 </div>
               </div>
             </div>
-            <div className="flex flex-col sm:items-end gap-1 text-xs text-[rgb(var(--color-text-tertiary))] font-medium">
-              <div>Total Spent: <span className="font-semibold text-[rgb(var(--color-text-primary))]">{formatNumber(budget.total_spent)} {currencyName}</span></div>
-              <div>Last Updated: <span className="font-semibold text-[rgb(var(--color-text-primary))]">{new Date().toLocaleDateString('en-GB')}</span></div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  setTempSortMode(sortMode);
+                  setIsFilterOpen(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] border border-[rgb(var(--color-border))] rounded-xl transition-all shadow-sm flex-shrink-0"
+                title="Sort & Filter Items"
+              >
+                <FiFilter className="w-4 h-4 text-blue-400" />
+                <span className="text-xs font-semibold">Filter</span>
+              </button>
             </div>
           </div>
         )}
+
         {/* Login nudge — informational, not a blocker */}
         {status !== 'authenticated' && (
           <div className="mb-8 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center justify-between gap-3 flex-wrap">
@@ -468,55 +559,6 @@ export default function ShopPage() {
             </button>
           </div>
         )}
-        
-        {/* Sort Filter Bar */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))]/50 backdrop-blur-md">
-          <div className="text-sm font-semibold text-[rgb(var(--color-text-secondary))]">
-            Sort Items:
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSortMode('default')}
-              className={`px-4 py-2 text-xs font-semibold rounded-xl border transition-all ${
-                sortMode === 'default'
-                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-sm'
-                  : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
-              }`}
-            >
-              Default
-            </button>
-            <button
-              onClick={() => setSortMode('low')}
-              className={`px-4 py-2 text-xs font-semibold rounded-xl border transition-all ${
-                sortMode === 'low'
-                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-sm'
-                  : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
-              }`}
-            >
-              Lowest to Highest
-            </button>
-            <button
-              onClick={() => setSortMode('high')}
-              className={`px-4 py-2 text-xs font-semibold rounded-xl border transition-all ${
-                sortMode === 'high'
-                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-sm'
-                  : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
-              }`}
-            >
-              Highest to Lowest
-            </button>
-            <button
-              onClick={() => setSortMode('popular')}
-              className={`px-4 py-2 text-xs font-semibold rounded-xl border transition-all ${
-                sortMode === 'popular'
-                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-sm'
-                  : 'bg-[rgb(var(--color-bg-tertiary))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
-              }`}
-            >
-              Most Purchased
-            </button>
-          </div>
-        </div>
 
         {/* Loading skeleton */}
         {loading ? (
