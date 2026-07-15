@@ -11,7 +11,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const members = await prismaBot.teamMember.findMany({
-      orderBy: { created_at: 'desc' },
+      orderBy: [
+        { position: 'asc' },
+        { created_at: 'asc' },
+      ],
     });
     const userIds = members.map((m) => m.discord_user_id);
     const profilesMap = await getLiveUserProfiles(userIds);

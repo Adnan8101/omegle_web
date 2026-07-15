@@ -4,7 +4,12 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
-    const members = await prismaBot.teamMember.findMany();
+    const members = await prismaBot.teamMember.findMany({
+      orderBy: [
+        { position: 'asc' },
+        { created_at: 'asc' },
+      ],
+    });
     const userIds = members.map((m) => m.discord_user_id);
     const profilesMap = await getLiveUserProfiles(userIds);
     const membersWithProfiles = members

@@ -1562,6 +1562,7 @@ model TeamMember {
   id              String   @id @default(uuid())
   discord_user_id String   @unique
   designation     String   // "Founder" | "Bot Developer" | "Management"
+  position        Int      @default(0)
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 

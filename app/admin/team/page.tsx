@@ -13,6 +13,7 @@ import {
   FiUsers,
   FiX,
   FiCopy,
+  FiMenu,
 } from 'react-icons/fi';
 interface TeamMember {
   id: string;
@@ -171,6 +172,53 @@ export default function TeamManagement() {
     setCopiedId(text);
     setTimeout(() => setCopiedId(null), 2000);
   };
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    if (searchQuery) {
+      e.preventDefault();
+      return;
+    }
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggedIndex(index);
+  };
+  const handleDragEnter = (targetIndex: number) => {
+    if (draggedIndex === null || draggedIndex === targetIndex || searchQuery) return;
+    const updated = [...members];
+    const [draggedItem] = updated.splice(draggedIndex, 1);
+    updated.splice(targetIndex, 0, draggedItem);
+    setDraggedIndex(targetIndex);
+    setMembers(updated);
+  };
+  const handleDragEnd = async () => {
+    setDraggedIndex(null);
+    if (searchQuery) return;
+    setError(null);
+    setSuccessMsg(null);
+    setLoading(true);
+    try {
+      const reorderedList = members.map((m, idx) => ({
+        id: m.id,
+        position: idx,
+      }));
+      const response = await fetch('/api/admin/team/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ members: reorderedList }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSuccessMsg('Team order updated successfully!');
+      } else {
+        setError(data.error || 'Failed to update team positions');
+        fetchMembers();
+      }
+    } catch (err) {
+      setError('An unexpected error occurred while reordering');
+      fetchMembers();
+    } finally {
+      setLoading(false);
+    }
+  };
   const filteredMembers = members.filter((member) => {
     const query = searchQuery.toLowerCase();
     const discordId = member.discord_user_id.toLowerCase();
@@ -282,6 +330,7 @@ export default function TeamManagement() {
           <table className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-tertiary))]/30 text-[rgb(var(--color-text-secondary))] font-semibold">
+                {!searchQuery && <th className="w-10 px-4 py-4"></th>}
                 <th className="px-6 py-4">Profile</th>
                 <th className="px-6 py-4">Discord ID</th>
                 <th className="px-6 py-4">Designation</th>
@@ -292,13 +341,30 @@ export default function TeamManagement() {
             <tbody className="divide-y divide-[rgb(var(--color-border))]/50">
               {filteredMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-[rgb(var(--color-text-tertiary))]">
+                  <td colSpan={searchQuery ? 5 : 6} className="px-6 py-12 text-center text-[rgb(var(--color-text-tertiary))]">
                     {loading ? 'Refreshing members...' : 'No team members found.'}
                   </td>
                 </tr>
               ) : (
-                filteredMembers.map((member) => (
-                  <tr key={member.id} className="hover:bg-[rgb(var(--color-hover))]/20 transition-colors">
+                filteredMembers.map((member, index) => (
+                  <tr
+                    key={member.id}
+                    draggable={!searchQuery}
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDragEnter={() => handleDragEnter(index)}
+                    onDragEnd={handleDragEnd}
+                    className={`hover:bg-[rgb(var(--color-hover))]/20 transition-colors ${
+                      draggedIndex === index ? 'opacity-40 bg-[rgb(var(--color-hover))]/40 border-y border-dashed border-blue-500/50' : ''
+                    }`}
+                  >
+                    {!searchQuery && (
+                      <td className="px-4 py-4 text-center align-middle">
+                        <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-[rgb(var(--color-hover))]/50 rounded-lg inline-flex items-center text-[rgb(var(--color-text-tertiary))] hover:text-[rgb(var(--color-text-primary))] transition-colors">
+                          <FiMenu className="w-4 h-4" />
+                        </div>
+                      </td>
+                    )}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="relative w-9 h-9 rounded-full overflow-hidden bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))]">
