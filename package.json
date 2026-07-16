@@ -9,7 +9,6 @@
     "start": "next start",
     "lint": "next lint",
     "check:databases": "tsx scripts/check-databases.ts",
-    "db:migrate-items": "tsx scripts/migrate_shop_items.js",
     "sync-users": "tsx scripts/syncAllUsers.ts",
     "fix-avatars": "tsx scripts/fixUserAvatars.ts",
     "test:applications-workflow": "tsx scripts/test-applications-workflow.ts",
