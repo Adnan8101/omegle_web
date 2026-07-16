@@ -3,7 +3,7 @@ import { signIn,signOut,useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect,useState } from 'react';
-import { FiLock } from 'react-icons/fi';
+import { FiLock, FiShieldAlert, FiLogOut, FiHome } from 'react-icons/fi';
 export default function AdminLogin() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -94,63 +94,37 @@ export default function AdminLogin() {
               </button>
             )}
             {status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess && (
-              <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 space-y-3">
-                <p className="text-red-500 text-sm font-semibold text-center">
-                  ❌ Access Denied
-                </p>
-                <p className="text-red-400 text-xs text-center">
-                  You do not have the required permissions to access this area.
-                </p>
-                {}
-                <div className="bg-black/20 rounded-lg p-3 text-xs space-y-2">
-                  <div>
-                    <p className="text-gray-400 font-semibold mb-1">Your Discord ID:</p>
-                    <div className="text-blue-300 font-mono text-[10px]">
-                      {session?.user?.id || 'Unknown'}
-                    </div>
+              <div className="space-y-6">
+                {/* Premium Lock/Shield Header */}
+                <div className="text-center relative py-4">
+                  <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4 relative overflow-hidden group">
+                    <FiShieldAlert className="w-10 h-10 text-red-500 animate-pulse" />
+                    <div className="absolute inset-0 bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
-                  <div>
-                    <p className="text-gray-400 font-semibold mb-1">Your Roles:</p>
-                    <div className="text-gray-300 font-mono text-[10px] space-y-0.5 max-h-32 overflow-y-auto">
-                      {session?.user?.permissions?.roles && Array.isArray(session.user.permissions.roles) && session.user.permissions.roles.length > 0 ? (
-                        session.user.permissions.roles.map((roleId: string, index: number) => (
-                          <div key={`${roleId}-${index}`}>• {roleId}</div>
-                        ))
-                      ) : (
-                        <div className="text-red-400">No roles found in guild</div>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 font-semibold mb-1">Required Permissions:</p>
-                    <div className="text-green-300 font-mono text-[10px] space-y-0.5">
-                      <div>• Server Administrator</div>
-                      <div>• Manage Server</div>
-                      <div>• Server Owner</div>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 font-semibold mb-1">OR Allowed Roles:</p>
-                    <div className="text-yellow-300 font-mono text-[10px] space-y-0.5">
-                      <div>Any configured role in database settings (Mod, Staff, SrMod, Casino Admin)</div>
-                    </div>
-                  </div>
+                  <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">Access Denied</h2>
+                  <p className="text-sm text-[rgb(var(--color-text-secondary))] font-light mt-2 px-4 max-w-sm mx-auto leading-relaxed">
+                    You do not have the required permissions to access this dashboard. Please contact a server administrator if you believe this is an error.
+                  </p>
                 </div>
-                <div className="flex flex-col gap-2 mt-4">
+
+                {/* Actions */}
+                <div className="flex flex-col gap-2.5 pt-2">
                   <button
                     onClick={() => {
                       try { localStorage.clear(); sessionStorage.clear(); } catch (e) { }
                       signOut({ callbackUrl: '/admin' });
                     }}
-                    className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg shadow-red-600/10 hover:shadow-red-600/20 font-medium"
                   >
-                    Sign Out & Try Again
+                    <FiLogOut className="w-4 h-4" />
+                    <span>Sign Out & Try Again</span>
                   </button>
                   <button
                     onClick={() => router.push('/')}
-                    className="w-full px-4 py-2 bg-[rgb(var(--color-bg-secondary))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] rounded-lg transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-[rgb(var(--color-bg-secondary))] hover:bg-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] rounded-2xl transition-all duration-200 border border-[rgb(var(--color-border))] font-medium"
                   >
-                    Go Back to Home
+                    <FiHome className="w-4 h-4" />
+                    <span>Go Back to Home</span>
                   </button>
                 </div>
               </div>
