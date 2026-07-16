@@ -131,7 +131,7 @@ export async function PATCH(request: NextRequest) {
         ...(message_enabled !== undefined && { message_enabled })
       }
     });
-    if (ozy_inr_rate !== undefined && currentConfig && currentConfig.ozy_inr_rate !== ozy_inr_rate) {
+    if (ozy_inr_rate !== undefined) {
       const itemsToUpdate = await prismaBot.shopItem.findMany({
         where: { guild_id: GUILD_ID, price_ozy_override: false }
       });

@@ -60,6 +60,7 @@ export default function ShopDashboard() {
   const [topItems, setTopItems] = useState<TopItem[]>([]);
   const [currencyEmoji, setCurrencyEmoji] = useState('🪙');
   const [ozyInrRate, setOzyInrRate] = useState(18.0);
+  const [savingRate, setSavingRate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -246,6 +247,29 @@ export default function ShopDashboard() {
       setError('Failed to load shop data');
     } finally {
       setLoading(false);
+    }
+  };
+  const handleApplyRate = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSavingRate(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/economy/config', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ozy_inr_rate: ozyInrRate })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update exchange rate');
+      }
+      // Successfully saved, refresh data
+      await fetchData();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Failed to update exchange rate');
+    } finally {
+      setSavingRate(false);
     }
   };
   const handleDelete = async (id: string) => {
@@ -664,6 +688,56 @@ export default function ShopDashboard() {
           </Link>
         </div>
       </div>
+
+      {/* Currency Exchange Rate settings card */}
+      <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md mb-6 sm:mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-green-500/20 rounded-xl">
+              <FiDollarSign className="w-6 h-6 text-green-500" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">Currency Exchange Rate</h2>
+              <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                Configure the exchange rate between {currencyEmoji} and INR. Example: 18 means 18 Ozy = 1 INR.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] rounded-xl px-3 py-1.5 focus-within:border-[rgb(var(--color-accent))] apple-transition">
+              <span className="text-sm font-medium text-[rgb(var(--color-text-secondary))] mr-2">1 INR =</span>
+              <input
+                type="number"
+                step="any"
+                min="0.01"
+                value={ozyInrRate}
+                onChange={(e) => setOzyInrRate(parseFloat(e.target.value) || 0)}
+                className="w-20 bg-transparent text-[rgb(var(--color-text-primary))] font-semibold focus:outline-none text-right"
+                placeholder="18"
+              />
+              <span className="text-sm text-[rgb(var(--color-text-secondary))] ml-2">Ozy</span>
+            </div>
+            <button
+              onClick={() => handleApplyRate()}
+              disabled={savingRate}
+              className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 text-white font-semibold rounded-xl transition-all shadow-md touch-manipulation"
+            >
+              {savingRate ? (
+                <>
+                  <FiRefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Applying...</span>
+                </>
+              ) : (
+                <>
+                  <FiSave className="w-4 h-4" />
+                  <span>Apply to all items</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {error && (
         <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
           <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
