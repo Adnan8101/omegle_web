@@ -124,7 +124,8 @@ export async function GET(request: NextRequest) {
         id: item.id,
         name: item.name,
         price: item.price,
-        price_inr: item.price_inr,
+        price_inr: item.actual_inr || item.price_inr || 0,
+        actual_inr: item.actual_inr || item.price_inr || 0,
         description: item.description,
         thumbnail: item.thumbnail,
         stock: item.stock,
@@ -276,7 +277,7 @@ export async function POST(request: NextRequest) {
         data: {
           guild_id: GUILD_ID,
           type: 'PURCHASE',
-          inr_cost: item.price_inr,
+          inr_cost: item.actual_inr || item.price_inr || 0,
           coin_cost: item.price,
           budget_before: oldAvailable,
           budget_after: newAvailable,

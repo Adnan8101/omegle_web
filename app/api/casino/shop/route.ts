@@ -124,16 +124,18 @@ export async function POST(request: NextRequest) {
     }
     const body = await request.json();
     const name = typeof body.name === 'string' ? body.name.trim() : '';
-    const price = parseOptionalInt(body.price);
-    const priceInr = parseOptionalInt(body.price_inr);
-    const priceOzyOverride = body.price_ozy_override === true;
+    const actualInrVal = parseOptionalInt(body.actual_inr);
+    const priceInrVal = parseOptionalInt(body.price_inr);
+    const actualInr = actualInrVal !== null && actualInrVal !== 'INVALID' ? actualInrVal : (priceInrVal !== null && priceInrVal !== 'INVALID' ? priceInrVal : 0);
+    const price = actualInr * 9;
+    const priceOzyOverride = false;
     const incomeAmount = parseOptionalInt(body.income_amount);
     const timeHours = parseOptionalInt(body.time_hours);
     const requiredBalance = parseOptionalInt(body.required_balance);
     const expiresInDays = parseOptionalInt(body.expires_in_days);
     if (
-      price === 'INVALID' ||
-      priceInr === 'INVALID' ||
+      actualInrVal === 'INVALID' ||
+      priceInrVal === 'INVALID' ||
       incomeAmount === 'INVALID' ||
       timeHours === 'INVALID' ||
       requiredBalance === 'INVALID' ||
@@ -145,10 +147,7 @@ export async function POST(request: NextRequest) {
     if (!name) {
       return NextResponse.json({ error: 'Item name is required' }, { status: 400 });
     }
-    if (price === null || price < 0) {
-      return NextResponse.json({ error: 'Price must be a non-negative number' }, { status: 400 });
-    }
-    if (priceInr !== null && priceInr < 0) {
+    if (actualInr < 0) {
       return NextResponse.json({ error: 'Price (INR) must be 0 or greater' }, { status: 400 });
     }
     let expiresAt = null;
@@ -161,7 +160,8 @@ export async function POST(request: NextRequest) {
         guild_id: GUILD_ID,
         name,
         price,
-        price_inr: priceInr || 0,
+        price_inr: actualInr,
+        actual_inr: actualInr,
         price_ozy_override: priceOzyOverride,
         stock: null,
         description: body.description || null,

@@ -1,7 +1,7 @@
 'use client';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback,useEffect,useState } from 'react';
 import {
 FiAlertCircle,
@@ -109,6 +109,7 @@ type TabType = 'basic' | 'advanced' | 'blacklist' | 'shop';
 export default function EconomyManagementPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>('basic');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -133,6 +134,13 @@ export default function EconomyManagementPage() {
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [memberSearchResults, setMemberSearchResults] = useState<Member[]>([]);
   const [searchingMembers, setSearchingMembers] = useState(false);
+  useEffect(() => {
+    const tabParam = searchParams?.get('tab');
+    if (tabParam === 'blacklist') {
+      setActiveTab('blacklist');
+      setBlacklistTab('members');
+    }
+  }, [searchParams]);
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopEnabled, setShopEnabled] = useState(true);
   const [] = useState<{ type: 'channels' | 'categories' | 'roles' } | null>(null);

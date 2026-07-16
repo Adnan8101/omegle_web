@@ -1229,6 +1229,7 @@ model ShopItem {
   name             String
   price            Int       @default(0)
   price_inr         Int       @default(0)
+  actual_inr        Int       @default(0)
   price_ozy_override Boolean   @default(false)
   reply_message    String?
   required_balance Int?

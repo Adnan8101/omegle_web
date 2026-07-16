@@ -26,13 +26,15 @@ import {
   FiUpload,
   FiImage,
   FiLoader,
-  FiMove
+  FiMove,
+  FiSlash
 } from 'react-icons/fi';
 interface ShopItem {
   id: string;
   name: string;
   price: number;
   price_inr?: number;
+  actual_inr?: number;
   description: string | null;
   thumbnail: string | null;
   stock: number | null;
@@ -132,6 +134,7 @@ export default function ShopDashboard() {
     description: '',
     thumbnail: '',
     price_inr: '',
+    actual_inr: '',
     price_ozy_override: false,
     income_amount: '',
     time_hours: '',
@@ -361,8 +364,9 @@ export default function ShopDashboard() {
       price: toInput(item.price),
       description: item.description || '',
       thumbnail: item.thumbnail || '',
-      price_inr: toInput(item.price_inr),
-      price_ozy_override: item.price_ozy_override === true,
+      price_inr: toInput(item.actual_inr || item.price_inr),
+      actual_inr: toInput(item.actual_inr || item.price_inr),
+      price_ozy_override: false,
       income_amount: toInput(item.income_amount),
       time_hours: toInput(item.time_hours),
       role_required_id: item.role_required_id || '',
@@ -379,41 +383,22 @@ export default function ShopDashboard() {
     const { name, value } = e.target;
     setEditFormData((prev: any) => {
       const updated = { ...prev, [name]: value };
-      if (name === 'price_inr' && !prev.price_ozy_override) {
+      if (name === 'actual_inr') {
         const inr = parseFloat(value);
         if (!isNaN(inr)) {
-          updated.price = String(Math.round(inr * ozyInrRate));
+          updated.price = String(Math.round(inr * 9));
+          updated.price_inr = value;
         } else {
           updated.price = '';
+          updated.price_inr = '';
         }
       }
       return updated;
     });
   };
-  const handleEditCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
-    setEditFormData((prev: any) => {
-      const updated = { ...prev, price_ozy_override: checked };
-      if (!checked) {
-        const inr = parseFloat(prev.price_inr);
-        if (!isNaN(inr)) {
-          updated.price = String(Math.round(inr * ozyInrRate));
-        } else {
-          updated.price = '';
-        }
-      }
-      return updated;
-    });
-  };
+  const handleEditCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {};
   const calculateEditPrice = (e: React.MouseEvent) => {
     e.preventDefault();
-    const inr = parseFloat(editFormData.price_inr);
-    if (!isNaN(inr)) {
-      setEditFormData((prev: any) => ({
-        ...prev,
-        price: String(Math.round(inr * ozyInrRate))
-      }));
-    }
   };
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
@@ -818,6 +803,21 @@ export default function ShopDashboard() {
           <FiChevronRight className="w-4 h-4 text-[rgb(var(--color-text-tertiary))] group-hover:text-[rgb(var(--color-accent))] group-hover:translate-x-1 apple-transition" />
         </Link>
         <Link
+          href="/admin/shop/economy?tab=blacklist"
+          className="glass-blue rounded-2xl p-4 border border-[rgb(var(--color-border))] hover:border-red-500/50 apple-transition flex items-center justify-between group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-500/20 rounded-xl">
+              <FiSlash className="w-5 h-5 text-red-500" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-[rgb(var(--color-text-primary))] text-sm">Blacklist Management</h3>
+              <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Exclude users/roles from coins</p>
+            </div>
+          </div>
+          <FiChevronRight className="w-4 h-4 text-[rgb(var(--color-text-tertiary))] group-hover:text-red-500 group-hover:translate-x-1 apple-transition" />
+        </Link>
+        <Link
           href="/shop"
           target="_blank"
           className="glass-blue rounded-2xl p-4 border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] apple-transition flex items-center justify-between group"
@@ -992,10 +992,10 @@ export default function ShopDashboard() {
                               {formatNumber(item.price)}
                             </span>
                           </div>
-                          {item.price_inr !== undefined && (
+                          {((item as any).actual_inr ?? item.price_inr) !== undefined && (
                             <div>
                               <span className="text-[rgb(var(--color-text-tertiary))] block">INR Cost:</span>
-                              <span className="font-medium mt-0.5 block">₹{formatNumber(item.price_inr)}</span>
+                              <span className="font-medium mt-0.5 block">₹{formatNumber((item as any).actual_inr ?? item.price_inr ?? 0)}</span>
                             </div>
                           )}
                           <div>
@@ -1254,19 +1254,9 @@ export default function ShopDashboard() {
                     className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
                     placeholder="Enter item name"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2 flex items-center justify-between">
-                    <span>Price ({getEmojiDisplay(currencyEmoji, 'w-4 h-4')}) *</span>
-                    <label className="flex items-center gap-1.5 text-xs font-normal cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={editFormData.price_ozy_override}
-                        onChange={handleEditCheckboxChange}
-                        className="rounded border-[rgb(var(--color-border))] text-[rgb(var(--color-accent))] focus:ring-0 w-3.5 h-3.5"
-                      />
-                      <span>Manual Override</span>
-                    </label>
+                        <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Price ({getEmojiDisplay(currencyEmoji, 'w-4 h-4')}) *
                   </label>
                   <input
                     type="number"
@@ -1275,33 +1265,26 @@ export default function ShopDashboard() {
                     onChange={handleEditChange}
                     required
                     min="0"
-                    disabled={!editFormData.price_ozy_override}
-                    placeholder={editFormData.price_ozy_override ? "1000" : "Auto-calculated"}
+                    disabled={true}
+                    placeholder="Auto-calculated (INR * 9)"
                     className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    Price (INR)
+                    Actual INR Price *
                   </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      name="price_inr"
-                      value={editFormData.price_inr}
-                      onChange={handleEditChange}
-                      min="0"
-                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
-                      placeholder="e.g., 500"
-                    />
-                    <button
-                      onClick={calculateEditPrice}
-                      className="px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-border))] text-sm font-medium rounded-xl border border-[rgb(var(--color-border))] transition-all whitespace-nowrap"
-                    >
-                      Calculate Price
-                    </button>
-                  </div>
-                </div>
+                  <input
+                    type="number"
+                    name="actual_inr"
+                    value={editFormData.actual_inr}
+                    onChange={handleEditChange}
+                    required
+                    min="0"
+                    placeholder="e.g., 500"
+                    className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  />
+                </div>          </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                     Description
