@@ -36,6 +36,7 @@ interface EconomyConfig {
   ignore_deafened: boolean;
   currency_name: string;
   currency_emoji: string;
+  ozy_inr_rate?: number;
   leaderboard_sync: boolean;
   enabled: boolean;
   advanced_mode: boolean;
@@ -766,6 +767,41 @@ export default function EconomyManagementPage() {
               <div className="mt-4 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
                 <p className="text-sm text-blue-300">
                   <strong>How it works:</strong> Messages accumulate. After {config.messages_per_point} valid messages, user earns {config.msg_ozy_amount || 1} {config.currency_name}. Progress persists until reward is earned.
+                </p>
+              </div>
+            </div>
+          </div>
+          {/* Currency Exchange Rate Card */}
+          <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-green-500/20 rounded-xl">
+                <FiDollarSign className="w-6 h-6 text-green-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Currency Exchange Rate</h2>
+                <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                  Configure the exchange rate between {config.currency_name} and INR
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Exchange Rate (1 INR = X {config.currency_name})
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="any"
+                    min="0.01"
+                    value={config.ozy_inr_rate ?? 18.0}
+                    onChange={(e) => setConfig({ ...config, ozy_inr_rate: parseFloat(e.target.value) || 18.0 })}
+                    className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                    placeholder="18"
+                  />
+                </div>
+                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                  Example: 18 means 18 {config.currency_name} = 1 INR. Changing this will update all item prices that do not have custom overrides.
                 </p>
               </div>
             </div>

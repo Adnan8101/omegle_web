@@ -105,6 +105,7 @@ export async function PUT(
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     const price = parseOptionalInt(body.price);
     const priceInr = parseOptionalInt(body.price_inr);
+    const priceOzyOverride = body.price_ozy_override === true;
     const incomeAmount = parseOptionalInt(body.income_amount);
     const timeHours = parseOptionalInt(body.time_hours);
     const requiredBalance = parseOptionalInt(body.required_balance);
@@ -140,6 +141,7 @@ export async function PUT(
         name,
         price,
         price_inr: priceInr || 0,
+        price_ozy_override: priceOzyOverride,
         stock: null,
         description: body.description || null,
         thumbnail: body.thumbnail || null,

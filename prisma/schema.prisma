@@ -628,6 +628,7 @@ model EconomyConfig {
   created_at          DateTime @default(now())
   currency_emoji      String   @default("🪙")
   currency_name       String   @default("Ozy")
+  ozy_inr_rate        Float    @default(18.0)
   economy_channel_id  String?
   enabled             Boolean  @default(false)
   guild_id            String   @id
@@ -1228,6 +1229,7 @@ model ShopItem {
   name             String
   price            Int       @default(0)
   price_inr         Int       @default(0)
+  price_ozy_override Boolean   @default(false)
   reply_message    String?
   required_balance Int?
   role_given_id    String?

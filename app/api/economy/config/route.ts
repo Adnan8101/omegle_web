@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
         ignore_deafened: false,
         currency_name: 'Ozy',
         currency_emoji: '🪙',
+        ozy_inr_rate: 18.0,
         leaderboard_sync: true,
         enabled: false,
         advanced_mode: false,
@@ -72,6 +73,7 @@ export async function PATCH(request: NextRequest) {
       ignore_deafened,
       currency_name,
       currency_emoji,
+      ozy_inr_rate,
       leaderboard_sync,
       enabled,
       advanced_mode,
@@ -80,6 +82,9 @@ export async function PATCH(request: NextRequest) {
       vc_enabled,
       message_enabled
     } = body;
+    const currentConfig = await prismaBot.economyConfig.findUnique({
+      where: { guild_id: GUILD_ID }
+    });
     const config = await prismaBot.economyConfig.upsert({
       where: { guild_id: GUILD_ID },
       create: {
@@ -95,6 +100,7 @@ export async function PATCH(request: NextRequest) {
         ignore_deafened: ignore_deafened ?? false,
         currency_name: currency_name ?? 'Ozy',
         currency_emoji: currency_emoji ?? '🪙',
+        ozy_inr_rate: ozy_inr_rate ?? 18.0,
         leaderboard_sync: leaderboard_sync ?? true,
         enabled: enabled ?? false,
         advanced_mode: advanced_mode ?? false,
@@ -115,6 +121,7 @@ export async function PATCH(request: NextRequest) {
         ...(ignore_deafened !== undefined && { ignore_deafened }),
         ...(currency_name !== undefined && { currency_name }),
         ...(currency_emoji !== undefined && { currency_emoji }),
+        ...(ozy_inr_rate !== undefined && { ozy_inr_rate }),
         ...(leaderboard_sync !== undefined && { leaderboard_sync }),
         ...(enabled !== undefined && { enabled }),
         ...(advanced_mode !== undefined && { advanced_mode }),
@@ -124,6 +131,20 @@ export async function PATCH(request: NextRequest) {
         ...(message_enabled !== undefined && { message_enabled })
       }
     });
+    if (ozy_inr_rate !== undefined && currentConfig && currentConfig.ozy_inr_rate !== ozy_inr_rate) {
+      const itemsToUpdate = await prismaBot.shopItem.findMany({
+        where: { guild_id: GUILD_ID, price_ozy_override: false }
+      });
+      for (const item of itemsToUpdate) {
+        if (item.price_inr > 0) {
+          const newPrice = Math.round(item.price_inr * ozy_inr_rate);
+          await prismaBot.shopItem.update({
+            where: { id: item.id },
+            data: { price: newPrice }
+          });
+        }
+      }
+    }
     return NextResponse.json({ success: true, config });
   } catch (error) {
     console.error('Error updating economy config:', error);

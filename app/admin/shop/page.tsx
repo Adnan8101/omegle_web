@@ -59,6 +59,7 @@ export default function ShopDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [topItems, setTopItems] = useState<TopItem[]>([]);
   const [currencyEmoji, setCurrencyEmoji] = useState('🪙');
+  const [ozyInrRate, setOzyInrRate] = useState(18.0);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -130,6 +131,7 @@ export default function ShopDashboard() {
     description: '',
     thumbnail: '',
     price_inr: '',
+    price_ozy_override: false,
     income_amount: '',
     time_hours: '',
     role_required_id: '',
@@ -211,20 +213,25 @@ export default function ShopDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const [itemsRes, statsRes, budgetRes] = await Promise.all([
+      const [itemsRes, statsRes, budgetRes, configRes] = await Promise.all([
         fetch('/api/casino/shop', { cache: 'no-store' }),
         fetch('/api/casino/stats', { cache: 'no-store' }),
-        fetch('/api/casino/budget', { cache: 'no-store' })
+        fetch('/api/casino/budget', { cache: 'no-store' }),
+        fetch('/api/economy/config', { cache: 'no-store' })
       ]);
       const itemsData = await itemsRes.json();
       const statsData = await statsRes.json();
       const budgetData = await budgetRes.json();
+      const configData = await configRes.json();
       if (itemsRes.ok) {
         setItems(itemsData.items || []);
         setRoles(itemsData.roles || []);
         setCurrencyEmoji(itemsData.currencyEmoji || '🪙');
       } else {
         setError(itemsData.error || 'Failed to load shop items');
+      }
+      if (configRes.ok && configData.config && configData.config.ozy_inr_rate !== undefined) {
+        setOzyInrRate(configData.config.ozy_inr_rate);
       }
       if (statsRes.ok) {
         setStats(statsData.stats || null);
@@ -331,6 +338,7 @@ export default function ShopDashboard() {
       description: item.description || '',
       thumbnail: item.thumbnail || '',
       price_inr: toInput(item.price_inr),
+      price_ozy_override: item.price_ozy_override === true,
       income_amount: toInput(item.income_amount),
       time_hours: toInput(item.time_hours),
       role_required_id: item.role_required_id || '',
@@ -344,7 +352,44 @@ export default function ShopDashboard() {
     setItemError(null);
   };
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setEditFormData((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setEditFormData((prev: any) => {
+      const updated = { ...prev, [name]: value };
+      if (name === 'price_inr' && !prev.price_ozy_override) {
+        const inr = parseFloat(value);
+        if (!isNaN(inr)) {
+          updated.price = String(Math.round(inr * ozyInrRate));
+        } else {
+          updated.price = '';
+        }
+      }
+      return updated;
+    });
+  };
+  const handleEditCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setEditFormData((prev: any) => {
+      const updated = { ...prev, price_ozy_override: checked };
+      if (!checked) {
+        const inr = parseFloat(prev.price_inr);
+        if (!isNaN(inr)) {
+          updated.price = String(Math.round(inr * ozyInrRate));
+        } else {
+          updated.price = '';
+        }
+      }
+      return updated;
+    });
+  };
+  const calculateEditPrice = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const inr = parseFloat(editFormData.price_inr);
+    if (!isNaN(inr)) {
+      setEditFormData((prev: any) => ({
+        ...prev,
+        price: String(Math.round(inr * ozyInrRate))
+      }));
+    }
   };
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
@@ -1137,8 +1182,17 @@ export default function ShopDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2 flex items-center gap-1">
-                    Price ({getEmojiDisplay(currencyEmoji, 'w-4 h-4')}) *
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2 flex items-center justify-between">
+                    <span>Price ({getEmojiDisplay(currencyEmoji, 'w-4 h-4')}) *</span>
+                    <label className="flex items-center gap-1.5 text-xs font-normal cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={editFormData.price_ozy_override}
+                        onChange={handleEditCheckboxChange}
+                        className="rounded border-[rgb(var(--color-border))] text-[rgb(var(--color-accent))] focus:ring-0 w-3.5 h-3.5"
+                      />
+                      <span>Manual Override</span>
+                    </label>
                   </label>
                   <input
                     type="number"
@@ -1146,24 +1200,33 @@ export default function ShopDashboard() {
                     value={editFormData.price}
                     onChange={handleEditChange}
                     required
-                    min="1"
-                    className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
-                    placeholder="1000"
+                    min="0"
+                    disabled={!editFormData.price_ozy_override}
+                    placeholder={editFormData.price_ozy_override ? "1000" : "Auto-calculated"}
+                    className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                     Price (INR)
                   </label>
-                  <input
-                    type="number"
-                    name="price_inr"
-                    value={editFormData.price_inr}
-                    onChange={handleEditChange}
-                    min="0"
-                    className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
-                    placeholder="e.g., 500"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      name="price_inr"
+                      value={editFormData.price_inr}
+                      onChange={handleEditChange}
+                      min="0"
+                      className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                      placeholder="e.g., 500"
+                    />
+                    <button
+                      onClick={calculateEditPrice}
+                      className="px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-border))] text-sm font-medium rounded-xl border border-[rgb(var(--color-border))] transition-all whitespace-nowrap"
+                    >
+                      Calculate Price
+                    </button>
+                  </div>
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">

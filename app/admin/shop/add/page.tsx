@@ -16,6 +16,7 @@ interface FormData {
   description: string;
   thumbnail: string;
   price_inr: string;
+  price_ozy_override: boolean;
   income_amount: string;
   time_hours: string;
   role_required_id: string;
@@ -35,6 +36,7 @@ export default function AddItemPage() {
     description: '',
     thumbnail: '',
     price_inr: '',
+    price_ozy_override: false,
     income_amount: '',
     time_hours: '',
     role_required_id: '',
@@ -44,6 +46,7 @@ export default function AddItemPage() {
     reply_message: '',
     expires_in_days: '',
   });
+  const [ozyInrRate, setOzyInrRate] = useState(18.0);
   const [currencyEmoji, setCurrencyEmoji] = useState('🪙');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -87,12 +90,58 @@ export default function AddItemPage() {
         if (Array.isArray(data.roles)) setRoles(data.roles);
       })
       .catch(() => {});
+
+    fetch('/api/economy/config')
+      .then(res => res.json())
+      .then(data => {
+        if (data.config && data.config.ozy_inr_rate !== undefined) {
+          setOzyInrRate(data.config.ozy_inr_rate);
+        }
+      })
+      .catch(() => {});
   }, []);
   useEffect(() => {
     setFormData((prev) => ({ ...prev, role_required_id: selectedRequiredRoles.join(',') }));
   }, [selectedRequiredRoles]);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === 'price_inr' && !prev.price_ozy_override) {
+        const inr = parseFloat(value);
+        if (!isNaN(inr)) {
+          updated.price = String(Math.round(inr * ozyInrRate));
+        } else {
+          updated.price = '';
+        }
+      }
+      return updated;
+    });
+  };
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setFormData((prev) => {
+      const updated = { ...prev, price_ozy_override: checked };
+      if (!checked) {
+        const inr = parseFloat(prev.price_inr);
+        if (!isNaN(inr)) {
+          updated.price = String(Math.round(inr * ozyInrRate));
+        } else {
+          updated.price = '';
+        }
+      }
+      return updated;
+    });
+  };
+  const calculatePrice = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const inr = parseFloat(formData.price_inr);
+    if (!isNaN(inr)) {
+      setFormData((prev) => ({
+        ...prev,
+        price: String(Math.round(inr * ozyInrRate))
+      }));
+    }
   };
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
@@ -280,8 +329,17 @@ export default function AddItemPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2 flex items-center gap-1">
-                  Price ({getEmojiDisplay(currencyEmoji, 'w-4 h-4')}) *
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2 flex items-center justify-between">
+                  <span>Price ({getEmojiDisplay(currencyEmoji, 'w-4 h-4')}) *</span>
+                  <label className="flex items-center gap-1.5 text-xs font-normal cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={formData.price_ozy_override}
+                      onChange={handleCheckboxChange}
+                      className="rounded border-[rgb(var(--color-border))] text-[rgb(var(--color-accent))] focus:ring-0 w-3.5 h-3.5"
+                    />
+                    <span>Manual Override</span>
+                  </label>
                 </label>
                 <input
                   type="number"
@@ -290,23 +348,32 @@ export default function AddItemPage() {
                   onChange={handleChange}
                   required
                   min="0"
-                  placeholder="730000"
-                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  disabled={!formData.price_ozy_override}
+                  placeholder={formData.price_ozy_override ? "730000" : "Auto-calculated"}
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
                   Price (INR)
                 </label>
-                <input
-                  type="number"
-                  name="price_inr"
-                  value={formData.price_inr}
-                  onChange={handleChange}
-                  min="0"
-                  placeholder="e.g., 500"
-                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    name="price_inr"
+                    value={formData.price_inr}
+                    onChange={handleChange}
+                    min="0"
+                    placeholder="e.g., 100"
+                    className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                  />
+                  <button
+                    onClick={calculatePrice}
+                    className="px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-border))] text-sm font-medium rounded-xl border border-[rgb(var(--color-border))] transition-all whitespace-nowrap"
+                  >
+                    Calculate Price
+                  </button>
+                </div>
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
