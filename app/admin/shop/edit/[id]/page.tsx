@@ -167,10 +167,8 @@ export default function EditItemPage() {
         const inr = parseFloat(value);
         if (!isNaN(inr)) {
           updated.price = String(Math.round(inr * 9));
-          updated.price_inr = value;
         } else {
           updated.price = '';
-          updated.price_inr = '';
         }
       }
       return updated;
@@ -373,13 +371,13 @@ export default function EditItemPage() {
                   required
                   min="0"
                   disabled={true}
-                  placeholder="Auto-calculated (INR * 9)"
+                  placeholder="Auto-calculated (Cost INR * 9)"
                   className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Actual INR Price *
+                  Actual INR Price (Cost to us) *
                 </label>
                 <input
                   type="number"
@@ -389,6 +387,21 @@ export default function EditItemPage() {
                   required
                   min="0"
                   placeholder="e.g., 500"
+                  className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Price (INR) (Shown to users) *
+                </label>
+                <input
+                  type="number"
+                  name="price_inr"
+                  value={formData.price_inr}
+                  onChange={handleChange}
+                  required
+                  min="0"
+                  placeholder="e.g., 890"
                   className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition"
                 />
               </div>

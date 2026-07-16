@@ -105,7 +105,8 @@ export async function PUT(
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     const actualInrVal = parseOptionalInt(body.actual_inr);
     const priceInrVal = parseOptionalInt(body.price_inr);
-    const actualInr = actualInrVal !== null && actualInrVal !== 'INVALID' ? actualInrVal : (priceInrVal !== null && priceInrVal !== 'INVALID' ? priceInrVal : 0);
+    const actualInr = actualInrVal !== null && actualInrVal !== 'INVALID' ? actualInrVal : 0;
+    const priceInr = priceInrVal !== null && priceInrVal !== 'INVALID' ? priceInrVal : actualInr;
     const price = actualInr * 9;
     const priceOzyOverride = false;
     const incomeAmount = parseOptionalInt(body.income_amount);
@@ -127,7 +128,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Item name is required' }, { status: 400 });
     }
     if (actualInr < 0) {
-      return NextResponse.json({ error: 'Price (INR) must be 0 or greater' }, { status: 400 });
+      return NextResponse.json({ error: 'Cost Price (Actual INR) must be 0 or greater' }, { status: 400 });
+    }
+    if (priceInr < 0) {
+      return NextResponse.json({ error: 'Selling Price (INR) must be 0 or greater' }, { status: 400 });
     }
     let expiresAt = null;
     if (expiresInDays && expiresInDays > 0) {
@@ -139,7 +143,7 @@ export async function PUT(
       data: {
         name,
         price,
-        price_inr: actualInr,
+        price_inr: priceInr,
         actual_inr: actualInr,
         price_ozy_override: priceOzyOverride,
         stock: null,
