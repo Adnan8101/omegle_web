@@ -3,7 +3,7 @@ import { signIn,signOut,useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect,useState } from 'react';
-import { FiLock, FiShieldAlert, FiLogOut, FiHome } from 'react-icons/fi';
+import { FiLock, FiAlertTriangle, FiLogOut, FiHome } from 'react-icons/fi';
 export default function AdminLogin() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -98,7 +98,7 @@ export default function AdminLogin() {
                 {/* Premium Lock/Shield Header */}
                 <div className="text-center relative py-4">
                   <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4 relative overflow-hidden group">
-                    <FiShieldAlert className="w-10 h-10 text-red-500 animate-pulse" />
+                    <FiAlertTriangle className="w-10 h-10 text-red-500 animate-pulse" />
                     <div className="absolute inset-0 bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
                   <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">Access Denied</h2>
