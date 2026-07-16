@@ -1,5 +1,5 @@
 'use client';
-import { signIn,useSession } from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import CrateReveal from '@/components/CrateReveal';
 import { useRouter } from 'next/navigation';
@@ -16,7 +16,8 @@ FiPackage,
 FiRefreshCw,
 FiShoppingCart,
 FiX,
-FiFilter
+FiFilter,
+FiLogOut
 } from 'react-icons/fi';
 interface ShopItem {
   id: string;
@@ -76,6 +77,7 @@ export default function ShopPage() {
   const [sortMode, setSortMode] = useState<'default' | 'low' | 'high' | 'popular'>('default');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [tempSortMode, setTempSortMode] = useState<'default' | 'low' | 'high' | 'popular'>('default');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const purchaseInFlightRef = useRef(false);
   // Load shop on mount — NO LOGIN REQUIRED to view
   useEffect(() => {
@@ -280,11 +282,72 @@ export default function ShopPage() {
                     </span>
                   )}
                 </Link>
-                <img
-                  src={session.user?.image || `https://cdn.discordapp.com/embed/avatars/0.png`}
-                  alt="Avatar"
-                  className="w-9 h-9 rounded-2xl border-2 border-blue-500/20 hover:border-blue-500/50 transition-all cursor-pointer shadow-sm"
-                />
+                <div className="relative">
+                  <img
+                    src={session.user?.image || `https://cdn.discordapp.com/embed/avatars/0.png`}
+                    alt="Avatar"
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="w-9 h-9 rounded-2xl border-2 border-blue-500/20 hover:border-blue-500/50 transition-all cursor-pointer shadow-sm"
+                  />
+                  {showProfileMenu && (
+                    <>
+                      {/* Click outside overlay */}
+                      <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
+                      
+                      <div className="absolute right-0 mt-2 w-48 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl shadow-xl py-2 z-50 animate-scale-in origin-top-right">
+                        <div className="px-4 py-2 border-b border-[rgb(var(--color-border))]">
+                          <p className="text-xs font-bold text-[rgb(var(--color-text-primary))] truncate">
+                            {session.user?.name || 'Discord User'}
+                          </p>
+                          <p className="text-[10px] text-[rgb(var(--color-text-tertiary))] truncate mt-0.5">
+                            ID: {session.user?.id || ''}
+                          </p>
+                        </div>
+                        
+                        <Link
+                          href="/purchases"
+                          onClick={() => setShowProfileMenu(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                        >
+                          <FiShoppingCart className="w-3.5 h-3.5 text-blue-400" />
+                          <span>My Purchases</span>
+                        </Link>
+                        
+                        <Link
+                          href="/donator/subscriptions"
+                          onClick={() => setShowProfileMenu(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                        >
+                          <FiPackage className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>My Subscriptions</span>
+                        </Link>
+
+                        <Link
+                          href="/admin"
+                          onClick={() => setShowProfileMenu(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                        >
+                          <FiLock className="w-3.5 h-3.5 text-purple-400" />
+                          <span>Admin Panel</span>
+                        </Link>
+                        
+                        <div className="border-t border-[rgb(var(--color-border))] mt-1 pt-1">
+                          <button
+                            onClick={() => {
+                              setShowProfileMenu(false);
+                              try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}
+                              signOut({ callbackUrl: '/shop' });
+                            }}
+                            className="w-full flex items-center gap-2 px-4 py-2 text-xs font-semibold text-red-400 hover:text-red-500 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+                          >
+                            <FiLogOut className="w-3.5 h-3.5" />
+                            <span>Sign Out</span>
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </>
             ) : (
               <span className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] bg-[rgb(var(--color-bg-tertiary))]/80 px-3.5 py-2 rounded-xl border border-[rgb(var(--color-border))] shadow-sm">
