@@ -112,7 +112,7 @@ export default function AddItemPage() {
       if (name === 'actual_inr') {
         const inr = parseFloat(value);
         if (!isNaN(inr)) {
-          updated.price = String(Math.round(inr * 9));
+          updated.price = String(Math.round(inr * ozyInrRate));
         } else {
           updated.price = '';
         }
@@ -321,13 +321,13 @@ export default function AddItemPage() {
                   required
                   min="0"
                   disabled={true}
-                  placeholder="Auto-calculated (Cost INR * 9)"
+                  placeholder="Auto-calculated (Actual INR * Rate)"
                   className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Actual INR Price (Cost to us) *
+                  Actual INR (Cost — backend only) *
                 </label>
                 <input
                   type="number"
@@ -342,7 +342,7 @@ export default function AddItemPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Price (INR) (Shown to users) *
+                  Display INR (Shown to users) *
                 </label>
                 <input
                   type="number"

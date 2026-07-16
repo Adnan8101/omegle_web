@@ -364,8 +364,8 @@ export default function ShopDashboard() {
       price: toInput(item.price),
       description: item.description || '',
       thumbnail: item.thumbnail || '',
-      price_inr: toInput(item.actual_inr || item.price_inr),
-      actual_inr: toInput(item.actual_inr || item.price_inr),
+      price_inr: toInput(item.price_inr),
+      actual_inr: toInput(item.actual_inr),
       price_ozy_override: false,
       income_amount: toInput(item.income_amount),
       time_hours: toInput(item.time_hours),
@@ -386,7 +386,7 @@ export default function ShopDashboard() {
       if (name === 'actual_inr') {
         const inr = parseFloat(value);
         if (!isNaN(inr)) {
-          updated.price = String(Math.round(inr * 9));
+          updated.price = String(Math.round(inr * ozyInrRate));
         } else {
           updated.price = '';
         }
@@ -990,12 +990,14 @@ export default function ShopDashboard() {
                               {formatNumber(item.price)}
                             </span>
                           </div>
-                          {((item as any).actual_inr ?? item.price_inr) !== undefined && (
-                            <div>
-                              <span className="text-[rgb(var(--color-text-tertiary))] block">INR Cost:</span>
-                              <span className="font-medium mt-0.5 block">₹{formatNumber((item as any).actual_inr ?? item.price_inr ?? 0)}</span>
-                            </div>
-                          )}
+                          <div>
+                            <span className="text-[rgb(var(--color-text-tertiary))] block">Display ₹:</span>
+                            <span className="font-medium mt-0.5 block">₹{formatNumber(item.price_inr ?? 0)}</span>
+                          </div>
+                          <div>
+                            <span className="text-[rgb(var(--color-text-tertiary))] block">Actual Cost:</span>
+                            <span className="font-medium mt-0.5 block">₹{formatNumber(item.actual_inr ?? 0)}</span>
+                          </div>
                           <div>
                             <span className="text-[rgb(var(--color-text-tertiary))] block">Stock:</span>
                             <span className={`font-medium mt-0.5 block ${item.stock === 0 ? 'text-red-500' : ''}`}>
@@ -1265,13 +1267,13 @@ export default function ShopDashboard() {
                     required
                     min="0"
                     disabled={true}
-                    placeholder="Auto-calculated (Cost INR * 9)"
+                    placeholder="Auto-calculated (Actual INR * Rate)"
                     className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    Actual INR Price (Cost to us) *
+                    Actual INR (Cost — backend only) *
                   </label>
                   <input
                     type="number"
@@ -1286,7 +1288,7 @@ export default function ShopDashboard() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    Price (INR) (Shown to users) *
+                    Display INR (Shown to users) *
                   </label>
                   <input
                     type="number"

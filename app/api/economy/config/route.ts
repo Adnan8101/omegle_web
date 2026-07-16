@@ -136,8 +136,10 @@ export async function PATCH(request: NextRequest) {
         where: { guild_id: GUILD_ID, price_ozy_override: false }
       });
       for (const item of itemsToUpdate) {
-        if (item.price_inr > 0) {
-          const newPrice = Math.round(item.price_inr * ozy_inr_rate);
+        // Always use actual_inr (backend cost) for OZY calculation — never display price_inr
+        const costInr = item.actual_inr ?? 0;
+        if (costInr > 0) {
+          const newPrice = Math.round(costInr * ozy_inr_rate);
           await prismaBot.shopItem.update({
             where: { id: item.id },
             data: { price: newPrice }

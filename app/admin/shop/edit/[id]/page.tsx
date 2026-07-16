@@ -139,8 +139,9 @@ export default function EditItemPage() {
         price: toInput(item.price),
         description: item.description || '',
         thumbnail: item.thumbnail || '',
-        price_inr: toInput(item.actual_inr || item.price_inr),
-        actual_inr: toInput(item.actual_inr || item.price_inr),
+        // Load each field independently — do NOT merge actual_inr and price_inr
+        price_inr: toInput(item.price_inr),
+        actual_inr: toInput(item.actual_inr),
         price_ozy_override: false,
         income_amount: toInput(item.income_amount),
         time_hours: toInput(item.time_hours),
@@ -166,7 +167,7 @@ export default function EditItemPage() {
       if (name === 'actual_inr') {
         const inr = parseFloat(value);
         if (!isNaN(inr)) {
-          updated.price = String(Math.round(inr * 9));
+          updated.price = String(Math.round(inr * ozyInrRate));
         } else {
           updated.price = '';
         }
@@ -371,13 +372,13 @@ export default function EditItemPage() {
                   required
                   min="0"
                   disabled={true}
-                  placeholder="Auto-calculated (Cost INR * 9)"
+                  placeholder="Auto-calculated (Actual INR * Rate)"
                   className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-accent))] focus:outline-none apple-transition disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Actual INR Price (Cost to us) *
+                  Actual INR (Cost — backend only) *
                 </label>
                 <input
                   type="number"
@@ -392,7 +393,7 @@ export default function EditItemPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                  Price (INR) (Shown to users) *
+                  Display INR (Shown to users) *
                 </label>
                 <input
                   type="number"

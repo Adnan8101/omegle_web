@@ -106,8 +106,12 @@ export async function PUT(
     const actualInrVal = parseOptionalInt(body.actual_inr);
     const priceInrVal = parseOptionalInt(body.price_inr);
     const actualInr = actualInrVal !== null && actualInrVal !== 'INVALID' ? actualInrVal : 0;
-    const priceInr = priceInrVal !== null && priceInrVal !== 'INVALID' ? priceInrVal : actualInr;
-    const price = actualInr * 9;
+    // price_inr is display-only, independent from actual_inr — never auto-derive one from the other
+    const priceInr = priceInrVal !== null && priceInrVal !== 'INVALID' ? priceInrVal : 0;
+    // Fetch the global conversion rate from DB — never hardcode
+    const economyConfig = await prismaBot.economyConfig.findUnique({ where: { guild_id: GUILD_ID } });
+    const ozyRate = economyConfig?.ozy_inr_rate ?? 10;
+    const price = Math.round(actualInr * ozyRate);
     const priceOzyOverride = false;
     const incomeAmount = parseOptionalInt(body.income_amount);
     const timeHours = parseOptionalInt(body.time_hours);
@@ -128,10 +132,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Item name is required' }, { status: 400 });
     }
     if (actualInr < 0) {
-      return NextResponse.json({ error: 'Cost Price (Actual INR) must be 0 or greater' }, { status: 400 });
+      return NextResponse.json({ error: 'Actual INR (cost) must be 0 or greater' }, { status: 400 });
     }
     if (priceInr < 0) {
-      return NextResponse.json({ error: 'Selling Price (INR) must be 0 or greater' }, { status: 400 });
+      return NextResponse.json({ error: 'Display INR must be 0 or greater' }, { status: 400 });
     }
     let expiresAt = null;
     if (expiresInDays && expiresInDays > 0) {

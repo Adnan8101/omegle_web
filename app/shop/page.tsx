@@ -24,7 +24,6 @@ interface ShopItem {
   name: string;
   price: number;
   price_inr?: number;
-  actual_inr?: number;
   description: string | null;
   thumbnail: string | null;
   stock: number | null;
