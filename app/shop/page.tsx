@@ -241,12 +241,12 @@ export default function ShopPage() {
               <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Omeglee Shop</h1>
               <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Casino Economy Store</p>
             </div>
-            <nav className="flex items-center gap-4 text-xs font-semibold text-[rgb(var(--color-text-secondary))] border-l border-[rgb(var(--color-border))] pl-0 sm:pl-8">
+            <nav className="flex items-center gap-4 text-xs font-semibold text-[rgb(var(--color-text-secondary))] sm:border-l sm:border-[rgb(var(--color-border))] pl-0 sm:pl-8">
               <Link href="/" className="hover:text-[rgb(var(--color-text-primary))] transition-colors">Home</Link>
               <Link href="/staff-application" className="hover:text-[rgb(var(--color-text-primary))] transition-colors">Staff Application</Link>
             </nav>
           </div>
-          <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
             {session ? (
               <>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-yellow-500/5 border border-amber-500/25 rounded-2xl shadow-[0_0_12px_rgba(245,158,11,0.12)] whitespace-nowrap flex-shrink-0 select-none">
@@ -468,7 +468,7 @@ export default function ShopPage() {
       )}
       {}
       {showPurchases && pendingPurchases.length > 0 && (
-        <div className="fixed top-20 right-4 z-40 w-80 bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))] shadow-xl">
+        <div className="fixed top-20 right-4 left-4 sm:left-auto sm:w-80 z-40 bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))] shadow-xl">
           <div className="p-4 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
             <h3 className="font-semibold text-[rgb(var(--color-text-primary))]">Pending Purchases</h3>
             <button onClick={() => setShowPurchases(false)}>
@@ -510,7 +510,7 @@ export default function ShopPage() {
       )}
       {}
       {error && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3 shadow-xl">
+        <div className="fixed bottom-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-between gap-3 shadow-xl max-w-[calc(100vw-2rem)] w-auto">
           <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <span className="text-red-500">{error}</span>
           <button onClick={() => setError(null)} className="text-red-500 hover:text-red-400">
@@ -521,7 +521,7 @@ export default function ShopPage() {
       {}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {budget && (
-          <div className="mb-8 p-6 bg-[rgb(var(--color-bg-secondary))]/40 border border-[rgb(var(--color-border))] rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 backdrop-blur-lg">
+          <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-[rgb(var(--color-bg-secondary))]/40 border border-[rgb(var(--color-border))] rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 backdrop-blur-lg">
             <div className="flex-1 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -576,20 +576,20 @@ export default function ShopPage() {
 
                   return (
                     <>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
-                          <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Total Budget</span>
-                          <span className="text-xl font-black text-yellow-500 mt-1 flex items-center gap-1.5">
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div className="p-3 sm:p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
+                          <span className="text-[10px] sm:text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Total Budget</span>
+                          <span className="text-lg sm:text-xl font-black text-yellow-500 mt-1 flex items-center gap-1.5 flex-wrap">
                             {getEmojiDisplay(currencyEmoji, 'w-4 h-4', 'text-xs')}
                             {formatNumber(budget.total_added)}
                           </span>
                         </div>
-                        <div className="p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
-                          <span className="text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Remaining Budget</span>
-                          <span className="text-xl font-black text-blue-400 mt-1 flex items-center gap-1.5">
+                        <div className="p-3 sm:p-4 bg-[rgb(var(--color-bg-tertiary))]/60 border border-[rgb(var(--color-border))]/55 rounded-2xl">
+                          <span className="text-[10px] sm:text-[11px] font-bold text-[rgb(var(--color-text-secondary))] block uppercase tracking-wider">Remaining Budget</span>
+                          <span className="text-lg sm:text-xl font-black text-blue-400 mt-1 flex items-center gap-1.5 flex-wrap">
                             {getEmojiDisplay(currencyEmoji, 'w-4 h-4', 'text-xs')}
                             {formatNumber(budget.available)}
-                            <span className="text-xs font-semibold text-blue-400/70 ml-1">({percent}%)</span>
+                            <span className="text-[10px] sm:text-xs font-semibold text-blue-400/70">({percent}%)</span>
                           </span>
                         </div>
                       </div>
@@ -648,7 +648,7 @@ export default function ShopPage() {
 
         {/* Loading skeleton */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 min-[440px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl border border-[rgb(var(--color-border))] overflow-hidden animate-pulse">
                 <div className="aspect-[4/3] bg-[rgb(var(--color-bg-tertiary))]" />
@@ -670,7 +670,7 @@ export default function ShopPage() {
             <p className="text-[rgb(var(--color-text-secondary))]">Check back later for new items!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 min-[440px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {[...items]
               .sort((a, b) => {
                 if (sortMode === 'low') return a.price - b.price;
@@ -770,16 +770,16 @@ export default function ShopPage() {
                       </div>
                     )}
                     {}
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
                       <div className="flex flex-col">
-                        <div className="flex items-center gap-1.5">
-                          {getEmojiDisplay(currencyEmoji)}
-                          <span className="text-xl font-bold text-[rgb(var(--color-text-primary))]">
+                        <div className="flex items-center gap-1">
+                          {getEmojiDisplay(currencyEmoji, 'w-4 h-4', 'text-sm')}
+                          <span className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))]">
                             {formatNumber(item.price)}
                           </span>
                         </div>
                         {item.price_inr !== undefined && item.price_inr !== null && (
-                          <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded-lg mt-1 w-fit block shadow-sm">
+                          <span className="text-[10px] sm:text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 sm:px-2.5 py-0.5 rounded-lg mt-1 w-fit block shadow-sm">
                             Value: ₹{formatNumber(item.price_inr)}
                           </span>
                         )}
@@ -787,7 +787,7 @@ export default function ShopPage() {
                       <button
                         onClick={() => handlePurchase(item)}
                         disabled={purchasing === item.id || isUnavailable || (isLoggedIn && (!canAfford || missingRequiredRole))}
-                        className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors flex items-center gap-1.5 ${
+                        className={`px-3 py-2 sm:px-4 sm:py-2 rounded-xl font-semibold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 ${
                           isOutOfStock || isDisabled
                             ? 'bg-red-500/20 text-red-400 cursor-not-allowed'
                             : isInsufficientBudget
