@@ -43,6 +43,9 @@ interface EconomyConfig {
   shop_enabled: boolean;
   vc_enabled: boolean;
   message_enabled: boolean;
+  afk_verify_enabled: boolean;
+  afk_verify_min: number;
+  afk_verify_max: number;
 }
 interface CategoryReward {
   id: string;
@@ -509,7 +512,7 @@ export default function EconomyManagementPage() {
       {}
       {activeTab === 'basic' && config && (
         <div className="space-y-6">
-          {}
+          {/* Economy System */}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -517,6 +520,7 @@ export default function EconomyManagementPage() {
                 <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Enable or disable the economy system</p>
               </div>
               <button
+                type="button"
                 onClick={() => setConfig({ ...config, enabled: !config.enabled })}
                 className={`p-3 rounded-xl transition-all ${
                   config.enabled
@@ -526,6 +530,61 @@ export default function EconomyManagementPage() {
               >
                 {config.enabled ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
               </button>
+            </div>
+          </div>
+
+          {/* AFK Verification Toggle */}
+          <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">AFK Verification</h2>
+                <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Enable random AFK verification prompt for voice grinders to prevent unattended grinding</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setConfig({ ...config, afk_verify_enabled: !config.afk_verify_enabled })}
+                className={`p-3 rounded-xl transition-all ${
+                  config.afk_verify_enabled
+                    ? 'bg-green-500/20 text-green-500 border border-green-500/30'
+                    : 'bg-red-500/20 text-red-500 border border-red-500/30'
+                }`}
+              >
+                {config.afk_verify_enabled ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 ${!config.afk_verify_enabled ? 'opacity-40 pointer-events-none select-none h-0 overflow-hidden' : ''}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 pt-4 border-t border-[rgb(var(--color-border))]/50">
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Minimum Active Time (minutes)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      value={config.afk_verify_min ?? 80}
+                      onChange={(e) => setConfig({ ...config, afk_verify_min: parseInt(e.target.value) || 80 })}
+                      className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                    />
+                    <span className="text-[rgb(var(--color-text-tertiary))]">minutes before eligible</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Maximum Verification Window (minutes)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      value={config.afk_verify_max ?? 90}
+                      onChange={(e) => setConfig({ ...config, afk_verify_max: parseInt(e.target.value) || 90 })}
+                      className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                    />
+                    <span className="text-[rgb(var(--color-text-tertiary))]">minutes window limit</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           {}

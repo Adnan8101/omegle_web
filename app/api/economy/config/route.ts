@@ -41,7 +41,10 @@ export async function GET(request: NextRequest) {
         advanced_mode: false,
         shop_enabled: true,
         vc_enabled: true,
-        message_enabled: true
+        message_enabled: true,
+        afk_verify_enabled: false,
+        afk_verify_min: 80,
+        afk_verify_max: 90
       },
       categoryRewards
     });
@@ -80,7 +83,10 @@ export async function PATCH(request: NextRequest) {
       shop_enabled,
       afk_channel_id,
       vc_enabled,
-      message_enabled
+      message_enabled,
+      afk_verify_enabled,
+      afk_verify_min,
+      afk_verify_max
     } = body;
     const currentConfig = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
@@ -107,7 +113,10 @@ export async function PATCH(request: NextRequest) {
         shop_enabled: shop_enabled ?? true,
         afk_channel_id: afk_channel_id ?? null,
         vc_enabled: vc_enabled ?? true,
-        message_enabled: message_enabled ?? true
+        message_enabled: message_enabled ?? true,
+        afk_verify_enabled: afk_verify_enabled ?? false,
+        afk_verify_min: afk_verify_min ?? 80,
+        afk_verify_max: afk_verify_max ?? 90
       },
       update: {
         ...(messages_per_point !== undefined && { messages_per_point }),
@@ -128,7 +137,10 @@ export async function PATCH(request: NextRequest) {
         ...(shop_enabled !== undefined && { shop_enabled }),
         ...(afk_channel_id !== undefined && { afk_channel_id }),
         ...(vc_enabled !== undefined && { vc_enabled }),
-        ...(message_enabled !== undefined && { message_enabled })
+        ...(message_enabled !== undefined && { message_enabled }),
+        ...(afk_verify_enabled !== undefined && { afk_verify_enabled }),
+        ...(afk_verify_min !== undefined && { afk_verify_min }),
+        ...(afk_verify_max !== undefined && { afk_verify_max })
       }
     });
     if (ozy_inr_rate !== undefined) {

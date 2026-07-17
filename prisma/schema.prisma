@@ -649,6 +649,9 @@ model EconomyConfig {
   vc_ozy_amount         Int      @default(1)     // Coins per cycle
   vc_enabled          Boolean  @default(true)
   message_enabled     Boolean  @default(true)
+  afk_verify_enabled  Boolean  @default(false)
+  afk_verify_min      Int      @default(80)
+  afk_verify_max      Int      @default(90)
   @@map("economy_config")
 }
 
@@ -1582,6 +1585,18 @@ model LiveReaction {
   updated_at DateTime @updatedAt
 
   @@map("live_reactions")
+}
+
+model EconomyAfkVerification {
+  guild_id            String
+  user_id             String
+  accumulated_seconds Int      @default(0)
+  target_seconds      Int
+  is_paused           Boolean  @default(false)
+  last_verified       DateTime @default(now())
+
+  @@id([guild_id, user_id])
+  @@map("economy_afk_verification")
 }
 
 
