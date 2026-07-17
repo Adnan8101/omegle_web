@@ -444,12 +444,12 @@ export default function Home() {
             </div>
             {}
             {showSubscriptionOverlay && (
-              <div className="absolute inset-0 bg-black/10 dark:bg-black/40 backdrop-blur-[2px] flex items-center justify-center transition-all duration-500">
-                <div className="glass-blue border border-white/20 p-4 rounded-xl max-w-[240px] text-center shadow-2xl scale-95 md:scale-100">
-                  <h4 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-3">Launching Soon</h4>
+              <div className="absolute inset-0 bg-black/15 dark:bg-black/40 backdrop-blur-[1.5px] flex items-center justify-center transition-all duration-500 z-20">
+                <div className="glass-blue border border-white/20 p-3 rounded-lg max-w-[180px] w-full text-center shadow-lg transform transition-all">
+                  <h4 className="text-[11px] font-bold text-[rgb(var(--color-text-primary))] mb-2 tracking-tight">Launching Soon</h4>
                   <button
                     onClick={() => setShowSubscriptionOverlay(false)}
-                    className="px-4 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-[10px] font-semibold shadow-lg shadow-blue-500/10 transition-colors"
+                    className="w-full py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-[9px] font-semibold transition-all shadow-md active:scale-95"
                   >
                     Got it
                   </button>
