@@ -3,7 +3,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { FiArrowRight, FiDisc, FiTrendingUp, FiLayers } from 'react-icons/fi';
+import { FiArrowRight, FiDisc, FiTrendingUp, FiLayers, FiTarget, FiAward } from 'react-icons/fi';
 interface TeamMember {
   id: string;
   discord_user_id: string;
@@ -355,16 +355,16 @@ export default function Home() {
                 </p>
 
                 <div className="flex flex-wrap justify-center md:justify-start gap-6 pt-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🎰</span>
+                  <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-purple-400 transition-colors">
+                    <FiLayers className="w-4 h-4 text-purple-500" />
                     <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">Slots & Casino Games</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🃏</span>
-                    <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">High Stakes Blackjack</span>
+                  <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-purple-400 transition-colors">
+                    <FiTarget className="w-4 h-4 text-purple-500" />
+                    <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">Spin the Wheel</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🏆</span>
+                  <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-purple-400 transition-colors">
+                    <FiAward className="w-4 h-4 text-purple-500 animate-pulse" />
                     <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">High Roller Leaderboards</span>
                   </div>
                 </div>
