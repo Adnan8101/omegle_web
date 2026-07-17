@@ -140,9 +140,11 @@ export async function checkUserPermissions(
       }
     }
     const hasAdminRole = adminRoleId ? roles.includes(adminRoleId) : false;
-    const hasFullAccess = isAdmin || hasManageServer || isOwner || hasAdminRole;
+    const finalIsAdmin = isAdmin || hasAdminRole;
+    const hasFullAccess = finalIsAdmin || hasManageServer || isOwner;
     console.log("🔐 Permission results:", {
       isAdmin,
+      finalIsAdmin,
       hasManageServer,
       isOwner,
       hasAdminRole,
@@ -184,7 +186,7 @@ export async function checkUserPermissions(
       hasSrModAccess: hasSrModRole,
       hasAnyAccess: hasFullAccess || hasModeratorRole || hasViewOnlyRole || hasCasinoAccess || hasSrModRole,
       isOwner,
-      isAdmin,
+      isAdmin: finalIsAdmin,
       hasManageServer,
       roles,
     };

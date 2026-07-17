@@ -3,7 +3,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { FiArrowRight, FiDisc, FiTrendingUp, FiLayers, FiHeart } from 'react-icons/fi';
+import { FiArrowRight, FiDisc, FiTrendingUp, FiLayers } from 'react-icons/fi';
 interface TeamMember {
   id: string;
   discord_user_id: string;
@@ -26,9 +26,6 @@ export default function Home() {
   const { theme } = useTheme();
   const [team, setTeam] = useState<TeamData | null>(null);
   const [teamLoading, setTeamLoading] = useState(true);
-  const [heartCount, setHeartCount] = useState<number>(0);
-  const [hasReacted, setHasReacted] = useState<boolean>(false);
-  const [reactionsLoading, setReactionsLoading] = useState(true);
   const [showSubscriptionOverlay, setShowSubscriptionOverlay] = useState(true);
   useEffect(() => {
     async function fetchTeam() {
@@ -44,47 +41,9 @@ export default function Home() {
         setTeamLoading(false);
       }
     }
-    async function fetchReactions() {
-      try {
-        const response = await fetch('/api/reactions', { cache: 'no-store' });
-        const resData = await response.json();
-        if (response.ok && resData.success) {
-          setHeartCount(resData.count);
-        }
-      } catch (err) {
-        console.error('Error fetching reactions:', err);
-      } finally {
-        setReactionsLoading(false);
-      }
-    }
     fetchTeam();
-    fetchReactions();
-    const reacted = localStorage.getItem('omegle_user_reacted_heart') === 'true';
-    setHasReacted(reacted);
   }, []);
-  const handleReactHeart = async () => {
-    const action = hasReacted ? 'decrement' : 'increment';
-    setHasReacted(!hasReacted);
-    setHeartCount(prev => Math.max(0, action === 'decrement' ? prev - 1 : prev + 1));
-    if (action === 'increment') {
-      localStorage.setItem('omegle_user_reacted_heart', 'true');
-    } else {
-      localStorage.removeItem('omegle_user_reacted_heart');
-    }
-    try {
-      const response = await fetch('/api/reactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
-      });
-      const resData = await response.json();
-      if (response.ok && resData.success) {
-        setHeartCount(resData.count);
-      }
-    } catch (err) {
-      console.error('Error updating reaction:', err);
-    }
-  };
+
   const getAccentColorStyle = (accentHex: string | null, type: 'border' | 'shadow' | 'bg') => {
     const color = accentHex || '#3b82f6';
     switch (type) {
@@ -368,6 +327,58 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {/* Omeglee Gambling Sneak Peek Section */}
+      <section className="relative w-full max-w-6xl z-10 py-6">
+        <div className="w-full px-4 sm:px-6">
+          <div className="relative group overflow-hidden rounded-3xl border border-purple-500/35 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-black/40 p-8 shadow-[0_0_50px_-12px_rgba(168,85,247,0.2)] backdrop-blur-xl transition-all duration-500 hover:shadow-[0_0_50px_-6px_rgba(168,85,247,0.35)] hover:border-purple-500/50">
+            {/* Ambient Background Glow */}
+            <div className="absolute -top-24 -right-24 w-80 h-80 bg-purple-500/15 rounded-full filter blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+            <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-indigo-500/10 rounded-full filter blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+            
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="space-y-4 text-center md:text-left flex-1">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                  <div className="inline-flex items-center justify-center px-3 py-1 bg-purple-500/15 rounded-full border border-purple-500/25">
+                    <span className="text-purple-400 font-bold text-[10px] uppercase tracking-wider">Under Development</span>
+                  </div>
+                  <div className="inline-flex items-center justify-center px-3 py-1 bg-amber-500/15 rounded-full border border-amber-500/25">
+                    <span className="text-amber-400 font-bold text-[10px] uppercase tracking-wider">Coming Soon</span>
+                  </div>
+                </div>
+                
+                <h2 className="text-3xl font-extrabold text-[rgb(var(--color-text-primary))] tracking-tight">
+                  Omeglee Gambling
+                </h2>
+                
+                <p className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed max-w-2xl">
+                  Get ready for the ultimate risk-and-reward experience directly integrated with the Ozy virtual economy! Double down in blackjack, spin the slots, test your luck in roulette, and challenge the community on the high-roller leaderboards. Under active development, launching soon.
+                </p>
+
+                <div className="flex flex-wrap justify-center md:justify-start gap-6 pt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🎰</span>
+                    <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">Slots & Casino Games</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🃏</span>
+                    <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">High Stakes Blackjack</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🏆</span>
+                    <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">High Roller Leaderboards</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative w-32 h-32 md:w-36 md:h-36 flex items-center justify-center flex-shrink-0">
+                <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl animate-pulse" />
+                <span className="text-6xl select-none filter drop-shadow-[0_0_15px_rgba(168,85,247,0.5)] animate-bounce duration-[2000ms]">🎲</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {}
       <section className="relative w-full max-w-6xl z-10 py-12">
         <div className="w-full px-4 sm:px-6">
@@ -434,11 +445,11 @@ export default function Home() {
             {}
             {showSubscriptionOverlay && (
               <div className="absolute inset-0 bg-black/10 dark:bg-black/40 backdrop-blur-[2px] flex items-center justify-center transition-all duration-500">
-                <div className="glass-blue border border-white/20 p-6 rounded-2xl max-w-sm text-center shadow-2xl scale-95 md:scale-100">
-                  <h4 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-4">Launching Soon</h4>
+                <div className="glass-blue border border-white/20 p-4 rounded-xl max-w-[240px] text-center shadow-2xl scale-95 md:scale-100">
+                  <h4 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-3">Launching Soon</h4>
                   <button
                     onClick={() => setShowSubscriptionOverlay(false)}
-                    className="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-500/10 transition-colors"
+                    className="px-4 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-[10px] font-semibold shadow-lg shadow-blue-500/10 transition-colors"
                   >
                     Got it
                   </button>
@@ -475,45 +486,6 @@ export default function Home() {
                   <FiArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </a>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      {}
-      <section className="relative w-full max-w-4xl z-10 py-12 pb-20">
-        <div className="w-full px-4 sm:px-6">
-          <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg text-center space-y-5">
-            <div className="space-y-2">
-              <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 bg-red-500/10 rounded-full border border-red-500/20 mb-2">
-                <FiHeart className="w-3 h-3 text-red-500 fill-red-500" />
-                <span className="text-red-500 font-bold text-[10px] uppercase tracking-wider">Live Reaction</span>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))]">Have you checked it out?</h3>
-              <p className="text-[11px] sm:text-xs text-[rgb(var(--color-text-secondary))] max-w-lg mx-auto">
-                React here so that we know! We may launch early supporter offers later for those who react here.
-              </p>
-            </div>
-            {}
-            <div className="flex justify-center pt-2">
-              {reactionsLoading ? (
-                <div className="w-6 h-6 border-2 border-red-500/20 border-t-red-500 rounded-full animate-spin" />
-              ) : (
-                <button
-                  onClick={handleReactHeart}
-                  className={`flex items-center gap-2.5 px-6 py-3 rounded-2xl border text-sm font-semibold transition-all duration-300 ${
-                    hasReacted
-                      ? 'bg-red-500/15 border-red-500 text-red-500 scale-105 shadow-md shadow-red-500/15'
-                      : 'border-[rgb(var(--color-border))]/65 hover:border-red-500/40 bg-[rgb(var(--color-bg-secondary))]/30 text-[rgb(var(--color-text-secondary))] hover:bg-red-500/5 active:scale-95'
-                  }`}
-                >
-                  <span className={`text-xl transition-transform duration-300 ${hasReacted ? 'scale-125 animate-pulse text-red-500' : 'group-hover:scale-110'}`}>
-                    ❤️
-                  </span>
-                  <span className="text-xs font-mono tracking-tight select-none">
-                    {heartCount}
-                  </span>
-                </button>
-              )}
             </div>
           </div>
         </div>
