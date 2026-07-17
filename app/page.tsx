@@ -235,18 +235,10 @@ export default function Home() {
             ) : (
               <div className="space-y-8 flex flex-col items-center">
                 {}
-                {team.founders.length > 0 && (
+                {(team.founders.length > 0 || team.developers.length > 0) && (
                   <div className="w-full flex flex-col items-center">
                     <div className="flex flex-wrap justify-center gap-5">
                       {team.founders.map(renderMemberCard)}
-                    </div>
-                  </div>
-                )}
-                {}
-                {team.developers.length > 0 && (
-                  <div className="w-full flex flex-col items-center border-t border-[rgb(var(--color-border))]/10 pt-6">
-                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-4">Developers</h3>
-                    <div className="flex flex-wrap justify-center gap-5">
                       {team.developers.map(renderMemberCard)}
                     </div>
                   </div>
