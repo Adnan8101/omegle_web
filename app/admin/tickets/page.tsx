@@ -17,11 +17,7 @@ import {
   FiServer
 } from 'react-icons/fi';
 import EntityDropdown from '@/components/ui/entity-dropdown';
-
-interface DiscordGuild {
-  guild_id: string;
-  guild_name: string;
-}
+import { GUILD_ID } from '@/lib/constants';
 
 interface DiscordData {
   categories: { id: string; name: string }[];
@@ -53,8 +49,7 @@ export default function TicketSystemConfig() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [guilds, setGuilds] = useState<DiscordGuild[]>([]);
-  const [selectedGuildId, setSelectedGuildId] = useState<string>('');
+  const [selectedGuildId] = useState<string>(GUILD_ID);
   
   const [discordData, setDiscordData] = useState<DiscordData>({
     categories: [],
@@ -63,7 +58,6 @@ export default function TicketSystemConfig() {
   });
   
   const [configs, setConfigs] = useState<Record<string, CategoryConfig>>({});
-  const [loadingGuilds, setLoadingGuilds] = useState<boolean>(true);
   const [loadingData, setLoadingData] = useState<boolean>(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>('General Queries');
   const [savingCategory, setSavingCategory] = useState<string | null>(null);
@@ -77,29 +71,6 @@ export default function TicketSystemConfig() {
       router.replace('/admin');
     }
   }, [status, session, router]);
-
-  // Load allowed guilds
-  useEffect(() => {
-    if (status !== 'authenticated') return;
-    
-    const fetchGuilds = async () => {
-      try {
-        setLoadingGuilds(true);
-        const res = await fetch('/api/tickets/guilds');
-        const data = await res.json();
-        if (data.success && data.guilds?.length > 0) {
-          setGuilds(data.guilds);
-          setSelectedGuildId(data.guilds[0].guild_id);
-        }
-      } catch (err) {
-        console.error('Failed to load guilds:', err);
-      } finally {
-        setLoadingGuilds(false);
-      }
-    };
-    
-    fetchGuilds();
-  }, [status]);
 
   // Fetch Discord data and ticket configs for selected guild
   useEffect(() => {
@@ -218,7 +189,7 @@ export default function TicketSystemConfig() {
     color: r.color
   }));
 
-  if (status === 'loading' || loadingGuilds) {
+  if (status === 'loading') {
     return (
       <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
         <div className="text-center">
@@ -242,29 +213,6 @@ export default function TicketSystemConfig() {
             Configure independent opening categories, transcript logs, and staff permissions for each ticket category.
           </p>
         </div>
-        
-        {/* Guild Selection Dropdown */}
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-semibold flex items-center gap-2 text-[rgb(var(--color-text-secondary))]">
-            <FiServer className="text-blue-500 w-4 h-4" /> Server:
-          </label>
-          <div className="relative">
-            <select
-              value={selectedGuildId}
-              onChange={(e) => setSelectedGuildId(e.target.value)}
-              className="appearance-none bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-[rgb(var(--color-text-primary))] px-4 py-2 pr-10 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer transition-colors"
-            >
-              {guilds.map((g) => (
-                <option key={g.guild_id} value={g.guild_id} className="bg-[rgb(var(--color-bg-secondary))] text-[rgb(var(--color-text-primary))]">
-                  {g.guild_name}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-blue-400">
-              <FiChevronDown />
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Floating Status Notification */}
@@ -279,15 +227,7 @@ export default function TicketSystemConfig() {
         </div>
       )}
 
-      {guilds.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-[rgb(var(--color-text-secondary))] gap-4 max-w-md mx-auto text-center glass-blue border border-white/5 rounded-3xl p-8 shadow-apple-lg">
-          <FiServer className="w-16 h-16 text-blue-500/50 animate-pulse" />
-          <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">No Authorized Servers</h2>
-          <p className="text-sm">
-            We couldn't find any Discord servers where the bot is installed and you possess administrator rights or a configured bot management role.
-          </p>
-        </div>
-      ) : loadingData ? (
+      {loadingData ? (
         <div className="flex flex-col items-center justify-center py-20 text-[rgb(var(--color-text-secondary))] gap-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           <span>Syncing with Discord Guild cache...</span>
@@ -302,10 +242,10 @@ export default function TicketSystemConfig() {
             return (
               <div 
                 key={catName} 
-                className={`glass-blue border rounded-3xl overflow-hidden transition-all duration-300 ${
+                className={`glass-blue border rounded-3xl transition-all duration-300 relative ${
                   isExpanded 
-                    ? 'border-blue-500/30 shadow-blue-glow/10 bg-blue-500/[0.02]' 
-                    : 'border-white/5 hover:border-white/10 hover:bg-white/[0.01]'
+                    ? 'border-blue-500/30 shadow-blue-glow/10 bg-blue-500/[0.02] overflow-visible z-30' 
+                    : 'border-white/5 hover:border-white/10 hover:bg-white/[0.01] overflow-hidden z-0'
                 }`}
               >
                 {/* Header Row */}
