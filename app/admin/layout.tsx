@@ -158,6 +158,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
     const navItems = [
         {
+            name: 'Ticket System',
+            href: '/admin/tickets',
+            icon: <FiMessageSquare className="w-5 h-5" />,
+            requiresFullAccess: true,
+        },
+        {
             name: 'Dashboard',
             href: '/admin/dashboard',
             icon: <FiHome className="w-5 h-5" />,

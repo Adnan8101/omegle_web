@@ -496,6 +496,13 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
             <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs ${result.user.inGuild ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
               {result.user.inGuild ? 'In Guild' : 'Left Guild'}
             </span>
+            {result.isTempBlocked && (
+              <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400">
+                <p className="font-semibold flex items-center gap-1">🚫 Temp Blocked</p>
+                <p className="mt-0.5">Expires: {new Date(result.tempBlockedUntil).toLocaleString()}</p>
+                {result.tempBlockReason && <p className="mt-0.5 opacity-80">Reason: {result.tempBlockReason}</p>}
+              </div>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-3 gap-4 p-4 bg-[rgb(var(--color-bg-primary))] rounded-lg">

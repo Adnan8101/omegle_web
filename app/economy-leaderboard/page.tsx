@@ -9,6 +9,7 @@ interface LeaderboardEntry {
   avatar: string | null;
   total_points: number;
   leaderboard_points: number;
+  isTempBlocked?: boolean;
 }
 export default function EconomyLeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -172,8 +173,13 @@ export default function EconomyLeaderboardPage() {
                   </div>
                   {}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-base sm:text-lg text-[rgb(var(--color-text-primary))] truncate">
-                      {entry.username}
+                    <h3 className="font-semibold text-base sm:text-lg text-[rgb(var(--color-text-primary))] truncate flex items-center gap-2">
+                      <span>{entry.username}</span>
+                      {entry.isTempBlocked && (
+                        <span className="flex-shrink-0 px-2 py-0.5 rounded text-[10px] bg-red-500/20 text-red-400 font-semibold uppercase tracking-wider">
+                          Blocked
+                        </span>
+                      )}
                     </h3>
                     <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))]">
                       Rank #{entry.rank} of {entries.length}

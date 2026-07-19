@@ -740,6 +740,8 @@ model EconomyUser {
   valid_messages     Int      @default(0)
   week_start         String?
   weekly_points      Int      @default(0)
+  temp_blocked_until DateTime?
+  temp_block_reason  String?
   @@map("economy_users")
   @@unique([guild_id, user_id])
   @@index([guild_id, created_at])
@@ -857,13 +859,14 @@ model JailerPermit {
 }
 
 model MailCategory {
-  auto_close_hours    Int?
-  channel_category_id String
-  created_at          DateTime @default(now())
-  guild_id            String
-  id                  String   @id @default(uuid())
-  name                String
-  staff_role_ids      String[]
+  auto_close_hours      Int?
+  channel_category_id   String
+  transcript_channel_id String?
+  created_at            DateTime @default(now())
+  guild_id              String
+  id                    String   @id @default(uuid())
+  name                  String
+  staff_role_ids        String[]
   @@map("mail_categories")
 }
 
@@ -1033,6 +1036,7 @@ model ModRole {
   role_id       String
   slowmode       Boolean @default(false)
   suggestion     Boolean @default(false)
+  tempblock      Boolean @default(false)
   timeout        Boolean @default(false)
   unban          Boolean @default(false)
   warn           Boolean @default(false)

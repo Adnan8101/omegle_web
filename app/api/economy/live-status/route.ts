@@ -299,7 +299,7 @@ async function getUserHistory(userId: string, config: any, today: string) {
     FROM discord_user_cache WHERE user_id = $1
   `, [userId]);
   const economyUser = await queryBotDb(`
-    SELECT total_points, total_vc_minutes, total_messages
+    SELECT total_points, total_vc_minutes, total_messages, temp_blocked_until, temp_block_reason
     FROM economy_users WHERE guild_id = $1 AND user_id = $2
   `, [GUILD_ID, userId]);
   const vcProgress = await queryBotDb(`
@@ -337,6 +337,9 @@ async function getUserHistory(userId: string, config: any, today: string) {
     balance: economy?.total_points || 0,
     totalVcMinutes: economy?.total_vc_minutes || 0,
     totalMessages: economy?.total_messages || 0,
+    isTempBlocked: economy?.temp_blocked_until ? new Date(economy.temp_blocked_until) > new Date() : false,
+    tempBlockedUntil: economy?.temp_blocked_until,
+    tempBlockReason: economy?.temp_block_reason,
     vc: {
       inVc: activeVc.length > 0,
       channel: activeVc[0]?.channel_name,

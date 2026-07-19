@@ -13,7 +13,7 @@ export default function AdminLogin() {
       setIsRedirecting(true);
       const perms = session?.user?.permissions;
       if (perms?.hasFullAccess) {
-        router.push('/admin/dashboard');
+        router.push('/admin/tickets');
       } else if (perms?.hasCasinoAccess) {
         router.push('/admin/shop');
       } else if (perms?.hasSrModAccess) {

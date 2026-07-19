@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
       select: {
         user_id: true,
         total_points: true,
-        leaderboard_points: true
+        leaderboard_points: true,
+        temp_blocked_until: true,
+        temp_block_reason: true
       }
     });
     const config = await prismaBot.economyConfig.findUnique({
@@ -45,7 +47,10 @@ export async function GET(request: NextRequest) {
             username,
             avatar,
             total_points: user.total_points,
-            leaderboard_points: user.leaderboard_points
+            leaderboard_points: user.leaderboard_points,
+            isTempBlocked: user.temp_blocked_until ? new Date(user.temp_blocked_until) > new Date() : false,
+            tempBlockedUntil: user.temp_blocked_until,
+            tempBlockReason: user.temp_block_reason
           };
         } catch (error) {
           console.error(`Error fetching user ${user.user_id}:`, error);
@@ -55,7 +60,10 @@ export async function GET(request: NextRequest) {
             username: 'Unknown User',
             avatar: null,
             total_points: user.total_points,
-            leaderboard_points: user.leaderboard_points
+            leaderboard_points: user.leaderboard_points,
+            isTempBlocked: user.temp_blocked_until ? new Date(user.temp_blocked_until) > new Date() : false,
+            tempBlockedUntil: user.temp_blocked_until,
+            tempBlockReason: user.temp_block_reason
           };
         }
       })
