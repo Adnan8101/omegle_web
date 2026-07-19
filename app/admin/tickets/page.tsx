@@ -279,7 +279,15 @@ export default function TicketSystemConfig() {
         </div>
       )}
 
-      {loadingData ? (
+      {guilds.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-[rgb(var(--color-text-secondary))] gap-4 max-w-md mx-auto text-center glass-blue border border-white/5 rounded-3xl p-8 shadow-apple-lg">
+          <FiServer className="w-16 h-16 text-blue-500/50 animate-pulse" />
+          <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">No Authorized Servers</h2>
+          <p className="text-sm">
+            We couldn't find any Discord servers where the bot is installed and you possess administrator rights or a configured bot management role.
+          </p>
+        </div>
+      ) : loadingData ? (
         <div className="flex flex-col items-center justify-center py-20 text-[rgb(var(--color-text-secondary))] gap-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           <span>Syncing with Discord Guild cache...</span>
