@@ -92,10 +92,11 @@ export default function TicketSystemConfig() {
           textChannels: discordJson.textChannels || [],
           roles: discordJson.roles || []
         });
-        
         const loadedConfigs: Record<string, CategoryConfig> = {};
         TICKET_CATEGORIES.forEach(cat => {
-          const matched = configJson.categories?.find((c: any) => c.name === cat);
+          const matched = configJson.categories?.find((c: any) => 
+            c.name === cat || (cat === 'Tech Support' && c.name === 'Support')
+          );
           loadedConfigs[cat] = matched ? {
             id: matched.id,
             guild_id: matched.guild_id,
