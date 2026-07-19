@@ -94,9 +94,10 @@ export default function TicketSystemConfig() {
         });
         const loadedConfigs: Record<string, CategoryConfig> = {};
         TICKET_CATEGORIES.forEach(cat => {
-          const matched = configJson.categories?.find((c: any) => 
-            c.name === cat || (cat === 'Tech Support' && c.name === 'Support')
-          );
+          let matched = configJson.categories?.find((c: any) => c.name === cat);
+          if (!matched && cat === 'Tech Support') {
+            matched = configJson.categories?.find((c: any) => c.name === 'Support');
+          }
           loadedConfigs[cat] = matched ? {
             id: matched.id,
             guild_id: matched.guild_id,

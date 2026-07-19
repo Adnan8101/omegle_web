@@ -42,34 +42,74 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
         
-        // Find existing configuration for this category name in this guild
-        const existing = await prismaBot.mailCategory.findFirst({
-            where: {
-                guild_id: guildId,
-                name: name
-            }
-        });
-        
         let result;
-        if (existing) {
-            result = await prismaBot.mailCategory.update({
-                where: { id: existing.id },
-                data: {
-                    channel_category_id: openingCategoryId,
-                    transcript_channel_id: transcriptChannelId,
-                    staff_role_ids: staffRoleIds
-                }
-            });
-        } else {
-            result = await prismaBot.mailCategory.create({
-                data: {
+        if (name === 'Tech Support') {
+            const allMatches = await prismaBot.mailCategory.findMany({
+                where: {
                     guild_id: guildId,
-                    name: name,
-                    channel_category_id: openingCategoryId,
-                    transcript_channel_id: transcriptChannelId,
-                    staff_role_ids: staffRoleIds
+                    name: { in: ['Tech Support', 'Support'] }
                 }
             });
+            const exactMatch = allMatches.find(c => c.name === 'Tech Support');
+            const oldMatch = allMatches.find(c => c.name === 'Support');
+            
+            if (exactMatch) {
+                result = await prismaBot.mailCategory.update({
+                    where: { id: exactMatch.id },
+                    data: {
+                        channel_category_id: openingCategoryId,
+                        transcript_channel_id: transcriptChannelId,
+                        staff_role_ids: staffRoleIds
+                    }
+                });
+                if (oldMatch) {
+                    await prismaBot.mailCategory.delete({ where: { id: oldMatch.id } }).catch(() => null);
+                }
+            } else if (oldMatch) {
+                result = await prismaBot.mailCategory.update({
+                    where: { id: oldMatch.id },
+                    data: {
+                        name: 'Tech Support',
+                        channel_category_id: openingCategoryId,
+                        transcript_channel_id: transcriptChannelId,
+                        staff_role_ids: staffRoleIds
+                    }
+                });
+            } else {
+                result = await prismaBot.mailCategory.create({
+                    data: {
+                        guild_id: guildId,
+                        name: 'Tech Support',
+                        channel_category_id: openingCategoryId,
+                        transcript_channel_id: transcriptChannelId,
+                        staff_role_ids: staffRoleIds
+                    }
+                });
+            }
+        } else {
+            const existing = await prismaBot.mailCategory.findFirst({
+                where: { guild_id: guildId, name: name }
+            });
+            if (existing) {
+                result = await prismaBot.mailCategory.update({
+                    where: { id: existing.id },
+                    data: {
+                        channel_category_id: openingCategoryId,
+                        transcript_channel_id: transcriptChannelId,
+                        staff_role_ids: staffRoleIds
+                    }
+                });
+            } else {
+                result = await prismaBot.mailCategory.create({
+                    data: {
+                        guild_id: guildId,
+                        name: name,
+                        channel_category_id: openingCategoryId,
+                        transcript_channel_id: transcriptChannelId,
+                        staff_role_ids: staffRoleIds
+                    }
+                });
+            }
         }
         
         // Also ensure MailConfig is enabled for this guild so the bot knows Modmail is enabled.
