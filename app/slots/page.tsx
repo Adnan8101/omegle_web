@@ -1,5 +1,6 @@
 'use client';
 
+import '@/lib/react-polyfill';
 import SlotMachinePage from '@/components/gambling/SlotMachine/SlotMachinePage';
 import type { SlotMachineHandle } from '@/components/gambling/SlotMachine/SlotMachine';
 import { SlotAudioSynth } from '@/lib/gambling/slotAudioSynth';

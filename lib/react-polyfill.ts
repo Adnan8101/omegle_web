@@ -5,6 +5,7 @@ import React from 'react';
 if (typeof window !== 'undefined' || true) {
   const reactObj = React as any;
   if (reactObj) {
+    // 1. Secret internals polyfill
     if (!reactObj.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED) {
       reactObj.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED =
         reactObj.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS ||
@@ -24,7 +25,29 @@ if (typeof window !== 'undefined' || true) {
       if (!secretInternals.ReactCurrentOwner) {
         secretInternals.ReactCurrentOwner = { current: null };
       }
+      if (!secretInternals.ReactCurrentActQueue) {
+        secretInternals.ReactCurrentActQueue = { current: null };
+      }
     }
+
+    // 2. Patch isValidElement to accept both React 18 and React 19 element symbols
+    const origIsValidElement = reactObj.isValidElement;
+    const REACT_ELEMENT_SYMBOL = Symbol.for('react.element');
+    const REACT_TRANSITIONAL_ELEMENT_SYMBOL = Symbol.for('react.transitional.element');
+
+    reactObj.isValidElement = function (object: any) {
+      if (object && typeof object === 'object' && object.$$typeof) {
+        if (
+          object.$$typeof === REACT_ELEMENT_SYMBOL ||
+          object.$$typeof === REACT_TRANSITIONAL_ELEMENT_SYMBOL ||
+          (typeof object.$$typeof === 'symbol' &&
+            object.$$typeof.description?.includes('react'))
+        ) {
+          return true;
+        }
+      }
+      return origIsValidElement ? origIsValidElement(object) : false;
+    };
   }
 }
 
