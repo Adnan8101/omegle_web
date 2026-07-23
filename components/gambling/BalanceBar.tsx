@@ -23,7 +23,7 @@ export default function BalanceBar({
   const prevBalance = useRef(balance);
   const [flash, setFlash] = useState<'gain' | 'loss' | null>(null);
   const [displayBalance, setDisplayBalance] = useState(balance);
-  const countRef = useRef<NodeJS.Timeout>();
+  const countRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   /* ── Counting animation when balance changes ───────────────────────────── */
   useEffect(() => {
