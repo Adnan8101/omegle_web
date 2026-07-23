@@ -320,11 +320,11 @@ export default function Home() {
           </div>
         </div>
       </section>
-      {/* Omeglee Gambling Sneak Peek Section */}
+      {}
       <section className="relative w-full max-w-6xl z-10 py-6">
         <div className="w-full px-4 sm:px-6">
           <div className="relative group overflow-hidden rounded-3xl border border-purple-500/35 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-black/40 p-8 shadow-[0_0_50px_-12px_rgba(168,85,247,0.2)] backdrop-blur-xl transition-all duration-500 hover:shadow-[0_0_50px_-6px_rgba(168,85,247,0.35)] hover:border-purple-500/50">
-            {/* Ambient Background Glow */}
+            {}
             <div className="absolute -top-24 -right-24 w-80 h-80 bg-purple-500/15 rounded-full filter blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
             <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-indigo-500/10 rounded-full filter blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
             

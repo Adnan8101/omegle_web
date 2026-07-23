@@ -1,6 +1,4 @@
-// Admin: read/write Slot Machine configuration (game settings, betting limits,
-// outcome probabilities, payout multipliers, and cosmetic symbols). Gated by
-// casino access. Odds/payouts live here (server-only) and never reach players.
+
 
 import { authOptions } from '@/lib/auth';
 import { GUILD_ID } from '@/lib/constants';
@@ -117,7 +115,7 @@ export async function PATCH(request: NextRequest) {
       symbols,
     } = body;
 
-    // --- Betting limits ---
+    
     const minBet = Math.floor(Number(min_bet));
     const maxBet = Math.floor(Number(max_bet));
     const defBet = Math.floor(Number(default_bet));
@@ -134,7 +132,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // --- Quick bets ---
+    
     if (!Array.isArray(quick_bets)) {
       return NextResponse.json({ error: 'quick_bets must be an array' }, { status: 400 });
     }
@@ -146,7 +144,7 @@ export async function PATCH(request: NextRequest) {
       ),
     ).sort((a, b) => a - b);
 
-    // --- Outcome probabilities: each 0..100, must total 100 ---
+    
     const pThree = Math.floor(Number(prob_three));
     const pTwo = Math.floor(Number(prob_two));
     const pNone = Math.floor(Number(prob_none));
@@ -166,7 +164,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // --- Payout multipliers: non-negative integers ---
+    
     const payThree = Math.floor(Number(payout_three));
     const payTwo = Math.floor(Number(payout_two));
     const payNone = Math.floor(Number(payout_none));
@@ -183,17 +181,17 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // --- Symbols ---
+    
     if (!Array.isArray(symbols) || symbols.length === 0) {
       return NextResponse.json({ error: 'At least one symbol is required' }, { status: 400 });
     }
     const cleanSymbols = symbols.map((s: any, i: number) => {
       const label = typeof s?.label === 'string' ? s.label.slice(0, 40) : '';
       const icon = typeof s?.icon === 'string' && s.icon.trim() ? s.icon.trim().slice(0, 200) : null;
-      const symEnabled = s?.enabled !== false; // default true
+      const symEnabled = s?.enabled !== false; 
       return { guild_id: GUILD_ID, position: i, label, icon, enabled: symEnabled };
     });
-    // A symbol must have something to render.
+    
     if (cleanSymbols.some((s) => !s.label && !s.icon)) {
       return NextResponse.json(
         { error: 'Each symbol must have a label or an icon' },
@@ -201,8 +199,8 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Enough ENABLED symbols must exist to realise every configured outcome,
-    // otherwise the engine cannot draw the required distinct symbols.
+    
+    
     const enabledCount = cleanSymbols.filter((s) => s.enabled).length;
     if (enabledCount < 1) {
       return NextResponse.json({ error: 'At least one symbol must be enabled' }, { status: 400 });
@@ -251,7 +249,7 @@ export async function PATCH(request: NextRequest) {
           payout_none: payNone,
         },
       });
-      // Replace the full symbol set to match the desired configuration.
+      
       await tx.slotSymbol.deleteMany({ where: { guild_id: GUILD_ID } });
       await tx.slotSymbol.createMany({ data: cleanSymbols });
     });

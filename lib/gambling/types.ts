@@ -1,6 +1,5 @@
-// Shared types for the gambling module's client/server contract.
 
-/** A segment as exposed to the PLAYER — note: never includes `weight`/odds. */
+
 export interface PublicSegment {
   position: number;
   label: string;
@@ -9,7 +8,6 @@ export interface PublicSegment {
   icon: string | null;
 }
 
-/** A segment as used in the ADMIN editor (includes weight). */
 export interface AdminSegment {
   position: number;
   label: string;
@@ -19,10 +17,9 @@ export interface AdminSegment {
   icon: string | null;
 }
 
-/** Player-facing wheel state (GET /api/gambling/wheel/state). */
 export interface WheelState {
   enabled: boolean;
-  disabled?: boolean; // true when game is off and viewer is not dev
+  disabled?: boolean; 
   devBypass?: boolean;
   entryCost: number;
   segmentCount: number;
@@ -33,7 +30,6 @@ export interface WheelState {
   currencyEmoji: string;
 }
 
-/** Spin result (POST /api/gambling/wheel/spin). */
 export interface SpinResult {
   winningIndex: number;
   reward: number;
@@ -42,17 +38,11 @@ export interface SpinResult {
   chances: number;
 }
 
-// ---------------------------------------------------------------------------
-// Slot Machine (Gambling System v2)
-// ---------------------------------------------------------------------------
-
-/** A symbol as exposed to the PLAYER — cosmetic only, never any odds. */
 export interface PublicSymbol {
   label: string;
   icon: string | null;
 }
 
-/** A symbol as used in the ADMIN editor. */
 export interface AdminSymbol {
   position: number;
   label: string;
@@ -60,16 +50,15 @@ export interface AdminSymbol {
   enabled: boolean;
 }
 
-/** Player-facing slot state (GET /api/gambling/slots/state). */
 export interface SlotState {
   enabled: boolean;
-  disabled?: boolean; // true when game is off and viewer is not dev
+  disabled?: boolean; 
   devBypass?: boolean;
   minBet: number;
   maxBet: number;
   defaultBet: number;
   quickBets: number[];
-  symbols: PublicSymbol[]; // enabled symbols only, no odds
+  symbols: PublicSymbol[]; 
   balance: number;
   currencyName: string;
   currencyEmoji: string;
@@ -77,12 +66,11 @@ export interface SlotState {
 
 export type SlotOutcome = 'THREE' | 'TWO' | 'NONE';
 
-/** Slot spin result (POST /api/gambling/slots/spin). */
 export interface SlotSpinResult {
-  reels: PublicSymbol[]; // exactly three, the symbols to display left→right
+  reels: PublicSymbol[]; 
   outcome: SlotOutcome;
   reward: number;
-  profit: number; // reward - bet (signed)
+  profit: number; 
   balance: number;
   spinId: string;
 }

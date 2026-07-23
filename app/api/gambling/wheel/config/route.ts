@@ -1,6 +1,4 @@
-// Admin: read/write Spin-the-Wheel configuration (game settings + segments).
-// Gated by casino access. Segments include weights (server-only odds) here —
-// this endpoint is never exposed to players.
+
 
 import { authOptions } from '@/lib/auth';
 import { GUILD_ID } from '@/lib/constants';
@@ -87,7 +85,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { enabled, entry_cost, segment_count, segments } = body;
 
-    // Validate segment count.
+    
     const count = Number(segment_count);
     if (!SEGMENT_COUNT_OPTIONS.includes(count as any)) {
       return NextResponse.json(
@@ -96,13 +94,13 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Validate entry cost.
+    
     const cost = Number(entry_cost);
     if (!Number.isInteger(cost) || cost < 0) {
       return NextResponse.json({ error: 'entry_cost must be a non-negative integer' }, { status: 400 });
     }
 
-    // Validate segments array matches the count.
+    
     if (!Array.isArray(segments) || segments.length !== count) {
       return NextResponse.json(
         { error: `segments must be an array of exactly ${count} entries` },
@@ -119,7 +117,7 @@ export async function PATCH(request: NextRequest) {
       return { guild_id: GUILD_ID, position: i, reward_amount: reward, weight, color, label, icon };
     });
 
-    // At least one segment must be reachable (weight > 0), else spins are undefined.
+    
     if (cleanSegments.every((s) => s.weight === 0)) {
       return NextResponse.json(
         { error: 'At least one segment must have a weight greater than 0' },
@@ -142,7 +140,7 @@ export async function PATCH(request: NextRequest) {
           segment_count: count,
         },
       });
-      // Replace the full segment set to match the desired configuration.
+      
       await tx.wheelSegment.deleteMany({ where: { guild_id: GUILD_ID } });
       await tx.wheelSegment.createMany({ data: cleanSegments });
     });

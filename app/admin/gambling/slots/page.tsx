@@ -1,8 +1,4 @@
 'use client';
-// Admin: configure the Slot Machine — game status, betting limits, cosmetic
-// symbols, outcome probabilities (must total 100%), payout multipliers, and
-// spin history. Mirrors the Spin the Wheel admin page conventions (session
-// guard, tabs, toggle/number inputs, save banners).
 
 import type { AdminSymbol } from '@/lib/gambling/types';
 import { DEFAULT_SLOT_SYMBOLS } from '@/lib/gambling/slots/constants';
@@ -87,7 +83,7 @@ export default function AdminSlotsPage() {
   const [historyTotalPages, setHistoryTotalPages] = useState(1);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  // --- Access guard + initial load ---
+  
   const load = useCallback(async () => {
     try {
       const accessRes = await fetch('/api/casino/access', { cache: 'no-store' });
@@ -141,7 +137,7 @@ export default function AdminSlotsPage() {
   const probValid = probTotal === 100;
   const enabledSymbolCount = useMemo(() => symbols.filter((s) => s.enabled).length, [symbols]);
 
-  // Client-side pre-validation mirrors the server; disables Save when invalid.
+  
   const validationError = useMemo(() => {
     if (config.min_bet < 1) return 'Minimum bet must be at least 1.';
     if (config.max_bet < config.min_bet) return 'Maximum bet must be ≥ minimum bet.';
@@ -190,7 +186,7 @@ export default function AdminSlotsPage() {
       setHistoryPage(data.page || 1);
       setHistoryTotalPages(data.totalPages || 1);
     } catch {
-      /* ignore */
+      
     } finally {
       setHistoryLoading(false);
     }
@@ -198,7 +194,7 @@ export default function AdminSlotsPage() {
 
   useEffect(() => {
     if (activeTab === 'history') loadHistory(historyPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [activeTab]);
 
   if (loading || status === 'loading') {
@@ -240,7 +236,7 @@ export default function AdminSlotsPage() {
         </button>
       </div>
 
-      {/* Banners */}
+      {}
       {success && (
         <div className="mb-4 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-500 text-sm flex items-center gap-2">
           <FiCheckCircle className="w-4 h-4" /> Configuration saved.
@@ -257,7 +253,7 @@ export default function AdminSlotsPage() {
         </div>
       )}
 
-      {/* Tabs */}
+      {}
       <div className="flex gap-2 mb-6 flex-wrap">
         {tabs.map((t) => (
           <button
@@ -275,7 +271,7 @@ export default function AdminSlotsPage() {
         ))}
       </div>
 
-      {/* General */}
+      {}
       {activeTab === 'general' && (
         <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6 max-w-2xl">
           <div className="flex items-center justify-between">
@@ -300,7 +296,7 @@ export default function AdminSlotsPage() {
         </div>
       )}
 
-      {/* Betting */}
+      {}
       {activeTab === 'betting' && (
         <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6 max-w-2xl">
           <div className="flex items-center justify-between">
@@ -363,7 +359,7 @@ export default function AdminSlotsPage() {
         </div>
       )}
 
-      {/* Symbols */}
+      {}
       {activeTab === 'symbols' && (
         <div className="space-y-3 max-w-3xl">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -438,7 +434,7 @@ export default function AdminSlotsPage() {
         </div>
       )}
 
-      {/* Odds & Payouts */}
+      {}
       {activeTab === 'odds' && (
         <div className="grid lg:grid-cols-2 gap-6 items-start max-w-4xl">
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md space-y-5">
@@ -513,7 +509,7 @@ export default function AdminSlotsPage() {
         </div>
       )}
 
-      {/* History */}
+      {}
       {activeTab === 'history' && (
         <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
           {historyLoading ? (

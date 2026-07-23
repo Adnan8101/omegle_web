@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
 
       const dbProgress = userProg?.accumulated_seconds || 0;
       const canEarn = hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false) && !isMutedAndIgnored && !isDeafenedAndIgnored;
-      // Compute live progress: dbProgress + seconds elapsed since last DB write
+      
       let liveProgress = dbProgress;
       if (canEarn) {
         let elapsedSinceSync = sessionDuration;
@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
           const timeSinceUpdate = Math.floor((Date.now() - new Date(userProg.updated_at).getTime()) / 1000);
           elapsedSinceSync = Math.min(sessionDuration, Math.max(0, timeSinceUpdate));
         }
-        // Do NOT apply modulo here — show true accumulated progress so the display doesn't flash to 0
+        
         liveProgress = dbProgress + elapsedSinceSync;
       }
       const cycleProgress = liveProgress % thresholdSeconds;

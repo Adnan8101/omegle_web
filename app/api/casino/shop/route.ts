@@ -127,9 +127,9 @@ export async function POST(request: NextRequest) {
     const actualInrVal = parseOptionalInt(body.actual_inr);
     const priceInrVal = parseOptionalInt(body.price_inr);
     const actualInr = actualInrVal !== null && actualInrVal !== 'INVALID' ? actualInrVal : 0;
-    // price_inr is display-only, never falls back to actual_inr — they are independent
+    
     const priceInr = priceInrVal !== null && priceInrVal !== 'INVALID' ? priceInrVal : 0;
-    // Fetch the global conversion rate from DB — never hardcode
+    
     const economyConfig = await prismaBot.economyConfig.findUnique({ where: { guild_id: GUILD_ID } });
     const ozyRate = economyConfig?.ozy_inr_rate ?? 10;
     const price = Math.round(actualInr * ozyRate);

@@ -1,6 +1,4 @@
-// Web Audio synth for the Slot Machine UI. No audio files — every sound is
-// synthesized (spec §11), matching lib/gambling/audioSynth.ts. Client-only
-// (constructs AudioContext lazily on first user gesture).
+
 
 export class SlotAudioSynth {
   private ctx: AudioContext | null = null;
@@ -15,7 +13,7 @@ export class SlotAudioSynth {
     }
   }
 
-  /** Low mechanical whirr while the reels spin. Returns a stop() function. */
+  
   playSpinLoop(): () => void {
     try {
       this.init();
@@ -27,7 +25,7 @@ export class SlotAudioSynth {
       const gain = this.ctx.createGain();
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(70, t);
-      // Wobble the pitch for a spinning-drum feel.
+      
       lfo.type = 'sine';
       lfo.frequency.setValueAtTime(18, t);
       lfoGain.gain.setValueAtTime(14, t);
@@ -49,7 +47,7 @@ export class SlotAudioSynth {
           osc.stop(end + 0.15);
           lfo.stop(end + 0.15);
         } catch {
-          /* ignore */
+          
         }
       };
     } catch {
@@ -57,7 +55,7 @@ export class SlotAudioSynth {
     }
   }
 
-  /** Sharp click as a reel snaps to its stop. */
+  
   playReelStop() {
     try {
       this.init();
@@ -76,11 +74,11 @@ export class SlotAudioSynth {
       osc.start(t);
       osc.stop(t + 0.13);
     } catch {
-      /* ignore */
+      
     }
   }
 
-  /** Celebratory arpeggio when a spin wins. `big` (three-match) is brighter. */
+  
   playWin(big: boolean = false) {
     try {
       this.init();
@@ -126,11 +124,11 @@ export class SlotAudioSynth {
         source.stop(t + 1.1);
       }
     } catch {
-      /* ignore */
+      
     }
   }
 
-  /** Soft descending tone for a losing spin. */
+  
   playLose() {
     try {
       this.init();
@@ -149,7 +147,7 @@ export class SlotAudioSynth {
       osc.start(t);
       osc.stop(t + 0.55);
     } catch {
-      /* ignore */
+      
     }
   }
 }

@@ -512,7 +512,7 @@ export default function EconomyManagementPage() {
       {}
       {activeTab === 'basic' && config && (
         <div className="space-y-6">
-          {/* Economy System */}
+          {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -533,7 +533,7 @@ export default function EconomyManagementPage() {
             </div>
           </div>
 
-          {/* AFK Verification Toggle */}
+          {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center justify-between mb-6">
               <div>

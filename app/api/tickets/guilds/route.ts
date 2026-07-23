@@ -16,7 +16,7 @@ export async function GET() {
         const accessToken = session.accessToken;
         const hasFullAccess = session.user.permissions?.hasFullAccess;
         
-        // Fetch user's guilds from Discord
+        
         let userGuilds: any[] = [];
         try {
             const res = await fetch('https://discord.com/api/v10/users/@me/guilds', {
@@ -34,7 +34,7 @@ export async function GET() {
         
         const userGuildsMap = new Map(userGuilds.map((g: any) => [g.id, g]));
         
-        // Fetch allowed guilds
+        
         const allowedGuilds = await prismaBot.allowedGuild.findMany({
             orderBy: { added_at: 'desc' }
         });
@@ -42,7 +42,7 @@ export async function GET() {
         const matchedGuilds = [];
         
         for (const guild of allowedGuilds) {
-            // 1. If user is a global developer with full access, allow them automatically
+            
             if (hasFullAccess) {
                 matchedGuilds.push({
                     guild_id: guild.guild_id,
@@ -52,9 +52,9 @@ export async function GET() {
             }
             
             const userGuild = userGuildsMap.get(guild.guild_id);
-            if (!userGuild) continue; // User is not in this guild
+            if (!userGuild) continue; 
             
-            // 2. Check Discord owner or admin/manage permissions
+            
             const permissions = BigInt(userGuild.permissions || '0');
             const isOwner = userGuild.owner === true;
             const isAdmin = (permissions & 0x8n) !== 0n;
@@ -68,7 +68,7 @@ export async function GET() {
                 continue;
             }
             
-            // 3. Check configured bot admin or mod roles in the guild
+            
             if (BOT_TOKEN) {
                 try {
                     const memberRes = await fetch(
@@ -101,7 +101,7 @@ export async function GET() {
             }
         }
         
-        // If matchedGuilds is empty, but database has no allowed guilds, fallback to default for main server
+        
         if (matchedGuilds.length === 0 && allowedGuilds.length === 0) {
             matchedGuilds.push({
                 guild_id: '1507458872225566811',

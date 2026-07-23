@@ -2,15 +2,15 @@ import { NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { checkUserPermissions,UserPermissions } from "./permissions";
 import { prismaBot } from "./prismaBot";
-const ACCESS_CHECK_INTERVAL = 10 * 60 * 1000; // Re-check Discord every 10 minutes (was 60s — too frequent)
+const ACCESS_CHECK_INTERVAL = 10 * 60 * 1000; 
 const CASINO_ROLE_DB_RETRY_MS = 5 * 60 * 1000;
 const GUILD_ID = "1507458872225566811";
 let casinoRoleDbFailedAt = 0;
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
-    updateAge: 60 * 60, // Only update session cookie every hour, not on every request
+    maxAge: 7 * 24 * 60 * 60, 
+    updateAge: 60 * 60, 
   },
   providers: [
     DiscordProvider({
@@ -115,9 +115,9 @@ export const authOptions: NextAuthOptions = {
           }
           const previousPermissions = token.permissions as UserPermissions | undefined;
           const permissions = await checkUserPermissions(token.accessToken, casinoRoleIds, srModRoleIds, modRoleIds, staffRoleIds, adminRoleId);
-          // Preserve previous permissions if:
-          // 1. User previously had access (hasFullAccess or hasAnyAccess)
-          // 2. New check returned no access AND no roles (likely a transient Discord API failure)
+          
+          
+          
           const previousHadAccess =
             Boolean(previousPermissions?.hasAnyAccess) ||
             Boolean(previousPermissions?.hasFullAccess);
@@ -141,12 +141,12 @@ export const authOptions: NextAuthOptions = {
           token.accessCheckedAt = nowMs;
         } catch (error) {
           console.error('[Auth] Permission check failed:', error);
-          // On any error during permission check, preserve existing permissions if we have them
-          // This prevents session drop due to network errors or Discord API outages
+          
+          
           const previousPermissions = token.permissions as UserPermissions | undefined;
           if (previousPermissions?.hasAnyAccess) {
             console.warn('[Auth] Keeping existing permissions due to permission check error');
-            // Keep token.permissions unchanged, just update the timestamp so we retry later
+            
           } else if (!token.permissions || !token.accessCheckedAt) {
             token.permissions = {
               hasFullAccess: false,

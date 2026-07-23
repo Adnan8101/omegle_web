@@ -1,5 +1,4 @@
-// Player: current wheel state — public config (NO weights), the viewer's OZY
-// balance and remaining spin chances. Requires login.
+
 
 import { authOptions } from '@/lib/auth';
 import { GUILD_ID } from '@/lib/constants';
@@ -41,7 +40,7 @@ export async function GET(request: NextRequest) {
     const currencyName = economyConfig?.currency_name || 'Ozy';
     const currencyEmoji = economyConfig?.currency_emoji || '🪙';
 
-    // Game off + not a developer → tell the client to show "Game Currently Disabled".
+    
     if (!enabled && !devBypass) {
       return NextResponse.json(
         { enabled: false, disabled: true, currencyName, currencyEmoji },
@@ -52,7 +51,7 @@ export async function GET(request: NextRequest) {
     const segments = await prismaBot.wheelSegment.findMany({
       where: { guild_id: GUILD_ID },
       orderBy: { position: 'asc' },
-      // NOTE: `weight` is intentionally NOT selected — odds never reach the client.
+      
       select: { position: true, label: true, reward_amount: true, color: true, icon: true },
     });
 

@@ -1,7 +1,4 @@
 'use client';
-// Result screen shown after the reels stop. Canvas confetti burst (same
-// technique as WinReveal.tsx / CrateReveal.tsx) scaled by win size, over a
-// glassmorphic card framed for the Slot Machine's bet/reward/profit model.
 
 import { useEffect, useRef } from 'react';
 import type { SlotOutcome } from '@/lib/gambling/types';
@@ -14,7 +11,7 @@ interface SlotResultRevealProps {
   currencyName: string;
   currencyEmoji: string;
   newBalance: number;
-  isBig: boolean; // three-match — heavier confetti
+  isBig: boolean; 
   reducedMotion?: boolean;
   canSpinAgain: boolean;
   onClose: () => void;

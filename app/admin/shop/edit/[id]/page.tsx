@@ -139,7 +139,7 @@ export default function EditItemPage() {
         price: toInput(item.price),
         description: item.description || '',
         thumbnail: item.thumbnail || '',
-        // Load each field independently — do NOT merge actual_inr and price_inr
+        
         price_inr: toInput(item.price_inr),
         actual_inr: toInput(item.actual_inr),
         price_ozy_override: false,

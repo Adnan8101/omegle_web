@@ -1,13 +1,4 @@
-// Shared OZY wallet service for the gambling module.
-//
-// All balance mutations reuse the existing economy tables:
-//   - EconomyUser.total_points  (spendable balance)
-//   - EconomyUser.leaderboard_points (kept in sync when EconomyConfig.leaderboard_sync)
-//   - EconomyPointLog (one signed row per mutation, for audit)
-//
-// These helpers are the single choke-point every gambling game uses to move
-// OZY, so future games (Coin Flip, Dice, …) get consistent, auditable wallet
-// behaviour for free. Call them INSIDE a prismaBot.$transaction.
+
 
 import type { Prisma } from '@prisma/client';
 import { GUILD_ID } from '@/lib/constants';
@@ -28,12 +19,6 @@ async function getLeaderboardSync(tx: Prisma.TransactionClient): Promise<boolean
   return config?.leaderboard_sync ?? true;
 }
 
-/**
- * Atomically deduct `amount` OZY from a user. Uses a conditional updateMany so
- * two concurrent spends can never overdraw. Writes a negative EconomyPointLog.
- * Returns the resulting balance. Throws InsufficientBalanceError if the user
- * lacks funds.
- */
 export async function spendOzy(
   tx: Prisma.TransactionClient,
   userId: string,
@@ -74,11 +59,6 @@ export async function spendOzy(
   return available - amount;
 }
 
-/**
- * Credit `amount` OZY to a user (mints freely — no budget cap). Creates the
- * economy account if it does not yet exist. Writes a positive EconomyPointLog
- * (skipped for a zero payout). Returns the resulting balance.
- */
 export async function awardOzy(
   tx: Prisma.TransactionClient,
   userId: string,

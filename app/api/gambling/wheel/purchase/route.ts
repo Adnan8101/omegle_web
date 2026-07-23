@@ -1,5 +1,4 @@
-// Player: buy one spin chance. Spends the configured entry cost and grants
-// +1 chance. The player does NOT spin here — chances are banked for later.
+
 
 import { authOptions } from '@/lib/auth';
 import { GUILD_ID } from '@/lib/constants';

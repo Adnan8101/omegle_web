@@ -1,8 +1,4 @@
-// Shared per-game "spin chance" ledger for the gambling module.
-//
-// Chances are stored per (guild, user, game_key) in GambleChance, so every
-// game tracks its own purchasable attempts without colliding. Players buy
-// chances (addChance) and consume them when they play (consumeChance).
+
 
 import type { Prisma } from '@prisma/client';
 import { prismaBot } from '@/lib/prismaBot';
@@ -15,7 +11,6 @@ export class NoChancesError extends Error {
   }
 }
 
-/** Read the current chance count for a user + game (non-transactional). */
 export async function getChances(userId: string, gameKey: string): Promise<number> {
   const row = await prismaBot.gambleChance.findUnique({
     where: {
@@ -26,7 +21,6 @@ export async function getChances(userId: string, gameKey: string): Promise<numbe
   return row?.chances ?? 0;
 }
 
-/** Grant `amount` chances (default 1). Returns the new total. */
 export async function addChance(
   tx: Prisma.TransactionClient,
   userId: string,
@@ -44,11 +38,6 @@ export async function addChance(
   return row.chances;
 }
 
-/**
- * Atomically consume one chance. Uses a conditional updateMany so a user can
- * never spend a chance they do not have (even under concurrent spins).
- * Returns the remaining count. Throws NoChancesError if none are available.
- */
 export async function consumeChance(
   tx: Prisma.TransactionClient,
   userId: string,

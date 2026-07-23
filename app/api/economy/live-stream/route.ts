@@ -150,7 +150,7 @@ async function fetchLiveData() {
 
     const dbProgress = userProg?.accumulated_seconds || 0;
     const canEarn = hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false) && !isMutedAndIgnored && !isDeafenedAndIgnored;
-    // Compute live progress: dbProgress + seconds elapsed since last DB write
+    
     let liveProgress = dbProgress;
     if (canEarn) {
       let elapsedSinceSync = sessionDuration;
@@ -158,10 +158,10 @@ async function fetchLiveData() {
         const timeSinceUpdate = Math.floor((Date.now() - new Date(userProg.updated_at).getTime()) / 1000);
         elapsedSinceSync = Math.min(sessionDuration, Math.max(0, timeSinceUpdate));
       }
-      // Do NOT apply modulo here — show true accumulated progress so the display doesn't flash to 0
+      
       liveProgress = dbProgress + elapsedSinceSync;
     }
-    // The display cycle progress is the position within the current cycle
+    
     const cycleProgress = liveProgress % thresholdSeconds;
     const progressPercent = Math.round((cycleProgress / thresholdSeconds) * 100);
     const nextIn = thresholdSeconds - cycleProgress;

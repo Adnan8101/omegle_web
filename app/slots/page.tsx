@@ -1,7 +1,4 @@
 'use client';
-// Player-facing Slot Machine. The backend is the single source of truth: this
-// page places a bet, requests a spin, and animates the reels to the
-// server-decided symbols. It never chooses the outcome.
 
 import SlotMachine, { SlotMachineHandle } from '@/components/gambling/SlotMachine';
 import SlotResultReveal from '@/components/gambling/SlotResultReveal';
@@ -29,8 +26,8 @@ export default function SlotsPage() {
   const [tileSize, setTileSize] = useState(96);
   const [reducedMotion, setReducedMotion] = useState(false);
 
-  // Dev password (set by the homepage Developer Access popup) → bypasses the
-  // enable-gate on the backend. Sent as a header on every slot API call.
+  
+  
   const devToken = useMemo(() => {
     if (typeof window === 'undefined') return null;
     return sessionStorage.getItem(DEV_ACCESS_STORAGE_KEY);
@@ -49,7 +46,7 @@ export default function SlotsPage() {
     }
   }, []);
 
-  // Responsive tile sizing (3 reels).
+  
   useEffect(() => {
     const resize = () => {
       const w = Math.min(window.innerWidth - 64, 420);
@@ -150,7 +147,7 @@ export default function SlotsPage() {
     }
   }, [spinning, betError, authHeaders, bet, status, loadState]);
 
-  // ---- Render states ----
+  
 
   if (loading || status === 'loading') {
     return (
@@ -199,12 +196,12 @@ export default function SlotsPage() {
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] relative overflow-hidden">
-      {/* Ambient glow */}
+      {}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 py-8 sm:py-12 flex flex-col items-center">
-        {/* Header */}
+        {}
         <div className="w-full flex items-center justify-between mb-6">
           <Link href="/" className="inline-flex items-center gap-2 text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors">
             <FiArrowLeft className="w-4 h-4" /> Back
@@ -223,13 +220,13 @@ export default function SlotsPage() {
           Place your bet and spin for {currencyName} rewards.
         </p>
 
-        {/* Balance */}
+        {}
         <div className="glass-blue rounded-2xl px-6 py-3 border border-[rgb(var(--color-border))]/60 text-center mb-8">
           <p className="text-[10px] uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Balance</p>
           <p className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{balance.toLocaleString()} {currencyName}</p>
         </div>
 
-        {/* Machine */}
+        {}
         {symbols.length > 0 ? (
           <SlotMachine
             ref={machineRef}
@@ -247,7 +244,7 @@ export default function SlotsPage() {
           </div>
         )}
 
-        {/* Bet controls */}
+        {}
         {symbols.length > 0 && (
           <div className="mt-8 w-full max-w-sm flex flex-col gap-3">
             <div className="flex items-center gap-2">
@@ -279,7 +276,7 @@ export default function SlotsPage() {
               </button>
             </div>
 
-            {/* Quick bet chips */}
+            {}
             <div className="flex flex-wrap gap-2 justify-center">
               {quickBets.map((q) => (
                 <button

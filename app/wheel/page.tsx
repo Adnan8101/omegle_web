@@ -1,7 +1,4 @@
 'use client';
-// Player-facing Spin the Wheel. The backend is the single source of truth:
-// this page buys chances, requests a spin, and animates the wheel to the
-// server-decided winning index. It never chooses the outcome.
 
 import SpinWheel, { SpinWheelHandle } from '@/components/gambling/SpinWheel';
 import WinReveal from '@/components/gambling/WinReveal';
@@ -30,8 +27,8 @@ export default function WheelPage() {
   const [wheelSize, setWheelSize] = useState(360);
   const [reducedMotion, setReducedMotion] = useState(false);
 
-  // Dev password (set by the homepage Developer Access popup) → bypasses the
-  // enable-gate on the backend. Sent as a header on every wheel API call.
+  
+  
   const devToken = useMemo(() => {
     if (typeof window === 'undefined') return null;
     return sessionStorage.getItem(DEV_ACCESS_STORAGE_KEY);
@@ -50,7 +47,7 @@ export default function WheelPage() {
     }
   }, []);
 
-  // Responsive wheel sizing.
+  
   useEffect(() => {
     const resize = () => {
       const w = Math.min(window.innerWidth - 48, 460);
@@ -115,7 +112,7 @@ export default function WheelPage() {
     if (spinning || chances < 1) return;
     setError(null);
     setSpinning(true);
-    setChances((c) => Math.max(0, c - 1)); // optimistic; reconciled from API
+    setChances((c) => Math.max(0, c - 1)); 
     audioRef.current?.init();
     audioRef.current?.playSpinStart();
     try {
@@ -129,7 +126,7 @@ export default function WheelPage() {
       }
       const spinResult: SpinResult = data;
       await wheelRef.current?.spinTo(spinResult.winningIndex);
-      // Reconcile authoritative values from the server.
+      
       setBalance(spinResult.balance);
       setChances(spinResult.chances);
       setResult(spinResult);
@@ -147,7 +144,7 @@ export default function WheelPage() {
     }
   }, [spinning, chances, authHeaders, maxReward, loadState]);
 
-  // ---- Render states ----
+  
 
   if (loading || status === 'loading') {
     return (
@@ -197,12 +194,12 @@ export default function WheelPage() {
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] relative overflow-hidden">
-      {/* Ambient glow */}
+      {}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 py-8 sm:py-12 flex flex-col items-center">
-        {/* Header */}
+        {}
         <div className="w-full flex items-center justify-between mb-6">
           <Link href="/" className="inline-flex items-center gap-2 text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors">
             <FiArrowLeft className="w-4 h-4" /> Back
@@ -221,7 +218,7 @@ export default function WheelPage() {
           Buy a spin, then try your luck for {currencyName} rewards.
         </p>
 
-        {/* Balance / chances */}
+        {}
         <div className="flex items-center gap-3 mb-8">
           <div className="glass-blue rounded-2xl px-5 py-3 border border-[rgb(var(--color-border))]/60 text-center">
             <p className="text-[10px] uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Balance</p>
@@ -233,7 +230,7 @@ export default function WheelPage() {
           </div>
         </div>
 
-        {/* Wheel */}
+        {}
         {segments.length > 0 ? (
           <SpinWheel
             ref={wheelRef}
@@ -253,7 +250,7 @@ export default function WheelPage() {
           </div>
         )}
 
-        {/* Controls */}
+        {}
         <div className="mt-8 w-full max-w-sm flex flex-col gap-3">
           <button
             onClick={purchase}

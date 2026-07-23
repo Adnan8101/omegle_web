@@ -1,5 +1,4 @@
-// Admin: paginated spin history for the Spin the Wheel game (spec §13).
-// Joins WheelSpin to DiscordUserCache for display names.
+
 
 import { authOptions } from '@/lib/auth';
 import { GUILD_ID } from '@/lib/constants';
@@ -37,7 +36,7 @@ export async function GET(request: NextRequest) {
       prismaBot.wheelSpin.count({ where: { guild_id: GUILD_ID } }),
     ]);
 
-    // Resolve display names.
+    
     const userIds = [...new Set(spins.map((s) => s.user_id))];
     const users = userIds.length
       ? await prismaBot.discordUserCache.findMany({

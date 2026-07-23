@@ -1,15 +1,4 @@
-// Player: perform a slot spin. The BACKEND is the single source of truth for
-// the outcome — it validates the bet, deducts it, picks the outcome by the
-// admin-configured probabilities, chooses cosmetic symbols, credits the reward,
-// records history and returns the reels. The frontend merely animates to those
-// symbols; it can never influence the result (spec §7, §8).
-//
-// Security (spec §13):
-//   - Backend-only CSPRNG (lib/gambling/slots/engine.ts)
-//   - Atomic wallet debit/credit inside a single $transaction (no overdraw)
-//   - Anti-replay / anti double-click via a per-user client_nonce unique key
-//   - Per-user rate limit (MIN_SPIN_INTERVAL_MS) against the last spin
-//   - Full server-side validation of the bet
+
 
 import { authOptions } from '@/lib/auth';
 import { GUILD_ID } from '@/lib/constants';
@@ -58,7 +47,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Bet-bounds validation (balance is enforced atomically below).
+    
     if (bet < config.min_bet) {
       return NextResponse.json(
         { error: `Minimum bet is ${config.min_bet}`, code: 'BELOW_MIN' },
@@ -72,7 +61,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limit (§13): reject a spin fired too soon after the previous one.
+    
     const lastSpin = await prismaBot.slotSpin.findFirst({
       where: { guild_id: GUILD_ID, user_id: userId },
       orderBy: { created_at: 'desc' },
@@ -86,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await prismaBot.$transaction(async (tx) => {
-      // Read config + enabled symbols fresh inside the tx (server-only odds).
+      
       const cfg = await tx.slotConfig.findUnique({ where: { guild_id: GUILD_ID } });
       if (!cfg) throw new Error('NOT_CONFIGURED');
 
@@ -97,17 +86,17 @@ export async function POST(request: NextRequest) {
       });
       if (symbols.length === 0) throw new Error('NO_SYMBOLS');
 
-      // Balance before any movement.
+      
       const before = await tx.economyUser.findUnique({
         where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } },
         select: { total_points: true },
       });
       const balanceBefore = before?.total_points ?? 0;
 
-      // Deduct the bet atomically — throws InsufficientBalanceError if short.
+      
       await spendOzy(tx, userId, bet, `Slot Machine — bet ${bet} OZY`, SLOTS_SOURCE);
 
-      // Backend decides the outcome, then the cosmetic reels.
+      
       const outcome = pickOutcome(cfg);
       const reels = generateReels(outcome, symbols);
       const reward = computeReward(outcome, bet, cfg);
@@ -121,9 +110,9 @@ export async function POST(request: NextRequest) {
       );
       const profit = reward - bet;
 
-      // Persisting the spin also enforces anti-replay: a duplicate
-      // (guild_id, user_id, client_nonce) throws P2002 and rolls back the
-      // whole transaction, so a replayed request can never debit twice.
+      
+      
+      
       const spin = await tx.slotSpin.create({
         data: {
           guild_id: GUILD_ID,
@@ -159,7 +148,7 @@ export async function POST(request: NextRequest) {
       );
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      // Duplicate client_nonce — replayed or double-clicked spin.
+      
       return NextResponse.json(
         { error: 'Duplicate spin ignored.', code: 'DUPLICATE' },
         { status: 409 },

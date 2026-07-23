@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'guildId query parameter is required' }, { status: 400 });
         }
         
-        // Fetch channels from cache for this guildId
+        
         const allChannels = await prismaBot.discordChannelCache.findMany({
             where: {
                 guild_id: guildId,
@@ -29,11 +29,11 @@ export async function GET(request: NextRequest) {
         });
         
         const categories = allChannels
-            .filter((c) => c.type === 4) // Category
+            .filter((c) => c.type === 4) 
             .map((c) => ({ id: c.channel_id, name: c.name }));
             
         const textChannels = allChannels
-            .filter((c) => c.type === 0 || c.type === 5) // Text or Announcement
+            .filter((c) => c.type === 0 || c.type === 5) 
             .map((c) => ({ id: c.channel_id, name: c.name }));
             
         let roles: any[] = [];

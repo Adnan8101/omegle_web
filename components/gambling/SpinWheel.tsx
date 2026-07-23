@@ -1,9 +1,4 @@
 'use client';
-// Premium canvas Spin-the-Wheel. The wheel face is drawn ONCE to a canvas and
-// then rotated via a GPU `transform: rotate()` driven by requestAnimationFrame
-// (60fps, no per-frame redraw). The winning index is decided by the backend;
-// the parent calls the imperative `spinTo(index)` and the wheel eases to land
-// exactly on that segment under the fixed top pointer.
 
 import {
   forwardRef,
@@ -21,7 +16,7 @@ export interface SpinWheelSegment {
 }
 
 export interface SpinWheelHandle {
-  /** Animate the wheel so `index` lands under the top pointer. Resolves when done. */
+  
   spinTo: (index: number) => Promise<void>;
 }
 
@@ -37,7 +32,6 @@ interface SpinWheelProps {
   centerLabel?: string;
 }
 
-// Relative luminance → pick readable text color for a segment.
 function textColorFor(hex: string): string {
   const m = hex.replace('#', '');
   const full = m.length === 3 ? m.split('').map((c) => c + c).join('') : m;
@@ -58,6 +52,52 @@ function shade(hex: string, amt: number): string {
   return `rgb(${r},${g},${b})`;
 }
 
+function easeInCubic(t: number): number {
+  return t * t * t;
+}
+
+function easeOutQuintic(t: number): number {
+  return 1 - Math.pow(1 - t, 5);
+}
+
+function physicsProgress(t: number): number {
+  const P1_END = 0.15;
+  const P2_END = 0.75;
+
+  if (t <= P1_END) {
+    
+    const localT = t / P1_END; 
+    const phaseProgress = easeInCubic(localT); 
+    
+    
+    return phaseProgress * 0.20;
+  } else if (t <= P2_END) {
+    
+    const localT = (t - P1_END) / (P2_END - P1_END); 
+    
+    return 0.20 + localT * 0.60;
+  } else {
+    
+    const localT = (t - P2_END) / (1 - P2_END); 
+    const phaseProgress = easeOutQuintic(localT);
+    
+    return 0.80 + phaseProgress * 0.20;
+  }
+}
+
+function physicsVelocity(t: number): number {
+  const P1_END = 0.15;
+  const P2_END = 0.75;
+  const eps = 0.001;
+  if (t < eps) return 0;
+  if (t > 1 - eps) return 0;
+  return (physicsProgress(Math.min(1, t + eps)) - physicsProgress(Math.max(0, t - eps))) / (2 * eps);
+}
+
+const MIN_DURATION_MS = 10_000; 
+const REDUCED_DURATION_MS = 450;
+const MIN_FULL_ROTATIONS = 8; 
+
 const SpinWheel = forwardRef<SpinWheelHandle, SpinWheelProps>(function SpinWheel(
   {
     segments,
@@ -73,13 +113,13 @@ const SpinWheel = forwardRef<SpinWheelHandle, SpinWheelProps>(function SpinWheel
   ref,
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rotationRef = useRef(0); // current rotation in degrees
+  const rotationRef = useRef(0); 
   const animatingRef = useRef(false);
 
   const n = Math.max(1, segments.length);
   const segDeg = 360 / n;
 
-  // Draw the wheel face once (and whenever segments/size change).
+  
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -97,7 +137,7 @@ const SpinWheel = forwardRef<SpinWheelHandle, SpinWheelProps>(function SpinWheel
     const segRad = (Math.PI * 2) / n;
     const TOP = -Math.PI / 2;
 
-    // Segments
+    
     for (let i = 0; i < n; i++) {
       const seg = segments[i];
       const start = TOP + (i - 0.5) * segRad;
@@ -115,12 +155,12 @@ const SpinWheel = forwardRef<SpinWheelHandle, SpinWheelProps>(function SpinWheel
       ctx.fillStyle = grad;
       ctx.fill();
 
-      // Separator
+      
       ctx.strokeStyle = 'rgba(255,255,255,0.25)';
       ctx.lineWidth = Math.max(1, size * 0.004);
       ctx.stroke();
 
-      // Labels (radial)
+      
       const txt = textColorFor(seg.color);
       ctx.save();
       ctx.translate(cx, cy);
@@ -141,7 +181,7 @@ const SpinWheel = forwardRef<SpinWheelHandle, SpinWheelProps>(function SpinWheel
       ctx.restore();
     }
 
-    // Outer metallic rim
+    
     ctx.shadowColor = 'transparent';
     const rim = ctx.createLinearGradient(0, 0, size, size);
     rim.addColorStop(0, '#e9d8a6');
@@ -155,7 +195,7 @@ const SpinWheel = forwardRef<SpinWheelHandle, SpinWheelProps>(function SpinWheel
     ctx.strokeStyle = rim;
     ctx.stroke();
 
-    // Studs around the rim
+    
     const studs = Math.min(24, n * 2);
     for (let s = 0; s < studs; s++) {
       const a = (s / studs) * Math.PI * 2;
@@ -172,7 +212,7 @@ const SpinWheel = forwardRef<SpinWheelHandle, SpinWheelProps>(function SpinWheel
     draw();
   }, [draw]);
 
-  // Keep the wheel visually at its current rotation after a redraw.
+  
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) canvas.style.transform = `rotate(${rotationRef.current}deg)`;
@@ -188,43 +228,50 @@ const SpinWheel = forwardRef<SpinWheelHandle, SpinWheelProps>(function SpinWheel
         }
         animatingRef.current = true;
 
+        
         const startR = rotationRef.current;
-        const spins = 5 + Math.floor(Math.random() * 3); // 5..7 full turns
-        const jitter = (Math.random() - 0.5) * segDeg * 0.55;
+        
+        const jitter = (Math.random() - 0.5) * segDeg * 0.45;
         const targetMod = (((-index * segDeg + jitter) % 360) + 360) % 360;
         const startMod = ((startR % 360) + 360) % 360;
-        const delta = (((targetMod - startMod) % 360) + 360) % 360;
-        const finalR = startR + spins * 360 + delta;
+        const segDelta = (((targetMod - startMod) % 360) + 360) % 360;
+        
+        const totalDeg = MIN_FULL_ROTATIONS * 360 + segDelta;
+        const finalR = startR + totalDeg;
 
-        const duration = reducedMotion ? 450 : 4200 + Math.random() * 1600;
-        const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+        const duration = reducedMotion
+          ? REDUCED_DURATION_MS
+          : MIN_DURATION_MS + Math.random() * 1000; 
 
         let lastTickIdx = Math.floor(startR / segDeg);
         let lastR = startR;
         const t0 = performance.now();
 
         const frame = (now: number) => {
-          const p = Math.min(1, (now - t0) / duration);
-          const R = startR + (finalR - startR) * easeOutCubic(p);
+          const rawT = Math.min(1, (now - t0) / duration);
+          const progress = reducedMotion ? rawT : physicsProgress(rawT);
+          const R = startR + totalDeg * progress;
           rotationRef.current = R;
           canvas.style.transform = `rotate(${R}deg)`;
 
-          // Motion blur proportional to angular velocity.
+          
           if (!reducedMotion) {
-            const v = Math.abs(R - lastR);
-            const blur = Math.min(7, v * 0.55);
-            canvas.style.filter = blur > 0.5 ? `blur(${blur.toFixed(1)}px)` : 'none';
+            const vel = physicsVelocity(rawT); 
+            
+            const normVel = vel / 1.7;
+            const blur = Math.min(10, normVel * 12);
+            canvas.style.filter = blur > 0.4 ? `blur(${blur.toFixed(1)}px)` : 'none';
           }
-          lastR = R;
 
-          // Tick as each segment boundary passes the pointer.
+          
           const tickIdx = Math.floor(R / segDeg);
           if (tickIdx !== lastTickIdx) {
             lastTickIdx = tickIdx;
             onTick?.();
           }
+          lastR = R;
 
-          if (p < 1) {
+          if (rawT < 1) {
             requestAnimationFrame(frame);
           } else {
             canvas.style.filter = 'none';
@@ -242,7 +289,7 @@ const SpinWheel = forwardRef<SpinWheelHandle, SpinWheelProps>(function SpinWheel
       style={{ width: size, height: size }}
       aria-label="Prize wheel"
     >
-      {/* Fixed top pointer */}
+      {}
       <div
         className="absolute left-1/2 -translate-x-1/2 z-20 pointer-events-none"
         style={{ top: -size * 0.02 }}
@@ -259,7 +306,7 @@ const SpinWheel = forwardRef<SpinWheelHandle, SpinWheelProps>(function SpinWheel
         />
       </div>
 
-      {/* Rotating wheel face */}
+      {}
       <canvas
         ref={canvasRef}
         style={{
@@ -272,7 +319,7 @@ const SpinWheel = forwardRef<SpinWheelHandle, SpinWheelProps>(function SpinWheel
         }}
       />
 
-      {/* Center hub / spin button (does not rotate) */}
+      {}
       <button
         type="button"
         onClick={canSpin && !spinning ? onSpinClick : undefined}

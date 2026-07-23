@@ -266,7 +266,7 @@ export default function ShopDashboard() {
       if (!res.ok) {
         throw new Error(data.error || 'Failed to update exchange rate');
       }
-      // Successfully saved, refresh data
+      
       await fetchData();
     } catch (err: any) {
       console.error(err);
@@ -672,7 +672,7 @@ export default function ShopDashboard() {
         </div>
       </div>
 
-      {/* Currency Exchange Rate settings card */}
+      {}
       <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md mb-6 sm:mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-3">

@@ -1,7 +1,4 @@
 'use client';
-// Admin: configure Spin the Wheel — game settings, segments (reward/odds/color/
-// label), a live preview, and spin history. Cloned from the economy config page
-// conventions (session guard, tabs, toggle/number inputs, save banners).
 
 import SpinWheel from '@/components/gambling/SpinWheel';
 import { DEFAULT_SEGMENT_COLORS, SEGMENT_COUNT_OPTIONS } from '@/lib/gambling/constants';
@@ -66,7 +63,7 @@ export default function AdminWheelPage() {
   const [historyTotalPages, setHistoryTotalPages] = useState(1);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  // --- Access guard + initial load ---
+  
   const load = useCallback(async () => {
     try {
       const accessRes = await fetch('/api/casino/access', { cache: 'no-store' });
@@ -90,7 +87,7 @@ export default function AdminWheelPage() {
         label: s.label || '',
         icon: s.icon ?? null,
       }));
-      // Normalize length to segment_count.
+      
       setSegments(syncLength(loaded, data.config.segment_count));
     } catch {
       setError('Failed to load wheel configuration.');
@@ -166,7 +163,7 @@ export default function AdminWheelPage() {
       setHistoryPage(data.page || 1);
       setHistoryTotalPages(data.totalPages || 1);
     } catch {
-      /* ignore */
+      
     } finally {
       setHistoryLoading(false);
     }
@@ -174,7 +171,7 @@ export default function AdminWheelPage() {
 
   useEffect(() => {
     if (activeTab === 'history') loadHistory(historyPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [activeTab]);
 
   if (loading || status === 'loading') {
@@ -210,7 +207,7 @@ export default function AdminWheelPage() {
         </button>
       </div>
 
-      {/* Banners */}
+      {}
       {success && (
         <div className="mb-4 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-500 text-sm flex items-center gap-2">
           <FiCheckCircle className="w-4 h-4" /> Configuration saved.
@@ -222,7 +219,7 @@ export default function AdminWheelPage() {
         </div>
       )}
 
-      {/* Tabs */}
+      {}
       <div className="flex gap-2 mb-6 flex-wrap">
         {tabs.map((t) => (
           <button
@@ -240,7 +237,7 @@ export default function AdminWheelPage() {
         ))}
       </div>
 
-      {/* General */}
+      {}
       {activeTab === 'general' && (
         <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6 max-w-2xl">
           <div className="flex items-center justify-between">
@@ -301,7 +298,7 @@ export default function AdminWheelPage() {
         </div>
       )}
 
-      {/* Segments */}
+      {}
       {activeTab === 'segments' && (
         <div className="grid lg:grid-cols-[1fr_auto] gap-8 items-start">
           <div className="space-y-3">
@@ -358,7 +355,7 @@ export default function AdminWheelPage() {
             </p>
           </div>
 
-          {/* Live preview */}
+          {}
           <div className="flex flex-col items-center gap-3 lg:sticky lg:top-6">
             <p className="text-xs uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Live Preview</p>
             <SpinWheel
@@ -371,7 +368,7 @@ export default function AdminWheelPage() {
         </div>
       )}
 
-      {/* History */}
+      {}
       {activeTab === 'history' && (
         <div className="glass-blue rounded-3xl p-4 sm:p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
           {historyLoading ? (

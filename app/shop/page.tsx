@@ -79,12 +79,12 @@ export default function ShopPage() {
   const [tempSortMode, setTempSortMode] = useState<'default' | 'low' | 'high' | 'popular'>('default');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const purchaseInFlightRef = useRef(false);
-  // Load shop on mount — NO LOGIN REQUIRED to view
+  
   useEffect(() => {
     fetchShop();
   }, []);
 
-  // Re-fetch when session changes (after login: load user balance/purchases)
+  
   useEffect(() => {
     if (status === 'authenticated') {
       fetchShop();
@@ -138,7 +138,7 @@ export default function ShopPage() {
     }
   };
   const handlePurchase = async (item: ShopItem) => {
-    // Not logged in → trigger Discord login and come back to /shop after
+    
     if (!session) {
       signIn('discord', { callbackUrl: '/shop' });
       return;
@@ -291,7 +291,7 @@ export default function ShopPage() {
                   />
                   {showProfileMenu && (
                     <>
-                      {/* Click outside overlay */}
+                      {}
                       <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
                       
                       <div className="absolute right-0 mt-2 w-48 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl shadow-xl py-2 z-50 animate-scale-in origin-top-right">
@@ -436,7 +436,7 @@ export default function ShopPage() {
           </div>
         </div>
       )}
-      {/* Premium Filter & Sort Panel Overlay */}
+      {}
       {isFilterOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
           <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 max-w-md w-full border border-[rgb(var(--color-border))] shadow-xl">
@@ -595,7 +595,7 @@ export default function ShopPage() {
                     Community Reward Pool
                   </h2>
                 </div>
-                {/* Mobile Filter Button */}
+                {}
                 <div className="md:hidden">
                   <button
                     onClick={() => {
@@ -610,7 +610,7 @@ export default function ShopPage() {
                 </div>
               </div>
 
-              {/* Stat Cards Row */}
+              {}
               <div className="space-y-3">
                 {(() => {
                   const percent = budget.total_added > 0 ? Math.min(100, Math.max(0, Math.round((budget.available / budget.total_added) * 100))) : 0;
@@ -657,7 +657,7 @@ export default function ShopPage() {
                         </div>
                       </div>
 
-                      {/* Progress bar */}
+                      {}
                       {budget.total_added > 0 && (
                         <div className="space-y-2 mt-2">
                           <div className="relative w-full bg-[rgb(var(--color-bg-tertiary))] rounded-full h-1.5">
@@ -682,7 +682,7 @@ export default function ShopPage() {
               </div>
             </div>
 
-            {/* Desktop Filter Button */}
+            {}
             <div className="hidden md:flex items-center gap-3">
               <button
                 onClick={() => {
@@ -699,7 +699,7 @@ export default function ShopPage() {
           </div>
         )}
 
-        {/* Login nudge — informational, not a blocker */}
+        {}
         {status !== 'authenticated' && (
           <div className="mb-8 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center gap-3">
             <FiLock className="w-5 h-5 text-blue-400 flex-shrink-0" />
@@ -709,7 +709,7 @@ export default function ShopPage() {
           </div>
         )}
 
-        {/* Loading skeleton */}
+        {}
         {loading ? (
           <div className="grid grid-cols-1 min-[440px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (

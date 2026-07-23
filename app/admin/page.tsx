@@ -95,7 +95,7 @@ export default function AdminLogin() {
             )}
             {status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess && (
               <div className="space-y-6">
-                {/* Premium Lock/Shield Header */}
+                {}
                 <div className="text-center relative py-4">
                   <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4 relative overflow-hidden group">
                     <FiAlertTriangle className="w-10 h-10 text-red-500 animate-pulse" />
@@ -107,7 +107,7 @@ export default function AdminLogin() {
                   </p>
                 </div>
 
-                {/* Actions */}
+                {}
                 <div className="flex flex-col gap-2.5 pt-2">
                   <button
                     onClick={() => {

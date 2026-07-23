@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { members } = await request.json(); // Array of { id: string, position: number }
+    const { members } = await request.json(); 
     if (!members || !Array.isArray(members)) {
       return NextResponse.json({ error: 'Invalid members list' }, { status: 400 });
     }

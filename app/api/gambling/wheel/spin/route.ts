@@ -1,7 +1,4 @@
-// Player: perform a spin. The BACKEND is the single source of truth for the
-// outcome — it consumes a chance, picks the winning segment by weighted random,
-// credits the reward, records history, and returns the winning index. The
-// frontend merely animates the wheel to that index; it can never influence it.
+
 
 import { authOptions } from '@/lib/auth';
 import { GUILD_ID } from '@/lib/constants';
@@ -34,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await prismaBot.$transaction(async (tx) => {
-      // Segments must be read fresh inside the transaction (server-only weights).
+      
       const segments = await tx.wheelSegment.findMany({
         where: { guild_id: GUILD_ID },
         orderBy: { position: 'asc' },
@@ -43,15 +40,15 @@ export async function POST(request: NextRequest) {
         throw new Error('NOT_CONFIGURED');
       }
 
-      // Consume a spin chance atomically — throws if the user has none.
+      
       const remainingChances = await consumeChance(tx, userId, WHEEL_GAME_KEY);
 
-      // Backend decides the winner.
+      
       const winningIndex = pickWinningIndex(segments);
       const winning = segments[winningIndex];
       const reward = Math.max(0, winning.reward_amount);
 
-      // Balance before payout (entry cost was already spent at purchase time).
+      
       const before = await tx.economyUser.findUnique({
         where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } },
         select: { total_points: true },

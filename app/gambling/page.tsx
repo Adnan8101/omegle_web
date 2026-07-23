@@ -1,8 +1,4 @@
 'use client';
-// Gambling Lobby — the entry point into the Omeglee Gambling System. Fetches
-// each registered game's public state and renders a card only for games that
-// are currently active (enabled, or accessible via the developer bypass).
-// Adding a future game is a one-line addition to lib/gambling/registry.ts.
 
 import { GAMBLING_GAMES } from '@/lib/gambling/registry';
 import { DEV_ACCESS_HEADER, DEV_ACCESS_STORAGE_KEY } from '@/lib/gambling/devAccess';
@@ -127,13 +123,13 @@ export default function GamblingLobbyPage() {
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] relative overflow-hidden">
-      {/* Ambient casino-felt glow */}
+      {}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 left-0 w-72 h-72 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 py-8 sm:py-12">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between mb-8">
           <Link
             href="/"
@@ -170,7 +166,7 @@ export default function GamblingLobbyPage() {
           )}
         </div>
 
-        {/* Game cards */}
+        {}
         {games.length === 0 ? (
           <div className="glass-blue rounded-3xl p-12 border border-[rgb(var(--color-border))] shadow-apple-lg text-center max-w-lg mx-auto">
             <div className="text-5xl mb-4">🎲</div>
@@ -187,7 +183,7 @@ export default function GamblingLobbyPage() {
                 href={game.href}
                 className="group relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-emerald-950/40 via-black/40 to-indigo-950/30 p-7 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-amber-400/40 hover:shadow-[0_20px_50px_-12px_rgba(251,191,36,0.25)]"
               >
-                {/* Corner glow on hover */}
+                {}
                 <div className="absolute -top-16 -right-16 w-48 h-48 bg-amber-400/0 group-hover:bg-amber-400/15 rounded-full blur-3xl transition-all duration-500 pointer-events-none" />
 
                 <div className="relative flex items-start justify-between mb-6">

@@ -25,7 +25,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'orderedIds must be a non-empty array' }, { status: 400 });
     }
 
-    // Bulk update sort_order: each item gets its index as the sort_order
+    
     await prismaBot.$transaction(
       orderedIds.map((id: string, index: number) =>
         prismaBot.shopItem.updateMany({

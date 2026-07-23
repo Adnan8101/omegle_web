@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
             }
         }
         
-        // Also ensure MailConfig is enabled for this guild so the bot knows Modmail is enabled.
+        
         await prismaBot.mailConfig.upsert({
             where: { guild_id: guildId },
             update: { enabled: true },

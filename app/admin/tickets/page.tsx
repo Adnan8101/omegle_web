@@ -63,7 +63,7 @@ export default function TicketSystemConfig() {
   const [savingCategory, setSavingCategory] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  // Authentication guard
+  
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.replace('/admin');
@@ -72,18 +72,18 @@ export default function TicketSystemConfig() {
     }
   }, [status, session, router]);
 
-  // Fetch Discord data and ticket configs for selected guild
+  
   useEffect(() => {
     if (!selectedGuildId) return;
     
     const fetchGuildDetails = async () => {
       try {
         setLoadingData(true);
-        // Fetch Discord categories, channels, and roles
+        
         const discordRes = await fetch(`/api/tickets/discord-data?guildId=${selectedGuildId}`);
         const discordJson = await discordRes.json();
         
-        // Fetch existing category configurations
+        
         const configRes = await fetch(`/api/tickets/config?guildId=${selectedGuildId}`);
         const configJson = await configRes.json();
         
@@ -182,7 +182,7 @@ export default function TicketSystemConfig() {
     }, 4000);
   };
 
-  // Mappers to EntityDropdownOptions
+  
   const categoryOptions = discordData.categories.map(c => ({ id: c.id, name: c.name }));
   const channelOptions = discordData.textChannels.map(c => ({ id: c.id, name: `#${c.name}` }));
   const roleOptions = discordData.roles.map(r => ({ 
@@ -205,7 +205,7 @@ export default function TicketSystemConfig() {
   return (
     <main className="min-h-screen p-6 md:p-10 space-y-8 bg-[rgb(var(--color-bg-primary))] text-[rgb(var(--color-text-primary))] pb-20">
       
-      {/* Title section */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/5 pb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
@@ -217,7 +217,7 @@ export default function TicketSystemConfig() {
         </div>
       </div>
 
-      {/* Floating Status Notification */}
+      {}
       {notification && (
         <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border backdrop-blur-md animate-fade-in ${
           notification.type === 'success' 
@@ -250,7 +250,7 @@ export default function TicketSystemConfig() {
                     : 'border-white/5 hover:border-white/10 hover:bg-white/[0.01] overflow-hidden z-0'
                 }`}
               >
-                {/* Header Row */}
+                {}
                 <div 
                   onClick={() => setExpandedCategory(isExpanded ? null : catName)}
                   className="flex items-center justify-between px-6 py-5 cursor-pointer select-none"
@@ -287,12 +287,12 @@ export default function TicketSystemConfig() {
                   </div>
                 </div>
 
-                {/* Configuration Content */}
+                {}
                 {isExpanded && (
                   <div className="border-t border-white/5 px-6 py-6 bg-black/[0.1] space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       
-                      {/* Opening Category Dropdown */}
+                      {}
                       <div className="space-y-2">
                         <label className="text-sm font-semibold flex items-center gap-2 text-[rgb(var(--color-text-secondary))]">
                           <FiFolder className="text-blue-400" /> Opening Category
@@ -318,7 +318,7 @@ export default function TicketSystemConfig() {
                         />
                       </div>
 
-                      {/* Transcript Channel Dropdown */}
+                      {}
                       <div className="space-y-2">
                         <label className="text-sm font-semibold flex items-center gap-2 text-[rgb(var(--color-text-secondary))]">
                           <FiFileText className="text-blue-400" /> Transcript Channel
@@ -346,7 +346,7 @@ export default function TicketSystemConfig() {
                       
                     </div>
 
-                    {/* Staff Roles Searchable Dropdown */}
+                    {}
                     <div className="space-y-2 pt-2 border-t border-white/5">
                       <label className="text-sm font-semibold flex items-center gap-2 text-[rgb(var(--color-text-secondary))]">
                         <FiUsers className="text-blue-400" /> Staff Roles
@@ -372,7 +372,7 @@ export default function TicketSystemConfig() {
                       />
                     </div>
 
-                    {/* Save Button Row */}
+                    {}
                     <div className="flex justify-end pt-4 border-t border-white/5">
                       <button
                         onClick={() => handleSaveConfig(catName)}

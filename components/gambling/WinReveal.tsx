@@ -1,7 +1,4 @@
 'use client';
-// Result screen shown after the wheel stops. Canvas confetti/particle burst
-// (same technique as components/CrateReveal.tsx) scaled by win size, over a
-// glassmorphic congratulations card.
 
 import { useEffect, useRef } from 'react';
 
@@ -11,7 +8,7 @@ interface WinRevealProps {
   currencyEmoji: string;
   newBalance: number;
   chancesLeft: number;
-  isBig: boolean; // jackpot-tier — heavier confetti
+  isBig: boolean; 
   reducedMotion?: boolean;
   onClose: () => void;
   onSpinAgain?: () => void;

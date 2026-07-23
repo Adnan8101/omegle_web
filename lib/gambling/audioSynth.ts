@@ -1,6 +1,4 @@
-// Web Audio synth for the Spin-the-Wheel UI. No audio files — every sound is
-// synthesized, matching the house pattern in components/CrateReveal.tsx.
-// Client-only (constructs AudioContext lazily on first user gesture).
+
 
 export class WheelAudioSynth {
   private ctx: AudioContext | null = null;
@@ -10,13 +8,13 @@ export class WheelAudioSynth {
       const Ctor = window.AudioContext || (window as any).webkitAudioContext;
       if (Ctor) this.ctx = new Ctor();
     }
-    // Resume if the browser suspended the context (autoplay policies).
+    
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
     }
   }
 
-  /** Short click as the pointer passes each segment during a spin. */
+  
   playTick(intensity: number = 1) {
     try {
       this.init();
@@ -34,11 +32,11 @@ export class WheelAudioSynth {
       osc.start(t);
       osc.stop(t + 0.07);
     } catch (err) {
-      /* ignore audio errors */
+      
     }
   }
 
-  /** Rising whoosh when a spin launches. */
+  
   playSpinStart() {
     try {
       this.init();
@@ -57,11 +55,11 @@ export class WheelAudioSynth {
       osc.start(t);
       osc.stop(t + 0.65);
     } catch (err) {
-      /* ignore audio errors */
+      
     }
   }
 
-  /** Celebratory arpeggio when a reward lands. `big` adds a brighter fanfare. */
+  
   playWin(big: boolean = false) {
     try {
       this.init();
@@ -87,7 +85,7 @@ export class WheelAudioSynth {
       });
 
       if (big) {
-        // Shimmer sweep for jackpot-tier wins.
+        
         const bufferSize = this.ctx.sampleRate * 1.0;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -108,11 +106,11 @@ export class WheelAudioSynth {
         source.stop(t + 1.1);
       }
     } catch (err) {
-      /* ignore audio errors */
+      
     }
   }
 
-  /** Soft descending tone for a zero / "no win" result. */
+  
   playNoWin() {
     try {
       this.init();
@@ -131,7 +129,7 @@ export class WheelAudioSynth {
       osc.start(t);
       osc.stop(t + 0.55);
     } catch (err) {
-      /* ignore audio errors */
+      
     }
   }
 }
