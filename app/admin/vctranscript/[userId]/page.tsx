@@ -709,11 +709,12 @@ export default function UserTranscriptPage() {
                                 border: '1px solid rgb(var(--color-border))',
                                 borderRadius: '8px'
                               }}
-                              formatter={(value: number | undefined) => {
-                                if (!value) return '0s';
-                                const hours = Math.floor(value / 3600);
-                                const minutes = Math.floor((value % 3600) / 60);
-                                const seconds = value % 60;
+                              formatter={(value) => {
+                                const total = typeof value === 'number' ? value : Number(value);
+                                if (!total) return '0s';
+                                const hours = Math.floor(total / 3600);
+                                const minutes = Math.floor((total % 3600) / 60);
+                                const seconds = total % 60;
                                 if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
                                 if (minutes > 0) return `${minutes}m ${seconds}s`;
                                 return `${seconds}s`;
