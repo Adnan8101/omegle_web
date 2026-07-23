@@ -1,6 +1,5 @@
 'use client';
 
-import '@/lib/react-polyfill';
 import { useRef, useState } from 'react';
 import SlotMachine, { type SlotMachineHandle } from '@/components/gambling/SlotMachine/SlotMachine';
 import type { PublicSymbol } from '@/lib/gambling/types';

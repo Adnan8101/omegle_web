@@ -1,6 +1,5 @@
 'use client';
 
-import '@/lib/react-polyfill';
 import dynamic from 'next/dynamic';
 import { forwardRef, useEffect, useImperativeHandle, useMemo } from 'react';
 import type { PublicSymbol } from '@/lib/gambling/types';

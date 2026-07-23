@@ -1,4 +1,3 @@
-import '@/lib/react-polyfill';
 import FrontendFooterMount from '@/components/FrontendFooterMount';
 import FrontendNavbarMount from '@/components/FrontendNavbarMount';
 import { ThemeProvider } from "@/contexts/ThemeContext";
