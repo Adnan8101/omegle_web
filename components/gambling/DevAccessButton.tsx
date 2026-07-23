@@ -5,10 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { FiLock, FiX, FiAlertCircle } from 'react-icons/fi';
 
-const SHOW =
-  process.env.NODE_ENV !== 'production' ||
-  process.env.NEXT_PUBLIC_SHOW_WHEEL_DEV_ACCESS === 'true';
-
 interface DevAccessButtonProps {
   
   target?: string;
@@ -28,8 +24,6 @@ export default function DevAccessButton({
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const [verifying, setVerifying] = useState(false);
-
-  if (!SHOW) return null;
 
   const submit = async () => {
     if (verifying) return;
