@@ -1603,5 +1603,65 @@ model EconomyAfkVerification {
   @@map("economy_afk_verification")
 }
 
+// ============================================================
+// Gambling module (Spin the Wheel + shared per-game services)
+// ============================================================
+
+model WheelConfig {
+  guild_id      String   @id
+  enabled       Boolean  @default(false)
+  entry_cost    Int      @default(50)
+  segment_count Int      @default(8) // one of 4,5,6,7,8,10,12
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("wheel_config")
+}
+
+model WheelSegment {
+  id            String  @id @default(uuid())
+  guild_id      String
+  position      Int // 0-based slot index
+  reward_amount Int     @default(0)
+  weight        Int     @default(1) // relative odds (>=0); 0 = never hits
+  color         String  @default("#3b82f6")
+  label         String  @default("")
+  icon          String? // future support
+
+  @@unique([guild_id, position])
+  @@index([guild_id])
+  @@map("wheel_segments")
+}
+
+// Generic per-game spin-chance ledger — extensible to future games via game_key
+model GambleChance {
+  id         String   @id @default(uuid())
+  guild_id   String
+  user_id    String
+  game_key   String // 'wheel' for now
+  chances    Int      @default(0)
+  updated_at DateTime @updatedAt
+
+  @@unique([guild_id, user_id, game_key])
+  @@index([guild_id, user_id])
+  @@map("gamble_chances")
+}
+
+// Spin outcome history (spec §13). id doubles as the public "Spin ID".
+model WheelSpin {
+  id             String   @id @default(uuid())
+  guild_id       String
+  user_id        String
+  segment_index  Int
+  reward_amount  Int
+  balance_before Int
+  balance_after  Int
+  created_at     DateTime @default(now())
+
+  @@index([guild_id, created_at])
+  @@index([guild_id, user_id])
+  @@map("wheel_spins")
+}
+
 
 

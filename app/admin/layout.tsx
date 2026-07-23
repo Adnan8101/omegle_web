@@ -1,6 +1,6 @@
 'use client';
 import { useTheme } from '@/contexts/ThemeContext';
-import { QrCodeIcon } from 'lucide-react';
+import { QrCodeIcon, Dices, Disc3 } from 'lucide-react';
 import { signOut,useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -20,6 +20,8 @@ FiMenu,
 FiMessageSquare,
 FiMic,
 FiMoon,
+FiChevronDown,
+FiChevronRight,
 FiShield,
 FiShoppingCart,
 FiSun,
@@ -41,6 +43,9 @@ function isPathnameAllowed(pathname: string, perms: any): boolean {
         if (pathname.startsWith('/admin/shop/economy/invites')) {
             return false;
         }
+        return true;
+    }
+    if (perms.hasCasinoAccess && pathname.startsWith('/admin/gambling')) {
         return true;
     }
     if (perms.hasSrModAccess) {
@@ -65,6 +70,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const router = useRouter();
     const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [mounted, setMounted] = useState(false);
     const { theme, toggleTheme } = useTheme();
     useEffect(() => {
@@ -188,6 +194,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresCasinoAccess: true,
         },
         {
+            name: 'Gambling',
+            icon: <Dices className="w-5 h-5" />,
+            requiresCasinoAccess: true,
+            children: [
+                {
+                    name: 'Spin the Wheel',
+                    href: '/admin/gambling/wheel',
+                    icon: <Disc3 className="w-5 h-5" />,
+                },
+            ],
+        },
+        {
             name: 'Invite Stats',
             href: '/admin/shop/economy/invites',
             icon: <FiUserPlus className="w-5 h-5" />,
@@ -282,6 +300,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         if (href === '/admin/vc-automation') {
             return pathname.startsWith('/admin/vc-automation');
         }
+        if (href === '/admin/gambling/wheel') {
+            return pathname.startsWith('/admin/gambling/wheel');
+        }
         return pathname.startsWith(href);
     };
     return (
@@ -374,20 +395,60 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </div>
                 {}
                 <nav className="flex-1 p-4 md:p-6 space-y-2 overflow-y-auto">
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className={`flex items-center gap-4 px-4 md:px-5 py-3 md:py-4 rounded-2xl apple-transition touch-manipulation ${isActive(item.href)
-                                ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-blue-glow'
-                                : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-bg-tertiary))] hover:text-[rgb(var(--color-text-primary))]'
-                                }`}
-                        >
-                            {item.icon}
-                            <span className="font-medium">{item.name}</span>
-                        </Link>
-                    ))}
+                    {navItems.map((item) => {
+                        const children = (item as any).children as { name: string; href: string; icon: React.ReactNode }[] | undefined;
+                        if (children && children.length > 0) {
+                            const groupActive = children.some((c) => isActive(c.href));
+                            const open = expandedGroups[item.name] ?? groupActive;
+                            return (
+                                <div key={item.name}>
+                                    <button
+                                        onClick={() => setExpandedGroups((prev) => ({ ...prev, [item.name]: !open }))}
+                                        className={`w-full flex items-center gap-4 px-4 md:px-5 py-3 md:py-4 rounded-2xl apple-transition touch-manipulation ${groupActive
+                                            ? 'text-[rgb(var(--color-text-primary))] bg-[rgb(var(--color-bg-tertiary))]'
+                                            : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-bg-tertiary))] hover:text-[rgb(var(--color-text-primary))]'
+                                            }`}
+                                    >
+                                        {(item as any).icon}
+                                        <span className="font-medium flex-1 text-left">{item.name}</span>
+                                        {open ? <FiChevronDown className="w-4 h-4" /> : <FiChevronRight className="w-4 h-4" />}
+                                    </button>
+                                    {open && (
+                                        <div className="mt-1 ml-5 pl-3 border-l border-[rgb(var(--color-border))] space-y-1">
+                                            {children.map((child) => (
+                                                <Link
+                                                    key={child.href}
+                                                    href={child.href}
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl apple-transition touch-manipulation ${isActive(child.href)
+                                                        ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-blue-glow'
+                                                        : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-bg-tertiary))] hover:text-[rgb(var(--color-text-primary))]'
+                                                        }`}
+                                                >
+                                                    {child.icon}
+                                                    <span className="font-medium text-sm">{child.name}</span>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
+                        return (
+                            <Link
+                                key={(item as any).href}
+                                href={(item as any).href}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className={`flex items-center gap-4 px-4 md:px-5 py-3 md:py-4 rounded-2xl apple-transition touch-manipulation ${isActive((item as any).href)
+                                    ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-blue-glow'
+                                    : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-bg-tertiary))] hover:text-[rgb(var(--color-text-primary))]'
+                                    }`}
+                            >
+                                {(item as any).icon}
+                                <span className="font-medium">{item.name}</span>
+                            </Link>
+                        );
+                    })}
                 </nav>
                 {}
                 <div className="p-4 md:p-6 border-t border-[rgb(var(--color-border))] space-y-2">

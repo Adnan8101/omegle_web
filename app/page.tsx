@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { FiArrowRight, FiDisc, FiTrendingUp, FiLayers, FiTarget, FiAward } from 'react-icons/fi';
+import DevAccessButton from '@/components/gambling/DevAccessButton';
 interface TeamMember {
   id: string;
   discord_user_id: string;
@@ -359,6 +360,10 @@ export default function Home() {
                     <FiAward className="w-4 h-4 text-purple-500 animate-pulse" />
                     <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">High Roller Leaderboards</span>
                   </div>
+                </div>
+
+                <div className="pt-2 flex justify-center md:justify-start">
+                  <DevAccessButton />
                 </div>
               </div>
 
