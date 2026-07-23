@@ -24,31 +24,51 @@ const SPIN_TILES = 80;
 
 const DURATIONS = [6_000, 8_000, 10_000];
 
-function easeInCubic(t: number): number {
-  return t * t * t;
-}
+// ─── Velocity-continuous 3-phase physics ─────────────────────────────────────
+//
+// Phase boundaries chosen so that d(progress)/dt is equal on both sides:
+//   a = 0.20  (end of acceleration, 20% of total time)
+//   b = 0.50  (end of constant-speed coasting, 50% of total time)
+//
+// With f1=1/7 of distance in phase 1, f2=4.5/7 in phase 2, f3=1.5/7 in phase 3
+// the peak velocity (2.14 /unit-t) matches exactly at both transitions.
+// Result: perfectly smooth, zero velocity jumps.
 
-function easeOutQuintic(t: number): number {
-  return 1 - Math.pow(1 - t, 5);
-}
+const _A = 0.20;          // acceleration ends at 20% elapsed time
+const _B = 0.50;          // coast ends at 50%  (deceleration fills last 50%)
+const _F1 = 1 / 7;        // fraction of total distance covered in phase 1
+const _F2 = 4.5 / 7;      // fraction covered in phase 2
+const _F3 = 1.5 / 7;      // fraction covered in phase 3
 
 function physicsProgress(t: number): number {
-  const P1_END = 0.10;
-  const P2_END = 0.80;
-
-  if (t <= P1_END) {
-    return easeInCubic(t / P1_END) * 0.15;
-  } else if (t <= P2_END) {
-    return 0.15 + ((t - P1_END) / (P2_END - P1_END)) * 0.70;
+  if (t <= _A) {
+    // Phase 1: ease-in cubic
+    const lt = t / _A;
+    return _F1 * (lt * lt * lt);
+  } else if (t <= _B) {
+    // Phase 2: constant velocity (linear)
+    return _F1 + _F2 * ((t - _A) / (_B - _A));
   } else {
-    return 0.85 + easeOutQuintic((t - P2_END) / (1 - P2_END)) * 0.15;
+    // Phase 3: ease-out quintic — silky smooth deceleration
+    const lt = (t - _B) / (1 - _B);
+    return _F1 + _F2 + _F3 * (1 - Math.pow(1 - lt, 5));
   }
 }
 
-function physicsVelocity(t: number): number {
-  const eps = 0.002;
-  if (t < eps || t > 1 - eps) return 0;
-  return (physicsProgress(t + eps) - physicsProgress(t - eps)) / (2 * eps);
+// ─── Blur schedule ────────────────────────────────────────────────────────────
+//   0  → 0.10 t  : blur builds up to max          (first ~1 s at 10 s duration)
+//   0.10 → 0.30 t : max blur — symbols invisible   (2 s of heavy blur)
+//   0.30 → 0.50 t : blur fades to 0               (2 s fade-out)
+//   0.50 → 1.00 t : ZERO blur — symbols fully visible for the last 5 s
+
+function blurAmount(t: number, maxPx: number): number {
+  const BUILD = 0.10;
+  const PEAK  = 0.30;
+  const CLEAR = 0.50;
+  if (t < BUILD) return (t / BUILD) * maxPx;
+  if (t < PEAK)  return maxPx;
+  if (t < CLEAR) return ((CLEAR - t) / (CLEAR - PEAK)) * maxPx;
+  return 0;
 }
 
 function SymbolTile({ symbol, tileH }: { symbol: PublicSymbol; tileH: number }) {
@@ -278,10 +298,8 @@ const SlotMachine = forwardRef<SlotMachineHandle, SlotMachineProps>(function Slo
         const y = finalY * progress;
         el.style.transform = `translate3d(0,${y}px,0)`;
 
-        
-        const vel = physicsVelocity(rawT) / 1.2;
-        const blur = (maxBlur * Math.min(1, vel)).toFixed(2);
-        el.style.filter = parseFloat(blur) > 0.5 ? `blur(${blur}px)` : 'none';
+        const blur = blurAmount(rawT, maxBlur);
+        el.style.filter = blur > 0.4 ? `blur(${blur.toFixed(1)}px)` : 'none';
 
         if (rawT < 1) {
           rafRefs.current[reelIndex] = requestAnimationFrame(step);
