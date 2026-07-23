@@ -1,11 +1,10 @@
 'use client';
 
 import SlotMachine, { SlotMachineHandle } from '@/components/gambling/SlotMachine';
-import SlotResultReveal from '@/components/gambling/SlotResultReveal';
+import SlotWinOverlay from '@/components/gambling/SlotMachine/SlotWinOverlay';
+import SlotDisplay from '@/components/gambling/SlotMachine/SlotDisplay';
 import { SlotAudioSynth } from '@/lib/gambling/slotAudioSynth';
 import { DEV_ACCESS_HEADER, DEV_ACCESS_STORAGE_KEY } from '@/lib/gambling/devAccess';
-import { renderEmoji } from '@/lib/gambling/renderEmoji';
-import BalanceBar from '@/components/gambling/BalanceBar';
 import type { SlotSpinResult, SlotState } from '@/lib/gambling/types';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -21,6 +20,7 @@ export default function SlotsPage() {
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);
   const [bet, setBet] = useState(0);
+  const [win, setWin] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<SlotSpinResult | null>(null);
   const [showReveal, setShowReveal] = useState(false);
@@ -109,6 +109,7 @@ export default function SlotsPage() {
     if (spinning || betError) return;
     setError(null);
     setSpinning(true);
+    setWin(0);
     audioRef.current?.init();
     const stopLoop = audioRef.current?.playSpinLoop();
     const nonce =
@@ -130,12 +131,14 @@ export default function SlotsPage() {
         return;
       }
       const spinResult: SlotSpinResult = data;
-      await machineRef.current?.spinTo(spinResult.reels);
+      const big = spinResult.outcome === 'THREE';
+      await machineRef.current?.spinTo(spinResult.reels, { reward: spinResult.reward, big });
       stopLoop?.();
       setBalance(spinResult.balance);
+      setWin(spinResult.reward);
       setResult(spinResult);
       if (spinResult.reward > 0) {
-        audioRef.current?.playWin(spinResult.outcome === 'THREE');
+        audioRef.current?.playWin(big);
       } else {
         audioRef.current?.playLose();
       }
@@ -224,14 +227,13 @@ export default function SlotsPage() {
 
         {}
         <div className="mb-8 w-full flex justify-center">
-          <BalanceBar
+          <SlotDisplay
             balance={balance}
+            bet={bet}
+            win={win}
             currencyName={currencyName}
             currencyEmoji={currencyEmoji}
-            animate
-            stats={[
-              { label: 'Bet', value: bet, accent: false },
-            ]}
+            reducedMotion={reducedMotion}
           />
         </div>
 
@@ -306,19 +308,9 @@ export default function SlotsPage() {
               </button>
             </div>
 
-            <button
-              onClick={spin}
-              disabled={!canSpin}
-              className="w-full px-5 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold transition-all shadow-lg shadow-blue-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {spinning ? (
-                'Spinning…'
-              ) : (
-                <span className="flex items-center justify-center gap-1.5">
-                  Spin — {bet.toLocaleString()} {renderEmoji(currencyEmoji, 'w-4 h-4')} {currencyName}
-                </span>
-              )}
-            </button>
+            <p className="text-center text-xs font-medium text-[rgb(var(--color-text-tertiary))] tracking-wide">
+              {spinning ? 'Spinning…' : canSpin ? 'Pull the lever to spin' : betError || 'Set a bet to play'}
+            </p>
 
             {(betError && !spinning) || (error && error !== 'AUTH') ? (
               <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
@@ -330,7 +322,7 @@ export default function SlotsPage() {
       </div>
 
       {showReveal && result && (
-        <SlotResultReveal
+        <SlotWinOverlay
           outcome={result.outcome}
           bet={result.reward - result.profit}
           reward={result.reward}

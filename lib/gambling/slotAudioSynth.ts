@@ -55,7 +55,74 @@ export class SlotAudioSynth {
     }
   }
 
-  
+
+  playLeverPull() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+
+      // Heavy mechanical thunk — low sine thump.
+      const thump = this.ctx.createOscillator();
+      const thumpGain = this.ctx.createGain();
+      thump.type = 'sine';
+      thump.frequency.setValueAtTime(160, t);
+      thump.frequency.exponentialRampToValueAtTime(45, t + 0.22);
+      thumpGain.gain.setValueAtTime(0.0001, t);
+      thumpGain.gain.linearRampToValueAtTime(0.28, t + 0.02);
+      thumpGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      thump.connect(thumpGain);
+      thumpGain.connect(this.ctx.destination);
+      thump.start(t);
+      thump.stop(t + 0.32);
+
+      // Metallic ratchet — short filtered noise burst.
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.15);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(1800, t);
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.18, t);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+      source.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.ctx.destination);
+      source.start(t);
+      source.stop(t + 0.15);
+    } catch {
+
+    }
+  }
+
+
+  playLeverReturn() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(220, t);
+      osc.frequency.exponentialRampToValueAtTime(440, t + 0.12);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(0.06, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.16);
+    } catch {
+
+    }
+  }
+
+
   playReelStop() {
     try {
       this.init();
