@@ -1,8 +1,7 @@
 'use client';
 
-import SlotMachine, { SlotMachineHandle } from '@/components/gambling/SlotMachine';
-import SlotWinOverlay from '@/components/gambling/SlotMachine/SlotWinOverlay';
-import SlotDisplay from '@/components/gambling/SlotMachine/SlotDisplay';
+import SlotMachinePage from '@/components/gambling/SlotMachine/SlotMachinePage';
+import type { SlotMachineHandle } from '@/components/gambling/SlotMachine/SlotMachine';
 import { SlotAudioSynth } from '@/lib/gambling/slotAudioSynth';
 import { DEV_ACCESS_HEADER, DEV_ACCESS_STORAGE_KEY } from '@/lib/gambling/devAccess';
 import type { SlotSpinResult, SlotState } from '@/lib/gambling/types';
@@ -25,7 +24,6 @@ export default function SlotsPage() {
   const [result, setResult] = useState<SlotSpinResult | null>(null);
   const [showReveal, setShowReveal] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tileSize, setTileSize] = useState(96);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   
@@ -46,17 +44,6 @@ export default function SlotsPage() {
     if (typeof window !== 'undefined') {
       setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     }
-  }, []);
-
-  
-  useEffect(() => {
-    const resize = () => {
-      const w = Math.min(window.innerWidth - 64, 420);
-      setTileSize(Math.max(72, Math.floor(w / 3)));
-    };
-    resize();
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
   }, []);
 
   const loadState = useCallback(async () => {
@@ -226,28 +213,33 @@ export default function SlotsPage() {
         </p>
 
         {}
-        <div className="mb-8 w-full flex justify-center">
-          <SlotDisplay
+        {symbols.length > 0 ? (
+          <SlotMachinePage
+            machineRef={machineRef}
+            symbols={symbols}
             balance={balance}
             bet={bet}
             win={win}
+            spinning={spinning}
+            canSpin={canSpin}
+            betError={betError}
+            minBet={minBet}
+            maxBet={maxBet}
+            quickBets={quickBets}
             currencyName={currencyName}
             currencyEmoji={currencyEmoji}
             reducedMotion={reducedMotion}
-          />
-        </div>
-
-        {}
-        {symbols.length > 0 ? (
-          <SlotMachine
-            ref={machineRef}
-            symbols={symbols}
-            size={tileSize}
-            spinning={spinning}
-            canSpin={canSpin}
-            onSpinClick={spin}
+            result={result}
+            showReveal={showReveal}
+            onBetChange={(next) => setBet(next)}
+            clampBet={clampBet}
+            onSpin={spin}
             onReelStop={() => audioRef.current?.playReelStop()}
-            reducedMotion={reducedMotion}
+            onCloseReveal={() => setShowReveal(false)}
+            onSpinAgain={() => {
+              setShowReveal(false);
+              setTimeout(() => spin(), 150);
+            }}
           />
         ) : (
           <div className="glass-blue rounded-3xl p-10 border border-[rgb(var(--color-border))] text-center">
@@ -255,91 +247,12 @@ export default function SlotsPage() {
           </div>
         )}
 
-        {}
-        {symbols.length > 0 && (
-          <div className="mt-8 w-full max-w-sm flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setBet((b) => clampBet(b - (minBet || 1)))}
-                disabled={spinning}
-                className="w-11 h-11 shrink-0 rounded-xl bg-[rgb(var(--color-bg-tertiary))] text-xl font-bold text-[rgb(var(--color-text-primary))] disabled:opacity-50"
-              >
-                −
-              </button>
-              <div className="flex-1 relative">
-                <input
-                  type="number"
-                  value={bet}
-                  min={minBet}
-                  max={maxBet}
-                  disabled={spinning}
-                  onChange={(e) => setBet(Math.max(0, parseInt(e.target.value) || 0))}
-                  onBlur={() => setBet((b) => (b > 0 ? clampBet(b) : b))}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center text-lg font-bold"
-                />
-              </div>
-              <button
-                onClick={() => setBet((b) => clampBet(b + (minBet || 1)))}
-                disabled={spinning}
-                className="w-11 h-11 shrink-0 rounded-xl bg-[rgb(var(--color-bg-tertiary))] text-xl font-bold text-[rgb(var(--color-text-primary))] disabled:opacity-50"
-              >
-                +
-              </button>
-            </div>
-
-            {}
-            <div className="flex flex-wrap gap-2 justify-center">
-              {quickBets.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => setBet(clampBet(q))}
-                  disabled={spinning}
-                  className="px-4 py-1.5 rounded-lg bg-[rgb(var(--color-bg-tertiary))] text-sm font-semibold text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] disabled:opacity-50"
-                >
-                  {q.toLocaleString()}
-                </button>
-              ))}
-              <button
-                onClick={() => setBet(clampBet(Math.min(balance, maxBet)))}
-                disabled={spinning}
-                className="px-4 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-sm font-bold text-amber-400 hover:bg-amber-500/25 disabled:opacity-50"
-              >
-                MAX
-              </button>
-            </div>
-
-            <p className="text-center text-xs font-medium text-[rgb(var(--color-text-tertiary))] tracking-wide">
-              {spinning ? 'Spinning…' : canSpin ? 'Pull the lever to spin' : betError || 'Set a bet to play'}
-            </p>
-
-            {(betError && !spinning) || (error && error !== 'AUTH') ? (
-              <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
-                {error && error !== 'AUTH' ? error : betError}
-              </div>
-            ) : null}
+        {error && error !== 'AUTH' && (
+          <div className="mt-6 w-full max-w-sm px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
+            {error}
           </div>
         )}
       </div>
-
-      {showReveal && result && (
-        <SlotWinOverlay
-          outcome={result.outcome}
-          bet={result.reward - result.profit}
-          reward={result.reward}
-          profit={result.profit}
-          currencyName={currencyName}
-          currencyEmoji={currencyEmoji}
-          newBalance={balance}
-          isBig={result.outcome === 'THREE'}
-          reducedMotion={reducedMotion}
-          canSpinAgain={bet <= balance && !betError}
-          onClose={() => setShowReveal(false)}
-          onSpinAgain={() => {
-            setShowReveal(false);
-            setTimeout(() => spin(), 150);
-          }}
-        />
-      )}
     </div>
   );
 }

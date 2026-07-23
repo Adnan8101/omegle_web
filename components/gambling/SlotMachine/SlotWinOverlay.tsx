@@ -1,8 +1,8 @@
 'use client';
 
-import type { SlotOutcome } from '@/lib/gambling/types';
+import { useEffect } from 'react';
 import { renderEmoji } from '@/lib/gambling/renderEmoji';
-import SlotParticles from './SlotParticles';
+import type { SlotOutcome } from '@/lib/gambling/types';
 
 interface SlotWinOverlayProps {
   outcome: SlotOutcome;
@@ -16,92 +16,101 @@ interface SlotWinOverlayProps {
   reducedMotion?: boolean;
   canSpinAgain: boolean;
   onClose: () => void;
-  onSpinAgain?: () => void;
+  onSpinAgain: () => void;
 }
-
-const TITLE: Record<SlotOutcome, string> = {
-  THREE: 'Jackpot — Three Matching!',
-  TWO: 'Two Matching — Bet Refunded',
-  NONE: 'No Match',
-};
 
 export default function SlotWinOverlay({
   outcome,
-  bet,
   reward,
   profit,
   currencyName,
   currencyEmoji,
   newBalance,
   isBig,
-  reducedMotion = false,
   canSpinAgain,
   onClose,
   onSpinAgain,
 }: SlotWinOverlayProps) {
   const won = reward > 0;
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const title = isBig ? 'JACKPOT!' : outcome === 'TWO' ? 'Nice Win!' : won ? 'You Won!' : 'No Luck';
+  const accent = won ? (isBig ? '#f5c542' : '#37c6ff') : '#8891a3';
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-      {won && <SlotParticles trigger={1} big={isBig} reducedMotion={reducedMotion} />}
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      {/* backdrop */}
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden
+      />
+      {won && (
+        <div
+          className="absolute inset-0 pointer-events-none animate-slot2-screen-flash"
+          style={{ background: `radial-gradient(circle at 50% 40%, ${accent}44, transparent 60%)` }}
+        />
+      )}
 
-      <div className="relative glass-blue rounded-3xl border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-2xl p-8 max-w-sm w-full text-center animate-scale-in">
-        <div className="text-6xl mb-3 animate-float">{outcome === 'THREE' ? '🎉' : won ? '🔄' : '🎰'}</div>
-
-        <h2 className="text-xl sm:text-2xl font-extrabold text-[rgb(var(--color-text-primary))] mb-1">
-          {TITLE[outcome]}
+      <div
+        className="relative w-full max-w-sm rounded-3xl p-8 text-center animate-slot2-overlay-in"
+        style={{
+          background: 'linear-gradient(180deg,#171b22,#0b0e13)',
+          border: `1px solid ${accent}55`,
+          boxShadow: `0 30px 70px rgba(0,0,0,0.6), 0 0 60px ${accent}33`,
+        }}
+      >
+        <div className="text-6xl mb-2">{won ? (isBig ? '🎉' : '✨') : '🎰'}</div>
+        <h2
+          className={`text-3xl font-extrabold mb-4 tracking-tight ${isBig ? 'animate-slot2-reward-pop' : ''}`}
+          style={{ color: accent, textShadow: `0 0 24px ${accent}88` }}
+        >
+          {title}
         </h2>
 
         {won ? (
-          <>
-            <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-4">You won</p>
-            <div className="text-5xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent mb-1 drop-shadow">
-              {reward.toLocaleString()}
+          <div className="mb-6">
+            <div className="text-sm text-white/50 uppercase tracking-wider mb-1">Reward</div>
+            <div className="flex items-center justify-center gap-2 text-4xl font-black text-white animate-slot2-reward-pop">
+              {renderEmoji(currencyEmoji, 'w-8 h-8 inline-block align-middle')}
+              <span>{reward.toLocaleString()}</span>
             </div>
-            <div className="text-base font-semibold text-[rgb(var(--color-text-primary))] mb-2 flex items-center justify-center gap-1">
-              {renderEmoji(currencyEmoji)} {currencyName}
+            <div className={`mt-1 text-sm font-semibold ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {profit >= 0 ? '+' : ''}
+              {profit.toLocaleString()} {currencyName}
             </div>
-            <p
-              className={`text-sm font-semibold mb-6 ${profit > 0 ? 'text-green-500' : 'text-[rgb(var(--color-text-tertiary))]'}`}
-            >
-              {profit > 0 ? `+${profit.toLocaleString()} profit` : 'Bet returned'}
-            </p>
-          </>
+          </div>
         ) : (
-          <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
-            You lost {bet.toLocaleString()} {currencyName}. Spin again for the win!
-          </p>
+          <p className="text-white/60 mb-6">Better luck on the next pull.</p>
         )}
 
-        <div className="grid grid-cols-3 gap-2 mb-6">
-          <div className="rounded-2xl bg-[rgb(var(--color-bg-tertiary))] p-3">
-            <p className="text-[10px] uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Bet</p>
-            <p className="text-base font-bold text-[rgb(var(--color-text-primary))]">{bet.toLocaleString()}</p>
-          </div>
-          <div className="rounded-2xl bg-[rgb(var(--color-bg-tertiary))] p-3">
-            <p className="text-[10px] uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Reward</p>
-            <p className="text-base font-bold text-[rgb(var(--color-text-primary))]">{reward.toLocaleString()}</p>
-          </div>
-          <div className="rounded-2xl bg-[rgb(var(--color-bg-tertiary))] p-3">
-            <p className="text-[10px] uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Balance</p>
-            <p className="text-base font-bold text-[rgb(var(--color-text-primary))]">{newBalance.toLocaleString()}</p>
-          </div>
+        <div className="flex items-center justify-center gap-2 text-sm text-white/60 mb-6">
+          <span>Balance</span>
+          {renderEmoji(currencyEmoji, 'w-4 h-4 inline-block align-middle')}
+          <span className="font-bold text-white">{newBalance.toLocaleString()}</span>
         </div>
 
-        <div className="flex flex-col gap-2">
-          {canSpinAgain && onSpinAgain && (
-            <button
-              onClick={onSpinAgain}
-              className="w-full px-5 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold transition-all shadow-lg shadow-red-500/20"
-            >
-              Pull Again
-            </button>
-          )}
+        <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="w-full px-5 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-medium transition-all"
+            className="flex-1 py-3 rounded-xl font-semibold text-white/80 bg-white/5 hover:bg-white/10 transition-colors"
           >
             Close
+          </button>
+          <button
+            onClick={onSpinAgain}
+            disabled={!canSpinAgain}
+            className="flex-1 py-3 rounded-xl font-bold text-black disabled:opacity-40 transition-transform active:scale-95"
+            style={{ background: `linear-gradient(180deg,#ffe08a,${accent})` }}
+          >
+            Pull Again
           </button>
         </div>
       </div>

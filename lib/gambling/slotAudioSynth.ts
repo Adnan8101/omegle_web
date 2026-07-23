@@ -195,7 +195,78 @@ export class SlotAudioSynth {
     }
   }
 
-  
+  // Short tick used as symbols pass the payline while a reel spins.
+  playReelClick() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(880, t);
+      osc.frequency.exponentialRampToValueAtTime(560, t + 0.03);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(0.04, t + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.06);
+    } catch {
+
+    }
+  }
+
+  private humNodes: { osc: OscillatorNode; osc2: OscillatorNode; gain: GainNode } | null = null;
+
+  // Low ambient machine hum so the cabinet always feels "powered on".
+  startAmbientHum() {
+    try {
+      this.init();
+      if (!this.ctx || this.humNodes) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(220, t);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(52, t);
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(104, t);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(0.018, t + 1.2);
+      osc.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc2.start(t);
+      this.humNodes = { osc, osc2, gain };
+    } catch {
+
+    }
+  }
+
+  stopAmbientHum() {
+    try {
+      if (!this.ctx || !this.humNodes) return;
+      const { osc, osc2, gain } = this.humNodes;
+      const end = this.ctx.currentTime;
+      gain.gain.cancelScheduledValues(end);
+      gain.gain.setValueAtTime(gain.gain.value, end);
+      gain.gain.exponentialRampToValueAtTime(0.0001, end + 0.4);
+      osc.stop(end + 0.45);
+      osc2.stop(end + 0.45);
+      this.humNodes = null;
+    } catch {
+
+    }
+  }
+
+
   playLose() {
     try {
       this.init();

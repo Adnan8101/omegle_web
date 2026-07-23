@@ -537,72 +537,43 @@ html:not(.dark) .text-gray-600 {
   animation: ping-once 0.7s ease-out forwards;
 }
 
-/* ── Slot machine cabinet ─────────────────────────────────────────────────── */
+/* ── Slot machine v2 (DOM HUD / overlay layer) ────────────────────────────── */
 
-@keyframes slot-bulb-breathe {
-  0%, 100% { opacity: 0.35; filter: brightness(0.8) saturate(1); transform: scale(0.92); }
-  50%      { opacity: 1;    filter: brightness(1.3) saturate(1.2); transform: scale(1); }
+@keyframes slot2-led-flicker {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.92; }
 }
-.animate-slot-bulb-breathe {
-  animation: slot-bulb-breathe 2.6s ease-in-out infinite;
-}
+.animate-slot2-led-flicker { animation: slot2-led-flicker 3.5s ease-in-out infinite; }
 
-@keyframes slot-bulb-flash {
-  0%, 100% { opacity: 1;   filter: brightness(1.6) hue-rotate(0deg); }
-  50%      { opacity: 0.35; filter: brightness(0.9) hue-rotate(25deg); }
+@keyframes slot2-chip-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
-.animate-slot-bulb-flash {
-  animation: slot-bulb-flash 0.14s steps(1) infinite;
-}
+.animate-slot2-chip-pop { animation: slot2-chip-pop 0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
 
-@keyframes slot-glass-sweep {
-  0%   { transform: translateX(-60%) translateY(-60%) rotate(24deg); opacity: 0; }
-  8%   { opacity: 0.5; }
-  35%  { opacity: 0.22; }
-  55%  { opacity: 0; }
-  100% { transform: translateX(160%) translateY(60%) rotate(24deg); opacity: 0; }
+@keyframes slot2-overlay-in {
+  0%   { transform: scale(0.86) translateY(14px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
 }
-.animate-slot-glass-sweep {
-  animation: slot-glass-sweep 6s ease-in-out infinite;
-}
+.animate-slot2-overlay-in { animation: slot2-overlay-in 0.42s cubic-bezier(0.22,1,0.36,1) both; }
 
-@keyframes slot-marquee-glow {
-  0%, 100% { text-shadow: 0 0 8px rgba(239,68,68,0.55), 0 0 22px rgba(239,68,68,0.35), 0 2px 0 rgba(0,0,0,0.8); }
-  50%      { text-shadow: 0 0 14px rgba(239,68,68,0.9), 0 0 34px rgba(239,68,68,0.6), 0 2px 0 rgba(0,0,0,0.8); }
+@keyframes slot2-reward-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  55%  { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
-.animate-slot-marquee-glow {
-  animation: slot-marquee-glow 2.2s ease-in-out infinite;
-}
+.animate-slot2-reward-pop { animation: slot2-reward-pop 0.6s cubic-bezier(0.34,1.56,0.64,1) both; }
 
-@keyframes slot-cabinet-shake {
-  0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
-  10% { transform: translate3d(-6px,-2px,0) rotate(-0.6deg); }
-  20% { transform: translate3d(7px,1px,0) rotate(0.7deg); }
-  30% { transform: translate3d(-8px,2px,0) rotate(-0.8deg); }
-  40% { transform: translate3d(6px,-2px,0) rotate(0.6deg); }
-  50% { transform: translate3d(-5px,1px,0) rotate(-0.4deg); }
-  60% { transform: translate3d(4px,-1px,0) rotate(0.4deg); }
-  70% { transform: translate3d(-3px,1px,0) rotate(-0.2deg); }
-  80% { transform: translate3d(2px,-1px,0) rotate(0.2deg); }
-  90% { transform: translate3d(-1px,0,0) rotate(0deg); }
-}
-.animate-slot-cabinet-shake {
-  animation: slot-cabinet-shake 0.55s cubic-bezier(0.36,0.07,0.19,0.97) both;
-}
-
-@keyframes slot-screen-flash {
+@keyframes slot2-screen-flash {
   0%   { opacity: 0; }
-  8%   { opacity: 0.85; }
+  8%   { opacity: 0.9; }
   100% { opacity: 0; }
 }
-.animate-slot-screen-flash {
-  animation: slot-screen-flash 0.5s ease-out;
-}
+.animate-slot2-screen-flash { animation: slot2-screen-flash 0.6s ease-out both; }
 
-@keyframes slot-ambient-pulse {
-  0%, 100% { opacity: 0.5; }
-  50%      { opacity: 0.9; }
+@keyframes slot2-badge-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(250,204,21,0.5), 0 0 24px rgba(250,204,21,0.28); }
+  50%      { box-shadow: 0 0 18px rgba(250,204,21,0.9), 0 0 40px rgba(250,204,21,0.55); }
 }
-.animate-slot-ambient-pulse {
-  animation: slot-ambient-pulse 3.4s ease-in-out infinite;
-}
+.animate-slot2-badge-glow { animation: slot2-badge-glow 1.4s ease-in-out infinite; }
