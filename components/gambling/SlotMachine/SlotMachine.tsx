@@ -108,7 +108,7 @@ const SlotMachine = forwardRef<SlotMachineHandle, SlotMachineProps>(function Slo
   return (
     <div
       className="relative w-full"
-      style={{ maxWidth: 540, aspectRatio: '17 / 20', margin: '0 auto' }}
+      style={{ maxWidth: 540, aspectRatio: '11 / 12', margin: '0 auto' }}
     >
       <SlotScene
         symbols={symbols}

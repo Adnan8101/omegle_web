@@ -72,14 +72,13 @@ export default function Marquee({ controller, title = 'SLOT MACHINE' }: MarqueeP
         <boxGeometry args={[MARQUEE_W + 0.3, MARQUEE_H + 0.3, 0.16]} />
         <meshStandardMaterial color={MAT.gold} metalness={1} roughness={0.28} />
       </mesh>
-      {/* frosted glass panel */}
+      {/* frosted glass panel — plain standard material (no transmission: the refraction pass
+          it required was rendered every frame and tanked performance) */}
       <mesh position={[0, 0, 0.02]}>
         <planeGeometry args={[MARQUEE_W, MARQUEE_H]} />
-        <meshPhysicalMaterial
+        <meshStandardMaterial
           color="#1a1030"
-          transmission={0.4}
           roughness={0.6}
-          thickness={0.4}
           metalness={0}
           emissive="#3a1e5c"
           emissiveIntensity={0.4}

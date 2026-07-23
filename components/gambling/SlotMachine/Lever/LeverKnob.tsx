@@ -30,16 +30,11 @@ const LeverKnob = forwardRef<THREE.Group, LeverKnobProps>(function LeverKnob(
         onPointerOver={onPointerOver}
         onPointerOut={onPointerOut}
       >
-        <sphereGeometry args={[0.42, 40, 40]} />
-        <meshPhysicalMaterial
+        <sphereGeometry args={[0.42, 32, 32]} />
+        <meshStandardMaterial
           color={MAT.ruby}
-          metalness={0}
-          roughness={0.08}
-          clearcoat={1}
-          clearcoatRoughness={0.05}
-          transmission={0.25}
-          thickness={0.6}
-          ior={1.5}
+          metalness={0.1}
+          roughness={0.12}
           emissive={MAT.ruby}
           emissiveIntensity={active ? 0.55 : 0.12}
         />

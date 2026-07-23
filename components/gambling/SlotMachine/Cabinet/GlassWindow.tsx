@@ -32,22 +32,19 @@ export default function GlassWindow() {
         <meshStandardMaterial color={MAT.chrome} metalness={1} roughness={0.15} />
       </mesh>
 
-      {/* tempered glass pane */}
+      {/* tempered glass pane — lightweight standard material (physical clearcoat shader was
+          overkill for a faint tinted pane) */}
       <mesh position={[0, 0, GLASS_Z]}>
-        <planeGeometry args={[WINDOW_W, WINDOW_H]} />
-        <meshPhysicalMaterial
+        <meshStandardMaterial
           color={MAT.glassTint}
           transparent
           opacity={0.16}
           roughness={0.06}
           metalness={0}
-          clearcoat={1}
-          clearcoatRoughness={0.04}
-          reflectivity={0.6}
-          transmission={0}
           depthWrite={false}
           side={THREE.DoubleSide}
         />
+        <planeGeometry args={[WINDOW_W, WINDOW_H]} />
       </mesh>
 
       {/* bright inner edge highlight */}

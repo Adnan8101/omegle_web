@@ -21,7 +21,6 @@ import GlassReflection from './Effects/GlassReflection';
 import WinLine from './Effects/WinLine';
 import CoinBurst from './Effects/CoinBurst';
 import Particles from './Effects/Particles';
-import GlowEffects from './Effects/GlowEffects';
 import { MachineShake } from './Effects/MachineShake';
 
 export interface SlotSceneProps {
@@ -62,7 +61,9 @@ function SceneContents({
   });
 
   return (
-    <>
+    // Shift the whole machine slightly left so the lever hanging off the right side stays
+    // inside the frame and the cabinet reads as centered.
+    <group position={[-0.33, 0, 0]}>
       <Lighting controller={controller} />
       <Particles reducedMotion={reducedMotion} />
 
@@ -96,9 +97,7 @@ function SceneContents({
         <WinLine controller={controller} />
         <CoinBurst controller={controller} />
       </group>
-
-      {enableBloom && !reducedMotion && <GlowEffects controller={controller} />}
-    </>
+    </group>
   );
 }
 
@@ -106,12 +105,21 @@ function SceneContents({
 export default function SlotScene(props: SlotSceneProps) {
   return (
     <Canvas
-      dpr={[1, 2]}
-      camera={{ position: [0, -0.3, 15], fov: 42 }}
+      // Cap DPR at 1.5 — rendering at full 2x retina quadrupled the pixel work and was a
+      // frequent cause of context loss / jank on integrated GPUs.
+      dpr={[1, 1.5]}
+      // Pulled back and widened so the full cabinet + the lever on the right stay in frame.
+      camera={{ position: [0, -0.15, 17], fov: 41 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       onCreated={({ gl }) => {
         gl.localClippingEnabled = true;
         gl.toneMapping = THREE.ACESFilmicToneMapping;
+        // Don't let a lost WebGL context hard-crash the page; the browser will restore it.
+        gl.domElement.addEventListener(
+          'webglcontextlost',
+          (e) => e.preventDefault(),
+          false,
+        );
       }}
       style={{ width: '100%', height: '100%', touchAction: 'none' }}
     >
