@@ -41,3 +41,48 @@ export interface SpinResult {
   balance: number;
   chances: number;
 }
+
+// ---------------------------------------------------------------------------
+// Slot Machine (Gambling System v2)
+// ---------------------------------------------------------------------------
+
+/** A symbol as exposed to the PLAYER — cosmetic only, never any odds. */
+export interface PublicSymbol {
+  label: string;
+  icon: string | null;
+}
+
+/** A symbol as used in the ADMIN editor. */
+export interface AdminSymbol {
+  position: number;
+  label: string;
+  icon: string | null;
+  enabled: boolean;
+}
+
+/** Player-facing slot state (GET /api/gambling/slots/state). */
+export interface SlotState {
+  enabled: boolean;
+  disabled?: boolean; // true when game is off and viewer is not dev
+  devBypass?: boolean;
+  minBet: number;
+  maxBet: number;
+  defaultBet: number;
+  quickBets: number[];
+  symbols: PublicSymbol[]; // enabled symbols only, no odds
+  balance: number;
+  currencyName: string;
+  currencyEmoji: string;
+}
+
+export type SlotOutcome = 'THREE' | 'TWO' | 'NONE';
+
+/** Slot spin result (POST /api/gambling/slots/spin). */
+export interface SlotSpinResult {
+  reels: PublicSymbol[]; // exactly three, the symbols to display left→right
+  outcome: SlotOutcome;
+  reward: number;
+  profit: number; // reward - bet (signed)
+  balance: number;
+  spinId: string;
+}

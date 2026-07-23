@@ -1663,5 +1663,69 @@ model WheelSpin {
   @@map("wheel_spins")
 }
 
+// ------------------------------------------------------------
+// Slot Machine (Gambling System v2). Players bet OZY directly
+// per spin — no purchased chances. The BACKEND is the single
+// source of truth: it picks one of three outcomes using the
+// admin-configured probabilities (which must total 100%), then
+// chooses purely-cosmetic symbols to realise it. Reuses the
+// shared EconomyUser/EconomyPointLog wallet via lib/gambling/wallet.
+// ------------------------------------------------------------
+
+model SlotConfig {
+  guild_id     String   @id
+  enabled      Boolean  @default(false)
+  min_bet      Int      @default(10)
+  max_bet      Int      @default(1000)
+  default_bet  Int      @default(50)
+  quick_bets   Int[]    @default([10, 25, 50, 100]) // "MAX" is a UI-only button
+  prob_three   Int      @default(15) // % chance of three matching (must total 100)
+  prob_two     Int      @default(35) // % chance of two matching
+  prob_none    Int      @default(50) // % chance of no match
+  payout_three Int      @default(3) // reward multiplier on bet (three matching)
+  payout_two   Int      @default(1) // reward multiplier (two matching = refund)
+  payout_none  Int      @default(0) // reward multiplier (no match)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@map("slot_config")
+}
+
+// Cosmetic symbol pool. Intentionally NO weight column — symbols do
+// not affect win rates (spec §7); the outcome probabilities alone do.
+model SlotSymbol {
+  id       String  @id @default(uuid())
+  guild_id String
+  position Int // display/order index (0-based)
+  label    String  @default("")
+  icon     String? // emoji or Discord emoji markup / image ref
+  enabled  Boolean @default(true)
+
+  @@unique([guild_id, position])
+  @@index([guild_id])
+  @@map("slot_symbols")
+}
+
+// Spin history (spec §12). id doubles as the public "Spin ID".
+model SlotSpin {
+  id             String   @id @default(uuid())
+  guild_id       String
+  user_id        String
+  bet_amount     Int
+  reward_amount  Int
+  profit         Int // reward_amount - bet_amount (signed)
+  outcome        String // 'THREE' | 'TWO' | 'NONE'
+  reels          Json // [{label, icon}, {…}, {…}] — exactly what was shown
+  balance_before Int
+  balance_after  Int
+  client_nonce   String // anti-replay idempotency key
+  created_at     DateTime @default(now())
+
+  @@unique([guild_id, user_id, client_nonce]) // anti-replay: duplicate nonce rejected
+  @@index([guild_id, created_at])
+  @@index([guild_id, user_id])
+  @@map("slot_spins")
+}
+
 
 

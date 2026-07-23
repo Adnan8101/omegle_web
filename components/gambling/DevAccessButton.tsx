@@ -1,7 +1,7 @@
 'use client';
 // Developer Access entry point (spec §6). Dev-only button on the homepage's
 // "Omeglee Gambling" card: password popup → on success, store the dev token and
-// open the real Spin the Wheel page (bypassing the enable-gate server-side).
+// open the Gambling Lobby (bypassing each game's enable-gate server-side).
 //
 // Rendered only in development builds (or when NEXT_PUBLIC_SHOW_WHEEL_DEV_ACCESS
 // is set), so it is trivially removed for launch.
@@ -15,7 +15,20 @@ const SHOW =
   process.env.NODE_ENV !== 'production' ||
   process.env.NEXT_PUBLIC_SHOW_WHEEL_DEV_ACCESS === 'true';
 
-export default function DevAccessButton() {
+interface DevAccessButtonProps {
+  /** Route to open on success. Defaults to the Gambling Lobby. */
+  target?: string;
+  /** Button label. */
+  label?: string;
+  /** Popup description of what will open. */
+  description?: string;
+}
+
+export default function DevAccessButton({
+  target = '/gambling?dev=1',
+  label = 'Developer Access',
+  description = 'Enter the password to open the gambling lobby.',
+}: DevAccessButtonProps = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState('');
@@ -30,7 +43,7 @@ export default function DevAccessButton() {
       } catch {
         /* ignore */
       }
-      router.push('/wheel?dev=1');
+      router.push(target);
     } else {
       setError(true);
     }
@@ -47,7 +60,7 @@ export default function DevAccessButton() {
         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 text-xs font-semibold transition-colors"
       >
         <FiLock className="w-3.5 h-3.5" />
-        Developer Access
+        {label}
       </button>
 
       {open && (
@@ -65,7 +78,7 @@ export default function DevAccessButton() {
               </div>
               <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">Developer Access</h3>
               <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
-                Enter the password to open the Spin the Wheel test page.
+                {description}
               </p>
             </div>
             <input

@@ -1,6 +1,6 @@
 'use client';
 import { useTheme } from '@/contexts/ThemeContext';
-import { QrCodeIcon, Dices, Disc3 } from 'lucide-react';
+import { QrCodeIcon, Dices, Disc3, Cherry } from 'lucide-react';
 import { signOut,useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -202,6 +202,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     name: 'Spin the Wheel',
                     href: '/admin/gambling/wheel',
                     icon: <Disc3 className="w-5 h-5" />,
+                },
+                {
+                    name: 'Slot Machine',
+                    href: '/admin/gambling/slots',
+                    icon: <Cherry className="w-5 h-5" />,
                 },
             ],
         },
