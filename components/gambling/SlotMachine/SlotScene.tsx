@@ -1,5 +1,6 @@
 'use client';
 
+import '@/lib/react-polyfill';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
