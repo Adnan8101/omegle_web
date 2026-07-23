@@ -7,7 +7,7 @@ import CabinetControls from './CabinetControls';
 import SlotWinOverlay from './SlotWinOverlay';
 
 interface SlotMachinePageProps {
-  machineRef: RefObject<SlotMachineHandle>;
+  machineRef: RefObject<SlotMachineHandle | null>;
   symbols: PublicSymbol[];
   balance: number;
   bet: number;
