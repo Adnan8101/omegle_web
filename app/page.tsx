@@ -323,42 +323,38 @@ export default function Home() {
       {}
       <section className="relative w-full max-w-6xl z-10 py-6">
         <div className="w-full px-4 sm:px-6">
-          <div className="relative group overflow-hidden rounded-3xl border border-purple-500/35 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-black/40 p-8 shadow-[0_0_50px_-12px_rgba(168,85,247,0.2)] backdrop-blur-xl transition-all duration-500 hover:shadow-[0_0_50px_-6px_rgba(168,85,247,0.35)] hover:border-purple-500/50">
-            {}
-            <div className="absolute -top-24 -right-24 w-80 h-80 bg-purple-500/15 rounded-full filter blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-            <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-indigo-500/10 rounded-full filter blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-            
+          <div className="relative group overflow-hidden rounded-3xl border border-purple-500/40 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 p-8 shadow-[0_10px_40px_rgba(168,85,247,0.25)] transition-all duration-500 hover:border-purple-400/60 hover:shadow-[0_15px_50px_rgba(168,85,247,0.4)]">
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="space-y-4 text-center md:text-left flex-1">
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                  <div className="inline-flex items-center justify-center px-3 py-1 bg-purple-500/15 rounded-full border border-purple-500/25">
-                    <span className="text-purple-400 font-bold text-[10px] uppercase tracking-wider">Under Development</span>
+                  <div className="inline-flex items-center justify-center px-3 py-1 bg-purple-500/20 rounded-full border border-purple-400/30">
+                    <span className="text-purple-300 font-bold text-[10px] uppercase tracking-wider">Under Development</span>
                   </div>
-                  <div className="inline-flex items-center justify-center px-3 py-1 bg-amber-500/15 rounded-full border border-amber-500/25">
-                    <span className="text-amber-400 font-bold text-[10px] uppercase tracking-wider">Coming Soon</span>
+                  <div className="inline-flex items-center justify-center px-3 py-1 bg-amber-500/20 rounded-full border border-amber-400/30">
+                    <span className="text-amber-300 font-bold text-[10px] uppercase tracking-wider">Coming Soon</span>
                   </div>
                 </div>
                 
-                <h2 className="text-3xl font-extrabold text-[rgb(var(--color-text-primary))] tracking-tight">
+                <h2 className="text-3xl font-extrabold text-white tracking-tight">
                   Omeglee Gambling
                 </h2>
                 
-                <p className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed max-w-2xl">
+                <p className="text-slate-200 text-sm leading-relaxed max-w-2xl">
                   Get ready for the ultimate risk-and-reward experience directly integrated with the Ozy virtual economy! Double down in blackjack, spin the slots, test your luck in roulette, and challenge the community on the high-roller leaderboards. Under active development, launching soon.
                 </p>
 
                 <div className="flex flex-wrap justify-center md:justify-start gap-6 pt-2">
-                  <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-purple-400 transition-colors">
-                    <FiLayers className="w-4 h-4 text-purple-500" />
-                    <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">Slots & Casino Games</span>
+                  <div className="flex items-center gap-2 text-purple-200 hover:text-white transition-colors">
+                    <FiLayers className="w-4 h-4 text-purple-400" />
+                    <span className="text-xs font-semibold text-purple-200">Slots & Casino Games</span>
                   </div>
-                  <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-purple-400 transition-colors">
-                    <FiTarget className="w-4 h-4 text-purple-500" />
-                    <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">Spin the Wheel</span>
+                  <div className="flex items-center gap-2 text-purple-200 hover:text-white transition-colors">
+                    <FiTarget className="w-4 h-4 text-purple-400" />
+                    <span className="text-xs font-semibold text-purple-200">Spin the Wheel</span>
                   </div>
-                  <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-purple-400 transition-colors">
-                    <FiAward className="w-4 h-4 text-purple-500 animate-pulse" />
-                    <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))]">High Roller Leaderboards</span>
+                  <div className="flex items-center gap-2 text-purple-200 hover:text-white transition-colors">
+                    <FiAward className="w-4 h-4 text-purple-400 animate-pulse" />
+                    <span className="text-xs font-semibold text-purple-200">High Roller Leaderboards</span>
                   </div>
                 </div>
 
@@ -368,8 +364,8 @@ export default function Home() {
               </div>
 
               <div className="relative w-32 h-32 md:w-36 md:h-36 flex items-center justify-center flex-shrink-0">
-                <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl animate-pulse" />
-                <span className="text-6xl select-none filter drop-shadow-[0_0_15px_rgba(168,85,247,0.5)] animate-bounce duration-[2000ms]">🎲</span>
+                <div className="absolute inset-0 bg-purple-500/30 rounded-full blur-lg animate-pulse" />
+                <span className="text-6xl select-none filter drop-shadow-[0_0_15px_rgba(168,85,247,0.8)] animate-bounce duration-[2000ms]">🎲</span>
               </div>
             </div>
           </div>
