@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { renderEmoji } from '@/lib/gambling/renderEmoji';
 
 interface WinRevealProps {
   reward: number;
@@ -8,27 +9,11 @@ interface WinRevealProps {
   currencyEmoji: string;
   newBalance: number;
   chancesLeft: number;
-  isBig: boolean; 
+  isBig: boolean;
   reducedMotion?: boolean;
   onClose: () => void;
   onSpinAgain?: () => void;
   canSpinAgain: boolean;
-}
-
-function renderEmoji(emoji: string) {
-  const match = emoji.match(/<a?:(\w+):(\d+)>/);
-  if (match) {
-    const [, name, id] = match;
-    const ext = emoji.startsWith('<a:') ? 'gif' : 'png';
-    return (
-      <img
-        src={`https://cdn.discordapp.com/emojis/${id}.${ext}?size=48&quality=lossless`}
-        alt={name}
-        className="inline-block w-6 h-6 align-middle"
-      />
-    );
-  }
-  return <span>{emoji}</span>;
 }
 
 export default function WinReveal({

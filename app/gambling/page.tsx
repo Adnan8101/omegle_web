@@ -2,10 +2,12 @@
 
 import { GAMBLING_GAMES } from '@/lib/gambling/registry';
 import { DEV_ACCESS_HEADER, DEV_ACCESS_STORAGE_KEY } from '@/lib/gambling/devAccess';
+import { renderEmoji } from '@/lib/gambling/renderEmoji';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiAlertCircle, FiArrowLeft, FiArrowRight, FiLoader } from 'react-icons/fi';
+import BalanceBar from '@/components/gambling/BalanceBar';
 
 interface ActiveGame {
   key: string;
@@ -155,13 +157,12 @@ export default function GamblingLobbyPage() {
             Pick a table. Every outcome is decided server-side — the house never lets the client cheat.
           </p>
           {games.length > 0 && (
-            <div className="inline-flex items-center gap-2 mt-5 glass-blue rounded-2xl px-5 py-2.5 border border-[rgb(var(--color-border))]/60">
-              <span className="text-[10px] uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">
-                Balance
-              </span>
-              <span className="text-base font-bold text-[rgb(var(--color-text-primary))]">
-                {balance.toLocaleString()} {currencyEmoji} {currencyName}
-              </span>
+            <div className="mt-6">
+              <BalanceBar
+                balance={balance}
+                currencyName={currencyName}
+                currencyEmoji={currencyEmoji}
+              />
             </div>
           )}
         </div>

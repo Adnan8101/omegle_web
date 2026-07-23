@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { SlotOutcome } from '@/lib/gambling/types';
+import { renderEmoji } from '@/lib/gambling/renderEmoji';
 
 interface SlotResultRevealProps {
   outcome: SlotOutcome;
@@ -11,27 +12,11 @@ interface SlotResultRevealProps {
   currencyName: string;
   currencyEmoji: string;
   newBalance: number;
-  isBig: boolean; 
+  isBig: boolean;
   reducedMotion?: boolean;
   canSpinAgain: boolean;
   onClose: () => void;
   onSpinAgain?: () => void;
-}
-
-function renderEmoji(emoji: string) {
-  const match = emoji.match(/<a?:(\w+):(\d+)>/);
-  if (match) {
-    const [, name, id] = match;
-    const ext = emoji.startsWith('<a:') ? 'gif' : 'png';
-    return (
-      <img
-        src={`https://cdn.discordapp.com/emojis/${id}.${ext}?size=48&quality=lossless`}
-        alt={name}
-        className="inline-block w-6 h-6 align-middle"
-      />
-    );
-  }
-  return <span>{emoji}</span>;
 }
 
 const TITLE: Record<SlotOutcome, string> = {

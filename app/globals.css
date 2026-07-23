@@ -517,3 +517,22 @@ html:not(.dark) .text-gray-600 {
 .animate-item-rise {
   animation: item-rise 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* BalanceBar coin ring */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+/* BalanceBar delta badge flash */
+@keyframes ping-once {
+  0%   { opacity: 1; transform: scale(1); }
+  60%  { opacity: 0.6; transform: scale(1.6); }
+  100% { opacity: 0; transform: scale(2); }
+}
+.animate-ping-once {
+  animation: ping-once 0.7s ease-out forwards;
+}

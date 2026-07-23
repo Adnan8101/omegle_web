@@ -4,6 +4,8 @@ import SlotMachine, { SlotMachineHandle } from '@/components/gambling/SlotMachin
 import SlotResultReveal from '@/components/gambling/SlotResultReveal';
 import { SlotAudioSynth } from '@/lib/gambling/slotAudioSynth';
 import { DEV_ACCESS_HEADER, DEV_ACCESS_STORAGE_KEY } from '@/lib/gambling/devAccess';
+import { renderEmoji } from '@/lib/gambling/renderEmoji';
+import BalanceBar from '@/components/gambling/BalanceBar';
 import type { SlotSpinResult, SlotState } from '@/lib/gambling/types';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -221,9 +223,16 @@ export default function SlotsPage() {
         </p>
 
         {}
-        <div className="glass-blue rounded-2xl px-6 py-3 border border-[rgb(var(--color-border))]/60 text-center mb-8">
-          <p className="text-[10px] uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Balance</p>
-          <p className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{balance.toLocaleString()} {currencyName}</p>
+        <div className="mb-8 w-full flex justify-center">
+          <BalanceBar
+            balance={balance}
+            currencyName={currencyName}
+            currencyEmoji={currencyEmoji}
+            animate
+            stats={[
+              { label: 'Bet', value: bet, accent: false },
+            ]}
+          />
         </div>
 
         {}
@@ -302,7 +311,13 @@ export default function SlotsPage() {
               disabled={!canSpin}
               className="w-full px-5 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold transition-all shadow-lg shadow-blue-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {spinning ? 'Spinning…' : `Spin — ${bet.toLocaleString()} ${currencyName}`}
+              {spinning ? (
+                'Spinning…'
+              ) : (
+                <span className="flex items-center justify-center gap-1.5">
+                  Spin — {bet.toLocaleString()} {renderEmoji(currencyEmoji, 'w-4 h-4')} {currencyName}
+                </span>
+              )}
             </button>
 
             {(betError && !spinning) || (error && error !== 'AUTH') ? (

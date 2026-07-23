@@ -2,8 +2,10 @@
 
 import SpinWheel, { SpinWheelHandle } from '@/components/gambling/SpinWheel';
 import WinReveal from '@/components/gambling/WinReveal';
+import BalanceBar from '@/components/gambling/BalanceBar';
 import { WheelAudioSynth } from '@/lib/gambling/audioSynth';
 import { DEV_ACCESS_HEADER, DEV_ACCESS_STORAGE_KEY } from '@/lib/gambling/devAccess';
+import { renderEmoji } from '@/lib/gambling/renderEmoji';
 import type { PublicSegment, SpinResult, WheelState } from '@/lib/gambling/types';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -218,16 +220,15 @@ export default function WheelPage() {
           Buy a spin, then try your luck for {currencyName} rewards.
         </p>
 
-        {}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="glass-blue rounded-2xl px-5 py-3 border border-[rgb(var(--color-border))]/60 text-center">
-            <p className="text-[10px] uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Balance</p>
-            <p className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{balance.toLocaleString()}</p>
-          </div>
-          <div className="glass-blue rounded-2xl px-5 py-3 border border-[rgb(var(--color-border))]/60 text-center">
-            <p className="text-[10px] uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Spin Chances</p>
-            <p className="text-lg font-bold text-amber-400">{chances}</p>
-          </div>
+        <div className="mb-8 w-full flex justify-center">
+          <BalanceBar
+            balance={balance}
+            currencyName={currencyName}
+            currencyEmoji={currencyEmoji}
+            stats={[
+              { label: 'Spin Chances', value: chances, accent: true },
+            ]}
+          />
         </div>
 
         {}
@@ -260,10 +261,10 @@ export default function WheelPage() {
             {purchasing ? (
               <FiLoader className="w-5 h-5 animate-spin" />
             ) : (
-              <>
+              <span className="flex items-center justify-center gap-1.5">
                 <FiPlusCircle className="w-5 h-5" />
-                Purchase Spin — {entryCost.toLocaleString()} {currencyName}
-              </>
+                Purchase Spin — {entryCost.toLocaleString()} {renderEmoji(currencyEmoji, 'w-4 h-4')} {currencyName}
+              </span>
             )}
           </button>
 
