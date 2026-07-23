@@ -1,10 +1,9 @@
-const path = require('path');
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  transpilePackages: ['@react-three/fiber', '@react-three/drei', '@react-three/postprocessing', 'three'],
   turbopack: {
     root: __dirname,
   },
@@ -24,16 +23,6 @@ const nextConfig = {
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
-  },
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        react: path.resolve(__dirname, 'node_modules/react'),
-        'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-      };
-    }
-    return config;
   },
 }
 
