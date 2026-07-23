@@ -1,8 +1,8 @@
 import React from 'react';
 
-// Polyfill React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED for React 19 / Next.js compatibility
+// Polyfill React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED for React 19 / Next.js client compatibility
 // with libraries like react-reconciler (@react-three/fiber) and framer-motion that access legacy secret internals.
-if (typeof window !== 'undefined' || true) {
+if (typeof window !== 'undefined') {
   const reactObj = React as any;
   if (reactObj) {
     // 1. Secret internals polyfill
