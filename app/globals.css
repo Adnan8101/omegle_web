@@ -185,6 +185,24 @@ h6 {
   }
 }
 
+/* ─── Hero 3D Phone Showcase ──────────────────────────────────────────────── */
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-8px); }
+}
+
+.hero-float-center {
+  animation: hero-float 8s ease-in-out infinite;
+}
+
+.hero-float-left {
+  animation: hero-float 8s ease-in-out infinite 1s;
+}
+
+.hero-float-right {
+  animation: hero-float 8s ease-in-out infinite 2s;
+}
+
 /* Responsive touch targets - minimum 44x44px for iOS */
 @media (pointer: coarse) {
   button, a, input[type="button"], input[type="submit"] {

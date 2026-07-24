@@ -1,157 +1,13 @@
 'use client';
 import { useTheme } from '@/contexts/ThemeContext';
-import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FiArrowRight, FiDisc, FiTrendingUp, FiLayers, FiTarget, FiAward } from 'react-icons/fi';
 import DevAccessButton from '@/components/gambling/DevAccessButton';
-interface TeamMember {
-  id: string;
-  discord_user_id: string;
-  designation: string;
-  profile: {
-    id: string;
-    username: string;
-    displayName: string;
-    avatar: string | null;
-    banner: string | null;
-    accentColor: string | null;
-  };
-}
-interface TeamData {
-  founders: TeamMember[];
-  developers: TeamMember[];
-  management: TeamMember[];
-}
+
 export default function Home() {
   const { theme } = useTheme();
-  const [team, setTeam] = useState<TeamData | null>(null);
-  const [teamLoading, setTeamLoading] = useState(true);
   const [showSubscriptionOverlay, setShowSubscriptionOverlay] = useState(true);
-  useEffect(() => {
-    async function fetchTeam() {
-      try {
-        const response = await fetch('/api/team', { cache: 'no-store' });
-        const resData = await response.json();
-        if (response.ok && resData.success) {
-          setTeam(resData.data);
-        }
-      } catch (err) {
-        console.error('Error fetching team:', err);
-      } finally {
-        setTeamLoading(false);
-      }
-    }
-    fetchTeam();
-  }, []);
-
-  const getAccentColorStyle = (accentHex: string | null, type: 'border' | 'shadow' | 'bg') => {
-    const color = accentHex || '#3b82f6';
-    switch (type) {
-      case 'border':
-        return { borderColor: color };
-      case 'shadow':
-        return { boxShadow: `0 10px 30px -10px ${color}33` };
-      case 'bg':
-        return { backgroundColor: color };
-      default:
-        return {};
-    }
-  };
-  const renderMemberCard = (member: TeamMember) => {
-    const { profile, designation } = member;
-    const accentColor = profile.accentColor;
-    return (
-      <div
-        key={member.id}
-        className="glass-blue rounded-[1.25rem] overflow-hidden border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-md hover:shadow-apple-xl hover:scale-[1.03] hover:border-blue-500/35 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col group relative w-full max-w-[190px] min-h-[210px]"
-        style={{
-          ...getAccentColorStyle(accentColor, 'shadow'),
-          backfaceVisibility: 'hidden',
-          WebkitBackfaceVisibility: 'hidden',
-          transform: 'translate3d(0,0,0)',
-        }}
-      >
-        {}
-        <div className="relative w-full h-12 bg-gradient-to-br from-blue-900/40 via-indigo-950/30 to-black/20 overflow-hidden">
-          {profile.banner ? (
-            <img
-              src={profile.banner}
-              alt="Banner"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (target.src.includes('.gif')) {
-                  target.src = target.src.replace('.gif', '.webp');
-                }
-              }}
-            />
-          ) : (
-            <div
-              className="w-full h-full opacity-60 mix-blend-overlay group-hover:opacity-85 transition-opacity"
-              style={{
-                background: `linear-gradient(135deg, ${accentColor || '#1e3a8a'} 0%, #000 100%)`
-              }}
-            />
-          )}
-        </div>
-        {}
-        <div className="relative px-3.5 -mt-5 flex justify-start z-10">
-          <div className="relative group/avatar">
-            {}
-            <div className="relative w-11 h-11 border-[2.5px] rounded-full overflow-hidden border-[rgb(var(--color-bg-primary))] bg-[rgb(var(--color-bg-secondary))] flex-shrink-0 shadow-apple-md transition-transform duration-500">
-              {profile.avatar ? (
-                <img
-                  src={profile.avatar}
-                  alt={profile.displayName}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (target.src.includes('.gif')) {
-                      target.src = target.src.replace('.gif', '.webp');
-                    }
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-blue-500/10 text-sm font-bold text-blue-500">
-                  {profile.username.substring(0, 2).toUpperCase()}
-                </div>
-              )}
-            </div>
-            {}
-            <span className="absolute bottom-0 right-0 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500 border border-[rgb(var(--color-bg-primary))]"></span>
-            </span>
-          </div>
-        </div>
-        {}
-        <div className="flex-grow flex flex-col justify-between p-3.5 pt-1.5 relative z-10">
-          <div>
-            <h3 className="font-[var(--font-display)] font-semibold text-[rgb(var(--color-text-primary))] group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-xs truncate">
-              {profile.displayName}
-            </h3>
-            <p className="text-[9px] font-mono text-[rgb(var(--color-text-tertiary))] tracking-tight truncate">
-              @{profile.username}
-            </p>
-          </div>
-          <div className="mt-2.5">
-            <span
-              className={`px-1.5 py-0.5 text-[8px] font-semibold rounded-full border ${
-                designation === 'Founder'
-                  ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-500 border-amber-500/25'
-                  : designation === 'Bot Developer'
-                  ? 'bg-cyan-500/10 text-cyan-400 border-cyan-400/20'
-                  : 'bg-purple-500/10 text-purple-400 border-purple-400/20'
-              }`}
-            >
-              {designation}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  };
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition relative overflow-hidden flex flex-col items-center">
       {}
@@ -174,89 +30,178 @@ export default function Home() {
         </div>
       )}
       {}
-      <section className="relative w-full max-w-6xl z-10 flex flex-col items-center justify-center pt-24 pb-12">
-        <div className="w-full px-4 sm:px-6 text-center space-y-8 animate-fade-in">
-          {}
-          <div className="flex justify-center animate-slide-down">
-            <div className="relative group cursor-pointer">
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-full blur-2xl opacity-60 group-hover:opacity-85 transition-opacity duration-500 animate-pulse" />
-              <div
-                className="absolute -inset-1.5 bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 rounded-full opacity-95 group-hover:scale-105 transition-all duration-500 shadow-blue-glow"
-                style={{ animation: 'spin 12s linear infinite' }}
-              />
-              <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-44 md:h-44 bg-black dark:bg-[rgb(var(--color-bg-secondary))] rounded-full overflow-hidden border-[3px] border-white/90 dark:border-white/15 flex items-center justify-center shadow-inner group-hover:scale-[1.02] transition-transform duration-500">
-                <Image
-                  src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
-                  alt="Omeglee Community Logo"
-                  fill
-                  className="object-cover rounded-full scale-102 transform group-hover:scale-110 transition-transform duration-500"
-                  priority
-                  unoptimized
-                />
-              </div>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-[rgb(var(--color-text-primary))] dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-gray-200 dark:to-white animate-slide-up">
-              Omeglee
-            </h1>
-            <div className="space-y-1">
-              <p className="text-lg sm:text-xl md:text-2xl font-medium text-[rgb(var(--color-text-secondary))] tracking-tight">
-                Community Portal
-              </p>
-              <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-light max-w-lg mx-auto">
-                Where connections become conversations
-              </p>
-            </div>
+      {/* ─── Hero Section ───────────────────────────────────────────── */}
+      <section className="relative w-full z-10 flex flex-col items-center pt-16 sm:pt-20 pb-0">
+        
+        {/* Text + CTA */}
+        <div className="w-full max-w-4xl px-4 sm:px-6 text-center flex flex-col items-center gap-5">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1]">
+            <span className="block text-white">Welcome to</span>
+            <span className="block">
+              <span style={{ color: '#3B9EFF' }}>Omeglee</span>{' '}
+              <span style={{ color: '#FF8C00' }}>Community</span>
+            </span>
+          </h1>
+
+          <p className="text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+            Where connections become conversations. Explore our vibrant server activity, earn Ozy currency, play gambling games, and claim exclusive community rewards!
+          </p>
+
+          <div className="pt-1">
+            <a
+              href="https://discord.gg/omegle"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center px-9 py-3.5 bg-white hover:bg-slate-100 text-black font-bold rounded-full text-base transition-all duration-300 hover:scale-105 active:scale-95"
+              style={{ boxShadow: '0 0 0 1px rgba(255,255,255,0.08), 0 8px 32px rgba(255,255,255,0.2), 0 2px 8px rgba(0,0,0,0.4)' }}
+            >
+              Join the Server
+            </a>
           </div>
         </div>
-      </section>
-      {}
-      <section className="relative w-full max-w-6xl z-10 py-12">
-        <div className="w-full px-4 sm:px-6">
-          <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg backdrop-blur-xl">
-            <div className="text-center space-y-2 mb-8">
-              <div className="inline-flex items-center justify-center px-3.5 py-0.5 bg-blue-500/10 rounded-full border border-blue-500/20 mb-2">
-                <span className="text-blue-400 font-bold text-[10px] uppercase tracking-wider">Meet Our Team</span>
-              </div>
-              <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">Behind the Scenes</h2>
-              <p className="text-[11px] text-[rgb(var(--color-text-tertiary))] max-w-xs mx-auto">
-                The founders, developers, and management teams maintaining our community portal.
-              </p>
-            </div>
-            {teamLoading ? (
-              <div className="py-8 flex justify-center">
-                <div className="relative w-6 h-6">
-                  <div className="absolute inset-0 rounded-full border-2 border-blue-500/20" />
-                  <div className="absolute inset-0 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+
+        {/* ─── 3D Phone Showcase · AUI Composition ─────────────────── */}
+        <div
+          className="relative w-full mt-4"
+          style={{ height: '500px', overflow: 'hidden' }}
+        >
+          {/* Darkened vignette behind phone area */}
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              inset: 0,
+              background: 'radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.3) 0%, transparent 60%)',
+            }}
+          />
+
+          {/* Ambient blue glow behind center phone */}
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              top: '10%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '400px',
+              height: '400px',
+              background: 'radial-gradient(ellipse at 50% 50%, rgba(59,158,255,0.2) 0%, rgba(99,102,241,0.08) 40%, transparent 70%)',
+              filter: 'blur(40px)',
+            }}
+          />
+
+          {/* 3D Stage — wide-angle perspective camera */}
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: '900px',
+              height: '100%',
+              margin: '0 auto',
+              perspective: '1400px',
+              perspectiveOrigin: '50% 25%',
+              transformStyle: 'preserve-3d',
+            }}
+          >
+
+            {/* ── LEFT PHONE ─────────────────────── */}
+            <div style={{ position: 'absolute', left: '5%', bottom: '-140px', width: '270px', zIndex: 5 }}>
+              <div className="hero-float-left" style={{ transformStyle: 'preserve-3d' }}>
+                <div style={{
+                  transform: 'rotateY(25deg) rotateZ(4deg) translateZ(-120px) scale(0.9)',
+                  transformStyle: 'preserve-3d',
+                }}>
+                  <img
+                    src="/Iphone.png"
+                    alt="Omeglee Discord Chat"
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      display: 'block',
+                      filter: 'drop-shadow(0 50px 80px rgba(0,0,0,0.6))',
+                    }}
+                    draggable={false}
+                  />
                 </div>
               </div>
-            ) : !team || (team.founders.length === 0 && team.developers.length === 0 && team.management.length === 0) ? (
-              <p className="text-center text-xs text-[rgb(var(--color-text-tertiary))]">No members added yet.</p>
-            ) : (
-              <div className="space-y-8 flex flex-col items-center">
-                {}
-                {(team.founders.length > 0 || team.developers.length > 0) && (
-                  <div className="w-full flex flex-col items-center">
-                    <div className="flex flex-wrap justify-center gap-5">
-                      {team.founders.map(renderMemberCard)}
-                      {team.developers.map(renderMemberCard)}
-                    </div>
-                  </div>
-                )}
-                {}
-                {team.management.length > 0 && (
-                  <div className="w-full flex flex-col items-center border-t border-[rgb(var(--color-border))]/10 pt-6">
-                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-4">Management Team</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 justify-items-center w-full max-w-3xl">
-                      {team.management.map(renderMemberCard)}
-                    </div>
-                  </div>
-                )}
+            </div>
+
+            {/* ── CENTER PHONE ────────────────────── */}
+            <div style={{
+              position: 'absolute',
+              left: '50%',
+              bottom: '-50px',
+              width: '320px',
+              zIndex: 20,
+              marginLeft: '-160px',
+            }}>
+              {/* Center glow */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  bottom: '40px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '300px',
+                  height: '250px',
+                  background: 'radial-gradient(ellipse at 50% 60%, rgba(59,158,255,0.25) 0%, transparent 70%)',
+                  filter: 'blur(40px)',
+                  zIndex: -1,
+                }}
+              />
+              <div className="hero-float-center" style={{ transformStyle: 'preserve-3d' }}>
+                <div style={{
+                  transform: 'rotateY(-2deg) rotateZ(-2deg) translateZ(80px)',
+                  transformStyle: 'preserve-3d',
+                }}>
+                  <img
+                    src="/Iphone.png"
+                    alt="Omeglee Discord Chat"
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      display: 'block',
+                      filter: 'drop-shadow(0 60px 100px rgba(0,0,0,0.7))',
+                    }}
+                    draggable={false}
+                  />
+                </div>
               </div>
-            )}
+            </div>
+
+            {/* ── RIGHT PHONE ────────────────────── */}
+            <div style={{ position: 'absolute', right: '5%', bottom: '-140px', width: '270px', zIndex: 5 }}>
+              <div className="hero-float-right" style={{ transformStyle: 'preserve-3d' }}>
+                <div style={{
+                  transform: 'rotateY(-25deg) rotateZ(-4deg) translateZ(-120px) scale(0.9)',
+                  transformStyle: 'preserve-3d',
+                }}>
+                  <img
+                    src="/Iphone.png"
+                    alt="Omeglee Discord Chat"
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      display: 'block',
+                      filter: 'drop-shadow(0 50px 80px rgba(0,0,0,0.6))',
+                    }}
+                    draggable={false}
+                  />
+                </div>
+              </div>
+            </div>
+
           </div>
+
+          {/* Bottom gradient — phones emerge from below */}
+          <div
+            className="absolute bottom-0 left-0 right-0 pointer-events-none"
+            style={{
+              height: '160px',
+              zIndex: 30,
+              background: 'linear-gradient(to top, rgb(var(--color-bg-primary)) 25%, transparent)',
+            }}
+          />
         </div>
+
       </section>
       {}
       <section className="relative w-full max-w-6xl z-10 py-12">

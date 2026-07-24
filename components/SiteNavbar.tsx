@@ -40,6 +40,7 @@ export default function SiteNavbar() {
   const links = useMemo(
     () => [
       { label: 'Shop', href: '/shop' },
+      { label: 'Team', href: '/team' },
       { label: 'Staff Application', href: '/staff-application' },
     ],
     []
