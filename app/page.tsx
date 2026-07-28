@@ -639,7 +639,8 @@ export default function Home() {
               <img
                 src="https://cdn.discordapp.com/emojis/1525594143135633539.gif?size=128"
                 alt="Ozy Coin"
-                className="w-14 h-14 sm:w-16 sm:h-16 object-contain select-none animate-bounce duration-[1500ms] flex-shrink-0"
+                className="w-14 h-14 sm:w-16 sm:h-16 object-contain select-none animate-bounce flex-shrink-0"
+                style={{ animationDuration: '3.5s' }}
               />
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] block">Total Ozy Pool</span>
