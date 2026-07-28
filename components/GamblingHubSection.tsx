@@ -291,16 +291,23 @@ export default function GamblingHubSection() {
                   <button onClick={() => go(1)} aria-label="Next event" className="event-nav-btn">
                     <FiChevronRight style={{ width: 20, height: 20 }} />
                   </button>
-                  <div style={{ display: 'flex', gap: 6, marginLeft: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, marginLeft: 6, alignItems: 'center' }}>
                     {EVENTS.map((e, i) => (
-                      <button
+                      <div
                         key={e.id}
+                        role="button"
                         onClick={() => setIndex(i)}
                         aria-label={`Go to ${e.title}`}
                         style={{
-                          width: i === index ? 16 : 4, height: 4, borderRadius: 999, border: 'none', cursor: 'pointer', padding: 0,
+                          width: i === index ? 16 : 4, 
+                          height: 4, 
+                          minWidth: i === index ? 16 : 4,
+                          minHeight: 4,
+                          flexShrink: 0,
+                          borderRadius: 999, 
+                          cursor: 'pointer', 
                           background: i === index ? '#ffffff' : 'rgba(255,255,255,0.3)',
-                          transition: 'width 0.3s ease, background 0.3s ease',
+                          transition: 'all 0.3s ease',
                         }}
                       />
                     ))}
