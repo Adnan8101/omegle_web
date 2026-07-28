@@ -7,7 +7,6 @@ import { consumeChance, NoChancesError } from '@/lib/gambling/chances';
 import { awardOzy } from '@/lib/gambling/wallet';
 import { pickWinningIndex } from '@/lib/gambling/wheel/engine';
 import { WHEEL_GAME_KEY } from '@/lib/gambling/constants';
-import { DEV_ACCESS_HEADER, isDevPassword } from '@/lib/gambling/devAccess';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -19,16 +18,18 @@ const NO_STORE = { 'Cache-Control': 'no-store, max-age=0' };
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = session?.user?.id ?? null;
+
+    if (!userId) {
       return NextResponse.json({ error: 'You must be logged in to spin' }, { status: 401 });
     }
-    const userId = session.user.id;
-    const devBypass = isDevPassword(request.headers.get(DEV_ACCESS_HEADER));
 
     const config = await prismaBot.wheelConfig.findUnique({ where: { guild_id: GUILD_ID } });
-    if (!config?.enabled && !devBypass) {
+    if (!config?.enabled) {
       return NextResponse.json({ error: 'Game Currently Disabled' }, { status: 403 });
     }
+
+    const uid = userId;
 
     const result = await prismaBot.$transaction(async (tx) => {
       
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       }
 
       
-      const remainingChances = await consumeChance(tx, userId, WHEEL_GAME_KEY);
+      const remainingChances = await consumeChance(tx, uid, WHEEL_GAME_KEY);
 
       
       const winningIndex = pickWinningIndex(segments);
@@ -50,14 +51,14 @@ export async function POST(request: NextRequest) {
 
       
       const before = await tx.economyUser.findUnique({
-        where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } },
+        where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: uid } },
         select: { total_points: true },
       });
       const balanceBefore = before?.total_points ?? 0;
 
       const balanceAfter = await awardOzy(
         tx,
-        userId,
+        uid,
         reward,
         `Spin the Wheel — won ${reward} OZY (segment ${winningIndex + 1})`,
         'wheel',
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
       const spin = await tx.wheelSpin.create({
         data: {
           guild_id: GUILD_ID,
-          user_id: userId,
+          user_id: uid,
           segment_index: winningIndex,
           reward_amount: reward,
           balance_before: balanceBefore,

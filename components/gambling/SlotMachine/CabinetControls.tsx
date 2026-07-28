@@ -37,13 +37,13 @@ export default function CabinetControls({
 
   return (
     <div
-      className="w-full max-w-[540px] mx-auto -mt-3 rounded-b-[26px] rounded-t-lg px-5 pt-5 pb-6 relative"
+      className="w-full max-w-[600px] mx-auto mt-2 rounded-[22px] px-5 pt-4 pb-5 relative"
       style={{
-        background: 'linear-gradient(180deg,#20242c 0%,#12151b 60%,#0a0c11 100%)',
+        background: 'linear-gradient(180deg,#1c2029 0%,#11141a 60%,#090b0e 100%)',
         boxShadow:
           'inset 0 2px 3px rgba(255,255,255,0.08), inset 0 -6px 14px rgba(0,0,0,0.6), 0 18px 40px rgba(0,0,0,0.45)',
-        border: '1px solid rgba(0,0,0,0.6)',
-        borderTop: '2px solid rgba(245,197,66,0.55)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderTop: '2px solid rgba(245,197,66,0.65)',
       }}
     >
       <div className="flex items-center gap-2">

@@ -1,13 +1,20 @@
 'use client';
 
 import { GAMBLING_GAMES } from '@/lib/gambling/registry';
-import { DEV_ACCESS_HEADER, DEV_ACCESS_STORAGE_KEY } from '@/lib/gambling/devAccess';
-import { renderEmoji } from '@/lib/gambling/renderEmoji';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FiAlertCircle, FiArrowLeft, FiArrowRight, FiLoader } from 'react-icons/fi';
+import { useCallback, useEffect, useState } from 'react';
+import { FiAlertCircle, FiArrowLeft, FiArrowRight, FiLoader, FiShield } from 'react-icons/fi';
 import BalanceBar from '@/components/gambling/BalanceBar';
+import GameCard from '@/components/gambling/GameCard';
+import { Reveal, RevealGroup, Item } from '@/components/gambling/Motion';
+
+/** Honest one-line descriptor per game — describes how the game works, no fabricated stats. */
+const GAME_META: Record<string, string> = {
+  wheel: 'Single spin · Jackpot segment',
+  slots: '3 reels · Match three to win',
+};
 
 interface ActiveGame {
   key: string;
@@ -15,7 +22,6 @@ interface ActiveGame {
   tagline: string;
   icon: string;
   href: string;
-  devBypass: boolean;
   balance: number;
   currencyName: string;
   currencyEmoji: string;
@@ -27,17 +33,6 @@ export default function GamblingLobbyPage() {
   const [authRequired, setAuthRequired] = useState(false);
   const [games, setGames] = useState<ActiveGame[]>([]);
 
-  const devToken = useMemo(() => {
-    if (typeof window === 'undefined') return null;
-    return sessionStorage.getItem(DEV_ACCESS_STORAGE_KEY);
-  }, []);
-
-  const authHeaders = useCallback((): Record<string, string> => {
-    const h: Record<string, string> = {};
-    if (devToken) h[DEV_ACCESS_HEADER] = devToken;
-    return h;
-  }, [devToken]);
-
   const load = useCallback(async () => {
     setLoading(true);
     setAuthRequired(false);
@@ -45,7 +40,7 @@ export default function GamblingLobbyPage() {
       const results = await Promise.all(
         GAMBLING_GAMES.map(async (game) => {
           try {
-            const res = await fetch(game.stateUrl, { headers: authHeaders(), cache: 'no-store' });
+            const res = await fetch(game.stateUrl, { cache: 'no-store' });
             if (res.status === 401) return { game, unauthenticated: true as const };
             const data = await res.json();
             return { game, data };
@@ -65,15 +60,13 @@ export default function GamblingLobbyPage() {
       for (const r of results) {
         if (!r || r.unauthenticated) continue;
         const { game, data } = r;
-        const isActive = Boolean(data?.enabled) || Boolean(data?.devBypass);
-        if (!isActive) continue;
+        if (!data?.enabled) continue;
         active.push({
           key: game.key,
           name: game.name,
           tagline: game.tagline,
           icon: game.icon,
           href: game.href,
-          devBypass: Boolean(data?.devBypass),
           balance: data?.balance ?? 0,
           currencyName: data?.currencyName || 'Ozy',
           currencyEmoji: data?.currencyEmoji || '🪙',
@@ -83,7 +76,7 @@ export default function GamblingLobbyPage() {
     } finally {
       setLoading(false);
     }
-  }, [authHeaders]);
+  }, []);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -93,7 +86,6 @@ export default function GamblingLobbyPage() {
   const balance = games.find((g) => g.balance > 0)?.balance ?? games[0]?.balance ?? 0;
   const currencyName = games[0]?.currencyName || 'Ozy';
   const currencyEmoji = games[0]?.currencyEmoji || '🪙';
-  const anyDev = games.some((g) => g.devBypass);
 
   if (loading || status === 'loading') {
     return (
@@ -125,91 +117,151 @@ export default function GamblingLobbyPage() {
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] relative overflow-hidden">
-      {}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 left-0 w-72 h-72 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+      {/* ── Ambient casino lighting ─────────────────────────── */}
+      <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[820px] h-[820px] bg-emerald-600/10 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute top-[30%] right-[-8%] w-[420px] h-[420px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[55%] left-[-8%] w-80 h-80 bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 py-8 sm:py-12">
-        {}
-        <div className="flex items-center justify-between mb-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* top bar */}
+        <div className="flex items-center justify-between mb-10">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors"
           >
             <FiArrowLeft className="w-4 h-4" /> Back
           </Link>
-          {anyDev && (
-            <span className="px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-400 text-[10px] font-bold uppercase tracking-wider">
-              Developer Access
-            </span>
-          )}
         </div>
 
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center px-3 py-1 bg-emerald-500/15 rounded-full border border-emerald-500/25 mb-4">
-            <span className="text-emerald-400 font-bold text-[10px] uppercase tracking-wider">Omeglee Gambling</span>
+        {/* ── Hero ──────────────────────────────────────────── */}
+        <Reveal className="text-center">
+          <div className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/25 mb-5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-emerald-300 font-bold text-[10px] uppercase tracking-[0.18em]">Omeglee Casino</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[rgb(var(--color-text-primary))] tracking-tight mb-2">
-            Casino Lobby
+          <h1 className="text-4xl sm:text-6xl font-extrabold text-white tracking-tight leading-[1.05] mb-4">
+            The Floor Is <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 bg-clip-text text-transparent">Open</span>
           </h1>
-          <p className="text-sm text-[rgb(var(--color-text-secondary))] max-w-md mx-auto">
-            Pick a table. Every outcome is decided server-side — the house never lets the client cheat.
+          <p className="text-base sm:text-lg text-white/55 max-w-xl mx-auto leading-relaxed">
+            Spin, bet, and chase the jackpot in {currencyName}. Every outcome is settled server-side —
+            provably fair, every single time.
           </p>
-          {games.length > 0 && (
-            <div className="mt-6">
-              <BalanceBar
-                balance={balance}
-                currencyName={currencyName}
-                currencyEmoji={currencyEmoji}
-              />
-            </div>
-          )}
-        </div>
+        </Reveal>
 
-        {}
+        {/* balance overview (real data) */}
+        {games.length > 0 && (
+          <Reveal delay={0.1} className="mt-8 flex justify-center">
+            <BalanceBar balance={balance} currencyName={currencyName} currencyEmoji={currencyEmoji} />
+          </Reveal>
+        )}
+
         {games.length === 0 ? (
-          <div className="glass-blue rounded-3xl p-12 border border-[rgb(var(--color-border))] shadow-apple-lg text-center max-w-lg mx-auto">
-            <div className="text-5xl mb-4">🎲</div>
-            <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-2">No Games Are Live Yet</h2>
-            <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-              The casino floor is being set up. Check back soon for Spin the Wheel, the Slot Machine, and more.
-            </p>
-          </div>
+          <Reveal className="mt-14">
+            <div
+              className="rounded-3xl p-12 text-center max-w-lg mx-auto"
+              style={{ background: 'linear-gradient(180deg,#12131a,#0a0b10)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              <div className="text-5xl mb-4">🎲</div>
+              <h2 className="text-xl font-bold text-white mb-2">No Games Are Live Yet</h2>
+              <p className="text-sm text-white/55">
+                The casino floor is being set up. Check back soon for Spin the Wheel, the Slot Machine, and more.
+              </p>
+            </div>
+          </Reveal>
         ) : (
-          <div className="grid sm:grid-cols-2 gap-6">
-            {games.map((game) => (
-              <Link
-                key={game.key}
-                href={game.href}
-                className="group relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-emerald-950/40 via-black/40 to-indigo-950/30 p-7 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-amber-400/40 hover:shadow-[0_20px_50px_-12px_rgba(251,191,36,0.25)]"
+          <>
+            {/* ── Flagship artwork banner ─────────────────────── */}
+            <Reveal delay={0.05} className="mt-12">
+              <div
+                className="group relative overflow-hidden rounded-[30px]"
+                style={{ border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 40px 100px -40px rgba(0,0,0,0.9)' }}
               >
-                {}
-                <div className="absolute -top-16 -right-16 w-48 h-48 bg-amber-400/0 group-hover:bg-amber-400/15 rounded-full blur-3xl transition-all duration-500 pointer-events-none" />
+                <div className="relative aspect-[16/7] w-full">
+                  <Image
+                    src="/Gambling.png"
+                    alt="Omeglee Casino"
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 1024px"
+                    className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.04]"
+                  />
+                  {/* cinematic gradient wash */}
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(6,7,12,0.92) 0%, rgba(6,7,12,0.55) 40%, rgba(6,7,12,0.1) 70%, transparent 100%)' }} />
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, rgba(6,7,12,0.85) 0%, transparent 45%)' }} />
+                  {/* gold top hairline */}
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
 
-                <div className="relative flex items-start justify-between mb-6">
-                  <div className="w-16 h-16 rounded-2xl bg-black/30 border border-amber-400/25 flex items-center justify-center text-4xl shadow-inner">
-                    {game.icon}
+                  {/* overlay copy */}
+                  <div className="absolute inset-0 flex flex-col justify-center pl-7 sm:pl-12 pr-6 max-w-2xl">
+                    <span className="text-amber-300 font-bold text-[11px] uppercase tracking-[0.2em] mb-3">Featured</span>
+                    <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight mb-3">
+                      High Stakes, <br className="hidden sm:block" />Higher Rewards
+                    </h2>
+                    <p className="text-sm sm:text-base text-white/60 leading-relaxed mb-6 max-w-md">
+                      Turn your {currencyName} into a fortune across the house&apos;s signature games.
+                    </p>
+                    <Link
+                      href={games[0].href}
+                      className="self-start inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-bold text-sm transition-transform hover:scale-[1.03] active:scale-95"
+                    >
+                      Enter the Floor
+                      <FiArrowRight className="w-4 h-4" />
+                    </Link>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live
-                  </span>
                 </div>
+              </div>
+            </Reveal>
 
-                <h3 className="relative text-xl font-extrabold text-[rgb(var(--color-text-primary))] mb-1.5">
-                  {game.name}
-                </h3>
-                <p className="relative text-sm text-[rgb(var(--color-text-secondary))] mb-6 leading-relaxed">
-                  {game.tagline}
-                </p>
-
-                <div className="relative inline-flex items-center gap-2 text-sm font-bold text-amber-400 group-hover:text-amber-300 transition-colors">
-                  Play Now
-                  <FiArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            {/* ── Featured games ──────────────────────────────── */}
+            <div className="mt-16">
+              <Reveal className="flex items-end justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Featured Games</h2>
+                  <p className="text-sm text-white/45 mt-1">Live tables on the floor right now.</p>
                 </div>
-              </Link>
-            ))}
-          </div>
+                <span className="text-sm font-bold text-white/40 tabular-nums">
+                  {String(games.length).padStart(2, '0')} <span className="text-white/25">live</span>
+                </span>
+              </Reveal>
+
+              <RevealGroup className="grid sm:grid-cols-2 gap-6" stagger={0.1}>
+                {games.map((game) => (
+                  <Item key={game.key}>
+                    <GameCard
+                      name={game.name}
+                      tagline={game.tagline}
+                      href={game.href}
+                      icon={game.icon}
+                      meta={GAME_META[game.key] ?? 'Live table'}
+                      balance={game.balance}
+                      currencyName={game.currencyName}
+                      currencyEmoji={game.currencyEmoji}
+                      themeKey={game.key}
+                    />
+                  </Item>
+                ))}
+              </RevealGroup>
+            </div>
+
+            {/* ── Fairness trust strip (real, honest) ─────────── */}
+            <Reveal delay={0.05} className="mt-14">
+              <div
+                className="flex items-center gap-4 rounded-2xl px-6 py-5"
+                style={{ background: 'linear-gradient(180deg,#101119,#0a0b10)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <div className="flex-shrink-0 w-11 h-11 rounded-xl grid place-items-center bg-emerald-500/12 border border-emerald-500/25 text-emerald-400">
+                  <FiShield className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Provably fair — settled server-side</h3>
+                  <p className="text-xs text-white/50 leading-relaxed mt-0.5">
+                    Every spin&apos;s outcome is generated and verified on the server. The client only plays the
+                    animation — it can never influence the result.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+          </>
         )}
       </div>
     </div>

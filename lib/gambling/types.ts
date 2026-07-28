@@ -19,8 +19,7 @@ export interface AdminSegment {
 
 export interface WheelState {
   enabled: boolean;
-  disabled?: boolean; 
-  devBypass?: boolean;
+  disabled?: boolean;
   entryCost: number;
   segmentCount: number;
   segments: PublicSegment[];
@@ -52,8 +51,7 @@ export interface AdminSymbol {
 
 export interface SlotState {
   enabled: boolean;
-  disabled?: boolean; 
-  devBypass?: boolean;
+  disabled?: boolean;
   minBet: number;
   maxBet: number;
   defaultBet: number;

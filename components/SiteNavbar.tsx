@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect,useMemo,useRef,useState } from 'react';
 import { FiChevronDown,FiMenu,FiMoon,FiSun,FiX } from 'react-icons/fi';
+import { Reveal } from '@/components/motion';
 export default function SiteNavbar() {
   const { theme, toggleTheme } = useTheme();
   const { data: session, status } = useSession();
@@ -27,6 +28,18 @@ export default function SiteNavbar() {
     setMobileOpen(false);
     setProfileOpen(false);
   }, [pathname]);
+  const isHome = pathname === '/';
+  const [scrolled, setScrolled] = useState(!isHome);
+  useEffect(() => {
+    if (!isHome) {
+      setScrolled(true);
+      return;
+    }
+    const onScroll = () => setScrolled(window.scrollY > 80);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isHome]);
   useEffect(() => {
     if (!mobileOpen) {
       document.body.style.overflow = '';
@@ -50,10 +63,12 @@ export default function SiteNavbar() {
     ? `/donator/subscriptions?guild_id=${encodeURIComponent(sessionGuildId)}`
     : '/memberships';
   return (
-    <header className="sticky top-0 z-50 border-b border-black/10 dark:border-white/10 bg-[rgba(245,245,247,0.78)] dark:bg-[rgba(22,22,23,0.82)] backdrop-blur-2xl">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="h-12 sm:h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
+    <header
+      className={`${isHome ? 'fixed' : 'sticky'} top-4 sm:top-5 left-0 right-0 z-50 pointer-events-none`}
+    >
+      <Reveal mount dir="down" distance={18} duration={0.7} className="mx-auto w-[92%] max-w-[900px] pointer-events-auto">
+        <div className="h-[52px] sm:h-[58px] px-5 sm:px-6 flex items-center justify-between rounded-full border border-white/10 bg-[#0a0a0f]/85 backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+          <Link href="/" className="nav-brand flex items-center gap-3 translate-y-[1px]">
             <div className="relative w-7 h-7 sm:w-8 sm:h-8">
               <Image
                 src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
@@ -65,29 +80,19 @@ export default function SiteNavbar() {
             </div>
             <span className="font-[var(--font-display)] text-sm sm:text-base font-semibold tracking-tight text-[rgb(var(--color-text-primary))]">Omeglee</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-0.5">
+          <nav className="hidden md:flex items-center gap-6">
             {links.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="px-3 py-1.5 rounded-lg text-[13px] font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-black/5 dark:hover:bg-white/10 apple-transition"
+                className="nav-link text-[14px] font-medium text-white/70 hover:text-white transition-colors"
               >
                 {item.label}
               </Link>
             ))}
           </nav>
           <div className="hidden md:flex items-center gap-2" ref={profileRef}>
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 apple-transition"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? (
-                <FiSun className="w-4 h-4 text-white/90" />
-              ) : (
-                <FiMoon className="w-4 h-4 text-[rgb(var(--color-text-primary))]" />
-              )}
-            </button>
+
             {status === 'authenticated' ? (
               <>
                 <button
@@ -139,7 +144,7 @@ export default function SiteNavbar() {
             )}
           </div>
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
+            className="md:hidden p-2 rounded-lg hover:bg-white/10 text-white"
             onClick={() => setMobileOpen((prev) => !prev)}
             aria-label="Toggle menu"
           >
@@ -147,7 +152,7 @@ export default function SiteNavbar() {
           </button>
         </div>
         {mobileOpen && (
-          <div className="md:hidden border-t border-black/10 dark:border-white/10 px-2 py-2 pb-4 space-y-1.5 max-h-[calc(100vh-3.5rem)] overflow-y-auto">
+          <div className="md:hidden mt-2 rounded-2xl border border-white/10 bg-[#09090b]/90 backdrop-blur-xl p-4 space-y-1.5 shadow-2xl">
             {links.map((item) => (
               <Link
                 key={item.href}
@@ -166,12 +171,7 @@ export default function SiteNavbar() {
               Memberships
             </Link>
             <div className="flex items-center justify-between pt-1">
-              <button
-                onClick={toggleTheme}
-                className="px-3 py-2 rounded-lg text-sm hover:bg-black/5 dark:hover:bg-white/10"
-              >
-                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-              </button>
+
               {status === 'authenticated' ? (
                 <button
                   onClick={() => signOut({ callbackUrl: '/' })}
@@ -190,7 +190,7 @@ export default function SiteNavbar() {
             </div>
           </div>
         )}
-      </div>
+      </Reveal>
     </header>
   );
 }

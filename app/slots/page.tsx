@@ -1,9 +1,9 @@
 'use client';
 
 import SlotMachinePage from '@/components/gambling/SlotMachine/SlotMachinePage';
+import { Reveal } from '@/components/gambling/Motion';
 import type { SlotMachineHandle } from '@/components/gambling/SlotMachine/SlotMachine';
 import { SlotAudioSynth } from '@/lib/gambling/slotAudioSynth';
-import { DEV_ACCESS_HEADER, DEV_ACCESS_STORAGE_KEY } from '@/lib/gambling/devAccess';
 import type { SlotSpinResult, SlotState } from '@/lib/gambling/types';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -26,18 +26,10 @@ export default function SlotsPage() {
   const [error, setError] = useState<string | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
 
-  
-  
-  const devToken = useMemo(() => {
-    if (typeof window === 'undefined') return null;
-    return sessionStorage.getItem(DEV_ACCESS_STORAGE_KEY);
-  }, []);
-
-  const authHeaders = useCallback((): Record<string, string> => {
-    const h: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (devToken) h[DEV_ACCESS_HEADER] = devToken;
-    return h;
-  }, [devToken]);
+  const authHeaders = useMemo<Record<string, string>>(
+    () => ({ 'Content-Type': 'application/json' }),
+    [],
+  );
 
   useEffect(() => {
     audioRef.current = new SlotAudioSynth();
@@ -49,7 +41,7 @@ export default function SlotsPage() {
   const loadState = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/gambling/slots/state', { headers: authHeaders(), cache: 'no-store' });
+      const res = await fetch('/api/gambling/slots/state', { headers: authHeaders, cache: 'no-store' });
       if (res.status === 401) {
         setState(null);
         setError('AUTH');
@@ -106,7 +98,7 @@ export default function SlotsPage() {
     try {
       const res = await fetch('/api/gambling/slots/spin', {
         method: 'POST',
-        headers: authHeaders(),
+        headers: authHeaders,
         body: JSON.stringify({ bet, nonce }),
       });
       const data = await res.json();
@@ -188,29 +180,31 @@ export default function SlotsPage() {
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] relative overflow-hidden">
-      {}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Ambient casino lighting */}
+      <div className="absolute top-[-6%] left-1/2 -translate-x-1/2 w-[720px] h-[720px] bg-amber-500/10 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-0 right-[-6%] w-[420px] h-[420px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[45%] left-[-8%] w-72 h-72 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 py-8 sm:py-12 flex flex-col items-center">
-        {}
-        <div className="w-full flex items-center justify-between mb-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors">
-            <FiArrowLeft className="w-4 h-4" /> Back
+        {/* top bar */}
+        <div className="w-full flex items-center justify-between mb-8">
+          <Link href="/gambling" className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors">
+            <FiArrowLeft className="w-4 h-4" /> Lobby
           </Link>
-          {state?.devBypass && (
-            <span className="px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-400 text-[10px] font-bold uppercase tracking-wider">
-              Developer Access
-            </span>
-          )}
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-[rgb(var(--color-text-primary))] tracking-tight mb-1 text-center">
-          Slot Machine
-        </h1>
-        <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6 text-center">
-          Place your bet and spin for {currencyName} rewards.
-        </p>
+        <Reveal className="w-full flex flex-col items-center text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-amber-500/10 rounded-full border border-amber-500/25 mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-amber-300 font-bold text-[10px] uppercase tracking-[0.18em]">Slot Machine</span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-[1.05] mb-2">
+            Match Three, <span className="bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text text-transparent">Win Big</span>
+          </h1>
+          <p className="text-sm sm:text-base text-white/55 mb-7 max-w-md">
+            Place your bet and pull the reels for {currencyName} rewards.
+          </p>
+        </Reveal>
 
         {}
         {symbols.length > 0 ? (

@@ -6,7 +6,6 @@ import { prismaBot } from '@/lib/prismaBot';
 import { addChance } from '@/lib/gambling/chances';
 import { spendOzy, InsufficientBalanceError } from '@/lib/gambling/wallet';
 import { WHEEL_GAME_KEY } from '@/lib/gambling/constants';
-import { DEV_ACCESS_HEADER, isDevPassword } from '@/lib/gambling/devAccess';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -18,22 +17,22 @@ const NO_STORE = { 'Cache-Control': 'no-store, max-age=0' };
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = session?.user?.id ?? null;
+
+    if (!userId) {
       return NextResponse.json({ error: 'You must be logged in to purchase a spin' }, { status: 401 });
     }
-    const userId = session.user.id;
-    const devBypass = isDevPassword(request.headers.get(DEV_ACCESS_HEADER));
 
     const config = await prismaBot.wheelConfig.findUnique({ where: { guild_id: GUILD_ID } });
-    if (!config?.enabled && !devBypass) {
+    if (!config?.enabled) {
       return NextResponse.json({ error: 'Game Currently Disabled' }, { status: 403 });
     }
 
     const entryCost = config?.entry_cost ?? 50;
 
     const result = await prismaBot.$transaction(async (tx) => {
-      const balance = await spendOzy(tx, userId, entryCost, 'Spin the Wheel — spin chance', 'wheel');
-      const chances = await addChance(tx, userId, WHEEL_GAME_KEY, 1);
+      const balance = await spendOzy(tx, userId as string, entryCost, 'Spin the Wheel — spin chance', 'wheel');
+      const chances = await addChance(tx, userId as string, WHEEL_GAME_KEY, 1);
       return { balance, chances };
     });
 
