@@ -954,14 +954,12 @@ export default function Home() {
 
             {/* ── LEFT COLUMN — mascot ───────────────────────────── */}
             <Reveal dir="left" distance={32} blur className="relative w-full h-full flex justify-center items-center order-2 lg:order-1">
-              <Tilt max={6} scale={1.03} perspective={1400} className="relative w-full max-w-[550px] aspect-square flex justify-center items-center">
-                <img
-                  src="/omegle_faq.png"
-                  alt="Omeglee FAQ mascot"
-                  className="w-full h-full object-contain select-none block drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                  draggable={false}
-                />
-              </Tilt>
+              <img
+                src="/omegle_faq.png"
+                alt="Omeglee FAQ mascot"
+                className="w-full max-w-[450px] h-auto object-contain select-none block drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                draggable={false}
+              />
             </Reveal>
 
             {/* ── RIGHT COLUMN — questions ────────────────────────── */}

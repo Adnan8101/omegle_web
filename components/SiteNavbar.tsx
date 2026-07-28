@@ -111,13 +111,7 @@ export default function SiteNavbar() {
                 </button>
                 {profileOpen && (
                   <div className="absolute top-12 right-6 w-64 rounded-xl border border-black/10 dark:border-white/10 bg-[rgba(255,255,255,0.92)] dark:bg-[rgba(33,33,36,0.95)] backdrop-blur-2xl shadow-xl p-2">
-                    <Link
-                      href={membershipsHref}
-                      onClick={() => setProfileOpen(false)}
-                      className="block rounded-xl px-3 py-2 text-sm text-[rgb(var(--color-text-primary))] hover:bg-black/5 dark:hover:bg-white/10"
-                    >
-                      Memberships
-                    </Link>
+
                     <Link
                       href="/staff-application"
                       onClick={() => setProfileOpen(false)}
@@ -163,13 +157,7 @@ export default function SiteNavbar() {
                 {item.label}
               </Link>
             ))}
-            <Link
-              href={membershipsHref}
-              onClick={() => setMobileOpen(false)}
-              className="block rounded-lg px-3 py-2 text-sm font-medium text-[rgb(var(--color-text-primary))] hover:bg-black/5 dark:hover:bg-white/10"
-            >
-              Memberships
-            </Link>
+
             <div className="flex items-center justify-between pt-1">
 
               {status === 'authenticated' ? (
