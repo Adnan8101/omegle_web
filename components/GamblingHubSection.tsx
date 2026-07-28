@@ -298,8 +298,8 @@ export default function GamblingHubSection() {
                         onClick={() => setIndex(i)}
                         aria-label={`Go to ${e.title}`}
                         style={{
-                          width: i === index ? 26 : 8, height: 8, borderRadius: 999, border: 'none', cursor: 'pointer', padding: 0,
-                          background: i === index ? 'linear-gradient(90deg,#3B9EFF,#2563EB)' : 'rgba(255,255,255,0.18)',
+                          width: i === index ? 18 : 6, height: 6, borderRadius: 999, border: 'none', cursor: 'pointer', padding: 0,
+                          background: i === index ? '#ffffff' : 'rgba(255,255,255,0.25)',
                           transition: 'width 0.3s ease, background 0.3s ease',
                         }}
                       />
