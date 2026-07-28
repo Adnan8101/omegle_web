@@ -100,7 +100,7 @@ export default function SiteNavbar() {
                   className="flex items-center gap-2 rounded-lg pl-2 pr-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10 apple-transition"
                 >
                   {session?.user?.image ? (
-                    <img src={session.user.image} alt="profile" className="w-8 h-8 rounded-full object-cover" />
+                    <Image src={session.user.image} alt="profile" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-[rgb(var(--color-bg-tertiary))]" />
                   )}

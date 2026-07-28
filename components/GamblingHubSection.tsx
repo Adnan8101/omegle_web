@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import { FiChevronLeft, FiChevronRight, FiCalendar, FiAward, FiUsers, FiZap } from 'react-icons/fi';
 import { FaDiscord } from 'react-icons/fa';
 import { Reveal, RevealGroup, Item, Words, Magnetic, Tilt, CountUp } from '@/components/motion';
@@ -215,11 +216,12 @@ export default function GamblingHubSection() {
               {/* Banner */}
               <div key={ev.id} className="event-banner" style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', overflow: 'hidden' }}>
                 {ev.banner ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={ev.banner}
                     alt={ev.title}
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    fill
+                    unoptimized
+                    style={{ objectFit: 'cover', display: 'block' }}
                   />
                 ) : (
                   <div style={{ position: 'absolute', inset: 0, background: ev.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

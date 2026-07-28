@@ -1,133 +1,30 @@
-'use client';
-import { useTheme } from '@/contexts/ThemeContext';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { FiArrowRight, FiArrowUpRight, FiChevronDown, FiPackage, FiServer, FiShield, FiX, FiZap } from 'react-icons/fi';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import { FiArrowRight, FiArrowUpRight, FiServer, FiShield, FiZap } from 'react-icons/fi';
 import { FaDiscord } from 'react-icons/fa';
-import GamblingHubSection from '@/components/GamblingHubSection';
 import {
   Reveal,
   RevealGroup,
   Item,
-  CountUp,
   Words,
   FloatIn,
   Magnetic,
   Tilt,
-  HoverLift,
   ScrollParallax,
   ScrollProgress,
 } from '@/components/motion';
 
-const FAQS: { q: string; a: string }[] = [
-  {
-    q: 'What is Omeglee?',
-    a: 'Omeglee is a Discord community built around events, games, and rewards — a place to hang out, join tournaments, and earn Ozy just for being active in the server.',
-  },
-  {
-    q: 'How do I join the community?',
-    a: 'Hit "Join the Server" anywhere on this page to head to our Discord invite. Once you\'re in, check the welcome channels for how everything works.',
-  },
-  {
-    q: 'What is Ozy and how do I earn it?',
-    a: 'Ozy is our server currency. It builds up automatically the more you hang out — chatting, joining voice channels, and showing up for events all add to your balance.',
-  },
-  {
-    q: 'Is the casino / gambling hub fair?',
-    a: 'Yes — every spin and every outcome is generated and verified server-side. The client only plays the animation; it can never influence the result.',
-  },
-  {
-    q: 'How do I spend my Ozy?',
-    a: 'Visit the Rewards Shop to redeem Ozy for roles, perks, and other items, or use it to play in the Gambling Hub for a shot at bigger rewards.',
-  },
-  {
-    q: 'How do I apply for staff?',
-    a: 'Head to the Staff Application page linked in the footer. We review applications regularly and reach out over Discord if you\'re a good fit.',
-  },
-];
+import ThemeAwareBackground from '@/components/ThemeAwareBackground';
+import ExploreEventsButton from '@/components/ExploreEventsButton';
+import HomeShopPreview from '@/components/HomeShopPreview';
+import FAQSection from '@/components/FAQSection';
 
-function FAQItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="group border-b border-white/10 last:border-b-0">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="w-full flex items-center justify-between gap-4 py-5 text-left cursor-pointer"
-      >
-        <span className="flex-1 text-[15px] sm:text-base font-semibold text-white group-hover:text-white/85 transition-colors">
-          {q}
-        </span>
-        <FiChevronDown
-          className={`w-4.5 h-4.5 flex-shrink-0 transition-all duration-300 ${open ? 'rotate-180 text-blue-400' : 'text-white/40 group-hover:text-white/70'}`}
-        />
-      </button>
-      <div
-        className="grid transition-[grid-template-rows] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
-        style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
-      >
-        <div className="overflow-hidden">
-          <p className="text-sm text-white/55 leading-relaxed pb-5 pr-8 max-w-[500px]">
-            {a}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface OzyShopItem {
-  id: string;
-  name: string;
-  price: number;
-  price_inr?: number | null;
-  description: string | null;
-  thumbnail: string | null;
-}
+const GamblingHubSection = dynamic(() => import('@/components/GamblingHubSection'), {
+  ssr: true,
+});
 
 export default function Home() {
-  const { theme } = useTheme();
-  const [ozyItems, setOzyItems] = useState<OzyShopItem[]>([]);
-  const [exploreEventModalOpen, setExploreEventModalOpen] = useState(false);
-  const [ozyLoading, setOzyLoading] = useState(true);
-  const [ozyCurrencyEmoji, setOzyCurrencyEmoji] = useState('🪙');
-  const [selectedOzyItem, setSelectedOzyItem] = useState<OzyShopItem | null>(null);
-  const [ozyBudget, setOzyBudget] = useState<{ available: number; total_added: number } | null>(null);
-
-  useEffect(() => {
-    fetch('/api/shop', { cache: 'no-store' })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.shopDisabled) return;
-        setOzyCurrencyEmoji(data?.config?.currencyEmoji || '🪙');
-        setOzyItems(
-          [...(data?.items || [])]
-            .sort((a: OzyShopItem, b: OzyShopItem) => b.price - a.price)
-            .slice(0, 12)
-        );
-        if (data?.budget) setOzyBudget(data.budget);
-      })
-      .catch((err) => console.error('Error fetching ozy shop preview:', err))
-      .finally(() => setOzyLoading(false));
-  }, []);
-
-  const formatNumber = (n: number) => n.toLocaleString();
-  const renderOzyEmoji = (size: string = 'w-4 h-4') => {
-    const emojiMatch = ozyCurrencyEmoji.match(/<a?:([\w_]+):(\d+)>/);
-    if (emojiMatch) {
-      const [, name, id] = emojiMatch;
-      const isAnimated = ozyCurrencyEmoji.startsWith('<a:');
-      return (
-        <img
-          src={`https://cdn.discordapp.com/emojis/${id}.${isAnimated ? 'gif' : 'png'}?size=48&quality=lossless`}
-          alt={name}
-          className={`inline-block ${size}`}
-        />
-      );
-    }
-    return <span className={size}>{ozyCurrencyEmoji}</span>;
-  };
-
   return (
     <main className="min-h-screen bg-[rgb(var(--color-bg-primary))] apple-transition relative overflow-hidden flex flex-col items-center">
       <ScrollProgress />
@@ -144,12 +41,7 @@ export default function Home() {
         </video>
         <div className="absolute inset-0 bg-gradient-to-b from-[rgb(var(--color-bg-primary))]/80 via-[rgb(var(--color-bg-primary))]/50 to-[rgb(var(--color-bg-primary))]" />
       </div>
-      {theme === 'light' && (
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 -left-4 w-[500px] h-[500px] bg-sky-300/10 rounded-full filter blur-3xl opacity-55 animate-float" />
-          <div className="absolute top-0 -right-4 w-[600px] h-[600px] bg-blue-300/10 rounded-full filter blur-3xl opacity-55 animate-float" style={{ animationDelay: '2s' }} />
-        </div>
-      )}
+      <ThemeAwareBackground />
       {}
       {/* ─── Hero Section ───────────────────────────────────────────── */}
       <section className="relative w-full z-10 flex flex-col items-center pt-20 sm:pt-32 pb-0">
@@ -383,9 +275,12 @@ export default function Home() {
                   transform: 'rotateY(0deg) rotateX(4deg)',
                   transformStyle: 'preserve-3d',
                 }}>
-                  <img
+                  <Image
                     src="/phone_mockup_screenshot2_8K.png"
                     alt="Omeglee Mobile App"
+                    width={400}
+                    height={800}
+                    priority
                     style={{
                       width: '100%',
                       height: 'auto',
@@ -413,9 +308,12 @@ export default function Home() {
                   transform: 'rotateY(6deg) rotateZ(-2deg)',
                   transformStyle: 'preserve-3d',
                 }}>
-                  <img
+                  <Image
                     src="/phone_mockup_screenshot2_8K.png"
                     alt="Omeglee Discord Server Channels"
+                    width={400}
+                    height={800}
+                    priority
                     style={{
                       width: '100%',
                       height: 'auto',
@@ -443,9 +341,12 @@ export default function Home() {
                   transform: 'rotateY(-6deg) rotateZ(2deg)',
                   transformStyle: 'preserve-3d',
                 }}>
-                  <img
+                  <Image
                     src="/phone_mockup_screenshot1_8K.png"
                     alt="Omeglee Discord Server Welcome"
+                    width={400}
+                    height={800}
+                    priority
                     style={{
                       width: '100%',
                       height: 'auto',
@@ -520,9 +421,11 @@ export default function Home() {
                   }}
                 />
                 <ScrollParallax distance={26} className="relative w-full sm:w-[108%] max-w-none ml-0 sm:-ml-[4%] lg:-ml-[2%]">
-                  <img
+                  <Image
                     src="/newone.webp"
                     alt="Omeglee community on desktop and mobile"
+                    width={1000}
+                    height={600}
                     className="w-full h-auto object-contain select-none"
                     style={{
                       filter: 'drop-shadow(0 30px 60px rgba(50,20,120,0.55))',
@@ -556,14 +459,7 @@ export default function Home() {
                       Join Now
                     </a>
                   </Magnetic>
-                  <Magnetic strength={0.22} max={9}>
-                    <button
-                      onClick={() => setExploreEventModalOpen(true)}
-                      className="inline-flex items-center justify-center px-7 py-[13px] bg-transparent border border-white/25 hover:border-white/60 text-white font-semibold rounded-full text-[15px] leading-none transition-colors"
-                    >
-                      Explore Events
-                    </button>
-                  </Magnetic>
+                  <ExploreEventsButton />
                 </div>
               </Item>
 
@@ -571,9 +467,11 @@ export default function Home() {
               <Item className="w-full" scale={0.95}>
                 <Tilt max={6} scale={1.015} className="w-full mb-10">
                   <div className="w-full rounded-[16px] overflow-hidden border border-white/8 shadow-[0_8px_40px_rgba(60,40,160,0.2)]">
-                    <img
+                    <Image
                       src="/auinew.webp"
                       alt="Wherever you game — hang out on Omeglee"
+                      width={1000}
+                      height={600}
                       className="w-full h-auto object-cover select-none block"
                       draggable={false}
                     />
@@ -614,169 +512,7 @@ export default function Home() {
         </div>
       </section>
       {}
-      <section className="relative w-full max-w-6xl z-10 py-16 sm:py-24">
-        <div className="w-full px-4 sm:px-6">
-          <RevealGroup stagger={0.11} className="text-center space-y-3 mb-8">
-            <Item dir="none" scale={0.85} className="flex justify-center">
-              <div className="inline-flex items-center justify-center px-4 py-1.5 bg-blue-500/10 rounded-full border border-blue-500/20">
-                <span className="text-blue-400 font-bold text-xs uppercase tracking-wider">Introducing Ozy</span>
-              </div>
-            </Item>
-            <Item>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[rgb(var(--color-text-primary))] leading-[1.1] tracking-tight">
-                <Words text="Spend Your Ozy in the Rewards Shop" stagger={0.045} />
-              </h2>
-            </Item>
-            <Item blur>
-              <p className="text-[rgb(var(--color-text-secondary))] leading-relaxed text-base sm:text-lg max-w-2xl mx-auto">
-                Earn Ozy through server activity, then redeem it for exclusive perks. Here's a look at some of the shop's most valuable items.
-              </p>
-            </Item>
-          </RevealGroup>
-
-          <Reveal scale={0.97} className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 md:gap-8 items-start md:items-center mb-6 p-6 sm:p-7 rounded-3xl border border-[rgb(var(--color-border))]/60 bg-[rgb(var(--color-bg-secondary))]/50 backdrop-blur-xl">
-            <div className="flex flex-row md:flex-col lg:flex-row items-center md:items-start lg:items-center gap-4 md:pr-8 md:border-r md:border-[rgb(var(--color-border))]">
-              <img
-                src="https://cdn.discordapp.com/emojis/1525594143135633539.gif?size=128"
-                alt="Ozy Coin"
-                className="w-14 h-14 sm:w-16 sm:h-16 object-contain select-none animate-bounce flex-shrink-0"
-                style={{ animationDuration: '3.5s' }}
-              />
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] block">Total Ozy Pool</span>
-                <span className="text-2xl sm:text-3xl font-black text-yellow-500 leading-tight block">
-                  {ozyBudget ? <CountUp value={ozyBudget.total_added} /> : '—'}
-                </span>
-                {ozyBudget && (
-                  <span className="text-xs font-semibold text-[rgb(var(--color-text-tertiary))] block mt-0.5">
-                    <CountUp value={ozyBudget.available} /> left to redeem
-                  </span>
-                )}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-1.5">How You Earn Ozy</h3>
-              <p className="text-sm text-[rgb(var(--color-text-secondary))] leading-relaxed">
-                Ozy builds up automatically the more you hang out in the server — chatting, joining voice channels, and showing up for events all add to your balance. Stay active and it keeps stacking. Redeem it anytime for roles, perks, and rewards in the shop below.
-              </p>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.05} className="glass-blue rounded-3xl border border-[rgb(var(--color-border))]/60 dark:border-white/10 shadow-apple-lg backdrop-blur-xl overflow-hidden">
-            {ozyLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 divide-x divide-y divide-[rgb(var(--color-border))]">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="flex flex-col items-center justify-center gap-2 p-6 animate-pulse">
-                    <div className="w-14 h-14 rounded-xl bg-[rgb(var(--color-bg-tertiary))]" />
-                    <div className="h-3 w-16 bg-[rgb(var(--color-bg-tertiary))] rounded" />
-                    <div className="h-3 w-10 bg-[rgb(var(--color-bg-tertiary))] rounded" />
-                  </div>
-                ))}
-              </div>
-            ) : ozyItems.length === 0 ? (
-              <div className="text-center py-16">
-                <FiPackage className="w-10 h-10 mx-auto text-[rgb(var(--color-text-tertiary))] mb-3" />
-                <p className="text-sm text-[rgb(var(--color-text-secondary))]">The shop is empty right now, check back soon!</p>
-              </div>
-            ) : (
-              <RevealGroup
-                key={ozyItems.length}
-                stagger={0.05}
-                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 divide-x divide-y divide-[rgb(var(--color-border))]"
-              >
-                {ozyItems.map((item) => (
-                  <Item key={item.id} distance={16} scale={0.94} className="h-full">
-                    <button
-                      onClick={() => setSelectedOzyItem(item)}
-                      className="group relative flex flex-col items-center justify-center gap-2.5 w-full h-full p-6 sm:p-7 text-center transition-colors hover:bg-[rgb(var(--color-hover))] cursor-pointer"
-                    >
-                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-[rgb(var(--color-bg-tertiary))] flex items-center justify-center transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-translate-y-0.5 group-active:scale-95">
-                        {item.thumbnail ? (
-                          <img src={item.thumbnail} alt={item.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <FiPackage className="w-6 h-6 text-[rgb(var(--color-text-tertiary))]" />
-                        )}
-                      </div>
-                      <span className="text-xs font-semibold text-[rgb(var(--color-text-primary))] line-clamp-1 max-w-full">
-                        {item.name}
-                      </span>
-                      <span className="flex items-center gap-1 text-sm font-bold text-yellow-500 transition-transform duration-300 ease-out group-hover:scale-105">
-                        {renderOzyEmoji('w-3.5 h-3.5')}
-                        {formatNumber(item.price)}
-                      </span>
-                    </button>
-                  </Item>
-                ))}
-              </RevealGroup>
-            )}
-          </Reveal>
-
-          <Reveal delay={0.05} className="flex justify-center mt-8">
-            <Magnetic strength={0.28} max={11}>
-              <Link
-                href="/shop"
-                className="inline-flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full font-semibold transition-all text-sm shadow-lg shadow-blue-500/25 group hover:gap-3 hover:shadow-xl hover:shadow-blue-500/40"
-              >
-                <span>Visit Rewards Shop</span>
-                <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-            </Magnetic>
-          </Reveal>
-        </div>
-      </section>
-      {}
-      {selectedOzyItem && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => setSelectedOzyItem(null)}
-        >
-          <Reveal mount dir="up" distance={18} scale={0.94} duration={0.4} className="max-w-sm w-full">
-          <div
-            className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 w-full border border-[rgb(var(--color-border))] shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <h3 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{selectedOzyItem.name}</h3>
-              <button onClick={() => setSelectedOzyItem(null)} className="flex-shrink-0 text-[rgb(var(--color-text-tertiary))] hover:text-[rgb(var(--color-text-primary))] transition-colors">
-                <FiX className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-[rgb(var(--color-bg-tertiary))] mb-4 flex items-center justify-center">
-              {selectedOzyItem.thumbnail ? (
-                <img src={selectedOzyItem.thumbnail} alt={selectedOzyItem.name} className="w-full h-full object-cover" />
-              ) : (
-                <FiPackage className="w-12 h-12 text-[rgb(var(--color-text-tertiary))]" />
-              )}
-            </div>
-            {selectedOzyItem.description && (
-              <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-4">{selectedOzyItem.description}</p>
-            )}
-            <div className="flex items-center justify-between p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">Price</span>
-              <span className="flex items-center gap-1.5 text-lg font-extrabold text-yellow-500">
-                {renderOzyEmoji('w-4 h-4')}
-                {formatNumber(selectedOzyItem.price)}
-              </span>
-            </div>
-            {selectedOzyItem.price_inr != null && (
-              <div className="mb-4 text-right">
-                <span className="text-[10px] sm:text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded-lg">
-                  Value: ₹{formatNumber(selectedOzyItem.price_inr)}
-                </span>
-              </div>
-            )}
-            <Link
-              href="/shop"
-              className="block text-center w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold transition-all"
-            >
-              View in Shop
-            </Link>
-          </div>
-          </Reveal>
-        </div>
-      )}
+      <HomeShopPreview />
       {/* ─── "World-Class, Enterprise-Grade Gaming" Casino Section ─── */}
       <section className="relative w-full z-10 bg-[#050607] overflow-hidden">
         {/* Ambient casino glow */}
@@ -893,9 +629,11 @@ export default function Home() {
                   className="relative w-full rounded-[26px] overflow-hidden"
                   style={{ border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 40px 100px -40px rgba(0,0,0,0.9)' }}
                 >
-                  <img
+                  <Image
                     src="/Gambling.png"
                     alt="Omeglee Casino — enterprise-grade gaming"
+                    width={1000}
+                    height={600}
                     className="w-full h-auto object-cover select-none block"
                     draggable={false}
                   />
@@ -950,98 +688,7 @@ export default function Home() {
         </div>
       </section>
       {/* ─── FAQ Section ────────────────────────────────────────── */}
-      <section className="relative w-full z-10 bg-transparent overflow-hidden">
-        <div className="w-full max-w-[1200px] mx-auto px-8 sm:px-12 lg:px-16 py-20 lg:py-28">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-12 lg:gap-20 items-center">
-
-            {/* ── LEFT COLUMN — mascot ───────────────────────────── */}
-            <Reveal dir="left" distance={32} blur className="relative w-full h-full flex justify-center items-center order-2 lg:order-1">
-              <img
-                src="/omegle_faq.png"
-                alt="Omeglee FAQ mascot"
-                className="w-full max-w-[450px] h-auto object-contain select-none block drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                draggable={false}
-              />
-            </Reveal>
-
-            {/* ── RIGHT COLUMN — questions ────────────────────────── */}
-            <div className="w-full order-1 lg:order-2 flex flex-col">
-              <RevealGroup stagger={0.1} className="flex flex-col items-start w-full mb-8">
-                <Item>
-                  <span className="block text-[#3B9EFF] font-semibold text-[13px] tracking-wide uppercase mb-2">FAQ&apos;s</span>
-                </Item>
-                <Item>
-                  <h2 className="text-[32px] sm:text-[40px] font-bold text-white leading-[1.15] tracking-tight mb-4">
-                    Looking for answers?
-                  </h2>
-                </Item>
-                <Item blur>
-                  <p className="text-white/60 text-[15px] leading-relaxed max-w-[480px]">
-                    Everything you need to know about joining, earning Ozy, and getting the most out of the community.
-                  </p>
-                </Item>
-              </RevealGroup>
-
-              <RevealGroup stagger={0.06} className="w-full">
-                {FAQS.map((item) => (
-                  <Item key={item.q} distance={14}>
-                    <FAQItem q={item.q} a={item.a} />
-                  </Item>
-                ))}
-              </RevealGroup>
-
-              <Reveal delay={0.1} className="mt-8">
-                <a
-                  href="https://discord.gg/omegle"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-white/40 hover:text-white/80 text-[14px] font-medium transition-colors group"
-                >
-                  Still have questions? Ask us on Discord
-                  <FiArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </a>
-              </Reveal>
-            </div>
-
-          </div>
-        </div>
-      </section>
-      {/* Explore Event Modal */}
-      {exploreEventModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm">
-          <Reveal mount dir="up" scale={0.9} duration={0.4} className="w-full max-w-md">
-            <div className="bg-[#0a0a0f] border border-[rgb(var(--color-border))]/60 shadow-[0_20px_60px_rgba(0,0,0,0.8)] rounded-3xl w-full p-6 sm:p-8 relative overflow-hidden flex flex-col items-center text-center">
-              {/* Background glow */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 opacity-50 blur-xl pointer-events-none" />
-              
-              <button onClick={() => setExploreEventModalOpen(false)} className="absolute top-4 right-4 text-[rgb(var(--color-text-tertiary))] hover:text-white transition-colors z-10 p-2">
-                <FiX className="w-5 h-5 sm:w-6 sm:h-6" />
-              </button>
-              
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/30 mb-5 sm:mb-6 shadow-[0_0_20px_rgba(59,130,246,0.3)] z-10 mt-2">
-                <FiZap className="w-8 h-8 sm:w-10 sm:h-10 text-blue-400" />
-              </div>
-              
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3 z-10 tracking-tight">
-                Want more events?
-              </h2>
-              
-              <p className="text-[rgb(var(--color-text-secondary))] mb-8 z-10 leading-relaxed text-sm sm:text-base">
-                Join our Discord server to participate in live tournaments, bingo nights, and claim massive Ozy rewards!
-              </p>
-              
-              <a
-                href="https://discord.gg/omegle"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3.5 sm:py-4 bg-[#5865F2] hover:bg-[#4752c4] text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/25 z-10 text-[15px] sm:text-base"
-              >
-                Join Server
-              </a>
-            </div>
-          </Reveal>
-        </div>
-      )}
+      <FAQSection />
     </main>
   );
 }
