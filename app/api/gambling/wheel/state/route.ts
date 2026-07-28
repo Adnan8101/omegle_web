@@ -5,7 +5,6 @@ import { GUILD_ID } from '@/lib/constants';
 import { prismaBot } from '@/lib/prismaBot';
 import { getChances } from '@/lib/gambling/chances';
 import { WHEEL_GAME_KEY } from '@/lib/gambling/constants';
-import { DEV_ACCESS_HEADER, isDevPassword } from '@/lib/gambling/devAccess';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -17,11 +16,11 @@ const NO_STORE = { 'Cache-Control': 'no-store, max-age=0' };
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = session?.user?.id ?? null;
+
+    if (!userId) {
       return NextResponse.json({ error: 'You must be logged in to play' }, { status: 401 });
     }
-    const userId = session.user.id;
-    const devBypass = isDevPassword(request.headers.get(DEV_ACCESS_HEADER));
 
     const [config, economyConfig, economyUser, chances] = await Promise.all([
       prismaBot.wheelConfig.findUnique({ where: { guild_id: GUILD_ID } }),
@@ -40,8 +39,7 @@ export async function GET(request: NextRequest) {
     const currencyName = economyConfig?.currency_name || 'Ozy';
     const currencyEmoji = economyConfig?.currency_emoji || '🪙';
 
-    
-    if (!enabled && !devBypass) {
+    if (!enabled) {
       return NextResponse.json(
         { enabled: false, disabled: true, currencyName, currencyEmoji },
         { headers: NO_STORE },
@@ -51,14 +49,12 @@ export async function GET(request: NextRequest) {
     const segments = await prismaBot.wheelSegment.findMany({
       where: { guild_id: GUILD_ID },
       orderBy: { position: 'asc' },
-      
       select: { position: true, label: true, reward_amount: true, color: true, icon: true },
     });
 
     return NextResponse.json(
       {
         enabled,
-        devBypass: devBypass && !enabled,
         entryCost: config?.entry_cost ?? 50,
         segmentCount: config?.segment_count ?? segments.length,
         segments: segments.map((s) => ({

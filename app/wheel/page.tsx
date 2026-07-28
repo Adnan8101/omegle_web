@@ -3,8 +3,8 @@
 import SpinWheel, { SpinWheelHandle } from '@/components/gambling/SpinWheel';
 import WinReveal from '@/components/gambling/WinReveal';
 import BalanceBar from '@/components/gambling/BalanceBar';
+import { Reveal } from '@/components/gambling/Motion';
 import { WheelAudioSynth } from '@/lib/gambling/audioSynth';
-import { DEV_ACCESS_HEADER, DEV_ACCESS_STORAGE_KEY } from '@/lib/gambling/devAccess';
 import { renderEmoji } from '@/lib/gambling/renderEmoji';
 import type { PublicSegment, SpinResult, WheelState } from '@/lib/gambling/types';
 import { useSession } from 'next-auth/react';
@@ -29,18 +29,10 @@ export default function WheelPage() {
   const [wheelSize, setWheelSize] = useState(360);
   const [reducedMotion, setReducedMotion] = useState(false);
 
-  
-  
-  const devToken = useMemo(() => {
-    if (typeof window === 'undefined') return null;
-    return sessionStorage.getItem(DEV_ACCESS_STORAGE_KEY);
-  }, []);
-
-  const authHeaders = useCallback((): Record<string, string> => {
-    const h: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (devToken) h[DEV_ACCESS_HEADER] = devToken;
-    return h;
-  }, [devToken]);
+  const authHeaders = useMemo<Record<string, string>>(
+    () => ({ 'Content-Type': 'application/json' }),
+    [],
+  );
 
   useEffect(() => {
     audioRef.current = new WheelAudioSynth();
@@ -63,7 +55,7 @@ export default function WheelPage() {
   const loadState = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/gambling/wheel/state', { headers: authHeaders(), cache: 'no-store' });
+      const res = await fetch('/api/gambling/wheel/state', { headers: authHeaders, cache: 'no-store' });
       if (res.status === 401) {
         setState(null);
         setError('AUTH');
@@ -94,7 +86,10 @@ export default function WheelPage() {
     setPurchasing(true);
     setError(null);
     try {
-      const res = await fetch('/api/gambling/wheel/purchase', { method: 'POST', headers: authHeaders() });
+      const res = await fetch('/api/gambling/wheel/purchase', {
+        method: 'POST',
+        headers: authHeaders,
+      });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Purchase failed.');
@@ -118,7 +113,10 @@ export default function WheelPage() {
     audioRef.current?.init();
     audioRef.current?.playSpinStart();
     try {
-      const res = await fetch('/api/gambling/wheel/spin', { method: 'POST', headers: authHeaders() });
+      const res = await fetch('/api/gambling/wheel/spin', {
+        method: 'POST',
+        headers: authHeaders,
+      });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Spin failed.');
@@ -196,31 +194,33 @@ export default function WheelPage() {
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] relative overflow-hidden">
-      {}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Ambient casino lighting */}
+      <div className="absolute top-[-6%] left-1/2 -translate-x-1/2 w-[720px] h-[720px] bg-violet-600/12 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-0 right-[-6%] w-[420px] h-[420px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[45%] left-[-8%] w-72 h-72 bg-amber-500/8 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 py-8 sm:py-12 flex flex-col items-center">
-        {}
-        <div className="w-full flex items-center justify-between mb-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors">
-            <FiArrowLeft className="w-4 h-4" /> Back
+        {/* top bar */}
+        <div className="w-full flex items-center justify-between mb-8">
+          <Link href="/gambling" className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors">
+            <FiArrowLeft className="w-4 h-4" /> Lobby
           </Link>
-          {state?.devBypass && (
-            <span className="px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-400 text-[10px] font-bold uppercase tracking-wider">
-              Developer Access
-            </span>
-          )}
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-[rgb(var(--color-text-primary))] tracking-tight mb-1 text-center">
-          Spin the Wheel
-        </h1>
-        <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6 text-center">
-          Buy a spin, then try your luck for {currencyName} rewards.
-        </p>
+        <Reveal className="w-full flex flex-col items-center text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-violet-500/10 rounded-full border border-violet-500/25 mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+            <span className="text-violet-300 font-bold text-[10px] uppercase tracking-[0.18em]">Spin the Wheel</span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-[1.05] mb-2">
+            Give It a <span className="bg-gradient-to-r from-violet-300 to-indigo-400 bg-clip-text text-transparent">Whirl</span>
+          </h1>
+          <p className="text-sm sm:text-base text-white/55 mb-7 max-w-md">
+            Buy a spin, then chase the jackpot segment for {currencyName} rewards.
+          </p>
+        </Reveal>
 
-        <div className="mb-8 w-full flex justify-center">
+        <Reveal delay={0.1} className="mb-8 w-full flex justify-center">
           <BalanceBar
             balance={balance}
             currencyName={currencyName}
@@ -229,7 +229,7 @@ export default function WheelPage() {
               { label: 'Spin Chances', value: chances, accent: true },
             ]}
           />
-        </div>
+        </Reveal>
 
         {}
         {segments.length > 0 ? (
@@ -252,7 +252,7 @@ export default function WheelPage() {
         )}
 
         {}
-        <div className="mt-8 w-full max-w-sm flex flex-col gap-3">
+        <Reveal delay={0.15} className="mt-8 w-full max-w-sm flex flex-col gap-3">
           <button
             onClick={purchase}
             disabled={purchasing || spinning}
@@ -287,7 +287,7 @@ export default function WheelPage() {
               {error}
             </div>
           )}
-        </div>
+        </Reveal>
       </div>
 
       {showReveal && result && (

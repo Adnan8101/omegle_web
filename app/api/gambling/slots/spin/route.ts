@@ -6,7 +6,6 @@ import { prismaBot } from '@/lib/prismaBot';
 import { spendOzy, awardOzy, InsufficientBalanceError } from '@/lib/gambling/wallet';
 import { pickOutcome, generateReels, computeReward } from '@/lib/gambling/slots/engine';
 import { SLOTS_SOURCE, MIN_SPIN_INTERVAL_MS } from '@/lib/gambling/slots/constants';
-import { DEV_ACCESS_HEADER, isDevPassword } from '@/lib/gambling/devAccess';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
@@ -19,11 +18,11 @@ const NO_STORE = { 'Cache-Control': 'no-store, max-age=0' };
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = session?.user?.id ?? null;
+
+    if (!userId) {
       return NextResponse.json({ error: 'You must be logged in to spin' }, { status: 401 });
     }
-    const userId = session.user.id;
-    const devBypass = isDevPassword(request.headers.get(DEV_ACCESS_HEADER));
 
     const body = await request.json().catch(() => ({}));
     const bet = Math.floor(Number(body?.bet));
@@ -37,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     const config = await prismaBot.slotConfig.findUnique({ where: { guild_id: GUILD_ID } });
-    if (!config?.enabled && !devBypass) {
+    if (!config?.enabled) {
       return NextResponse.json({ error: 'Game Currently Disabled' }, { status: 403 });
     }
     if (!config) {
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    
+
     if (bet < config.min_bet) {
       return NextResponse.json(
         { error: `Minimum bet is ${config.min_bet}`, code: 'BELOW_MIN' },
@@ -61,9 +60,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    
+    const uid = userId;
+
     const lastSpin = await prismaBot.slotSpin.findFirst({
-      where: { guild_id: GUILD_ID, user_id: userId },
+      where: { guild_id: GUILD_ID, user_id: uid },
       orderBy: { created_at: 'desc' },
       select: { created_at: true },
     });
@@ -88,13 +88,13 @@ export async function POST(request: NextRequest) {
 
       
       const before = await tx.economyUser.findUnique({
-        where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } },
+        where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: uid } },
         select: { total_points: true },
       });
       const balanceBefore = before?.total_points ?? 0;
 
-      
-      await spendOzy(tx, userId, bet, `Slot Machine — bet ${bet} OZY`, SLOTS_SOURCE);
+
+      await spendOzy(tx, uid, bet, `Slot Machine — bet ${bet} OZY`, SLOTS_SOURCE);
 
       
       const outcome = pickOutcome(cfg);
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
 
       const balanceAfter = await awardOzy(
         tx,
-        userId,
+        uid,
         reward,
         `Slot Machine — ${outcome} won ${reward} OZY (bet ${bet})`,
         SLOTS_SOURCE,
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       const spin = await tx.slotSpin.create({
         data: {
           guild_id: GUILD_ID,
-          user_id: userId,
+          user_id: uid,
           bet_amount: bet,
           reward_amount: reward,
           profit,

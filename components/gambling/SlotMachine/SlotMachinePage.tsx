@@ -72,6 +72,7 @@ export default function SlotMachinePage({
         ref={machineRef}
         symbols={symbols}
         canSpin={canSpin}
+        spinning={spinning}
         reducedMotion={reducedMotion}
         balance={balance}
         bet={bet}
