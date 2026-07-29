@@ -197,7 +197,7 @@ export default function MembershipsPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-3.5 bg-white hover:bg-slate-100 text-black font-bold rounded-full text-base transition-colors duration-300 shadow-lg shadow-black/20"
               >
-                <FaDiscord className="w-4.5 h-4.5" />
+                <FaDiscord className="h-[18px] w-[18px]" />
                 Join Discord for Updates
               </a>
             </Magnetic>
