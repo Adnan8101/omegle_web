@@ -314,15 +314,6 @@ export default function ShopPage() {
                         </Link>
                         
                         <Link
-                          href="/donator/subscriptions"
-                          onClick={() => setShowProfileMenu(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-                        >
-                          <FiPackage className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>My Subscriptions</span>
-                        </Link>
-
-                        <Link
                           href="/admin"
                           onClick={() => setShowProfileMenu(false)}
                           className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"

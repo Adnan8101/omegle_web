@@ -17,10 +17,15 @@ import {
 
 import ThemeAwareBackground from '@/components/ThemeAwareBackground';
 import ExploreEventsButton from '@/components/ExploreEventsButton';
-import HomeShopPreview from '@/components/HomeShopPreview';
-import FAQSection from '@/components/FAQSection';
+import HeroBackgroundVideo from '@/components/HeroBackgroundVideo';
 
+const HomeShopPreview = dynamic(() => import('@/components/HomeShopPreview'), {
+  ssr: true,
+});
 const GamblingHubSection = dynamic(() => import('@/components/GamblingHubSection'), {
+  ssr: true,
+});
+const FAQSection = dynamic(() => import('@/components/FAQSection'), {
   ssr: true,
 });
 
@@ -30,15 +35,7 @@ export default function Home() {
       <ScrollProgress />
       {}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <video
-          className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2 object-cover opacity-20 dark:opacity-10"
-          autoPlay
-          loop
-          muted
-          playsInline
-        >
-          <source src="/Discord:Omegle.mp4" type="video/mp4" />
-        </video>
+        <HeroBackgroundVideo />
         <div className="absolute inset-0 bg-gradient-to-b from-[rgb(var(--color-bg-primary))]/80 via-[rgb(var(--color-bg-primary))]/50 to-[rgb(var(--color-bg-primary))]" />
       </div>
       <ThemeAwareBackground />
@@ -630,7 +627,7 @@ export default function Home() {
                   style={{ border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 40px 100px -40px rgba(0,0,0,0.9)' }}
                 >
                   <Image
-                    src="/Gambling.png"
+                    src="/Gambling.webp"
                     alt="Omeglee Casino — enterprise-grade gaming"
                     width={1000}
                     height={600}

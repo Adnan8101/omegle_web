@@ -178,7 +178,7 @@ export default function GamblingLobbyPage() {
               >
                 <div className="relative aspect-[16/7] w-full">
                   <Image
-                    src="/Gambling.png"
+                    src="/Gambling.webp"
                     alt="Omeglee Casino"
                     fill
                     priority

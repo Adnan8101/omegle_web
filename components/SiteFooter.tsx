@@ -34,7 +34,6 @@ const IconInstagram = () => (
 export default function SiteFooter() {
   const pages = [
     { label: 'Home', href: '/' },
-    { label: 'About', href: '/#about' },
     { label: 'Membership', href: '/memberships' },
     { label: 'Shop', href: '/shop' },
     { label: 'Team', href: '/team' },
@@ -43,7 +42,6 @@ export default function SiteFooter() {
 
   const forms = [
     { label: 'Staff Application', href: '/staff-application' },
-    { label: 'Donator Perks', href: '/donator' },
     { label: 'Economy Leaderboard', href: '/economy-leaderboard' },
     { label: 'Gambling Hub', href: '/gambling' },
     { label: 'Wheel of Fortune', href: '/wheel' },

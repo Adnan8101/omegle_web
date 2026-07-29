@@ -15,6 +15,7 @@ export default function SiteNavbar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
+    if (!profileOpen) return;
     const onDocClick = (event: MouseEvent) => {
       if (!profileRef.current) return;
       if (!profileRef.current.contains(event.target as Node)) {
@@ -23,7 +24,7 @@ export default function SiteNavbar() {
     };
     document.addEventListener('click', onDocClick);
     return () => document.removeEventListener('click', onDocClick);
-  }, []);
+  }, [profileOpen]);
   useEffect(() => {
     setMobileOpen(false);
     setProfileOpen(false);
@@ -58,10 +59,6 @@ export default function SiteNavbar() {
     ],
     []
   );
-  const sessionGuildId = (session?.user as any)?.guild_id as string | undefined;
-  const membershipsHref = sessionGuildId
-    ? `/donator/subscriptions?guild_id=${encodeURIComponent(sessionGuildId)}`
-    : '/memberships';
   return (
     <header
       className={`${isHome ? 'fixed' : 'sticky'} top-4 sm:top-5 left-0 right-0 z-50 pointer-events-none`}
