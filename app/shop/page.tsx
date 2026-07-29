@@ -246,6 +246,7 @@ export default function ShopPage() {
             <nav className="flex items-center gap-4 text-xs font-semibold text-[rgb(var(--color-text-secondary))] sm:border-l sm:border-[rgb(var(--color-border))] pl-0 sm:pl-8">
               <Link href="/" className="hover:text-[rgb(var(--color-text-primary))] transition-colors">Home</Link>
               <Link href="/staff-application" className="hover:text-[rgb(var(--color-text-primary))] transition-colors">Staff Application</Link>
+              <Link href="/recent-purchases" className="hover:text-[rgb(var(--color-text-primary))] transition-colors">Recent Purchases</Link>
             </nav>
           </div>
           <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
