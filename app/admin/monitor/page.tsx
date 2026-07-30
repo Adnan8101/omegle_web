@@ -371,9 +371,14 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
                       <span className="font-medium text-[rgb(var(--color-text-primary))]">{user.name}</span>
                       {user.isBlacklisted ? (
                         <span className="px-2 py-0.5 rounded text-xs bg-red-500/20 text-red-400">Blacklisted</span>
+                      ) : user.dailyLimitReached ? (
+                        <span className="px-2 py-0.5 rounded text-xs bg-orange-500/20 text-orange-400 flex items-center gap-1">
+                          <FiXCircle className="w-3 h-3" />
+                          Maximum Daily Limit Reached
+                        </span>
                       ) : user.isEarning ? (
                         <span className="px-2 py-0.5 rounded text-xs bg-green-500/20 text-green-400 flex items-center gap-1">
-                          <FiZap className="w-3 h-3" />
+                          <FiCheckCircle className="w-3 h-3" />
                           Earning
                         </span>
                       ) : (
@@ -393,6 +398,20 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
                       </span>
                       <span>Rate: {user.rate}</span>
                     </div>
+                    {user.dailyLimitReached && (
+                      <div className="mt-2 p-2 bg-orange-500/10 border border-orange-500/30 rounded text-xs text-orange-400">
+                        ❌ Not earning - Maximum daily limit exceeded.
+                        <span className="block mt-0.5 opacity-80">
+                          {formatDuration(user.dailySecondsUsed || 0)} / {formatDuration(user.dailyLimitSeconds || 0)} used today
+                          {user.dailyResetAt && ` • resets ${new Date(user.dailyResetAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+                        </span>
+                      </div>
+                    )}
+                    {!user.dailyLimitReached && user.dailyLimitEnabled && (
+                      <div className="mt-2 text-xs text-[rgb(var(--color-text-tertiary))]">
+                        Daily allowance: {formatDuration(user.dailySecondsUsed || 0)} / {formatDuration(user.dailyLimitSeconds || 0)}
+                      </div>
+                    )}
                     {user.trackingDisabled && (
                       <div className="mt-2 p-2 bg-orange-500/10 border border-orange-500/30 rounded text-xs text-orange-400">
                         ⚠️ Tracking disabled: {user.memberCount}/{user.minMembers} members (min: {user.minMembers})
@@ -425,7 +444,7 @@ function VoiceTab({ data, formatDuration, buildAvatarUrl, currency, getEmojiDisp
 function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
   const users = data?.messages?.active || [];
   const config = data?.messages?.config || data?.messages?.settings || {};
-  const messagesPerPoint = config?.perPoint ?? config?.messagesPerPoint ?? 25;
+  const minPerMinute = config?.minPerMinute ?? 3;
   const ozyAmount = config?.ozyAmount ?? 1;
   return (
     <div className="bg-[rgb(var(--color-bg-secondary))] rounded-xl border border-[rgb(var(--color-border))]">
@@ -437,7 +456,7 @@ function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
         <div className="grid grid-cols-1 gap-4 text-sm">
           <div>
             <span className="text-[rgb(var(--color-text-tertiary))]">Rate:</span>
-            <p className="text-[rgb(var(--color-text-primary))]">{messagesPerPoint} msgs = {ozyAmount} {getEmojiDisplay(currency)}</p>
+            <p className="text-[rgb(var(--color-text-primary))]">{minPerMinute}+ valid msgs in a minute = {ozyAmount} {getEmojiDisplay(currency)} (evaluated every minute)</p>
           </div>
         </div>
       </div>
@@ -461,7 +480,7 @@ function MessagesTab({ data, buildAvatarUrl, currency, getEmojiDisplay }: any) {
                       </div>
                     )}
                     <div className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-                      Staged messages: {user.staged}/{user.threshold || messagesPerPoint}
+                      This minute: {user.staged}/{user.threshold || minPerMinute} valid msgs
                     </div>
                     <div className="mt-2">
                       <div className="flex justify-between text-xs mb-1">
@@ -501,6 +520,21 @@ function SearchTab({ result, formatDuration, formatTimeAgo, buildAvatarUrl, curr
                 <p className="font-semibold flex items-center gap-1">🚫 Temp Blocked</p>
                 <p className="mt-0.5">Expires: {new Date(result.tempBlockedUntil).toLocaleString()}</p>
                 {result.tempBlockReason && <p className="mt-0.5 opacity-80">Reason: {result.tempBlockReason}</p>}
+              </div>
+            )}
+            {result.dailyLimit?.enabled && (
+              <div className={`mt-2 p-2 border rounded-lg text-xs ${
+                result.dailyLimit.limitReached
+                  ? 'bg-orange-500/10 border-orange-500/20 text-orange-400'
+                  : 'bg-[rgb(var(--color-bg-primary))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]'
+              }`}>
+                <p className="font-semibold flex items-center gap-1">
+                  {result.dailyLimit.limitReached ? '❌ Not earning - Maximum daily limit exceeded.' : '✅ Earning'}
+                </p>
+                <p className="mt-0.5 opacity-80">
+                  {formatDuration(result.dailyLimit.usedSeconds || 0)} / {formatDuration(result.dailyLimit.maxSeconds || 0)} used today
+                  {result.dailyLimit.resetAt && ` • resets ${new Date(result.dailyLimit.resetAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+                </p>
               </div>
             )}
           </div>

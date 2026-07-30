@@ -51,7 +51,7 @@ async function fetchLiveData() {
       SELECT category_id, category_name, vc_enabled, vc_minutes_per_point,
              vc_ozy_amount, vc_min_members, vc_count_bots,
              vc_ignore_self_muted, vc_ignore_deafened,
-             message_enabled, messages_per_point, msg_ozy_amount
+             message_enabled, msg_min_per_minute, msg_ozy_amount
       FROM economy_category_rewards
       WHERE guild_id = $1
     `, [GUILD_ID]);
@@ -61,6 +61,21 @@ async function fetchLiveData() {
     WHERE guild_id = $1 AND channel_type = 'voice'
   `, [GUILD_ID]);
   const blacklistedChannelIds = new Set(blacklistedChannels.map((c: any) => c.channel_id));
+  const gmtDay = new Date().toISOString().slice(0, 10);
+  const dailyGrindRows = await queryBotDb(`
+    SELECT user_id, earned_seconds FROM economy_daily_grind
+    WHERE guild_id = $1 AND day = $2
+  `, [GUILD_ID, gmtDay]);
+  const dailyGrindMap = new Map<string, number>(
+    dailyGrindRows.map((r: any) => [r.user_id, Number(r.earned_seconds) || 0])
+  );
+  const dailyLimitEnabled = config?.max_grind_enabled === true;
+  const dailyLimitSeconds = Math.max(0, Number(config?.max_grind_hours ?? 8)) * 3600;
+  const gmtResetAt = new Date(Date.UTC(
+    new Date().getUTCFullYear(),
+    new Date().getUTCMonth(),
+    new Date().getUTCDate() + 1
+  )).toISOString();
   const recentVcAwards = await queryBotDb(`
     SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
     FROM economy_point_logs epl
@@ -149,7 +164,10 @@ async function fetchLiveData() {
     const isDeafenedAndIgnored = session.was_deafened && ignoreDeafened;
 
     const dbProgress = userProg?.accumulated_seconds || 0;
-    const canEarn = hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false) && !isMutedAndIgnored && !isDeafenedAndIgnored;
+
+    const dailySecondsUsed = dailyGrindMap.get(session.user_id) || 0;
+    const dailyLimitReached = dailyLimitEnabled && dailySecondsUsed >= dailyLimitSeconds;
+    const canEarn = hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false) && !isMutedAndIgnored && !isDeafenedAndIgnored && !dailyLimitReached;
     
     let liveProgress = dbProgress;
     if (canEarn) {
@@ -177,6 +195,11 @@ async function fetchLiveData() {
       deafened: session.was_deafened,
       isEarning: canEarn,
       isBlacklisted,
+      dailyLimitEnabled,
+      dailyLimitReached,
+      dailySecondsUsed,
+      dailyLimitSeconds,
+      dailyResetAt: gmtResetAt,
       memberCount: currentMemberCount,
       minMembers: minMembers,
       trackingDisabled: !hasEnoughMembers && !countBots,
@@ -193,8 +216,8 @@ async function fetchLiveData() {
     const catReward = categoryRewardMap.get(p.category_id);
     const useCategorySettings = config?.advanced_mode && p.category_id !== 'global' && !!catReward;
     const threshold = useCategorySettings
-      ? (catReward.messages_per_point || 25)
-      : (config?.messages_per_point || 25);
+      ? (catReward.msg_min_per_minute || 3)
+      : (config?.msg_min_per_minute || 3);
     return {
       id: p.user_id,
       name: p.display_name || p.username || p.user_id,
@@ -235,12 +258,20 @@ async function fetchLiveData() {
         categoryId: p.category_id
       }))
     },
+    dailyLimit: {
+      enabled: dailyLimitEnabled,
+      maxHours: Number(config?.max_grind_hours ?? 8),
+      maxSeconds: dailyLimitSeconds,
+      gmtDay,
+      resetAt: gmtResetAt
+    },
     messages: {
       settings: {
-        messagesPerPoint: config?.messages_per_point || 25,
+        minPerMinute: config?.msg_min_per_minute || 3,
         ozyAmount: config?.msg_ozy_amount || 1,
         minLength: config?.min_message_length || 5,
-        cooldown: config?.message_cooldown || 5
+        countEmojis: config?.msg_count_emojis ?? false,
+        countStickers: config?.msg_count_stickers ?? false
       },
       active: msgActivity,
       recentAwards: recentMsgAwards.map((a: any) => ({

@@ -25,9 +25,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       config: config || {
         guild_id: GUILD_ID,
-        messages_per_point: 25,
         min_message_length: 5,
-        message_cooldown: 5,
         minutes_per_point: 1,
         require_two_members: 1,
         ignore_afk_channel: true,
@@ -44,7 +42,14 @@ export async function GET(request: NextRequest) {
         message_enabled: true,
         afk_verify_enabled: false,
         afk_verify_min: 80,
-        afk_verify_max: 90
+        afk_verify_max: 90,
+        purchase_cooldown_enabled: false,
+        purchase_cooldown_hours: 24,
+        max_grind_enabled: false,
+        max_grind_hours: 8,
+        msg_min_per_minute: 3,
+        msg_count_emojis: false,
+        msg_count_stickers: false
       },
       categoryRewards
     });
@@ -65,9 +70,7 @@ export async function PATCH(request: NextRequest) {
     }
     const body = await request.json();
     const {
-      messages_per_point,
       min_message_length,
-      message_cooldown,
       minutes_per_point,
       require_two_members,
       count_bots,
@@ -86,8 +89,20 @@ export async function PATCH(request: NextRequest) {
       message_enabled,
       afk_verify_enabled,
       afk_verify_min,
-      afk_verify_max
+      afk_verify_max,
+      purchase_cooldown_enabled,
+      purchase_cooldown_hours,
+      max_grind_enabled,
+      max_grind_hours,
+      msg_min_per_minute,
+      msg_count_emojis,
+      msg_count_stickers
     } = body;
+    const clampInt = (value: unknown, fallback: number, min: number, max: number) => {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) return fallback;
+      return Math.min(max, Math.max(min, Math.round(parsed)));
+    };
     const currentConfig = await prismaBot.economyConfig.findUnique({
       where: { guild_id: GUILD_ID }
     });
@@ -95,9 +110,7 @@ export async function PATCH(request: NextRequest) {
       where: { guild_id: GUILD_ID },
       create: {
         guild_id: GUILD_ID,
-        messages_per_point: messages_per_point ?? 25,
         min_message_length: min_message_length ?? 5,
-        message_cooldown: message_cooldown ?? 5,
         minutes_per_point: minutes_per_point ?? 1,
         require_two_members: require_two_members ?? 1,
         count_bots: count_bots ?? false,
@@ -116,12 +129,17 @@ export async function PATCH(request: NextRequest) {
         message_enabled: message_enabled ?? true,
         afk_verify_enabled: afk_verify_enabled ?? false,
         afk_verify_min: afk_verify_min ?? 80,
-        afk_verify_max: afk_verify_max ?? 90
+        afk_verify_max: afk_verify_max ?? 90,
+        purchase_cooldown_enabled: purchase_cooldown_enabled ?? false,
+        purchase_cooldown_hours: clampInt(purchase_cooldown_hours, 24, 1, 8760),
+        max_grind_enabled: max_grind_enabled ?? false,
+        max_grind_hours: clampInt(max_grind_hours, 8, 1, 24),
+        msg_min_per_minute: clampInt(msg_min_per_minute, 3, 1, 500),
+        msg_count_emojis: msg_count_emojis ?? false,
+        msg_count_stickers: msg_count_stickers ?? false
       },
       update: {
-        ...(messages_per_point !== undefined && { messages_per_point }),
         ...(min_message_length !== undefined && { min_message_length }),
-        ...(message_cooldown !== undefined && { message_cooldown }),
         ...(minutes_per_point !== undefined && { minutes_per_point }),
         ...(require_two_members !== undefined && { require_two_members }),
         ...(count_bots !== undefined && { count_bots }),
@@ -140,7 +158,14 @@ export async function PATCH(request: NextRequest) {
         ...(message_enabled !== undefined && { message_enabled }),
         ...(afk_verify_enabled !== undefined && { afk_verify_enabled }),
         ...(afk_verify_min !== undefined && { afk_verify_min }),
-        ...(afk_verify_max !== undefined && { afk_verify_max })
+        ...(afk_verify_max !== undefined && { afk_verify_max }),
+        ...(purchase_cooldown_enabled !== undefined && { purchase_cooldown_enabled }),
+        ...(purchase_cooldown_hours !== undefined && { purchase_cooldown_hours: clampInt(purchase_cooldown_hours, 24, 1, 8760) }),
+        ...(max_grind_enabled !== undefined && { max_grind_enabled }),
+        ...(max_grind_hours !== undefined && { max_grind_hours: clampInt(max_grind_hours, 8, 1, 24) }),
+        ...(msg_min_per_minute !== undefined && { msg_min_per_minute: clampInt(msg_min_per_minute, 3, 1, 500) }),
+        ...(msg_count_emojis !== undefined && { msg_count_emojis }),
+        ...(msg_count_stickers !== undefined && { msg_count_stickers })
       }
     });
     if (ozy_inr_rate !== undefined) {

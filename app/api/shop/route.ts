@@ -1,6 +1,7 @@
 import { authOptions } from '@/lib/auth';
 import { getDiscordUser,getGuildRoleName,sendDM,getDisplayName } from '@/lib/discord';
 import { prismaBot } from '@/lib/prismaBot';
+import { buildCooldownState, formatCooldownHHMM, INACTIVE_COOLDOWN } from '@/lib/purchaseCooldown';
 import crypto from 'crypto';
 import { getServerSession } from 'next-auth';
 import { NextRequest,NextResponse } from 'next/server';
@@ -97,8 +98,9 @@ export async function GET(request: NextRequest) {
       }));
       return names;
     };
+    let cooldown = { ...INACTIVE_COOLDOWN, enabled: config?.purchase_cooldown_enabled === true };
     if (userId) {
-      const [economyUser, member, pendingPurchases] = await Promise.all([
+      const [economyUser, member, pendingPurchases, lastPurchase] = await Promise.all([
         prismaBot.economyUser.findUnique({
           where: { guild_id_user_id: { guild_id: GUILD_ID, user_id: userId } }
         }),
@@ -111,11 +113,17 @@ export async function GET(request: NextRequest) {
           },
           orderBy: { created_at: 'desc' },
           take: 10
+        }),
+        prismaBot.shopPurchase.findFirst({
+          where: { guild_id: GUILD_ID, user_id: userId },
+          orderBy: { created_at: 'desc' },
+          select: { created_at: true }
         })
       ]);
       userBalance = economyUser?.total_points || 0;
       userRoleIds = member?._fromGuild ? (member.roles || []) : [];
       userPurchases = pendingPurchases;
+      cooldown = buildCooldownState(config, lastPurchase?.created_at ?? null);
     }
     const budget = await prismaBot.shopBudget.findUnique({
       where: { guild_id: GUILD_ID }
@@ -157,6 +165,10 @@ export async function GET(request: NextRequest) {
         available: budget.available,
         total_added: budget.total_added,
         total_spent: budget.total_spent
+      },
+      purchaseCooldown: {
+        ...cooldown,
+        remainingLabel: formatCooldownHHMM(cooldown.remainingMs)
       },
       user: userId ? {
         id: userId,
@@ -202,6 +214,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'The shop is currently closed' }, { status: 400 });
     }
     const result = await prismaBot.$transaction(async (tx) => {
+
+      if (config?.purchase_cooldown_enabled === true) {
+        const lastPurchase = await tx.shopPurchase.findFirst({
+          where: { guild_id: GUILD_ID, user_id: userId },
+          orderBy: { created_at: 'desc' },
+          select: { created_at: true }
+        });
+        const cooldown = buildCooldownState(config, lastPurchase?.created_at ?? null);
+        if (cooldown.active) {
+          throw new Error(`PURCHASE_COOLDOWN:${cooldown.remainingMs}:${cooldown.availableAt}`);
+        }
+      }
       const item = await tx.shopItem.findFirst({
         where: { id: itemId, guild_id: GUILD_ID }
       });
@@ -376,6 +400,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           error: `Insufficient reward budget to complete this purchase. Item costs ${Number(required).toLocaleString()} ${currencyName} but only ${Number(current).toLocaleString()} ${currencyName} remains.`
         }, { status: 400 });
+      }
+      if (error.message.startsWith('PURCHASE_COOLDOWN:')) {
+        const match = error.message.match(/^PURCHASE_COOLDOWN:(\d+):(.*)$/);
+        const remaining = Number(match?.[1]) || 0;
+        const availableAt = match?.[2] || null;
+        return NextResponse.json({
+          error: `You can buy again in ${formatCooldownHHMM(remaining)}.`,
+          cooldown: {
+            active: true,
+            remainingMs: remaining,
+            remainingLabel: formatCooldownHHMM(remaining),
+            availableAt: availableAt || null
+          }
+        }, { status: 429 });
       }
       if (error.message === 'ITEM_NOT_FOUND') {
         return NextResponse.json({ error: 'Item not found' }, { status: 404 });

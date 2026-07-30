@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
         SELECT category_id, category_name, vc_enabled, vc_minutes_per_point,
                vc_ozy_amount, vc_min_members, vc_count_bots,
                vc_ignore_self_muted, vc_ignore_deafened,
-               message_enabled, messages_per_point, msg_ozy_amount
+               message_enabled, msg_min_per_minute, msg_ozy_amount
         FROM economy_category_rewards
         WHERE guild_id = $1
       `, [GUILD_ID]);
@@ -74,6 +74,21 @@ export async function GET(request: NextRequest) {
       WHERE guild_id = $1 AND channel_type = 'voice'
     `, [GUILD_ID]);
     const blacklistedChannelIds = new Set(blacklistedChannels.map((c: any) => c.channel_id));
+    const gmtDay = new Date().toISOString().slice(0, 10);
+    const dailyGrindRows = await queryBotDb(`
+      SELECT user_id, earned_seconds FROM economy_daily_grind
+      WHERE guild_id = $1 AND day = $2
+    `, [GUILD_ID, gmtDay]);
+    const dailyGrindMap = new Map<string, number>(
+      dailyGrindRows.map((r: any) => [r.user_id, Number(r.earned_seconds) || 0])
+    );
+    const dailyLimitEnabled = config?.max_grind_enabled === true;
+    const dailyLimitSeconds = Math.max(0, Number(config?.max_grind_hours ?? 8)) * 3600;
+    const gmtResetAt = new Date(Date.UTC(
+      new Date().getUTCFullYear(),
+      new Date().getUTCMonth(),
+      new Date().getUTCDate() + 1
+    )).toISOString();
     const recentVcAwards = await queryBotDb(`
       SELECT epl.user_id, epl.amount, epl.created_at, epl.reason, duc.username, duc.display_name, duc.avatar_url
       FROM economy_point_logs epl
@@ -162,7 +177,10 @@ export async function GET(request: NextRequest) {
       const isDeafenedAndIgnored = session.was_deafened && ignoreDeafened;
 
       const dbProgress = userProg?.accumulated_seconds || 0;
-      const canEarn = hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false) && !isMutedAndIgnored && !isDeafenedAndIgnored;
+
+      const dailySecondsUsed = dailyGrindMap.get(session.user_id) || 0;
+      const dailyLimitReached = dailyLimitEnabled && dailySecondsUsed >= dailyLimitSeconds;
+      const canEarn = hasEnoughMembers && !isBlacklisted && vcEnabled && (config?.enabled ?? false) && !isMutedAndIgnored && !isDeafenedAndIgnored && !dailyLimitReached;
       
       let liveProgress = dbProgress;
       if (canEarn) {
@@ -189,6 +207,11 @@ export async function GET(request: NextRequest) {
         deafened: session.was_deafened,
         isEarning: canEarn,
         isBlacklisted,
+        dailyLimitEnabled,
+        dailyLimitReached,
+        dailySecondsUsed,
+        dailyLimitSeconds,
+        dailyResetAt: gmtResetAt,
         memberCount: currentMemberCount,
         minMembers: minMembers,
         trackingDisabled: !hasEnoughMembers && !countBots,
@@ -205,8 +228,8 @@ export async function GET(request: NextRequest) {
       const catReward = categoryRewardMap.get(p.category_id);
       const useCategorySettings = config?.advanced_mode && p.category_id !== 'global' && !!catReward;
       const threshold = useCategorySettings
-        ? (catReward.messages_per_point || 25)
-        : (config?.messages_per_point || 25);
+        ? (catReward.msg_min_per_minute || 3)
+        : (config?.msg_min_per_minute || 3);
       return {
         id: p.user_id,
         name: p.display_name || p.username || p.user_id,
@@ -251,11 +274,20 @@ export async function GET(request: NextRequest) {
           categoryId: p.category_id
         }))
       },
+      dailyLimit: {
+        enabled: dailyLimitEnabled,
+        maxHours: Number(config?.max_grind_hours ?? 8),
+        maxSeconds: dailyLimitSeconds,
+        gmtDay,
+        resetAt: gmtResetAt
+      },
       messages: {
         config: {
-          perPoint: config?.messages_per_point || 25,
+          minPerMinute: config?.msg_min_per_minute || 3,
           ozyAmount: config?.msg_ozy_amount || 1,
-          cooldown: config?.message_cooldown || 5
+          minLength: config?.min_message_length || 5,
+          countEmojis: config?.msg_count_emojis ?? false,
+          countStickers: config?.msg_count_stickers ?? false
         },
         active: msgActivity,
         recentAwards: recentMsgAwards.map((a: any) => ({
@@ -323,10 +355,24 @@ async function getUserHistory(userId: string, config: any, today: string) {
     LEFT JOIN discord_channel_cache dcc ON dcc.channel_id = vt.channel_id
     WHERE vt.guild_id = $1 AND vt.user_id = $2 AND vt.left_at IS NULL
   `, [GUILD_ID, userId]);
+  const gmtDay = new Date().toISOString().slice(0, 10);
+  const dailyGrind = await queryBotDb(`
+    SELECT earned_seconds FROM economy_daily_grind
+    WHERE guild_id = $1 AND user_id = $2 AND day = $3
+  `, [GUILD_ID, userId, gmtDay]);
   const user = userInfo[0];
   const economy = economyUser[0];
   const vc = vcProgress[0];
   const msg = msgProgress[0];
+  const dailyLimitEnabled = config?.max_grind_enabled === true;
+  const dailyLimitSeconds = Math.max(0, Number(config?.max_grind_hours ?? 8)) * 3600;
+  const dailySecondsUsed = Number(dailyGrind[0]?.earned_seconds || 0);
+  const nowUtc = new Date();
+  const gmtResetAt = new Date(Date.UTC(
+    nowUtc.getUTCFullYear(),
+    nowUtc.getUTCMonth(),
+    nowUtc.getUTCDate() + 1
+  )).toISOString();
   return NextResponse.json({
     user: {
       id: userId,
@@ -340,6 +386,16 @@ async function getUserHistory(userId: string, config: any, today: string) {
     isTempBlocked: economy?.temp_blocked_until ? new Date(economy.temp_blocked_until) > new Date() : false,
     tempBlockedUntil: economy?.temp_blocked_until,
     tempBlockReason: economy?.temp_block_reason,
+    dailyLimit: {
+      enabled: dailyLimitEnabled,
+      maxHours: Number(config?.max_grind_hours ?? 8),
+      maxSeconds: dailyLimitSeconds,
+      usedSeconds: dailySecondsUsed,
+      remainingSeconds: Math.max(0, dailyLimitSeconds - dailySecondsUsed),
+      limitReached: dailyLimitEnabled && dailySecondsUsed >= dailyLimitSeconds,
+      gmtDay,
+      resetAt: gmtResetAt
+    },
     vc: {
       inVc: activeVc.length > 0,
       channel: activeVc[0]?.channel_name,

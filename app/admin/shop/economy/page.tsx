@@ -7,6 +7,7 @@ import {
 FiAlertCircle,
 FiCheck,
 FiChevronLeft,
+FiClock,
 FiDollarSign,
 FiEdit2,
 FiLayers,
@@ -24,10 +25,8 @@ FiX
 } from 'react-icons/fi';
 interface EconomyConfig {
   guild_id: string;
-  messages_per_point: number;
   msg_ozy_amount: number;
   min_message_length: number;
-  message_cooldown: number;
   minutes_per_point: number;
   vc_ozy_amount: number;
   require_two_members: number;
@@ -46,6 +45,13 @@ interface EconomyConfig {
   afk_verify_enabled: boolean;
   afk_verify_min: number;
   afk_verify_max: number;
+  purchase_cooldown_enabled: boolean;
+  purchase_cooldown_hours: number;
+  max_grind_enabled: boolean;
+  max_grind_hours: number;
+  msg_min_per_minute: number;
+  msg_count_emojis: boolean;
+  msg_count_stickers: boolean;
 }
 interface CategoryReward {
   id: string;
@@ -59,10 +65,9 @@ interface CategoryReward {
   vcIgnoreSelfMuted?: boolean;
   vcIgnoreDeafened?: boolean;
   messageEnabled: boolean;
-  messagesPerPoint: number;
+  msgMinPerMinute?: number;
   msgOzyAmount?: number;
   msgMinLength?: number;
-  msgCooldown?: number;
 }
 interface Category {
   id: string;
@@ -749,12 +754,75 @@ export default function EconomyManagementPage() {
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
+                <div className="p-3 bg-orange-500/20 rounded-xl">
+                  <FiClock className="w-6 h-6 text-orange-500" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Maximum Grinding Hours Per Day</h2>
+                  <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                    Cap how long a user can earn each day. Resets at 00:00 GMT.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setConfig({ ...config, max_grind_enabled: !config.max_grind_enabled })}
+                className={`p-3 rounded-xl transition-all ${
+                  config.max_grind_enabled
+                    ? 'bg-green-500/20 text-green-500 border border-green-500/30'
+                    : 'bg-red-500/20 text-red-500 border border-red-500/30'
+                }`}
+              >
+                {config.max_grind_enabled ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+              </button>
+            </div>
+            <div className={`transition-all duration-300 ${!config.max_grind_enabled ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                    Maximum Hours
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      max="24"
+                      value={config.max_grind_hours ?? 8}
+                      onChange={(e) => setConfig({ ...config, max_grind_hours: parseInt(e.target.value) || 8 })}
+                      className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                    />
+                    <span className="text-[rgb(var(--color-text-tertiary))]">hours of earning per GMT day</span>
+                  </div>
+                </div>
+                <div className="flex items-end">
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
+                    Day window: <strong className="text-[rgb(var(--color-text-secondary))]">00:00 GMT → 23:59 GMT</strong>.
+                    Your local reset time is{' '}
+                    <strong className="text-[rgb(var(--color-text-secondary))]">
+                      {new Date(Date.UTC(2000, 0, 2, 0, 0, 0)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </strong>.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-orange-500/10 rounded-xl border border-orange-500/20">
+                <p className="text-sm text-orange-300">
+                  <strong>How it works:</strong> Earning time is tracked per GMT day. Once a user hits{' '}
+                  {config.max_grind_hours ?? 8} hours they stop earning {config.currency_name} immediately — any further time
+                  in VC generates nothing — and they start earning again automatically at the next 00:00 GMT reset.
+                </p>
+              </div>
+            </div>
+          </div>
+          {}
+          <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
                 <div className="p-3 bg-blue-500/20 rounded-xl">
                   <FiMessageSquare className="w-6 h-6 text-blue-500" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Message Rewards</h2>
-                  <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Configure message-based currency earning (accumulates towards threshold)</p>
+                  <p className="text-sm text-[rgb(var(--color-text-tertiary))]">Every minute is scored on its own — hit the minimum and the reward is paid once</p>
                 </div>
               </div>
               <button
@@ -773,22 +841,22 @@ export default function EconomyManagementPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    Messages Required
+                    Minimum Messages Per Minute
                   </label>
                   <div className="flex items-center gap-3">
                     <input
                       type="number"
                       min="1"
-                      value={config.messages_per_point}
-                      onChange={(e) => setConfig({ ...config, messages_per_point: parseInt(e.target.value) || 25 })}
+                      value={config.msg_min_per_minute ?? 3}
+                      onChange={(e) => setConfig({ ...config, msg_min_per_minute: parseInt(e.target.value) || 3 })}
                       className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
                     />
-                    <span className="text-[rgb(var(--color-text-tertiary))]">messages to earn</span>
+                    <span className="text-[rgb(var(--color-text-tertiary))]">valid messages within one minute</span>
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    {config.currency_name} Amount
+                    {config.currency_name} Reward Per Minute
                   </label>
                   <div className="flex items-center gap-3">
                     <input
@@ -798,15 +866,15 @@ export default function EconomyManagementPage() {
                       onChange={(e) => setConfig({ ...config, msg_ozy_amount: parseInt(e.target.value) || 1 })}
                       className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
                     />
-                    <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} earned</span>
+                    <span className="text-[rgb(var(--color-text-tertiary))]">{config.currency_name} per qualifying minute</span>
                   </div>
                   <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
-                    = {config.msg_ozy_amount || 1} {config.currency_name} per {config.messages_per_point} msgs
+                    Awarded at most once per minute, no matter how many extra messages are sent.
                   </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    Min Message Length
+                    Minimum Characters Per Message
                   </label>
                   <input
                     type="number"
@@ -816,24 +884,66 @@ export default function EconomyManagementPage() {
                     className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
                     placeholder="5"
                   />
+                  <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                    Shorter messages are ignored entirely.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                    Cooldown (seconds)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={config.message_cooldown}
-                    onChange={(e) => setConfig({ ...config, message_cooldown: parseInt(e.target.value) || 5 })}
-                    className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                    placeholder="5"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                      Count Emojis
+                    </label>
+                    <button
+                      onClick={() => setConfig({ ...config, msg_count_emojis: !config.msg_count_emojis })}
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                        config.msg_count_emojis
+                          ? 'bg-green-500/10 border-green-500/30 text-green-500'
+                          : 'bg-gray-500/10 border-gray-500/30 text-gray-400'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{config.msg_count_emojis ? '✓' : '✗'}</span>
+                        <div className="text-left">
+                          <div className="font-semibold">{config.msg_count_emojis ? 'ON' : 'OFF'}</div>
+                          <div className="text-xs opacity-80">
+                            {config.msg_count_emojis ? 'Emojis count as characters' : 'Emojis are stripped'}
+                          </div>
+                        </div>
+                      </div>
+                      {config.msg_count_emojis ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                      Count Stickers
+                    </label>
+                    <button
+                      onClick={() => setConfig({ ...config, msg_count_stickers: !config.msg_count_stickers })}
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                        config.msg_count_stickers
+                          ? 'bg-green-500/10 border-green-500/30 text-green-500'
+                          : 'bg-gray-500/10 border-gray-500/30 text-gray-400'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{config.msg_count_stickers ? '✓' : '✗'}</span>
+                        <div className="text-left">
+                          <div className="font-semibold">{config.msg_count_stickers ? 'ON' : 'OFF'}</div>
+                          <div className="text-xs opacity-80">
+                            {config.msg_count_stickers ? 'Stickers count as messages' : 'Stickers are ignored'}
+                          </div>
+                        </div>
+                      </div>
+                      {config.msg_count_stickers ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="mt-4 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
                 <p className="text-sm text-blue-300">
-                  <strong>How it works:</strong> Messages accumulate. After {config.messages_per_point} valid messages, user earns {config.msg_ozy_amount || 1} {config.currency_name}. Progress persists until reward is earned.
+                  <strong>How it works:</strong> At the end of every minute the valid messages sent during that minute are
+                  counted. {config.msg_min_per_minute ?? 3} or more earns {config.msg_ozy_amount || 1} {config.currency_name};
+                  fewer earns nothing. Each minute is evaluated independently and never pays out more than once.
                 </p>
               </div>
             </div>
@@ -961,9 +1071,9 @@ export default function EconomyManagementPage() {
                             vcCountBots: config?.count_bots || false,
                             vcIgnoreSelfMuted: config?.ignore_self_muted || false,
                             vcIgnoreDeafened: config?.ignore_deafened || false,
-                            messagesPerPoint: config?.messages_per_point || 25,
-                            msgMinLength: config?.min_message_length || 5,
-                            msgCooldown: config?.message_cooldown || 5
+                            msgMinPerMinute: config?.msg_min_per_minute ?? 3,
+                            msgOzyAmount: config?.msg_ozy_amount || 1,
+                            msgMinLength: config?.min_message_length || 5
                           });
                         }}
                         className="w-full px-4 py-3 rounded-xl bg-[rgb(var(--color-bg-primary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
@@ -1165,18 +1275,18 @@ export default function EconomyManagementPage() {
                             <FiMessageSquare className="w-5 h-5 text-blue-500" />
                             <h4 className="font-semibold text-[rgb(var(--color-text-primary))]">Message Rewards</h4>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
                               <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                                Messages Required
+                                Min Messages / Minute
                               </label>
                               <input
                                 type="number"
                                 min="1"
-                                value={newCategoryReward.messagesPerPoint || 25}
+                                value={newCategoryReward.msgMinPerMinute ?? 3}
                                 onChange={(e) => setNewCategoryReward({
                                   ...newCategoryReward,
-                                  messagesPerPoint: parseInt(e.target.value) || 25
+                                  msgMinPerMinute: parseInt(e.target.value) || 3
                                 })}
                                 className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
                               />
@@ -1211,24 +1321,9 @@ export default function EconomyManagementPage() {
                                 className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
                               />
                             </div>
-                            <div>
-                              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
-                                Cooldown (sec)
-                              </label>
-                              <input
-                                type="number"
-                                min="0"
-                                value={newCategoryReward.msgCooldown || 5}
-                                onChange={(e) => setNewCategoryReward({
-                                  ...newCategoryReward,
-                                  msgCooldown: parseInt(e.target.value) || 5
-                                })}
-                                className="w-full px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
-                              />
-                            </div>
                           </div>
                           <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-2">
-                            Users earn {newCategoryReward.msgOzyAmount || 1} {config?.currency_name || 'Ozy'} after {newCategoryReward.messagesPerPoint || 25} messages (accumulates)
+                            Every minute is scored on its own: {newCategoryReward.msgMinPerMinute ?? 3}+ valid messages in that minute earns {newCategoryReward.msgOzyAmount || 1} {config?.currency_name || 'Ozy'}, fewer earns nothing.
                           </p>
                         </div>
                         <div className="flex justify-end mt-6 gap-3">
@@ -1303,10 +1398,9 @@ export default function EconomyManagementPage() {
                                   vcCountBots: reward.vcCountBots,
                                   vcIgnoreSelfMuted: reward.vcIgnoreSelfMuted,
                                   vcIgnoreDeafened: reward.vcIgnoreDeafened,
-                                  messagesPerPoint: reward.messagesPerPoint,
+                                  msgMinPerMinute: reward.msgMinPerMinute ?? 3,
                                   msgOzyAmount: reward.msgOzyAmount,
-                                  msgMinLength: reward.msgMinLength,
-                                  msgCooldown: reward.msgCooldown
+                                  msgMinLength: reward.msgMinLength
                                 });
                               }}
                               className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500 transition-all"
@@ -1330,7 +1424,7 @@ export default function EconomyManagementPage() {
                           </div>
                           <div className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))]">
                             <FiMessageSquare className="w-4 h-4 text-blue-500" />
-                            <span>Msgs: <strong className="text-[rgb(var(--color-text-primary))]">{reward.msgOzyAmount || 1}</strong> {config?.currency_name || 'Ozy'} per <strong>{reward.messagesPerPoint}</strong> msgs</span>
+                            <span>Msgs: <strong className="text-[rgb(var(--color-text-primary))]">{reward.msgOzyAmount || 1}</strong> {config?.currency_name || 'Ozy'} per minute at <strong>{reward.msgMinPerMinute ?? 3}</strong>+ msgs/min</span>
                           </div>
                         </div>
                         {}
@@ -1675,6 +1769,67 @@ export default function EconomyManagementPage() {
               </button>
             </div>
           </div>
+          {}
+          {config && (
+            <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-orange-500/20 rounded-xl">
+                    <FiClock className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Item Purchase Cooldown</h2>
+                    <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
+                      After buying any item, a user cannot buy any other item until the cooldown expires
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setConfig({ ...config, purchase_cooldown_enabled: !config.purchase_cooldown_enabled })}
+                  className={`p-3 rounded-xl transition-all ${
+                    config.purchase_cooldown_enabled
+                      ? 'bg-green-500/20 text-green-500 border border-green-500/30'
+                      : 'bg-red-500/20 text-red-500 border border-red-500/30'
+                  }`}
+                >
+                  {config.purchase_cooldown_enabled ? <FiToggleRight className="w-6 h-6" /> : <FiToggleLeft className="w-6 h-6" />}
+                </button>
+              </div>
+              <div className={`transition-all duration-300 ${!config.purchase_cooldown_enabled ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+                <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                  Cooldown Duration
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    value={config.purchase_cooldown_hours ?? 24}
+                    onChange={(e) => setConfig({ ...config, purchase_cooldown_hours: parseInt(e.target.value) || 24 })}
+                    className="w-24 px-3 py-2 rounded-xl bg-[rgb(var(--color-bg-tertiary))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-center"
+                  />
+                  <span className="text-[rgb(var(--color-text-tertiary))]">hours between purchases</span>
+                </div>
+                <div className="mt-4 p-3 bg-orange-500/10 rounded-xl border border-orange-500/20">
+                  <p className="text-sm text-orange-300">
+                    <strong>How it works:</strong> The cooldown is shop-wide, not per item, and restarts after every
+                    successful purchase. Items stay visible while a user is on cooldown, but buying is blocked until the
+                    remaining {config.purchase_cooldown_hours ?? 24}h have passed.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={saveConfig}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all disabled:opacity-50"
+                >
+                  {saving ? <FiRefreshCw className="w-5 h-5 animate-spin" /> : <FiSave className="w-5 h-5" />}
+                  Save Cooldown
+                </button>
+              </div>
+            </div>
+          )}
           {}
           <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))] shadow-apple-md">
             <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">Individual Item Toggles</h2>

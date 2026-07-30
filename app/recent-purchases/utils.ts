@@ -29,3 +29,10 @@ export function statusLabel(status: string): { label: string; redeemed: boolean 
 export function initialsOf(name: string): string {
   return name.replace(/[^\p{L}\p{N} ]/gu, '').trim().slice(0, 2).toUpperCase() || '?';
 }
+
+/** Compact wall-clock time for the desktop rail, e.g. "3:45 PM". */
+export function clockOf(value: Date | string): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}

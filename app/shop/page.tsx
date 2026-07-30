@@ -47,6 +47,13 @@ interface PendingPurchase {
   createdAt: string;
   expiresAt: string | null;
 }
+interface PurchaseCooldown {
+  enabled: boolean;
+  hours: number;
+  active: boolean;
+  availableAt: string | null;
+  remainingMs: number;
+}
 interface PurchaseResult {
   id: string;
   itemName: string;
@@ -78,8 +85,32 @@ export default function ShopPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [tempSortMode, setTempSortMode] = useState<'default' | 'low' | 'high' | 'popular'>('default');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [cooldown, setCooldown] = useState<PurchaseCooldown | null>(null);
+  const [showCooldownModal, setShowCooldownModal] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const purchaseInFlightRef = useRef(false);
-  
+
+
+  const cooldownAvailableAt = cooldown?.enabled && cooldown.availableAt
+    ? new Date(cooldown.availableAt).getTime()
+    : null;
+  const cooldownRemainingMs = cooldownAvailableAt !== null ? Math.max(0, cooldownAvailableAt - now) : 0;
+  const isOnCooldown = status === 'authenticated' && cooldownRemainingMs > 0;
+
+
+  useEffect(() => {
+    if (cooldownAvailableAt === null) return;
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, [cooldownAvailableAt]);
+
+
+  useEffect(() => {
+    if (showCooldownModal && !isOnCooldown) {
+      setShowCooldownModal(false);
+    }
+  }, [showCooldownModal, isOnCooldown]);
+
   useEffect(() => {
     fetchShop();
   }, []);
@@ -125,6 +156,8 @@ export default function ShopPage() {
           if (data.budget) {
             setBudget(data.budget);
           }
+          setCooldown(data.purchaseCooldown || null);
+          setNow(Date.now());
           if (data.user) {
             setUserBalance(data.user.balance || 0);
             setPendingPurchases(data.user.pendingPurchases || []);
@@ -138,9 +171,14 @@ export default function ShopPage() {
     }
   };
   const handlePurchase = async (item: ShopItem) => {
-    
+
     if (!session) {
       signIn('discord', { callbackUrl: '/shop' });
+      return;
+    }
+
+    if (isOnCooldown) {
+      setShowCooldownModal(true);
       return;
     }
     if (userBalance < item.price) {
@@ -171,6 +209,20 @@ export default function ShopPage() {
         body: JSON.stringify({ itemId: item.id })
       });
       const data = await res.json();
+      if (res.status === 429 && data.cooldown) {
+
+        setCooldown({
+          enabled: true,
+          hours: cooldown?.hours ?? 24,
+          active: true,
+          availableAt: data.cooldown.availableAt ?? new Date(Date.now() + (data.cooldown.remainingMs || 0)).toISOString(),
+          remainingMs: data.cooldown.remainingMs || 0
+        });
+        setNow(Date.now());
+        setConfirmItem(null);
+        setShowCooldownModal(true);
+        return;
+      }
       if (!res.ok) {
         throw new Error(data.error || 'Purchase failed');
       }
@@ -194,6 +246,14 @@ export default function ShopPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
   const formatNumber = (n: number) => n.toLocaleString();
+
+  const formatHHMM = (ms: number) => {
+    const totalMinutes = Math.max(0, Math.ceil(ms / 60_000));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  };
+  const cooldownLabel = formatHHMM(cooldownRemainingMs);
   if (loading) {
     return (
       <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
@@ -349,6 +409,56 @@ export default function ShopPage() {
           </div>
         </div>
       </section>
+      {}
+      {showCooldownModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[rgb(var(--color-bg-secondary))] rounded-2xl p-6 max-w-sm w-full border border-[rgb(var(--color-border))] shadow-xl text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-orange-500/20 rounded-full flex items-center justify-center">
+              <FiClock className="w-8 h-8 text-orange-500" />
+            </div>
+            <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-1">Purchase Cooldown Active</h3>
+            <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-5">
+              You can buy your next item once the cooldown ends.
+            </p>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[rgb(var(--color-bg-tertiary))] mb-4 text-left">
+              <img
+                src={session?.user?.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                alt={session?.user?.name || 'You'}
+                className="w-11 h-11 rounded-full border border-[rgb(var(--color-border))]"
+              />
+              <div className="min-w-0">
+                <p className="font-semibold text-[rgb(var(--color-text-primary))] truncate">
+                  {session?.user?.name || 'Discord User'}
+                </p>
+                <p className="text-[11px] text-[rgb(var(--color-text-tertiary))] truncate">
+                  ID: {session?.user?.id || ''}
+                </p>
+              </div>
+            </div>
+            <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/30 mb-5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-orange-400/80">Time Remaining</p>
+              <p className="text-3xl font-black text-orange-400 tabular-nums mt-1">{cooldownLabel}</p>
+              <p className="text-[11px] text-[rgb(var(--color-text-tertiary))] mt-1">HH:MM</p>
+              {cooldown?.availableAt && (
+                <p className="text-[11px] text-[rgb(var(--color-text-tertiary))] mt-2">
+                  Unlocks at {new Date(cooldown.availableAt).toLocaleString([], {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setShowCooldownModal(false)}
+              className="w-full px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] rounded-xl transition-colors font-semibold text-sm"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
       {}
       {confirmItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -700,6 +810,25 @@ export default function ShopPage() {
             </p>
           </div>
         )}
+        {}
+        {isOnCooldown && (
+          <div className="mb-8 p-4 bg-orange-500/10 border border-orange-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="p-2.5 bg-orange-500/15 rounded-xl border border-orange-500/25 w-fit">
+              <FiClock className="w-5 h-5 text-orange-400" />
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-[rgb(var(--color-text-primary))] text-sm">Purchase cooldown active</p>
+              <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">
+                You already bought an item. You can buy again once the cooldown ends.
+              </p>
+            </div>
+            <div className="text-left sm:text-right">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-orange-400/80">Time Remaining</p>
+              <p className="text-2xl font-black text-orange-400 tabular-nums leading-tight">{cooldownLabel}</p>
+              <p className="text-[10px] text-[rgb(var(--color-text-tertiary))]">HH:MM</p>
+            </div>
+          </div>
+        )}
 
         {}
         {loading ? (
@@ -841,12 +970,14 @@ export default function ShopPage() {
                       </div>
                       <button
                         onClick={() => handlePurchase(item)}
-                        disabled={purchasing === item.id || isUnavailable || (isLoggedIn && (!canAfford || missingRequiredRole))}
+                        disabled={purchasing === item.id || isUnavailable || (isLoggedIn && !isOnCooldown && (!canAfford || missingRequiredRole))}
                         className={`px-3 py-2 sm:px-4 sm:py-2 rounded-xl font-semibold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 ${
                           isOutOfStock || isDisabled
                             ? 'bg-red-500/20 text-red-400 cursor-not-allowed'
                             : isInsufficientBudget
                             ? 'bg-orange-500/20 text-orange-400 cursor-not-allowed'
+                            : isLoggedIn && isOnCooldown
+                            ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30'
                             : isLoggedIn && missingRequiredRole
                             ? 'bg-orange-500/20 text-orange-400 cursor-not-allowed'
                             : !isLoggedIn
@@ -864,6 +995,11 @@ export default function ShopPage() {
                           'Unavailable'
                         ) : isInsufficientBudget ? (
                           'Unavailable'
+                        ) : isLoggedIn && isOnCooldown ? (
+                          <>
+                            <FiClock className="w-3.5 h-3.5" />
+                            {cooldownLabel}
+                          </>
                         ) : isLoggedIn && missingRequiredRole ? (
                           'Role Required'
                         ) : !isLoggedIn ? (

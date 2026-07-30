@@ -156,10 +156,9 @@ export async function GET(request: NextRequest) {
         vcIgnoreSelfMuted: cr.vc_ignore_self_muted,
         vcIgnoreDeafened: cr.vc_ignore_deafened,
         messageEnabled: cr.message_enabled,
-        messagesPerPoint: cr.messages_per_point,
+        msgMinPerMinute: cr.msg_min_per_minute,
         msgOzyAmount: cr.msg_ozy_amount,
-        msgMinLength: cr.msg_min_length,
-        msgCooldown: cr.msg_cooldown
+        msgMinLength: cr.msg_min_length
       })),
       blacklist: {
         channels: blacklistedChannels.map((c: any) => ({ id: c.channel_id, type: c.channel_type })),
@@ -202,10 +201,9 @@ export async function POST(request: NextRequest) {
       vcIgnoreSelfMuted,
       vcIgnoreDeafened,
       messageEnabled,
-      messagesPerPoint,
+      msgMinPerMinute,
       msgOzyAmount,
-      msgMinLength,
-      msgCooldown
+      msgMinLength
     } = body;
     if (!categoryId) {
       return NextResponse.json({ error: 'Category ID is required' }, { status: 400 });
@@ -229,10 +227,9 @@ export async function POST(request: NextRequest) {
         vc_ignore_self_muted: vcIgnoreSelfMuted ?? false,
         vc_ignore_deafened: vcIgnoreDeafened ?? false,
         message_enabled: messageEnabled ?? true,
-        messages_per_point: messagesPerPoint ?? 25,
+        msg_min_per_minute: msgMinPerMinute ?? 3,
         msg_ozy_amount: msgOzyAmount ?? 1,
-        msg_min_length: msgMinLength ?? 5,
-        msg_cooldown: msgCooldown ?? 5
+        msg_min_length: msgMinLength ?? 5
       },
       update: {
         category_name: categoryName,
@@ -244,10 +241,9 @@ export async function POST(request: NextRequest) {
         vc_ignore_self_muted: vcIgnoreSelfMuted,
         vc_ignore_deafened: vcIgnoreDeafened,
         message_enabled: messageEnabled,
-        messages_per_point: messagesPerPoint,
+        msg_min_per_minute: msgMinPerMinute,
         msg_ozy_amount: msgOzyAmount,
-        msg_min_length: msgMinLength,
-        msg_cooldown: msgCooldown
+        msg_min_length: msgMinLength
       }
     });
     return NextResponse.json({ success: true, reward });

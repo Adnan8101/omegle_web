@@ -587,9 +587,8 @@ model EconomyCategoryReward {
   guild_id             String
   id                   String   @id @default(uuid())
   message_enabled      Boolean  @default(true)
-  messages_per_point Int      @default(25)      // Messages per cycle
-  msg_cooldown       Int      @default(5)       // Cooldown in seconds
   msg_min_length     Int      @default(5)       // Min message length
+  msg_min_per_minute Int      @default(3)       // Min valid messages in a minute to earn
   msg_ozy_amount     Int      @default(1)       // Coins per cycle
   updated_at           DateTime @updatedAt
   vc_count_bots      Boolean  @default(false)   // Include bots in member count
@@ -638,8 +637,6 @@ model EconomyConfig {
   invites_enabled     Boolean  @default(true)
   leaderboard_sync    Boolean  @default(true)
   logs_channel_id     String?
-  message_cooldown      Int      @default(5)     // seconds between messages
-  messages_per_point    Int      @default(25)    // Messages per cycle
   min_message_length  Int      @default(5)
   minutes_per_point     Int      @default(5)     // Minutes per cycle
   msg_ozy_amount        Int      @default(1)     // Coins per cycle
@@ -652,7 +649,26 @@ model EconomyConfig {
   afk_verify_enabled  Boolean  @default(false)
   afk_verify_min      Int      @default(80)
   afk_verify_max      Int      @default(90)
+  purchase_cooldown_enabled Boolean @default(false) // Global cooldown between shop purchases
+  purchase_cooldown_hours   Int     @default(24)    // Cooldown duration in hours
+  max_grind_enabled         Boolean @default(false) // Cap daily earning time
+  max_grind_hours           Int     @default(8)     // Max earning hours per GMT day
+  msg_min_per_minute        Int     @default(3)     // Min valid messages in a minute to earn
+  msg_count_emojis          Boolean @default(false) // Count emojis toward message length
+  msg_count_stickers        Boolean @default(false) // Count sticker-only messages as valid
   @@map("economy_config")
+}
+
+model EconomyDailyGrind {
+  created_at      DateTime @default(now())
+  day             String   // GMT/UTC calendar day, YYYY-MM-DD
+  earned_seconds  Int      @default(0) // Earning-eligible VC seconds credited today
+  guild_id        String
+  updated_at      DateTime @updatedAt
+  user_id         String
+  @@id([guild_id, user_id, day])
+  @@map("economy_daily_grind")
+  @@index([guild_id, day])
 }
 
 model EconomyIgnoredChannel {
