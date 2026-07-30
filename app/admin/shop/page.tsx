@@ -69,7 +69,7 @@ export default function ShopDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'items' | 'budget' | 'logs'>('items');
+  const [activeTab, setActiveTab] = useState<'items' | 'budget' | 'logs' | 'cooldown'>('items');
   const [budget, setBudget] = useState<{ available: number; totalAdded: number; totalSpent: number } | null>(null);
   const [budgetLogs, setBudgetLogs] = useState<any[]>([]);
   const [refillAmount, setRefillAmount] = useState('');
@@ -85,6 +85,12 @@ export default function ShopDashboard() {
   const [roles, setRoles] = useState<any[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [isReordering, setIsReordering] = useState(false);
+
+  // Cooldown tab state
+  const [cooldownEnabled, setCooldownEnabled] = useState(false);
+  const [cooldownHours, setCooldownHours] = useState(24);
+  const [savingCooldown, setSavingCooldown] = useState(false);
+  const [cooldownSuccess, setCooldownSuccess] = useState(false);
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
@@ -234,8 +240,12 @@ export default function ShopDashboard() {
       } else {
         setError(itemsData.error || 'Failed to load shop items');
       }
-      if (configRes.ok && configData.config && configData.config.ozy_inr_rate !== undefined) {
-        setOzyInrRate(configData.config.ozy_inr_rate);
+      if (configRes.ok && configData.config) {
+        if (configData.config.ozy_inr_rate !== undefined) {
+          setOzyInrRate(configData.config.ozy_inr_rate);
+        }
+        setCooldownEnabled(configData.config.purchase_cooldown_enabled ?? false);
+        setCooldownHours(configData.config.purchase_cooldown_hours ?? 24);
       }
       if (statsRes.ok) {
         setStats(statsData.stats || null);
@@ -250,6 +260,29 @@ export default function ShopDashboard() {
       setError('Failed to load shop data');
     } finally {
       setLoading(false);
+    }
+  };
+  const handleSaveCooldown = async () => {
+    setSavingCooldown(true);
+    setError(null);
+    setCooldownSuccess(false);
+    try {
+      const res = await fetch('/api/economy/config', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          purchase_cooldown_enabled: cooldownEnabled,
+          purchase_cooldown_hours: cooldownHours
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save cooldown settings');
+      setCooldownSuccess(true);
+      setTimeout(() => setCooldownSuccess(false), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save cooldown settings');
+    } finally {
+      setSavingCooldown(false);
     }
   };
   const handleApplyRate = async (e?: React.FormEvent) => {
@@ -864,6 +897,19 @@ export default function ShopDashboard() {
         >
           Logs
         </button>
+        <button
+          onClick={() => setActiveTab('cooldown')}
+          className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 -mb-[2px] ${
+            activeTab === 'cooldown'
+              ? 'border-orange-500 text-orange-500'
+              : 'border-transparent text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
+          }`}
+        >
+          <span className="flex items-center gap-1.5">
+            <FiClock className="w-3.5 h-3.5" />
+            Cooldown
+          </span>
+        </button>
       </div>
       {activeTab === 'items' && (
         <>
@@ -1112,6 +1158,118 @@ export default function ShopDashboard() {
                   {budgetLoading ? <FiRefreshCw className="w-4 h-4 animate-spin" /> : 'Update Budget Stats'}
                 </button>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {activeTab === 'cooldown' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Header card */}
+          <div className="glass-blue rounded-3xl p-6 border border-[rgb(var(--color-border))]">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-orange-500/20 rounded-xl">
+                <FiClock className="w-6 h-6 text-orange-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Item Purchase Cooldown</h2>
+                <p className="text-sm text-[rgb(var(--color-text-tertiary))] mt-0.5">
+                  After buying any item, a user cannot buy another until the cooldown expires.
+                </p>
+              </div>
+            </div>
+
+            {cooldownSuccess && (
+              <div className="mb-6 p-3 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center gap-2 text-green-500 text-sm">
+                <FiCheck className="w-4 h-4" />
+                <span>Cooldown settings saved successfully!</span>
+              </div>
+            )}
+
+            {/* Toggle row */}
+            <div className="flex items-center justify-between p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-2xl mb-4">
+              <div>
+                <p className="font-semibold text-[rgb(var(--color-text-primary))]">Enable Purchase Cooldown</p>
+                <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-0.5">
+                  Block users from buying again until the cooldown ends
+                </p>
+              </div>
+              <button
+                onClick={() => setCooldownEnabled(!cooldownEnabled)}
+                className={`p-1.5 rounded-xl border transition-all ${
+                  cooldownEnabled
+                    ? 'bg-orange-500/20 text-orange-500 border-orange-500/30'
+                    : 'bg-[rgb(var(--color-bg-secondary))] text-[rgb(var(--color-text-tertiary))] border-[rgb(var(--color-border))]'
+                }`}
+                title={cooldownEnabled ? 'Enabled (click to disable)' : 'Disabled (click to enable)'}
+              >
+                {cooldownEnabled ? <FiToggleRight className="w-7 h-7" /> : <FiToggleLeft className="w-7 h-7" />}
+              </button>
+            </div>
+
+            {/* Duration input */}
+            <div className={`transition-all duration-300 ${!cooldownEnabled ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+              <label className="block text-sm font-medium text-[rgb(var(--color-text-secondary))] mb-2">
+                Cooldown Duration (hours)
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min={1}
+                  max={8760}
+                  value={cooldownHours}
+                  onChange={(e) => setCooldownHours(Math.max(1, parseInt(e.target.value) || 24))}
+                  className="w-40 px-4 py-3 bg-[rgb(var(--color-bg-tertiary))] rounded-xl border border-[rgb(var(--color-border))] focus:border-orange-500 focus:outline-none transition-colors font-semibold text-[rgb(var(--color-text-primary))]"
+                />
+                <span className="text-sm text-[rgb(var(--color-text-secondary))]">hours after each purchase</span>
+              </div>
+              <p className="mt-3 text-xs text-[rgb(var(--color-text-tertiary))] leading-relaxed">
+                <strong>How it works:</strong> After a successful purchase, the buyer cannot purchase any other item
+                until <strong>{cooldownHours}h</strong> has elapsed. The cooldown is shop-wide (not per item) and
+                restarts after each successful purchase.
+              </p>
+            </div>
+
+            {/* Preview box */}
+            <div className={`mt-4 p-4 rounded-2xl border transition-all ${
+              cooldownEnabled
+                ? 'bg-orange-500/10 border-orange-500/30'
+                : 'bg-[rgb(var(--color-bg-tertiary))] border-[rgb(var(--color-border))] opacity-50'
+            }`}>
+              <p className="text-xs font-bold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))] mb-1">Preview — What users will see</p>
+              <div className="flex items-center gap-3 mt-2">
+                <FiClock className="w-5 h-5 text-orange-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+                    {cooldownEnabled ? `Purchase cooldown active — ${cooldownHours}h between purchases` : 'No cooldown — users can buy freely'}
+                  </p>
+                  {cooldownEnabled && (
+                    <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">
+                      Countdown timer and exact unlock time will appear on the shop page.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={handleSaveCooldown}
+                disabled={savingCooldown}
+                className="flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-500/50 text-white font-semibold rounded-xl transition-all shadow-md shadow-orange-500/20 touch-manipulation"
+              >
+                {savingCooldown ? (
+                  <><FiRefreshCw className="w-4 h-4 animate-spin" /><span>Saving...</span></>
+                ) : (
+                  <><FiSave className="w-4 h-4" /><span>Save Cooldown Settings</span></>
+                )}
+              </button>
+              <a
+                href="/admin/shop/economy"
+                className="flex items-center gap-2 px-5 py-3 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] font-medium rounded-xl transition-all text-sm"
+              >
+                <FiChevronRight className="w-4 h-4" />
+                Advanced Settings
+              </a>
             </div>
           </div>
         </div>

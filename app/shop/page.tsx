@@ -492,7 +492,7 @@ export default function ShopPage() {
                   </div>
                 </div>
               </div>
-              {}
+              {/* Balance summary */}
               <div className="space-y-2 mb-6 text-left">
                 <div className="flex justify-between items-center p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-lg">
                   <span className="text-[rgb(var(--color-text-secondary))]">Your Balance</span>
@@ -517,6 +517,28 @@ export default function ShopPage() {
                   </div>
                 </div>
               </div>
+              {/* Cooldown warning — shown only if cooldown is enabled and user is not already on cooldown */}
+              {cooldown?.enabled && !isOnCooldown && (
+                <div className="mb-5 p-3 bg-orange-500/10 border border-orange-500/25 rounded-xl flex items-start gap-2.5">
+                  <FiClock className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-orange-400">Purchase Cooldown</p>
+                    <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">
+                      Buying this item will start a <strong className="text-orange-400">{cooldown.hours}h</strong> cooldown.
+                      You won't be able to buy again until{' '}
+                      <strong className="text-orange-400">
+                        {new Date(Date.now() + cooldown.hours * 3_600_000).toLocaleString([], {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </strong>.
+                    </p>
+                  </div>
+                </div>
+              )}
               {}
               <div className="flex gap-3">
                 <button
@@ -821,6 +843,17 @@ export default function ShopPage() {
               <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">
                 You already bought an item. You can buy again once the cooldown ends.
               </p>
+              {cooldown?.availableAt && (
+                <p className="text-xs text-orange-400 mt-1 font-medium">
+                  Unlocks at {new Date(cooldown.availableAt).toLocaleString([], {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              )}
             </div>
             <div className="text-left sm:text-right">
               <p className="text-[10px] font-bold uppercase tracking-wider text-orange-400/80">Time Remaining</p>
