@@ -1,7 +1,8 @@
 'use client';
+import Image from 'next/image';
 import { useState } from 'react';
-import { FiChevronDown, FiArrowUpRight } from 'react-icons/fi';
-import { Reveal, RevealGroup, Item } from '@/components/motion';
+import { FiArrowUpRight, FiPlus } from 'react-icons/fi';
+import { Item, Reveal, RevealGroup, Tilt } from '@/components/motion';
 
 const FAQS: { q: string; a: string }[] = [
   {
@@ -33,71 +34,105 @@ const FAQS: { q: string; a: string }[] = [
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="group border-b border-white/10 last:border-b-0">
+    <div className="border-b border-white/10 last:border-b-0">
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="w-full flex items-center justify-between gap-4 py-5 text-left cursor-pointer"
+        className="group flex w-full items-center justify-between gap-4 py-4 text-left"
       >
-        <span className="flex-1 text-[15px] sm:text-base font-semibold text-white group-hover:text-white/85 transition-colors">
+        <span className="flex-1 text-[14.5px] font-bold text-white transition-colors group-hover:text-white/80 sm:text-[15.5px]">
           {q}
         </span>
-        <FiChevronDown
-          className={`w-4.5 h-4.5 flex-shrink-0 transition-all duration-300 ${open ? 'rotate-180 text-blue-400' : 'text-white/40 group-hover:text-white/70'}`}
+        <FiPlus
+          aria-hidden
+          className={`h-4 w-4 flex-shrink-0 transition-all duration-300 ${
+            open ? 'rotate-45 text-[#3B9EFF]' : 'text-white/40 group-hover:text-white/75'
+          }`}
         />
       </button>
       <div
-        className="grid transition-[grid-template-rows] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="grid transition-[grid-template-rows] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
         style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden">
-          <p className="text-sm text-white/55 leading-relaxed pb-5 pr-8 max-w-[500px]">
-            {a}
-          </p>
+          <p className="max-w-[52ch] pb-4 pr-8 text-[13.5px] leading-relaxed text-white/50">{a}</p>
         </div>
       </div>
     </div>
   );
 }
 
+/**
+ * Two columns, vertically centered: the mascot on one side, the questions on
+ * the other. On mobile the same two blocks simply stack — art, then heading
+ * and accordion — so nothing needs a separate mobile layout to feel deliberate.
+ *
+ * The render is shot on pure black. Now that the section itself is flat
+ * black with nothing glowing behind the art, the image's own canvas needs no
+ * crop, mask, or blend trick at all — black-on-black is simply invisible, so
+ * the full illustration shows uncropped and the "frame" disappears on its own.
+ */
 export default function FAQSection() {
   return (
-    <div className="w-full order-1 lg:order-2 flex flex-col">
-      <RevealGroup stagger={0.1} className="flex flex-col items-start w-full mb-8">
-        <Item>
-          <span className="block text-[#3B9EFF] font-semibold text-[13px] tracking-wide uppercase mb-2">FAQ&apos;s</span>
-        </Item>
-        <Item>
-          <h2 className="text-[32px] sm:text-[40px] font-bold text-white leading-[1.15] tracking-tight mb-4">
-            Looking for answers?
-          </h2>
-        </Item>
-        <Item blur>
-          <p className="text-white/60 text-[15px] leading-relaxed max-w-[480px]">
-            Everything you need to know about joining, earning Ozy, and getting the most out of the community.
-          </p>
-        </Item>
-      </RevealGroup>
+    <section className="relative w-full z-10 overflow-hidden bg-black">
+      <div className="mx-auto w-full max-w-[1300px] px-6 py-14 sm:px-12 sm:py-20 lg:px-16 lg:py-28">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[0.8fr_1fr] lg:gap-14">
+          {/* ── Artwork ──────────────────────────────────────────── */}
+          <Reveal dir="left" distance={36} blur scale={0.96} className="relative flex w-full justify-center lg:justify-start">
+            <Tilt max={5} scale={1.02} perspective={1400} className="relative w-full max-w-[340px] lg:max-w-[400px]">
+              <Image
+                src="/omeglee_faq.png"
+                alt="Omeglee mascot holding an FAQ list"
+                width={1536}
+                height={1024}
+                className="h-auto w-full select-none"
+                draggable={false}
+              />
+            </Tilt>
+          </Reveal>
 
-      <RevealGroup stagger={0.06} className="w-full">
-        {FAQS.map((item) => (
-          <Item key={item.q} distance={14}>
-            <FAQItem q={item.q} a={item.a} />
-          </Item>
-        ))}
-      </RevealGroup>
+          {/* ── Questions ────────────────────────────────────────── */}
+          <div className="w-full">
+            <RevealGroup stagger={0.1} className="mb-6 flex flex-col items-start">
+              <Item>
+                <span className="mb-2 block text-[13px] font-semibold uppercase tracking-wide text-[#3B9EFF]">FAQ&apos;s</span>
+              </Item>
+              <Item>
+                <h2 className="mb-3 text-[30px] font-bold leading-[1.12] tracking-tight text-white sm:text-[38px] lg:text-[44px]">
+                  Looking for answers?
+                </h2>
+              </Item>
+              <Item blur>
+                <p className="max-w-[480px] text-[14.5px] leading-relaxed text-white/55">
+                  Everything you need to know about joining, earning Ozy, and getting the most out of the
+                  community.
+                </p>
+              </Item>
+            </RevealGroup>
 
-      <Reveal delay={0.1} className="mt-8">
-        <a
-          href="https://discord.gg/omegle"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-white/40 hover:text-white/80 text-[14px] font-medium transition-colors group"
-        >
-          Still have questions? Ask us on Discord
-          <FiArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </a>
-      </Reveal>
-    </div>
+            <Reveal dir="up" distance={16}>
+              <div>
+                {FAQS.map((item) => (
+                  <FAQItem key={item.q} q={item.q} a={item.a} />
+                ))}
+              </div>
+            </Reveal>
+
+            <Reveal delay={0.1} className="mt-6">
+              <a
+                href="https://discord.gg/omegle"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-1.5 text-[14px] font-medium text-white/40 transition-colors hover:text-white/80"
+              >
+                Still have questions? Ask us on Discord
+                <FiArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </a>
+            </Reveal>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

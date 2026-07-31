@@ -8,16 +8,14 @@ import { formatJoined, initialsOf, swapGifForWebp } from '../utils';
 
 interface MemberCardProps {
   member: TeamMember;
-  /** Leadership reads larger; everyone else sits in the roster grid. */
-  variant: 'feature' | 'grid';
   onOpen: (member: TeamMember) => void;
 }
 
-export default function MemberCard({ member, variant, onOpen }: MemberCardProps) {
+/** One consistent card size for every member — no leadership vs. roster split. */
+export default function MemberCard({ member, onOpen }: MemberCardProps) {
   const { profile, designation, created_at } = member;
   const accent = profile.accentColor || DEFAULT_ACCENT;
   const joined = formatJoined(created_at);
-  const feature = variant === 'feature';
 
   return (
     <SpotlightCard
@@ -34,7 +32,7 @@ export default function MemberCard({ member, variant, onOpen }: MemberCardProps)
       />
       {/* Banner — the member's own Discord banner, or a wash of their accent */}
       <div
-        className={`relative w-full overflow-hidden ${feature ? 'h-28 sm:h-32' : 'h-24'}`}
+        className="relative h-24 w-full overflow-hidden"
         style={{ background: `linear-gradient(135deg, ${accent}44, transparent 70%)` }}
       >
         {profile.banner ? (
@@ -65,8 +63,8 @@ export default function MemberCard({ member, variant, onOpen }: MemberCardProps)
       </div>
 
       {/* Identity */}
-      <div className={`relative z-[2] flex flex-col ${feature ? 'px-6 pb-6' : 'px-5 pb-5'}`}>
-        <div className={`relative ${feature ? '-mt-11' : '-mt-9'} mb-3.5 flex items-end justify-between gap-3`}>
+      <div className="relative z-[2] flex flex-col px-5 pb-5">
+        <div className="relative -mt-9 mb-3.5 flex items-end justify-between gap-3">
           <div className="relative">
             <div
               aria-hidden
@@ -74,9 +72,7 @@ export default function MemberCard({ member, variant, onOpen }: MemberCardProps)
               style={{ background: accent }}
             />
             <div
-              className={`relative overflow-hidden rounded-full border-[3px] bg-[rgb(var(--color-bg-secondary))] shadow-xl transition-transform duration-500 ease-[var(--fx-ease)] group-hover:-rotate-2 group-hover:scale-[1.04] ${
-                feature ? 'h-20 w-20' : 'h-16 w-16'
-              }`}
+              className="relative h-16 w-16 overflow-hidden rounded-full border-[3px] bg-[rgb(var(--color-bg-secondary))] shadow-xl transition-transform duration-500 ease-[var(--fx-ease)] group-hover:-rotate-2 group-hover:scale-[1.04]"
               style={{ borderColor: 'rgb(var(--color-bg-primary))' }}
             >
               {profile.avatar ? (
@@ -104,30 +100,20 @@ export default function MemberCard({ member, variant, onOpen }: MemberCardProps)
 
           <span
             className="mb-1 inline-flex flex-shrink-0 items-center rounded-full border px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em]"
-            style={{
-              color: accent,
-              borderColor: `${accent}4d`,
-              background: `${accent}14`,
-            }}
+            style={{ color: accent, borderColor: `${accent}4d`, background: `${accent}14` }}
           >
             {designation}
           </span>
         </div>
 
-        <h3
-          className={`truncate font-extrabold tracking-[-0.02em] text-[rgb(var(--color-text-primary))] ${
-            feature ? 'text-[21px]' : 'text-[17px]'
-          }`}
-        >
+        <h3 className="truncate text-[17px] font-extrabold tracking-[-0.02em] text-[rgb(var(--color-text-primary))]">
           {profile.displayName}
         </h3>
-        <p className="mt-0.5 truncate text-[12.5px] font-medium text-[var(--fx-ink-3)]">
-          @{profile.username}
-        </p>
+        <p className="mt-0.5 truncate text-[12.5px] font-medium text-[var(--fx-ink-3)]">@{profile.username}</p>
 
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--fx-hairline)] pt-3.5">
           <span className="text-[11.5px] font-semibold text-[var(--fx-ink-3)]">
-            {joined ? `On the team since ${joined}` : 'Core team'}
+            {joined ? `Since ${joined}` : 'Core team'}
           </span>
           <span
             className="flex items-center gap-1 text-[11.5px] font-bold opacity-0 transition-all duration-300 ease-[var(--fx-ease)] group-hover:translate-x-0 group-hover:opacity-100 sm:-translate-x-1"

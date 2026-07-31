@@ -35,7 +35,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 /**
  * The reward moment, understated: a checkmark draws itself, the item settles
  * into place, and the receipt — code, DM status, how to claim it — follows.
- * No confetti canvas, no multi-ring pulse. The moment reads as earned, not
+ * No confetti canvas, no crate-shaking wait. The moment reads as earned, not
  * performed.
  */
 export default function SuccessReveal({
@@ -86,8 +86,7 @@ export default function SuccessReveal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.36, ease: EASE }}
-        className="fixed inset-0"
-        style={{ background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)' }}
+        className="fixed inset-0 bg-black/90 backdrop-blur-xl"
       />
 
       <div className="relative z-10 w-full max-w-[440px]">
@@ -97,17 +96,18 @@ export default function SuccessReveal({
             initial={reduce ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={reduce ? { duration: 0.2 } : { type: 'spring', stiffness: 340, damping: 22, mass: 0.7 }}
-            className="flex h-14 w-14 items-center justify-center rounded-full"
-            style={{ background: 'rgba(52,211,153,0.14)', border: '1px solid rgba(52,211,153,0.34)' }}
+            className="flex h-14 w-14 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-400/15"
           >
             <svg viewBox="0 0 32 32" className="h-6 w-6" fill="none" aria-hidden>
-              <path
+              <motion.path
                 d="M8 16.8 13.4 22 24 11"
-                stroke="#6ee7b7"
+                stroke="#34D399"
                 strokeWidth="2.6"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="sx-draw"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.5, ease: EASE, delay: 0.15 }}
               />
             </svg>
           </motion.div>
@@ -116,7 +116,7 @@ export default function SuccessReveal({
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: EASE, delay: 0.2 }}
-            className="mt-3.5 text-[10.5px] font-extrabold uppercase tracking-[0.2em] text-[#6ee7b7]"
+            className="mt-3.5 text-[10.5px] font-extrabold uppercase tracking-[0.2em] text-emerald-400"
           >
             Purchase complete
           </motion.p>
@@ -125,14 +125,13 @@ export default function SuccessReveal({
             initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.85, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.5, ease: EASE, delay: 0.14 }}
-            className="mt-5 h-[92px] w-[92px] overflow-hidden"
-            style={{ borderRadius: 20, border: '1px solid var(--sx-hair-2)', background: 'rgba(255,255,255,0.04)' }}
+            className="mt-5 h-[92px] w-[92px] overflow-hidden rounded-[20px] border border-white/15 bg-white/[0.04]"
           >
             {itemThumbnail ? (
               <img src={itemThumbnail} alt={itemName} className="h-full w-full object-cover" />
             ) : (
               <span className="flex h-full w-full items-center justify-center">
-                <FiPackage className="h-9 w-9 text-[var(--sx-ink-4)]" />
+                <FiPackage className="h-9 w-9 text-white/25" />
               </span>
             )}
           </motion.div>
@@ -141,7 +140,7 @@ export default function SuccessReveal({
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: EASE, delay: 0.28 }}
-            className="sx-display mt-4 max-w-[19ch] text-center text-[23px] font-extrabold text-[var(--sx-ink)]"
+            className="mt-4 max-w-[19ch] text-center text-[23px] font-extrabold tracking-[-0.02em] text-white"
           >
             {itemName}
           </motion.h2>
@@ -150,7 +149,7 @@ export default function SuccessReveal({
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: EASE, delay: 0.38 }}
-            className="sx-num mt-2.5 flex items-center gap-1.5 text-[13px] font-semibold text-[var(--sx-ink-3)]"
+            className="mt-2.5 flex items-center gap-1.5 text-[13px] font-semibold text-white/45 tabular-nums"
           >
             Paid <CurrencyMark emoji={currencyEmoji} size={13} />
             <span className="text-[#ffd77a]">{formatNumber(pricePaid)}</span>
@@ -162,28 +161,23 @@ export default function SuccessReveal({
           initial={reduce ? { opacity: 0 } : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: EASE, delay: 0.3 }}
-          className="sx-panel-solid relative mt-6 overflow-hidden"
-          style={{ borderRadius: 'var(--sx-r-xl)' }}
+          className="relative mt-6 overflow-hidden rounded-[24px] border border-white/10 bg-[#0d0d12]"
         >
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="sx-focus absolute right-3.5 top-3.5 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-[var(--sx-ink-3)] transition-colors hover:bg-white/[0.07] hover:text-[var(--sx-ink)]"
-            style={{ borderColor: 'var(--sx-hair)' }}
+            className="absolute right-3.5 top-3.5 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-white/45 transition-colors hover:bg-white/[0.07] hover:text-white"
           >
             <FiX className="h-4 w-4" />
           </button>
 
           <div className="px-5 pb-5 pt-5 sm:px-6 sm:pb-6">
             {/* ── Code ─────────────────────────────────────────────── */}
-            <p className="sx-eyebrow">Redeem code</p>
-            <div
-              className="relative mt-2.5 flex h-[56px] items-center justify-center overflow-hidden px-4"
-              style={{ borderRadius: 'var(--sx-r-md)', border: '1px solid var(--sx-hair)', background: 'rgba(255,255,255,0.03)' }}
-            >
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/45">Redeem code</p>
+            <div className="relative mt-2.5 flex h-[56px] items-center justify-center overflow-hidden rounded-2xl border border-white/8 bg-white/[0.03] px-4">
               <code
-                className={`sx-mono select-all text-[20px] font-black tracking-[0.18em] text-[#ffd77a] transition-all duration-500 ${
+                className={`select-all font-mono text-[20px] font-black tracking-[0.18em] text-[#ffd77a] transition-all duration-500 ${
                   revealed ? 'opacity-100 blur-0' : 'select-none opacity-30 blur-[6px]'
                 }`}
               >
@@ -194,8 +188,7 @@ export default function SuccessReveal({
                 <button
                   type="button"
                   onClick={() => setRevealed(true)}
-                  className="sx-focus absolute inset-0 flex items-center justify-center gap-2 text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--sx-ink-2)] transition-colors hover:text-[var(--sx-ink)]"
-                  style={{ background: 'rgba(0,0,0,0.4)' }}
+                  className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 text-[12px] font-extrabold uppercase tracking-[0.14em] text-white/70 transition-colors hover:text-white"
                 >
                   <FiEye className="h-3.5 w-3.5" />
                   Reveal code
@@ -205,20 +198,19 @@ export default function SuccessReveal({
                   type="button"
                   onClick={copy}
                   aria-label="Copy redeem code"
-                  className="sx-focus absolute right-2.5 flex h-9 w-9 items-center justify-center rounded-[var(--sx-r-xs)] border transition-colors hover:bg-white/[0.07]"
-                  style={{ borderColor: 'var(--sx-hair)', background: 'rgba(0,0,0,0.5)' }}
+                  className="absolute right-2.5 flex h-9 w-9 items-center justify-center rounded-lg border border-white/8 bg-black/50 transition-colors hover:bg-white/[0.07]"
                 >
                   {copied ? (
-                    <FiCheck className="h-4 w-4 text-[#6ee7b7]" />
+                    <FiCheck className="h-4 w-4 text-emerald-400" />
                   ) : (
-                    <FiCopy className="h-4 w-4 text-[var(--sx-ink-3)]" />
+                    <FiCopy className="h-4 w-4 text-white/45" />
                   )}
                 </button>
               )}
             </div>
 
             {expiresAt && (
-              <p className="mt-2.5 flex items-center gap-1.5 text-[11.5px] font-medium text-[var(--sx-ink-4)]">
+              <p className="mt-2.5 flex items-center gap-1.5 text-[11.5px] font-medium text-white/30">
                 <FiClock className="h-3 w-3" />
                 Expires{' '}
                 {new Date(expiresAt).toLocaleString('en-US', {
@@ -233,19 +225,16 @@ export default function SuccessReveal({
 
             {/* ── DM status ────────────────────────────────────────── */}
             <div
-              className="mt-4 flex items-start gap-2.5 border px-3.5 py-3"
-              style={
-                dmSent
-                  ? { borderRadius: 'var(--sx-r-sm)', borderColor: 'rgba(52,211,153,0.28)', background: 'rgba(52,211,153,0.09)' }
-                  : { borderRadius: 'var(--sx-r-sm)', borderColor: 'rgba(251,113,133,0.28)', background: 'rgba(251,113,133,0.09)' }
-              }
+              className={`mt-4 flex items-start gap-2.5 rounded-xl border px-3.5 py-3 ${
+                dmSent ? 'border-emerald-400/25 bg-emerald-400/10' : 'border-red-400/25 bg-red-400/10'
+              }`}
             >
               {dmSent ? (
-                <FiCheck className="mt-[2px] h-3.5 w-3.5 flex-shrink-0 text-[#6ee7b7]" />
+                <FiCheck className="mt-[2px] h-3.5 w-3.5 flex-shrink-0 text-emerald-400" />
               ) : (
-                <FiAlertCircle className="mt-[2px] h-3.5 w-3.5 flex-shrink-0 text-[#ff9aa6]" />
+                <FiAlertCircle className="mt-[2px] h-3.5 w-3.5 flex-shrink-0 text-red-300" />
               )}
-              <p className="text-[12.5px] font-semibold leading-snug" style={{ color: dmSent ? '#6ee7b7' : '#ffb1bb' }}>
+              <p className={`text-[12.5px] font-semibold leading-snug ${dmSent ? 'text-emerald-300' : 'text-red-200'}`}>
                 {dmSent
                   ? 'Receipt sent to your Discord DMs.'
                   : 'We couldn’t DM you — open your DMs, and keep this code somewhere safe.'}
@@ -253,35 +242,29 @@ export default function SuccessReveal({
             </div>
 
             {note && (
-              <p
-                className="mt-3 border-l-2 pl-3.5 text-[12.5px] leading-relaxed text-[var(--sx-ink-2)]"
-                style={{ borderColor: 'rgba(124,106,245,0.5)' }}
-              >
+              <p className="mt-3 border-l-2 border-[#3B9EFF]/50 pl-3.5 text-[12.5px] leading-relaxed text-white/65">
                 {note}
               </p>
             )}
 
             {/* ── How to claim ─────────────────────────────────────── */}
-            <div className="mt-4 border p-3.5" style={{ borderRadius: 'var(--sx-r-sm)', borderColor: 'var(--sx-hair)' }}>
-              <p className="flex items-center gap-2 text-[10.5px] font-extrabold uppercase tracking-[0.15em] text-[var(--sx-ink-3)]">
-                <FiMessageCircle className="h-3.5 w-3.5 text-[#aab4ff]" />
+            <div className="mt-4 rounded-xl border border-white/8 p-3.5">
+              <p className="flex items-center gap-2 text-[10.5px] font-extrabold uppercase tracking-[0.15em] text-white/45">
+                <FiMessageCircle className="h-3.5 w-3.5 text-[#7cc4ff]" />
                 How to claim it
               </p>
-              <ol className="mt-2.5 space-y-1.5 text-[12.5px] leading-relaxed text-[var(--sx-ink-2)]">
+              <ol className="mt-2.5 space-y-1.5 text-[12.5px] leading-relaxed text-white/65">
                 <li className="flex gap-2.5">
-                  <span className="sx-num text-[var(--sx-ink-4)]">1</span>
+                  <span className="text-white/30">1</span>
                   <span>
-                    Open Discord and DM <span className="font-bold text-[#aab4ff]">Omeglee Bot</span>
+                    Open Discord and DM <span className="font-bold text-[#7cc4ff]">Omeglee Bot</span>
                   </span>
                 </li>
                 <li className="flex gap-2.5">
-                  <span className="sx-num text-[var(--sx-ink-4)]">2</span>
+                  <span className="text-white/30">2</span>
                   <span className="flex flex-wrap items-center gap-1.5">
                     Send
-                    <code
-                      className="sx-mono rounded px-1.5 py-0.5 text-[11.5px] font-bold text-[#ffd77a]"
-                      style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid var(--sx-hair)' }}
-                    >
+                    <code className="rounded bg-black/45 px-1.5 py-0.5 font-mono text-[11.5px] font-bold text-[#ffd77a]">
                       /redeem {redeemCode}
                     </code>
                   </span>
@@ -294,25 +277,22 @@ export default function SuccessReveal({
               <img
                 src={userAvatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}
                 alt=""
-                className="h-6 w-6 rounded-full object-cover"
-                style={{ boxShadow: '0 0 0 1.5px var(--sx-hair-2)' }}
+                className="h-6 w-6 rounded-full border border-white/15 object-cover"
               />
-              <span className="text-[11.5px] font-medium text-[var(--sx-ink-4)]">Delivered to your connected account</span>
+              <span className="text-[11.5px] font-medium text-white/30">Delivered to your connected account</span>
             </div>
 
             <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
               <button
                 type="button"
                 onClick={onClose}
-                className="sx-focus h-12 flex-[1.4] text-[13.5px] font-extrabold text-black transition-colors hover:bg-[#eceaff]"
-                style={{ borderRadius: 'var(--sx-r-sm)', background: '#ffffff' }}
+                className="h-12 flex-[1.4] rounded-xl bg-white text-[13.5px] font-extrabold text-black transition-colors hover:bg-gray-100"
               >
                 Keep shopping
               </button>
               <Link
                 href="/purchases"
-                className="sx-focus group flex h-12 flex-1 items-center justify-center gap-2 border text-[13.5px] font-bold text-[var(--sx-ink)] transition-colors hover:bg-white/[0.05]"
-                style={{ borderRadius: 'var(--sx-r-sm)', borderColor: 'var(--sx-hair)' }}
+                className="group flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 text-[13.5px] font-bold text-white transition-colors hover:bg-white/[0.05]"
               >
                 My stuff
                 <FiArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />

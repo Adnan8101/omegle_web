@@ -1,7 +1,7 @@
-/** Mirrors the champion panel + ladder so nothing reflows when data arrives. */
+/** Mirrors the pool stats + podium + ladder so nothing reflows when data arrives. */
 export default function LeaderboardSkeleton() {
   return (
-    <div className="space-y-10" aria-hidden>
+    <div className="space-y-8" aria-hidden>
       {/* Pool stats */}
       <div className="fx-surface grid grid-cols-2 gap-px overflow-hidden rounded-[var(--fx-r-lg)] bg-[var(--fx-hairline)] lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
@@ -12,24 +12,21 @@ export default function LeaderboardSkeleton() {
         ))}
       </div>
 
-      {/* Champion */}
-      <div className="fx-surface flex flex-col items-center gap-7 rounded-[var(--fx-r-xl)] px-10 py-11 lg:flex-row lg:gap-10">
-        <div className="fx-skeleton h-[132px] w-[132px] flex-shrink-0 rounded-full" />
-        <div className="w-full flex-1 space-y-4">
-          <div className="fx-skeleton h-5 w-28 rounded-full" />
-          <div className="fx-skeleton h-10 w-64 max-w-full rounded-[var(--fx-r-xs)]" />
-          <div className="fx-skeleton h-9 w-48 rounded-[var(--fx-r-xs)]" />
-        </div>
-        <div className="fx-skeleton h-[76px] w-full rounded-[var(--fx-r-md)] lg:w-[260px]" />
+      {/* Podium */}
+      <div className="flex flex-col items-end gap-4 sm:flex-row sm:items-end sm:gap-5">
+        {[{ h: 'sm:pb-4' }, { h: 'sm:pb-9' }, { h: 'sm:pb-0' }].map((row, index) => (
+          <div key={index} className={`fx-surface flex-1 rounded-[var(--fx-r-lg)] px-5 pb-6 pt-8 ${row.h}`}>
+            <div className="fx-skeleton mx-auto h-20 w-20 rounded-full" />
+            <div className="fx-skeleton mx-auto mt-4 h-3.5 w-20 rounded-full" />
+            <div className="fx-skeleton mx-auto mt-3 h-4 w-16 rounded-full" />
+          </div>
+        ))}
       </div>
 
       {/* Ladder */}
       <div className="space-y-3">
-        {Array.from({ length: 7 }).map((_, index) => (
-          <div
-            key={index}
-            className="fx-surface flex items-center gap-4 rounded-[var(--fx-r-md)] px-5 py-4"
-          >
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className="fx-surface flex items-center gap-4 rounded-[var(--fx-r-md)] px-5 py-4">
             <div className="fx-skeleton h-6 w-7 rounded" />
             <div className="fx-skeleton h-12 w-12 flex-shrink-0 rounded-full" />
             <div className="min-w-0 flex-1 space-y-2.5">

@@ -31,10 +31,8 @@ export default function SiteFooter() {
           grid-template-columns: clamp(220px,38%,360px) 1fr 1fr;
           gap: clamp(28px,5vw,72px);
         }
-        .crew-img { filter: drop-shadow(0 -8px 40px rgba(139,92,246,0.30)); }
         @media (max-width: 768px) {
           .footer-grid { grid-template-columns: 1fr !important; }
-          .crew-img { max-width: 560px !important; }
         }
         .footer-link {
           font-size: 17px;
@@ -50,38 +48,38 @@ export default function SiteFooter() {
         }
       `}</style>
 
-      {/* ── Crew band — illustrated Omeglee crew standing on the footer ── */}
+      {/* ── Ambient light — the one background the whole footer shares ── */}
       <div
-        className="crew-band"
+        aria-hidden
         style={{
-          position: 'relative',
-          zIndex: 10,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'flex-end',
-          marginBottom: '-1px',
+          position: 'absolute', top: '-6%', left: '50%', transform: 'translateX(-50%)',
+          width: 'min(1100px, 130%)', height: 520,
+          background: 'radial-gradient(ellipse at 50% 30%, rgba(139,92,246,0.2) 0%, rgba(88,101,242,0.07) 46%, transparent 74%)',
+          filter: 'blur(50px)', pointerEvents: 'none',
+        }}
+      />
+
+      {/* ── Crew artwork — painted straight onto the footer surface ──────
+          Shot on black, so its own floor dissolves into the footer's canvas
+          via the fade below rather than sitting on a separate coloured
+          panel. Pulled down with a negative margin so the crew's feet
+          overlap the content band instead of stopping flush above it. */}
+      <div
+        aria-hidden
+        style={{
+          position: 'relative', zIndex: 1,
+          maxWidth: 1180, margin: '0 auto',
+          marginBottom: 'clamp(-72px, -8vw, -38px)',
         }}
       >
-        {/* soft purple ground glow behind the crew */}
-        <div
-          aria-hidden
-          style={{
-            position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-            width: 'min(90%, 900px)', height: 180,
-            background: 'radial-gradient(ellipse at 50% 100%, rgba(139,92,246,0.35) 0%, transparent 70%)',
-            filter: 'blur(30px)', pointerEvents: 'none',
-          }}
-        />
-        <Reveal dir="up" distance={44} duration={0.9} scale={0.97} className="relative z-[1] w-full flex justify-center">
-          <ScrollParallax distance={18} className="w-full flex justify-center">
+        <Reveal dir="up" distance={44} duration={0.9} scale={0.97} className="w-full">
+          <ScrollParallax distance={18} className="w-full">
             <img
-              src="/footer_icon.png"
+              src="/omeglee_footer.png"
               alt="The Omeglee crew"
-              className="crew-img"
               draggable={false}
               style={{
                 width: '100%',
-                maxWidth: 1060,
                 height: 'auto',
                 display: 'block',
                 pointerEvents: 'none',
@@ -90,23 +88,20 @@ export default function SiteFooter() {
             />
           </ScrollParallax>
         </Reveal>
-      </div>
 
-      {/* ── Footer panel ──────────────────────────────────────── */}
-      <div style={{
-        position: 'relative', zIndex: 5,
-        background: '#15151C',
-        borderRadius: '28px 28px 0 0',
-        padding: 'clamp(44px,5.5vw,68px) clamp(20px,6vw,80px) clamp(150px,16vw,230px)',
-        overflow: 'hidden',
-      }}>
-        {/* Top gradient glow */}
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 160,
-          background: 'linear-gradient(180deg, rgba(123,63,228,0.07) 0%, transparent 100%)',
-          borderRadius: '28px 28px 0 0',
+        {/* fades the crew's own floor into the footer's black canvas */}
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to bottom, transparent 62%, #000000 97%)',
           pointerEvents: 'none',
         }} />
+      </div>
+
+      {/* ── Footer content — same surface, no separate panel colour ──── */}
+      <div style={{
+        position: 'relative', zIndex: 2,
+        padding: 'clamp(28px,4vw,44px) clamp(20px,6vw,80px) clamp(150px,16vw,230px)',
+      }}>
 
         {/* 3-column grid */}
         <RevealGroup stagger={0.12} className="footer-grid relative z-[2]">

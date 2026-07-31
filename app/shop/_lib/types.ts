@@ -46,6 +46,23 @@ export interface ShopBudget {
   total_spent: number;
 }
 
+/** Shop-wide purchase cooldown — one active purchase locks out every other item until it lapses. */
+export interface PurchaseCooldown {
+  enabled: boolean;
+  hours: number;
+  active: boolean;
+  availableAt: string | null;
+  remainingMs: number;
+}
+
+/** `HH:MM`, rounding partial minutes up so the banner never shows 00:00 early. */
+export function formatCooldownHHMM(remainingMs: number): string {
+  const totalMinutes = Math.max(0, Math.ceil(remainingMs / 60_000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
 export type SortMode = 'default' | 'low' | 'high' | 'popular';
 
 export const SORT_OPTIONS: { id: SortMode; label: string; short: string; hint: string }[] = [
@@ -66,12 +83,13 @@ export interface Availability {
   insufficientBudget: boolean;
   missingRole: boolean;
   canAfford: boolean;
+  onCooldown: boolean;
   /** Item-side blockers: nothing the viewer can do about these. */
   unavailable: boolean;
   /** Buy button is inert. */
   blocked: boolean;
   cta: string;
-  tone: 'buy' | 'signin' | 'dead' | 'warn' | 'poor';
+  tone: 'buy' | 'signin' | 'dead' | 'warn' | 'poor' | 'cooldown';
   /** Days until the listing expires, when that's within a week. */
   daysLeft: number | null;
   stockLeft: number | null;
@@ -79,7 +97,15 @@ export interface Availability {
 
 export function availabilityOf(
   item: ShopItem,
-  ctx: { isLoggedIn: boolean; userBalance: number; budget: ShopBudget | null; purchasing: boolean }
+  ctx: {
+    isLoggedIn: boolean;
+    userBalance: number;
+    budget: ShopBudget | null;
+    purchasing: boolean;
+    /** Shop-wide cooldown after a purchase — bypasses afford/role checks, same as clicking always opens the cooldown modal. */
+    onCooldown?: boolean;
+    cooldownLabel?: string;
+  }
 ): Availability {
   const { isLoggedIn, userBalance, budget, purchasing } = ctx;
 
@@ -89,7 +115,8 @@ export function availabilityOf(
   const missingRole = Boolean(isLoggedIn && item.role_required_ids?.length > 0 && item.has_required_role === false);
   const canAfford = isLoggedIn ? userBalance >= item.price : true;
   const unavailable = outOfStock || disabled || insufficientBudget;
-  const blocked = purchasing || unavailable || (isLoggedIn && (!canAfford || missingRole));
+  const onCooldown = Boolean(ctx.onCooldown) && isLoggedIn && !unavailable;
+  const blocked = purchasing || unavailable || (isLoggedIn && !onCooldown && (!canAfford || missingRole));
 
   const daysLeftRaw = item.expires_at
     ? Math.ceil((new Date(item.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -103,6 +130,9 @@ export function availabilityOf(
   } else if (disabled || insufficientBudget) {
     cta = 'Unavailable';
     tone = 'dead';
+  } else if (onCooldown) {
+    cta = ctx.cooldownLabel ?? 'On cooldown';
+    tone = 'cooldown';
   } else if (missingRole) {
     cta = 'Role required';
     tone = 'warn';
@@ -120,6 +150,7 @@ export function availabilityOf(
     insufficientBudget,
     missingRole,
     canAfford,
+    onCooldown,
     unavailable,
     blocked,
     cta,

@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { FiArrowLeft, FiArrowUpRight } from 'react-icons/fi';
-import { CountUp, Item, Magnetic, Reveal, RevealGroup, ScrollParallax, Words } from '@/components/motion';
+import { CountUp, Item, Magnetic, Reveal, RevealGroup, Tilt, Words } from '@/components/motion';
 
 interface TeamHeroProps {
   headcount: number;
@@ -13,9 +13,9 @@ interface TeamHeroProps {
 }
 
 /**
- * Cinematic opener. Mirrors the home page's hero grammar — type above,
- * illustration bottom-anchored, gradient dissolve into the next section — so
- * the two pages read as one product.
+ * The crew portrait carries the section — large, tilted, lit from behind —
+ * with the stats and CTA sitting underneath it rather than the headline
+ * alone. Mirrors the shop hero's rhythm: title, one line, then the art.
  */
 export default function TeamHero({ headcount, departments, since }: TeamHeroProps) {
   const stats = [
@@ -29,17 +29,17 @@ export default function TeamHero({ headcount, departments, since }: TeamHeroProp
       {/* Ambient lighting */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div
-          className="absolute left-1/2 top-[-10%] h-[560px] w-[900px] -translate-x-1/2"
+          className="absolute left-1/2 top-[-8%] h-[600px] w-[980px] -translate-x-1/2"
           style={{
             background:
-              'radial-gradient(ellipse at 50% 40%, rgba(124,58,237,0.22) 0%, rgba(59,158,255,0.10) 42%, transparent 72%)',
-            filter: 'blur(60px)',
+              'radial-gradient(ellipse at 50% 35%, rgba(124,58,237,0.18) 0%, rgba(34,211,238,0.08) 45%, transparent 72%)',
+            filter: 'blur(64px)',
           }}
         />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[1180px] px-5 pt-28 sm:px-8 sm:pt-32">
-        <Reveal mount dir="down" distance={12} className="mb-10">
+        <Reveal mount dir="down" distance={12} className="mb-9">
           <Magnetic strength={0.3} max={10} className="inline-flex">
             <Link
               href="/"
@@ -51,92 +51,79 @@ export default function TeamHero({ headcount, departments, since }: TeamHeroProp
           </Magnetic>
         </Reveal>
 
-        <div className="mx-auto max-w-3xl text-center">
-          <RevealGroup mount stagger={0.11} className="flex flex-col items-center gap-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <RevealGroup mount stagger={0.11} className="flex flex-col items-center gap-5">
             <Item dir="none" scale={0.9}>
               <span className="fx-eyebrow">The people behind Omeglee</span>
             </Item>
 
             <Item>
-              <h1 className="text-[clamp(40px,8vw,76px)] font-extrabold leading-[1.02] tracking-[-0.035em] text-[rgb(var(--color-text-primary))]">
-                <Words text="Meet the" mount delay={0.18} distance={24} />{' '}
-                <Words text="Crew" mount delay={0.32} distance={24} style={{ color: '#A78BFA' }} />
+              <h1 className="text-[clamp(38px,7.5vw,68px)] font-extrabold leading-[1.02] tracking-[-0.035em] text-[rgb(var(--color-text-primary))]">
+                <Words text="Meet the" mount delay={0.16} distance={22} />{' '}
+                <Words text="Crew" mount delay={0.3} distance={22} style={{ color: '#A78BFA' }} />
               </h1>
             </Item>
 
             <Item blur>
-              <p className="mx-auto max-w-xl text-[15px] leading-relaxed text-[var(--fx-ink-2)] sm:text-base">
-                A small group running a very large community — engineering the bot and economy,
-                moderating around the clock, and hosting the events that keep everyone coming back.
+              <p className="mx-auto max-w-md text-[15px] leading-relaxed text-[var(--fx-ink-2)]">
+                The people who build, moderate, and run Omeglee day to day.
               </p>
-            </Item>
-
-            <Item>
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-2.5">
-                {stats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="fx-surface flex items-baseline gap-2 rounded-[var(--fx-r-xs)] px-3.5 py-2"
-                  >
-                    <span className="fx-num text-[17px] font-extrabold tracking-tight text-[rgb(var(--color-text-primary))]">
-                      <CountUp
-                        value={stat.value}
-                        format={stat.plain ? (n) => String(Math.round(n)) : undefined}
-                      />
-                    </span>
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fx-ink-3)]">
-                      {stat.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </Item>
-
-            <Item scale={0.92}>
-              <Magnetic strength={0.24} max={10}>
-                <Link
-                  href="/staff-application"
-                  className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-[15px] font-bold text-black shadow-lg shadow-black/20 transition-colors hover:bg-slate-100"
-                >
-                  Apply to join the team
-                  <FiArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                </Link>
-              </Magnetic>
             </Item>
           </RevealGroup>
         </div>
-      </div>
 
-      {/* Crew illustration — grounded with a glow pool, dissolved into the page */}
-      <div className="relative mt-4 sm:mt-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute bottom-0 left-1/2 h-[180px] w-[min(92%,980px)] -translate-x-1/2"
-          style={{
-            background: 'radial-gradient(ellipse at 50% 100%, rgba(139,92,246,0.34) 0%, transparent 70%)',
-            filter: 'blur(34px)',
-          }}
-        />
-        <Reveal mount dir="up" distance={40} duration={1} delay={0.45} scale={0.98}>
-          <ScrollParallax distance={22} className="flex w-full justify-center">
+        {/* ── Portrait ─────────────────────────────────────────────── */}
+        <Reveal mount dir="up" distance={36} duration={0.95} delay={0.32} scale={0.97} className="relative mt-10 sm:mt-14">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[720px] -translate-x-1/2 -translate-y-1/2"
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(124,58,237,0.22) 0%, rgba(34,211,238,0.1) 42%, transparent 72%)',
+              filter: 'blur(60px)',
+            }}
+          />
+          <Tilt max={4} scale={1.012} perspective={1500} className="relative mx-auto w-full max-w-[640px]">
             <Image
-              src="/team-crew.webp"
+              src="/Omeglee_Team.png"
               alt="Illustration of the Omeglee crew"
-              width={2200}
-              height={832}
+              width={1554}
+              height={1012}
               priority
               draggable={false}
-              className="pointer-events-none w-full max-w-[1180px] select-none"
+              className="pointer-events-none w-full select-none"
             />
-          </ScrollParallax>
+          </Tilt>
         </Reveal>
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-32"
-          style={{
-            background: 'linear-gradient(to top, rgb(var(--color-bg-primary)) 12%, transparent 100%)',
-          }}
-        />
+
+        {/* ── Stats + CTA ──────────────────────────────────────────── */}
+        <RevealGroup stagger={0.1} delay={0.1} className="mx-auto mt-8 flex max-w-2xl flex-col items-center gap-7 pb-6 sm:mt-10">
+          <Item>
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
+              {stats.map((stat) => (
+                <div key={stat.label} className="fx-surface flex items-baseline gap-2 rounded-[var(--fx-r-xs)] px-3.5 py-2">
+                  <span className="fx-num text-[17px] font-extrabold tracking-tight text-[rgb(var(--color-text-primary))]">
+                    <CountUp value={stat.value} format={stat.plain ? (n) => String(Math.round(n)) : undefined} />
+                  </span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fx-ink-3)]">
+                    {stat.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Item>
+
+          <Item scale={0.92}>
+            <Magnetic strength={0.24} max={10}>
+              <Link
+                href="/staff-application"
+                className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-[15px] font-bold text-black shadow-lg shadow-black/20 transition-colors hover:bg-slate-100"
+              >
+                Apply to join the team
+                <FiArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              </Link>
+            </Magnetic>
+          </Item>
+        </RevealGroup>
       </div>
     </section>
   );

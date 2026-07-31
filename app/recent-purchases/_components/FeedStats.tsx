@@ -12,53 +12,37 @@ interface FeedStatsProps {
   currencyName: string;
 }
 
-/**
- * Four figures read straight off the feed on screen — no extra request, and
- * nothing here that the rows below don't already prove.
- */
-export default function FeedStats({
-  count,
-  spent,
-  buyers,
-  biggest,
-  currencyEmoji,
-  currencyName,
-}: FeedStatsProps) {
+/** Four figures read straight off the feed — no extra request, nothing invented. */
+export default function FeedStats({ count, spent, buyers, biggest, currencyEmoji, currencyName }: FeedStatsProps) {
   const cells = [
-    { label: 'Purchases shown', value: count, tint: 'var(--sx-ink)', coin: false },
-    { label: `${currencyName} spent`, value: spent, tint: '#ffd77a', coin: true },
-    { label: 'Members buying', value: buyers, tint: '#a99bff', coin: false },
-    { label: 'Biggest single buy', value: biggest, tint: '#8fbcff', coin: true },
+    { label: 'Purchases', value: count, coin: false },
+    { label: `${currencyName} spent`, value: spent, coin: true },
+    { label: 'Buyers', value: buyers, coin: false },
+    { label: 'Biggest buy', value: biggest, coin: true },
   ];
 
   return (
     <RevealGroup
       stagger={0.07}
-      className="grid grid-cols-2 overflow-hidden border lg:grid-cols-4"
-      style={{ borderRadius: 'var(--sx-r-lg)', borderColor: 'var(--sx-hair)', background: 'rgba(255,255,255,0.022)' }}
+      className="grid grid-cols-2 overflow-hidden rounded-[20px] border border-white/8 bg-white/[0.02] lg:grid-cols-4"
     >
       {cells.map((cell, index) => (
         <Item
           key={cell.label}
           distance={14}
-          // Hairlines follow the wrap: two columns on phones, four on desktop.
           className={[
             'relative p-4 sm:p-5',
-            index >= 2 ? 'border-t lg:border-t-0' : '',
-            index % 2 === 1 ? 'border-l' : '',
-            index > 0 ? 'lg:border-l' : '',
+            index >= 2 ? 'border-t border-white/8 lg:border-t-0' : '',
+            index % 2 === 1 ? 'border-l border-white/8' : '',
+            index > 0 ? 'lg:border-l lg:border-white/8' : '',
           ]
             .filter(Boolean)
             .join(' ')}
-          style={{ borderColor: 'var(--sx-hair)' }}
         >
-          <span className="sx-eyebrow text-[9.5px]">{cell.label}</span>
-          <span
-            className="sx-num mt-2 flex items-center gap-1.5 text-[21px] font-extrabold leading-none"
-            style={{ color: cell.tint }}
-          >
+          <span className="text-[11px] font-semibold text-white/40">{cell.label}</span>
+          <span className="mt-2 flex items-center gap-1.5 text-[20px] font-extrabold leading-none text-white tabular-nums">
             {cell.coin && <CurrencyMark emoji={currencyEmoji} size={15} />}
-            <CountUp value={cell.value} duration={1.3} />
+            <CountUp value={cell.value} duration={1.1} />
           </span>
         </Item>
       ))}

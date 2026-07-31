@@ -3,12 +3,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { FiChevronDown, FiLock, FiLogOut, FiMenu, FiPackage, FiX } from 'react-icons/fi';
 import { FaDiscord } from 'react-icons/fa';
 import CurrencyMark from '@/components/ui/CurrencyMark';
 import { Reveal } from '@/components/motion';
-import AnimatedNumber from './AnimatedNumber';
 
 const LINKS = [
   { label: 'Shop', href: '/shop' },
@@ -23,16 +22,15 @@ interface ShopHeaderProps {
   balance: number;
   currencyEmoji: string;
   currencyName: string;
-  balanceReady: boolean;
   onSignIn: () => void;
   onSignOut: () => void;
 }
 
 /**
- * The Shop replaces the global navbar (see FrontendNavbarMount), so this dock
- * carries both site navigation and the wallet. Geometry deliberately matches
- * the home page's floating pill — same height, same radius, same blur — so
- * arriving from Home reads as the same chrome, just with more in it.
+ * The Shop replaces the global navbar (see FrontendNavbarMount), so this
+ * carries both site navigation and the wallet. Same floating pill geometry as
+ * the home page's <SiteNavbar> — `#0a0a0f]/85`, `border-white/10`, 52-58px
+ * tall — so arriving from Home reads as the same chrome with more in it.
  */
 export default function ShopHeader({
   user,
@@ -40,22 +38,12 @@ export default function ShopHeader({
   balance,
   currencyEmoji,
   currencyName,
-  balanceReady,
   onSignIn,
   onSignOut,
 }: ShopHeaderProps) {
-  const reduce = useReducedMotion();
-  const [condensed, setCondensed] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const onScroll = () => setCondensed(window.scrollY > 40);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   useEffect(() => {
     if (!profileOpen) return;
@@ -67,136 +55,69 @@ export default function ShopHeader({
   }, [profileOpen]);
 
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [menuOpen]);
+  }, [mobileOpen]);
 
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-3 z-40 sm:top-5">
-      <Reveal mount dir="down" distance={18} duration={0.7} className="pointer-events-auto mx-auto w-[94%] max-w-[1120px]">
-        <div
-          className="flex items-center justify-between gap-3 rounded-full border px-3 pl-4 sm:px-4 sm:pl-5"
-          style={{
-            height: condensed ? 56 : 60,
-            borderColor: condensed ? 'rgba(255,255,255,0.11)' : 'rgba(255,255,255,0.06)',
-            background: condensed ? 'rgba(9,9,16,0.82)' : 'rgba(9,9,16,0.42)',
-            backdropFilter: 'blur(26px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(26px) saturate(160%)',
-            boxShadow: condensed ? '0 18px 48px -26px rgba(0,0,0,1)' : 'none',
-            transition: reduce
-              ? 'none'
-              : 'height 340ms var(--sx-ease), background 340ms var(--sx-ease), box-shadow 340ms var(--sx-ease), border-color 340ms var(--sx-ease)',
-          }}
-        >
-          {/* ── Brand ─────────────────────────────────────────────── */}
-          <Link href="/" className="nav-brand flex flex-shrink-0 items-center gap-2.5" aria-label="Omeglee home">
-            <span className="relative block h-7 w-7 overflow-hidden rounded-full sm:h-[30px] sm:w-[30px]">
+    <header className="fixed top-4 sm:top-5 left-0 right-0 z-50 pointer-events-none">
+      <Reveal mount dir="down" distance={18} duration={0.7} className="mx-auto w-[94%] max-w-[980px] pointer-events-auto">
+        <div className="h-[52px] sm:h-[58px] px-4 sm:px-6 flex items-center justify-between rounded-full border border-white/10 bg-[#0a0a0f]/85 backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+          <Link href="/" className="nav-brand flex items-center gap-2.5 flex-shrink-0">
+            <div className="relative w-7 h-7 sm:w-8 sm:h-8">
               <Image
                 src="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif"
-                alt=""
+                alt="Omeglee"
                 fill
-                className="object-cover"
+                className="object-cover rounded-full"
                 unoptimized
               />
-            </span>
-            <span className="hidden text-[15px] font-semibold tracking-[-0.02em] text-[var(--sx-ink)] sm:block">
-              Omeglee
-            </span>
-            <span
-              className="hidden items-center rounded-full border px-2 py-[3px] text-[9.5px] font-extrabold uppercase tracking-[0.16em] lg:inline-flex"
-              style={{
-                borderColor: 'rgba(124,106,245,0.32)',
-                background: 'rgba(124,106,245,0.13)',
-                color: '#b5aaff',
-              }}
-            >
-              Shop
-            </span>
+            </div>
+            <span className="hidden sm:block font-semibold text-sm sm:text-base tracking-tight text-white">Omeglee</span>
           </Link>
 
-          {/* ── Links ─────────────────────────────────────────────── */}
-          <nav className="hidden items-center gap-1 lg:flex">
-            {LINKS.map((link) => {
-              const active = link.href === '/shop';
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  aria-current={active ? 'page' : undefined}
-                  className="sx-focus group relative rounded-full px-3.5 py-2 text-[13.5px] font-medium transition-colors"
-                  style={{ color: active ? 'var(--sx-ink)' : 'var(--sx-ink-2)' }}
-                >
-                  {active && (
-                    <span
-                      aria-hidden
-                      className="absolute inset-0 rounded-full"
-                      style={{
-                        background: 'rgba(255,255,255,0.07)',
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.09)',
-                      }}
-                    />
-                  )}
-                  <span className="relative">{link.label}</span>
-                  {!active && (
-                    <span
-                      aria-hidden
-                      className="absolute bottom-1 left-3.5 right-3.5 h-[1.5px] origin-left scale-x-0 rounded-full transition-transform duration-[340ms] ease-[var(--sx-ease)] group-hover:scale-x-100"
-                      style={{ background: 'linear-gradient(90deg,#7C6AF5,#3B9EFF)' }}
-                    />
-                  )}
-                </Link>
-              );
-            })}
+          <nav className="hidden lg:flex items-center gap-6">
+            {LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={link.href === '/shop' ? 'page' : undefined}
+                className={`nav-link text-[14px] font-medium transition-colors ${
+                  link.href === '/shop' ? 'text-white' : 'text-white/70 hover:text-white'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
-          {/* ── Wallet + account ──────────────────────────────────── */}
-          <div className="flex flex-shrink-0 items-center gap-2" ref={profileRef}>
+          <div className="flex items-center gap-2 flex-shrink-0" ref={profileRef}>
             {authenticated ? (
               <>
                 <div
-                  className="relative flex items-center gap-2.5 overflow-hidden rounded-full border py-1.5 pl-2 pr-3.5"
-                  style={{
-                    borderColor: 'rgba(246,185,59,0.24)',
-                    background: 'linear-gradient(120deg, rgba(246,185,59,0.16), rgba(246,185,59,0.04) 62%)',
-                  }}
+                  className="flex items-center gap-2 rounded-full border border-[#3B9EFF]/25 bg-gradient-to-r from-[#3B9EFF]/15 to-[#3B9EFF]/5 py-1.5 pl-2 pr-3"
                   title={`Your ${currencyName} balance`}
                 >
-                  <span
-                    className="flex h-6 w-6 items-center justify-center rounded-full"
-                    style={{ background: 'rgba(246,185,59,0.16)' }}
-                  >
-                    <CurrencyMark emoji={currencyEmoji} size={14} />
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3B9EFF]/15">
+                    <CurrencyMark emoji={currencyEmoji} size={13} />
                   </span>
-                  <span className="flex flex-col leading-none">
-                    <span className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-[rgba(246,185,59,0.72)]">
-                      Balance
-                    </span>
-                    {balanceReady ? (
-                      <span className="mt-[3px] text-[13.5px] font-extrabold text-[#ffd77a]">
-                        <AnimatedNumber value={balance} />
-                      </span>
-                    ) : (
-                      <span className="sx-skel mt-[4px] block h-3 w-12 rounded-full" />
-                    )}
-                  </span>
+                  <span className="text-[13px] font-bold text-white">{balance.toLocaleString()}</span>
                 </div>
 
                 <Link
                   href="/purchases"
-                  className="sx-focus hidden items-center gap-2 rounded-full border px-3.5 py-2 text-[12.5px] font-semibold transition-colors md:inline-flex"
-                  style={{ borderColor: 'var(--sx-hair)', color: 'var(--sx-ink-2)' }}
-                  title="Everything you own"
+                  className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-2 text-[12.5px] font-semibold text-white/80 transition-colors hover:text-white hover:bg-white/5"
                 >
-                  <FiPackage className="h-3.5 w-3.5" style={{ color: '#8fbcff' }} />
+                  <FiPackage className="h-3.5 w-3.5" />
                   My stuff
                 </Link>
 
                 <button
                   type="button"
                   onClick={() => setProfileOpen((open) => !open)}
-                  className="sx-focus flex items-center gap-1.5 rounded-full p-[3px] transition-colors hover:bg-white/5"
+                  className="flex items-center gap-1.5 rounded-full p-[3px] transition-colors hover:bg-white/5"
                   aria-haspopup="menu"
                   aria-expanded={profileOpen}
                 >
@@ -204,11 +125,10 @@ export default function ShopHeader({
                     src={user?.image || 'https://cdn.discordapp.com/embed/avatars/0.png'}
                     alt={user?.name || 'Your avatar'}
                     className="h-8 w-8 rounded-full object-cover"
-                    style={{ boxShadow: '0 0 0 1.5px rgba(124,106,245,0.45)' }}
                   />
                   <FiChevronDown
-                    className="hidden h-3.5 w-3.5 transition-transform duration-300 sm:block"
-                    style={{ color: 'var(--sx-ink-3)', transform: profileOpen ? 'rotate(180deg)' : 'none' }}
+                    className="hidden sm:block h-3.5 w-3.5 text-white/50 transition-transform duration-300"
+                    style={{ transform: profileOpen ? 'rotate(180deg)' : 'none' }}
                   />
                 </button>
 
@@ -216,46 +136,40 @@ export default function ShopHeader({
                   {profileOpen && (
                     <motion.div
                       role="menu"
-                      initial={reduce ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.96 }}
+                      initial={{ opacity: 0, y: -8, scale: 0.96 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={reduce ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.97 }}
-                      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-                      className="sx-panel-solid absolute right-0 top-[calc(100%+10px)] w-[236px] origin-top-right overflow-hidden p-1.5"
-                      style={{ borderRadius: 'var(--sx-r-md)' }}
+                      exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute right-0 top-[calc(100%+10px)] w-56 origin-top-right overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d12]/95 backdrop-blur-2xl shadow-2xl p-1.5"
                     >
-                      <div className="px-3 pb-2.5 pt-2">
-                        <p className="truncate text-[13px] font-bold text-[var(--sx-ink)]">
-                          {user?.name || 'Discord user'}
-                        </p>
-                        <p className="sx-mono mt-0.5 truncate text-[10.5px] text-[var(--sx-ink-4)]">
-                          {user?.id || ''}
-                        </p>
+                      <div className="px-3 pb-2 pt-2">
+                        <p className="truncate text-[13px] font-bold text-white">{user?.name || 'Discord user'}</p>
                       </div>
-                      <div className="h-px" style={{ background: 'var(--sx-hair)' }} />
+                      <div className="h-px bg-white/10" />
                       <Link
                         href="/purchases"
                         onClick={() => setProfileOpen(false)}
-                        className="mt-1.5 flex items-center gap-2.5 rounded-[var(--sx-r-xs)] px-3 py-2.5 text-[13px] font-semibold text-[var(--sx-ink-2)] transition-colors hover:bg-white/[0.06] hover:text-[var(--sx-ink)]"
+                        className="mt-1 flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-white/75 transition-colors hover:bg-white/5 hover:text-white"
                       >
-                        <FiPackage className="h-4 w-4" style={{ color: '#8fbcff' }} />
+                        <FiPackage className="h-4 w-4 text-[#3B9EFF]" />
                         My purchases
                       </Link>
                       <Link
                         href="/admin"
                         onClick={() => setProfileOpen(false)}
-                        className="flex items-center gap-2.5 rounded-[var(--sx-r-xs)] px-3 py-2.5 text-[13px] font-semibold text-[var(--sx-ink-2)] transition-colors hover:bg-white/[0.06] hover:text-[var(--sx-ink)]"
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-white/75 transition-colors hover:bg-white/5 hover:text-white"
                       >
-                        <FiLock className="h-4 w-4" style={{ color: '#b6a4ff' }} />
+                        <FiLock className="h-4 w-4 text-white/50" />
                         Admin panel
                       </Link>
-                      <div className="my-1 h-px" style={{ background: 'var(--sx-hair)' }} />
+                      <div className="my-1 h-px bg-white/10" />
                       <button
                         type="button"
                         onClick={() => {
                           setProfileOpen(false);
                           onSignOut();
                         }}
-                        className="flex w-full items-center gap-2.5 rounded-[var(--sx-r-xs)] px-3 py-2.5 text-left text-[13px] font-semibold text-[#ff9aa6] transition-colors hover:bg-[rgba(251,113,133,0.1)]"
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-red-400 transition-colors hover:bg-red-500/10"
                       >
                         <FiLogOut className="h-4 w-4" />
                         Sign out
@@ -268,8 +182,7 @@ export default function ShopHeader({
               <button
                 type="button"
                 onClick={onSignIn}
-                className="sx-focus group inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-bold text-white transition-all"
-                style={{ background: '#5865F2', boxShadow: '0 10px 26px -14px rgba(88,101,242,0.9)' }}
+                className="inline-flex items-center gap-2 rounded-full bg-[#5865F2] px-3.5 sm:px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-[#4752C4]"
               >
                 <FaDiscord className="h-4 w-4" />
                 <span className="hidden sm:inline">Sign in</span>
@@ -278,36 +191,29 @@ export default function ShopHeader({
 
             <button
               type="button"
-              onClick={() => setMenuOpen((open) => !open)}
-              className="sx-focus flex h-9 w-9 items-center justify-center rounded-full border transition-colors hover:bg-white/5 lg:hidden"
-              style={{ borderColor: 'var(--sx-hair)' }}
+              onClick={() => setMobileOpen((open) => !open)}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white transition-colors hover:bg-white/5 lg:hidden"
               aria-label="Menu"
-              aria-expanded={menuOpen}
+              aria-expanded={mobileOpen}
             >
-              {menuOpen ? (
-                <FiX className="h-4 w-4 text-[var(--sx-ink)]" />
-              ) : (
-                <FiMenu className="h-4 w-4 text-[var(--sx-ink)]" />
-              )}
+              {mobileOpen ? <FiX className="h-4 w-4" /> : <FiMenu className="h-4 w-4" />}
             </button>
           </div>
         </div>
 
-        {/* ── Mobile sheet ─────────────────────────────────────────── */}
         <AnimatePresence>
-          {menuOpen && (
+          {mobileOpen && (
             <motion.nav
-              initial={reduce ? { opacity: 0 } : { opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
+              exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-              className="sx-panel-solid mt-2.5 overflow-hidden p-2 lg:hidden"
-              style={{ borderRadius: 'var(--sx-r-lg)' }}
+              className="mt-2 overflow-hidden rounded-2xl border border-white/10 bg-[#09090b]/95 backdrop-blur-xl p-2 shadow-2xl lg:hidden"
             >
               <Link
                 href="/"
-                onClick={() => setMenuOpen(false)}
-                className="block rounded-[var(--sx-r-sm)] px-3.5 py-3 text-[14px] font-semibold text-[var(--sx-ink-2)] transition-colors hover:bg-white/[0.06] hover:text-[var(--sx-ink)]"
+                onClick={() => setMobileOpen(false)}
+                className="block rounded-xl px-3.5 py-3 text-[14px] font-semibold text-white/75 transition-colors hover:bg-white/5 hover:text-white"
               >
                 Home
               </Link>
@@ -315,21 +221,19 @@ export default function ShopHeader({
                 <Link
                   key={link.href}
                   href={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-between rounded-[var(--sx-r-sm)] px-3.5 py-3 text-[14px] font-semibold transition-colors hover:bg-white/[0.06]"
-                  style={{ color: link.href === '/shop' ? 'var(--sx-ink)' : 'var(--sx-ink-2)' }}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center justify-between rounded-xl px-3.5 py-3 text-[14px] font-semibold transition-colors hover:bg-white/5 ${
+                    link.href === '/shop' ? 'text-white' : 'text-white/75'
+                  }`}
                 >
                   {link.label}
-                  {link.href === '/shop' && (
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: '#7C6AF5' }} />
-                  )}
                 </Link>
               ))}
               {authenticated && (
                 <Link
                   href="/purchases"
-                  onClick={() => setMenuOpen(false)}
-                  className="block rounded-[var(--sx-r-sm)] px-3.5 py-3 text-[14px] font-semibold text-[var(--sx-ink-2)] transition-colors hover:bg-white/[0.06] hover:text-[var(--sx-ink)]"
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-xl px-3.5 py-3 text-[14px] font-semibold text-white/75 transition-colors hover:bg-white/5 hover:text-white"
                 >
                   My stuff
                 </Link>

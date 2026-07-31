@@ -67,26 +67,19 @@ export default function CartDock({ pending, currencyEmoji, copiedCode, onCopy }:
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.96 }}
-            transition={
-              reduce ? { duration: 0.2 } : { type: 'spring', stiffness: 340, damping: 30, mass: 0.75 }
-            }
-            className="sx-panel-solid absolute bottom-[calc(100%+14px)] right-0 w-[min(360px,calc(100vw-32px))] origin-bottom-right overflow-hidden"
-            style={{ borderRadius: 'var(--sx-r-lg)' }}
+            transition={reduce ? { duration: 0.2 } : { type: 'spring', stiffness: 340, damping: 30, mass: 0.75 }}
+            className="absolute bottom-[calc(100%+14px)] right-0 w-[min(360px,calc(100vw-32px))] origin-bottom-right overflow-hidden rounded-[20px] border border-white/10 bg-[#0d0d12] shadow-2xl"
             role="dialog"
             aria-label="Codes waiting to be redeemed"
           >
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-px"
-              style={{ background: 'linear-gradient(90deg, transparent, rgba(124,106,245,0.6), transparent)' }}
-            />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#3B9EFF]/50 to-transparent" />
 
             <div className="flex items-start justify-between gap-3 px-5 pb-3.5 pt-4">
               <div>
-                <h2 className="text-[14.5px] font-extrabold tracking-[-0.015em] text-[var(--sx-ink)]">
+                <h2 className="text-[14.5px] font-extrabold tracking-[-0.015em] text-white">
                   {count > 0 ? 'Waiting to be redeemed' : 'Nothing waiting'}
                 </h2>
-                <p className="mt-1 text-[12px] leading-snug text-[var(--sx-ink-3)]">
+                <p className="mt-1 text-[12px] leading-snug text-white/45">
                   {count > 0
                     ? 'DM the Omeglee bot with a code to claim it.'
                     : 'Everything you own has been claimed already.'}
@@ -96,7 +89,7 @@ export default function CartDock({ pending, currencyEmoji, copiedCode, onCopy }:
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="sx-focus -mr-1 mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[var(--sx-ink-3)] transition-colors hover:bg-white/[0.07] hover:text-[var(--sx-ink)]"
+                className="-mr-1 mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-white/45 transition-colors hover:bg-white/[0.07] hover:text-white"
               >
                 <FiX className="h-3.5 w-3.5" />
               </button>
@@ -110,43 +103,36 @@ export default function CartDock({ pending, currencyEmoji, copiedCode, onCopy }:
                     initial={reduce ? false : { opacity: 0, x: 14 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1], delay: index * 0.045 }}
-                    className="mb-1.5 rounded-[var(--sx-r-md)] border p-3.5 transition-colors hover:border-[var(--sx-hair-2)]"
-                    style={{ borderColor: 'var(--sx-hair)', background: 'rgba(255,255,255,0.022)' }}
+                    className="mb-1.5 rounded-2xl border border-white/8 bg-white/[0.02] p-3.5 transition-colors hover:border-white/15"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <p className="min-w-0 flex-1 truncate text-[13px] font-bold text-[var(--sx-ink)]">
-                        {purchase.itemName}
-                      </p>
-                      <span className="sx-num flex flex-shrink-0 items-center gap-1 text-[12px] font-bold text-[#ffd77a]">
+                      <p className="min-w-0 flex-1 truncate text-[13px] font-bold text-white">{purchase.itemName}</p>
+                      <span className="flex flex-shrink-0 items-center gap-1 text-[12px] font-bold text-[#ffd77a]">
                         <CurrencyMark emoji={currencyEmoji} size={12} />
                         {formatNumber(purchase.pricePaid)}
                       </span>
                     </div>
 
                     <div className="mt-2.5 flex items-center gap-2">
-                      <code
-                        className="sx-mono min-w-0 flex-1 truncate rounded-[var(--sx-r-xs)] px-2.5 py-1.5 text-[12.5px] font-bold tracking-[0.14em] text-[#ffd77a]"
-                        style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid var(--sx-hair)' }}
-                      >
+                      <code className="min-w-0 flex-1 truncate rounded-lg border border-white/8 bg-black/45 px-2.5 py-1.5 font-mono text-[12.5px] font-bold tracking-[0.14em] text-[#ffd77a]">
                         {purchase.redeemCode}
                       </code>
                       <button
                         type="button"
                         onClick={() => onCopy(purchase.redeemCode)}
                         aria-label={`Copy code for ${purchase.itemName}`}
-                        className="sx-focus flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[var(--sx-r-xs)] border transition-colors hover:bg-white/[0.07]"
-                        style={{ borderColor: 'var(--sx-hair)' }}
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-white/8 transition-colors hover:bg-white/[0.07]"
                       >
                         {copiedCode === purchase.redeemCode ? (
-                          <FiCheck className="h-3.5 w-3.5 text-[#6ee7b7]" />
+                          <FiCheck className="h-3.5 w-3.5 text-emerald-400" />
                         ) : (
-                          <FiCopy className="h-3.5 w-3.5 text-[var(--sx-ink-3)]" />
+                          <FiCopy className="h-3.5 w-3.5 text-white/45" />
                         )}
                       </button>
                     </div>
 
                     {purchase.expiresAt && (
-                      <p className="mt-2 flex items-center gap-1.5 text-[10.5px] font-medium text-[var(--sx-ink-4)]">
+                      <p className="mt-2 flex items-center gap-1.5 text-[10.5px] font-medium text-white/30">
                         <FiClock className="h-2.5 w-2.5" />
                         Expires {new Date(purchase.expiresAt).toLocaleString('en-US', dateFormat)}
                       </p>
@@ -156,14 +142,14 @@ export default function CartDock({ pending, currencyEmoji, copiedCode, onCopy }:
               </ul>
             )}
 
-            <div className="border-t p-2.5" style={{ borderColor: 'var(--sx-hair)' }}>
+            <div className="border-t border-white/8 p-2.5">
               <Link
                 href="/purchases"
                 onClick={() => setOpen(false)}
-                className="group flex items-center justify-between rounded-[var(--sx-r-sm)] px-3 py-2.5 text-[13px] font-bold text-[var(--sx-ink)] transition-colors hover:bg-white/[0.06]"
+                className="group flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-white/[0.06]"
               >
                 Open my stuff
-                <FiArrowUpRight className="h-3.5 w-3.5 text-[var(--sx-ink-3)] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                <FiArrowUpRight className="h-3.5 w-3.5 text-white/45 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </Link>
             </div>
           </motion.div>
@@ -181,55 +167,55 @@ export default function CartDock({ pending, currencyEmoji, copiedCode, onCopy }:
           aria-expanded={open}
           whileTap={reduce ? undefined : { scale: 0.94 }}
           transition={{ type: 'spring', stiffness: 420, damping: 26 }}
-          className="sx-focus relative flex items-center overflow-visible border pl-[56px] pr-0 sm:pl-[60px]"
-          style={{
-            height: 62,
-            borderRadius: 999,
-            borderColor: count > 0 ? 'rgba(124,106,245,0.34)' : 'var(--sx-hair)',
-            background: 'rgba(11,11,20,0.84)',
-            backdropFilter: 'blur(22px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(22px) saturate(160%)',
-            boxShadow: '0 26px 54px -26px rgba(0,0,0,1)',
-          }}
+          className={`relative flex h-[62px] items-center overflow-visible rounded-full border pl-[56px] pr-0 backdrop-blur-2xl sm:pl-[60px] ${
+            count > 0 ? 'border-[#3B9EFF]/30' : 'border-white/10'
+          }`}
+          style={{ background: 'rgba(11,11,20,0.9)', boxShadow: '0 26px 54px -26px rgba(0,0,0,1)' }}
         >
-          {/* the mascot leans out of the dock */}
-          <span
+          {/* the mascot leans out of the dock, idling with a gentle bob */}
+          <motion.span
             aria-hidden
             className="pointer-events-none absolute bottom-[-6px] left-[-14px] block"
             style={{ width: 90, height: 90 }}
+            animate={reduce ? undefined : { y: hovered ? -8 : [0, -6, 0] }}
+            transition={
+              reduce
+                ? undefined
+                : hovered
+                ? { duration: 0.28, ease: 'easeOut' }
+                : { duration: 3.4, repeat: Infinity, ease: 'easeInOut' }
+            }
           >
             <Image
               src="/Omegle_cart.png"
               alt=""
               width={90}
               height={90}
-              className={`sx-cutout select-none ${reduce ? '' : 'sx-bob'}`}
+              className="select-none"
               style={{
                 width: 90,
                 height: 90,
+                mixBlendMode: 'screen',
                 filter: 'drop-shadow(0 12px 18px rgba(0,0,0,0.75))',
-                transition: 'transform 320ms var(--sx-ease)',
-                transform: hovered && !reduce ? 'translateY(-3px) scale(1.05)' : 'none',
+                transform: hovered && !reduce ? 'scale(1.05)' : 'none',
+                transition: 'transform 320ms ease-out',
               }}
               draggable={false}
             />
-          </span>
+          </motion.span>
 
           {/* label reveals itself on hover / while open */}
           <motion.span
             initial={false}
-            animate={{
-              width: hovered || open ? 'auto' : 0,
-              opacity: hovered || open ? 1 : 0,
-            }}
+            animate={{ width: hovered || open ? 'auto' : 0, opacity: hovered || open ? 1 : 0 }}
             transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }}
             className="overflow-hidden whitespace-nowrap"
           >
             <span className="block pr-5 text-left">
-              <span className="block text-[9.5px] font-extrabold uppercase tracking-[0.15em] text-[var(--sx-ink-4)]">
+              <span className="block text-[9.5px] font-extrabold uppercase tracking-[0.15em] text-white/35">
                 {count > 0 ? 'Unredeemed' : 'My stuff'}
               </span>
-              <span className="mt-0.5 block text-[13px] font-extrabold text-[var(--sx-ink)]">
+              <span className="mt-0.5 block text-[13px] font-extrabold text-white">
                 {count > 0 ? `${count} code${count === 1 ? '' : 's'} waiting` : 'All claimed'}
               </span>
             </span>
@@ -244,18 +230,14 @@ export default function CartDock({ pending, currencyEmoji, copiedCode, onCopy }:
                 animate={{ scale: 1, opacity: 1 }}
                 exit={reduce ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 520, damping: 20 }}
-                className="sx-num absolute -right-1 -top-1 flex h-[22px] min-w-[22px] items-center justify-center rounded-full px-1 text-[11px] font-black text-white"
-                style={{
-                  background: 'linear-gradient(140deg, #8b7cff, #5b45e0)',
-                  boxShadow: '0 6px 16px -6px rgba(124,106,245,1), 0 0 0 2px rgba(11,11,20,0.9)',
-                }}
+                className="absolute -right-1 -top-1 flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#3B9EFF] px-1 text-[11px] font-black tabular-nums text-white"
+                style={{ boxShadow: '0 0 0 2px rgba(11,11,20,0.9)' }}
               >
                 {count}
               </motion.span>
             )}
           </AnimatePresence>
 
-          {/* keeps the collapsed pill circular */}
           {!(hovered || open) && <span aria-hidden style={{ width: 6 }} />}
         </motion.button>
       </div>

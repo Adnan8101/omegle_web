@@ -12,6 +12,8 @@ interface ProductGridProps {
   budget: ShopBudget | null;
   currencyEmoji: string;
   purchasingId: string | null;
+  onCooldown: boolean;
+  cooldownLabel: string;
   onBuy: (item: ShopItem) => void;
 }
 
@@ -23,40 +25,34 @@ export default function ProductGrid({
   budget,
   currencyEmoji,
   purchasingId,
+  onCooldown,
+  cooldownLabel,
   onBuy,
 }: ProductGridProps) {
   const reduce = useReducedMotion();
 
-  // Only the first screenful staggers; anything below arrives on time. Keeps a
-  // forty-item shop from spending two seconds dealing itself out.
+  // Only the first screenful staggers; anything below arrives on time.
   const enter = (index: number) =>
     reduce
       ? { duration: 0 }
-      : { duration: 0.55, ease: [0.22, 1, 0.36, 1] as const, delay: Math.min(index, 7) * 0.055 };
+      : { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const, delay: Math.min(index, 7) * 0.05 };
+
+  const cardProps = { isLoggedIn, userBalance, budget, currencyEmoji, onCooldown, cooldownLabel, onBuy };
 
   return (
     <div className="space-y-4 sm:space-y-5">
       {featured && (
         <motion.div
-          initial={reduce ? false : { opacity: 0, y: 26, filter: 'blur(10px)' }}
-          whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          initial={reduce ? false : { opacity: 0, y: 22 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="mb-3 flex items-center gap-3">
-            <span className="sx-eyebrow">Pick of the shelf</span>
-            <span className="h-px flex-1" style={{ background: 'linear-gradient(90deg, var(--sx-hair-2), transparent)' }} />
+            <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/45">Pick of the shelf</span>
+            <span className="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent" />
           </div>
-          <ProductCard
-            featured
-            item={featured}
-            isLoggedIn={isLoggedIn}
-            userBalance={userBalance}
-            budget={budget}
-            currencyEmoji={currencyEmoji}
-            purchasing={purchasingId === featured.id}
-            onBuy={onBuy}
-          />
+          <ProductCard featured item={featured} purchasing={purchasingId === featured.id} {...cardProps} />
         </motion.div>
       )}
 
@@ -65,21 +61,13 @@ export default function ProductGrid({
           <motion.div
             key={item.id}
             layout={!reduce}
-            initial={reduce ? false : { opacity: 0, y: 22, filter: 'blur(8px)' }}
-            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            initial={reduce ? false : { opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
             transition={enter(index)}
             className="h-full"
           >
-            <ProductCard
-              item={item}
-              isLoggedIn={isLoggedIn}
-              userBalance={userBalance}
-              budget={budget}
-              currencyEmoji={currencyEmoji}
-              purchasing={purchasingId === item.id}
-              onBuy={onBuy}
-            />
+            <ProductCard item={item} purchasing={purchasingId === item.id} {...cardProps} />
           </motion.div>
         ))}
       </div>
@@ -94,29 +82,20 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
       {Array.from({ length: count }).map((_, index) => (
         <div
           key={index}
-          className="flex h-full flex-col border"
-          style={{
-            borderRadius: 'var(--sx-r-lg)',
-            borderColor: 'var(--sx-hair)',
-            background: 'linear-gradient(168deg, rgba(255,255,255,0.04), rgba(255,255,255,0.012))',
-            // A touch of drift between placeholders so the wall of them breathes.
-            opacity: 1 - (index % 4) * 0.07,
-          }}
+          className="flex h-full flex-col rounded-[20px] border border-white/8 bg-white/[0.025]"
+          style={{ opacity: 1 - (index % 4) * 0.07 }}
         >
           <div className="p-[6px]">
-            <div
-              className="sx-skel w-full"
-              style={{ aspectRatio: '5 / 4', borderRadius: 'calc(var(--sx-r-lg) - 7px)' }}
-            />
+            <div className="w-full animate-pulse rounded-[16px] bg-white/[0.04]" style={{ aspectRatio: '5 / 4' }} />
           </div>
           <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
-            <div className="sx-skel h-4 w-3/4 rounded-full" />
-            <div className="sx-skel mt-2.5 h-3 w-full rounded-full" />
-            <div className="sx-skel mt-2 h-3 w-2/5 rounded-full" />
+            <div className="h-4 w-3/4 animate-pulse rounded-full bg-white/[0.04]" />
+            <div className="mt-2.5 h-3 w-full animate-pulse rounded-full bg-white/[0.04]" />
+            <div className="mt-2 h-3 w-2/5 animate-pulse rounded-full bg-white/[0.04]" />
             <div className="mt-auto pt-5">
-              <div className="sx-skel h-3 w-10 rounded-full" />
-              <div className="sx-skel mt-2 h-6 w-24 rounded-full" />
-              <div className="sx-skel mt-4 h-11 w-full" style={{ borderRadius: 'var(--sx-r-sm)' }} />
+              <div className="h-3 w-10 animate-pulse rounded-full bg-white/[0.04]" />
+              <div className="mt-2 h-6 w-24 animate-pulse rounded-full bg-white/[0.04]" />
+              <div className="mt-4 h-11 w-full animate-pulse rounded-xl bg-white/[0.04]" />
             </div>
           </div>
         </div>
