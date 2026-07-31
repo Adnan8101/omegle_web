@@ -1,7 +1,7 @@
 import mongoose, { Schema, Model } from 'mongoose';
 export interface IStaffApplication {
   _id?: string;
-  applicationRole?: 'moderation' | 'event_team' | 'gaming_mod' | 'media_team' | 'entertainment_team';
+  applicationRole?: 'moderation' | 'event_team' | 'gaming_mod' | 'media_team';
   dailyAvailability?: string;
   roleAnswers?: Record<string, string>;
   formVersion?: number;
@@ -46,7 +46,7 @@ const StaffApplicationSchema = new Schema<IStaffApplication>(
   {
     applicationRole: {
       type: String,
-      enum: ['moderation', 'event_team', 'gaming_mod', 'media_team', 'entertainment_team'],
+      enum: ['moderation', 'event_team', 'gaming_mod', 'media_team'],
       default: 'moderation',
     },
     dailyAvailability: { type: String, required: false },

@@ -29,15 +29,21 @@ const nextConfig = {
     // websocket/eval-based Fast Refresh, since dev builds are never public.
     if (process.env.NODE_ENV !== 'production') return []
 
-    // NOTE: a Content-Security-Policy and Cross-Origin-Opener-Policy were
-    // trialled here and pulled after a production Lighthouse run showed a
-    // severe regression (Speed Index 3.2s -> 10.7s, TBT 0 -> 130ms, a new
-    // "browser errors logged to console" flag, and a ~16s render delay on
-    // the LCP element) — all symptoms of blocked/broken script execution,
-    // and the CSP wasn't even being credited by Lighthouse's own audit. Redo
-    // that pair with real browser testing (not just a local `next start`
-    // curl check) before reintroducing them; the headers below are purely
-    // declarative and can't block resource loading, so they're safe as-is.
+    // NOTE: a Content-Security-Policy was trialled here and pulled after a
+    // production Lighthouse run showed a severe regression (Speed Index
+    // 3.2s -> 10.7s, TBT 0 -> 130ms, a new "browser errors logged to
+    // console" flag, and a ~16s render delay on the LCP element) — all
+    // symptoms of blocked/broken script execution, and it wasn't even being
+    // credited by Lighthouse's own CSP audit. A real one needs a proper
+    // nonce-based script-src worked out against a live browser session, not
+    // a static 'unsafe-inline' policy — don't reintroduce it without that.
+    //
+    // Cross-Origin-Opener-Policy was pulled in the same rollback out of
+    // caution, then confirmed independently to be unrelated (COOP can't
+    // block a script/style/resource load — it only governs window.opener
+    // between cross-origin popups) and re-added below. If Discord sign-in
+    // or the Razorpay checkout flow ever break after a deploy, this is the
+    // first thing to revert.
     return [
       {
         source: '/:path*',
@@ -51,6 +57,7 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },

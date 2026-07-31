@@ -1,47 +1,56 @@
-export type StaffRole =
-  | 'moderation'
-  | 'event_team'
-  | 'gaming_mod'
-  | 'media_team'
-  | 'entertainment_team';
+export type StaffRole = 'moderation' | 'event_team' | 'gaming_mod' | 'media_team';
+
 export interface StaffQuestion {
   id: string;
   title: string;
   prompt: string;
   placeholder: string;
 }
+
 export interface StaffRoleMeta {
   id: StaffRole;
   label: string;
   shortDescription: string;
+  /** Dedicated artwork for this role's card — see /public. */
+  image: string;
+  /** Hex accent sampled from that artwork, driving the card's glow/badge colour. */
+  accent: string;
 }
+
+/** The hero's own artwork — distinct from any single role. */
+export const APPLICATION_HERO_IMAGE = '/staff_form.webp';
+
 export const STAFF_ROLES: StaffRoleMeta[] = [
   {
     id: 'moderation',
-    label: 'Moderation',
+    label: 'Moderator',
     shortDescription: 'Rule enforcement, safety, and fair moderation decisions.',
-  },
-  {
-    id: 'event_team',
-    label: 'Event Team',
-    shortDescription: 'Plan, host, and improve structured community events.',
+    image: '/mod_form.webp',
+    accent: '#3B9EFF',
   },
   {
     id: 'gaming_mod',
-    label: 'Gaming Mod',
-    shortDescription: 'Revive and manage active, inclusive gaming voice channels.',
+    label: 'Vanguard',
+    shortDescription: 'Front-line patrol for gaming voice channels — keep them active, fair, and fun.',
+    image: '/vangaurd_form.webp',
+    accent: '#FF5A45',
   },
   {
     id: 'media_team',
     label: 'Media Team',
     shortDescription: 'Capture, edit, and publish content that grows engagement.',
+    image: '/media_team_formn.webp',
+    accent: '#2DD4BF',
   },
   {
-    id: 'entertainment_team',
-    label: 'Entertainment Team',
-    shortDescription: 'Host music/jamming activities and keep daily VC energy high.',
+    id: 'event_team',
+    label: 'Event Team',
+    shortDescription: 'Plan, host, and improve structured community events.',
+    image: '/event_team_form.webp',
+    accent: '#FBBF24',
   },
 ];
+
 export const COMMON_QUESTIONS: StaffQuestion[] = [
   {
     id: 'introduction_purpose',
@@ -60,6 +69,7 @@ export const COMMON_QUESTIONS: StaffQuestion[] = [
       'Example: 2-3 hours daily, mostly 7 PM to 10 PM IST, available 6 days a week.',
   },
 ];
+
 export const ROLE_QUESTIONS: Record<StaffRole, StaffQuestion[]> = {
   moderation: [
     {
@@ -214,51 +224,8 @@ export const ROLE_QUESTIONS: Record<StaffRole, StaffQuestion[]> = {
       placeholder: 'Content improvements, distribution tactics, and iteration loop.',
     },
   ],
-  entertainment_team: [
-    {
-      id: 'daily_jamming_activity',
-      title: 'Daily VC Jamming Activity',
-      prompt:
-        'Voice channels are quiet. How will you start casual music/jamming sessions naturally and keep people in VC?',
-      placeholder: 'Natural kickoff strategy and engagement flow.',
-    },
-    {
-      id: 'hosting_music_sessions',
-      title: 'Hosting Music Sessions',
-      prompt:
-        'How would you structure song flow, turn-taking, interaction, and basic rules for a smooth session?',
-      placeholder: 'Balanced structure and relaxed vibe execution.',
-    },
-    {
-      id: 'keeping_energy_consistent',
-      title: 'Keeping Energy Consistent',
-      prompt:
-        'During live sessions, engagement drops. What immediate actions will you take to recover energy?',
-      placeholder: 'Real-time facilitation and participation tactics.',
-    },
-    {
-      id: 'inclusive_environment',
-      title: 'Inclusive Environment',
-      prompt:
-        'Members have different music tastes and some are shy. How do you keep sessions inclusive and welcoming?',
-      placeholder: 'Inclusion methods without pressure.',
-    },
-    {
-      id: 'external_artist_management',
-      title: 'External Artist / Host Management',
-      prompt:
-        'How would you find, evaluate, approach, negotiate, and coordinate external artists/hosts for events?',
-      placeholder: 'Selection criteria, budget discussion, and execution steps.',
-    },
-    {
-      id: 'long_term_engagement_strategy',
-      title: 'Long-Term Engagement Strategy',
-      prompt:
-        'How will you design a sustainable mix of daily jamming, themed nights, and special events over time?',
-      placeholder: 'Sustainable framework, cadence, and variety plan.',
-    },
-  ],
 };
+
 export const STAFF_ROLE_LABELS: Record<StaffRole, string> = STAFF_ROLES.reduce(
   (acc, role) => {
     acc[role.id] = role.label;
@@ -266,10 +233,16 @@ export const STAFF_ROLE_LABELS: Record<StaffRole, string> = STAFF_ROLES.reduce(
   },
   {} as Record<StaffRole, string>
 );
+
 export function getRoleLabel(role: string | undefined | null): string {
   if (!role) return 'Unknown Role';
   return STAFF_ROLE_LABELS[role as StaffRole] || role;
 }
+
+export function getRoleMeta(role: string | undefined | null): StaffRoleMeta | undefined {
+  return STAFF_ROLES.find((r) => r.id === role);
+}
+
 export function getQuestionTitle(role: string | undefined | null, key: string): string {
   const roleKey = role as StaffRole | undefined;
   const roleQuestions = roleKey ? ROLE_QUESTIONS[roleKey] : undefined;

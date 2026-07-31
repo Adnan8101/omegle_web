@@ -12,7 +12,6 @@ const DEFAULT_ROLE_FORM_SETTINGS: Record<StaffRole, RoleFormSetting> = {
   event_team: { isOpen: true, closedMessage: '' },
   gaming_mod: { isOpen: true, closedMessage: '' },
   media_team: { isOpen: true, closedMessage: '' },
-  entertainment_team: { isOpen: true, closedMessage: '' },
 };
 interface Application {
   _id: string;

@@ -1,237 +1,130 @@
 'use client';
-import { useTheme } from '@/contexts/ThemeContext';
-import { COMMON_QUESTIONS,ROLE_QUESTIONS,STAFF_ROLES,StaffRole,getRoleLabel } from '@/lib/staffApplicationForm';
-import { signIn,signOut,useSession } from 'next-auth/react';
-import Image from 'next/image';
+
 import Link from 'next/link';
-import { useEffect,useMemo,useState } from 'react';
-import { IconType } from 'react-icons';
-import { FaCalendarAlt,FaGamepad,FaGavel,FaMusic } from 'react-icons/fa';
-import { FiArrowLeft,FiCheckCircle,FiLock,FiSend,FiUser } from 'react-icons/fi';
-import { MdLiveTv } from 'react-icons/md';
-type RoleFormSetting = {
+import { signIn, signOut, useSession } from 'next-auth/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { FiClock, FiLock, FiLogOut, FiUsers } from 'react-icons/fi';
+import { FaDiscord } from 'react-icons/fa';
+import Atmosphere from '@/components/shop/Atmosphere';
+import ApplicationForm, { type ProfileData } from './_components/ApplicationForm';
+import ApplicationHero from './_components/ApplicationHero';
+import GatePanel from './_components/GatePanel';
+import RoleGrid from './_components/RoleGrid';
+import SuccessOverlay from './_components/SuccessOverlay';
+import { COMMON_QUESTIONS, getRoleMeta, ROLE_QUESTIONS, STAFF_ROLES, type StaffRole } from '@/lib/staffApplicationForm';
+
+interface RoleFormSetting {
   isOpen: boolean;
   closedMessage?: string;
-};
-interface AppSettingsResponse {
-  success: boolean;
-  data?: {
-    isOpen: boolean;
-    closedMessage?: string;
-    roleForms?: Partial<Record<StaffRole, RoleFormSetting>>;
-  };
 }
-interface SubmitResponse {
-  success: boolean;
-  error?: string;
-}
-type RoleVisualStyle = {
-  Icon: IconType;
-  openCard: string;
-  openIcon: string;
-  openChip: string;
-  openGlow: string;
-  softBorder: string;
-  softGlow: string;
-  badge: string;
-  focusRing: string;
-  button: string;
-  buttonHover: string;
-  avatarBorder: string;
-};
-const ROLE_VISUALS: Record<StaffRole, RoleVisualStyle> = {
-  moderation: {
-    Icon: FaGavel,
-    openCard: 'bg-cyan-50/90 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-300/45 hover:border-cyan-300 dark:hover:border-cyan-200/70',
-    openIcon: 'text-cyan-700 dark:text-cyan-300',
-    openChip: 'bg-cyan-100 text-cyan-800 border border-cyan-200 dark:bg-cyan-500/20 dark:text-cyan-200 dark:border-cyan-400/30',
-    openGlow: 'hover:shadow-[0_0_24px_rgba(14,116,144,0.12)] dark:hover:shadow-[0_0_35px_rgba(34,211,238,0.28)]',
-    softBorder: 'border-cyan-300/35',
-    softGlow: 'shadow-[0_0_30px_rgba(34,211,238,0.16)]',
-    badge: 'bg-cyan-100 text-cyan-800 border border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-200 dark:border-cyan-400/30',
-    focusRing: 'focus:ring-cyan-300',
-    button: 'bg-cyan-600 dark:bg-cyan-500',
-    buttonHover: 'hover:bg-cyan-700 dark:hover:bg-cyan-400',
-    avatarBorder: 'border-cyan-500 dark:border-cyan-400',
+
+type Step = 'terms' | 'signin' | 'roles' | 'role-closed' | 'form';
+
+const DEFAULT_ROLE_FORMS: Record<StaffRole, RoleFormSetting> = STAFF_ROLES.reduce(
+  (acc, role) => {
+    acc[role.id] = { isOpen: true, closedMessage: '' };
+    return acc;
   },
-  event_team: {
-    Icon: FaCalendarAlt,
-    openCard: 'bg-amber-50/90 dark:bg-amber-300/10 border-amber-200 dark:border-amber-200/45 hover:border-amber-300 dark:hover:border-amber-100/70',
-    openIcon: 'text-amber-700 dark:text-amber-200',
-    openChip: 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-300/20 dark:text-amber-100 dark:border-amber-300/30',
-    openGlow: 'hover:shadow-[0_0_24px_rgba(180,83,9,0.12)] dark:hover:shadow-[0_0_35px_rgba(251,191,36,0.25)]',
-    softBorder: 'border-amber-200/35',
-    softGlow: 'shadow-[0_0_30px_rgba(251,191,36,0.14)]',
-    badge: 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-300/15 dark:text-amber-100 dark:border-amber-300/30',
-    focusRing: 'focus:ring-amber-200',
-    button: 'bg-amber-500 dark:bg-amber-400',
-    buttonHover: 'hover:bg-amber-600 dark:hover:bg-amber-300',
-    avatarBorder: 'border-amber-500 dark:border-amber-300',
-  },
-  gaming_mod: {
-    Icon: FaGamepad,
-    openCard: 'bg-rose-50/90 dark:bg-red-500/10 border-rose-200 dark:border-red-300/45 hover:border-rose-300 dark:hover:border-red-200/70',
-    openIcon: 'text-rose-700 dark:text-red-300',
-    openChip: 'bg-rose-100 text-rose-800 border border-rose-200 dark:bg-red-500/20 dark:text-red-200 dark:border-red-400/30',
-    openGlow: 'hover:shadow-[0_0_24px_rgba(190,24,93,0.12)] dark:hover:shadow-[0_0_35px_rgba(239,68,68,0.28)]',
-    softBorder: 'border-red-300/35',
-    softGlow: 'shadow-[0_0_30px_rgba(239,68,68,0.14)]',
-    badge: 'bg-rose-100 text-rose-800 border border-rose-200 dark:bg-red-500/15 dark:text-red-200 dark:border-red-400/30',
-    focusRing: 'focus:ring-red-300',
-    button: 'bg-red-600 dark:bg-red-500',
-    buttonHover: 'hover:bg-red-700 dark:hover:bg-red-400',
-    avatarBorder: 'border-rose-500 dark:border-red-400',
-  },
-  media_team: {
-    Icon: MdLiveTv,
-    openCard: 'bg-emerald-50/90 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-300/45 hover:border-emerald-300 dark:hover:border-emerald-200/70',
-    openIcon: 'text-emerald-700 dark:text-emerald-300',
-    openChip: 'bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-200 dark:border-emerald-400/30',
-    openGlow: 'hover:shadow-[0_0_24px_rgba(4,120,87,0.12)] dark:hover:shadow-[0_0_35px_rgba(16,185,129,0.28)]',
-    softBorder: 'border-emerald-300/35',
-    softGlow: 'shadow-[0_0_30px_rgba(16,185,129,0.14)]',
-    badge: 'bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:border-emerald-400/30',
-    focusRing: 'focus:ring-emerald-300',
-    button: 'bg-emerald-600 dark:bg-emerald-500',
-    buttonHover: 'hover:bg-emerald-700 dark:hover:bg-emerald-400',
-    avatarBorder: 'border-emerald-500 dark:border-emerald-400',
-  },
-  entertainment_team: {
-    Icon: FaMusic,
-    openCard: 'bg-violet-50/90 dark:bg-purple-500/10 border-violet-200 dark:border-purple-300/45 hover:border-violet-300 dark:hover:border-purple-200/70',
-    openIcon: 'text-violet-700 dark:text-purple-300',
-    openChip: 'bg-violet-100 text-violet-800 border border-violet-200 dark:bg-purple-500/20 dark:text-purple-200 dark:border-purple-400/30',
-    openGlow: 'hover:shadow-[0_0_24px_rgba(109,40,217,0.12)] dark:hover:shadow-[0_0_35px_rgba(168,85,247,0.28)]',
-    softBorder: 'border-purple-300/35',
-    softGlow: 'shadow-[0_0_30px_rgba(168,85,247,0.14)]',
-    badge: 'bg-violet-100 text-violet-800 border border-violet-200 dark:bg-purple-500/15 dark:text-purple-200 dark:border-purple-400/30',
-    focusRing: 'focus:ring-purple-300',
-    button: 'bg-purple-600 dark:bg-purple-500',
-    buttonHover: 'hover:bg-purple-700 dark:hover:bg-purple-400',
-    avatarBorder: 'border-violet-500 dark:border-purple-400',
-  },
-};
+  {} as Record<StaffRole, RoleFormSetting>
+);
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 export default function StaffApplicationPage() {
-  const { theme } = useTheme();
-  const { data: session } = useSession();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isApplicationsOpen, setIsApplicationsOpen] = useState(true);
-  const [closedMessage, setClosedMessage] = useState('Staff applications are currently closed. Please check back later.');
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [agreedToTOS, setAgreedToTOS] = useState(false);
-  const [showFormFlow, setShowFormFlow] = useState(false);
+  const { data: session, status } = useSession();
+  const reduce = useReducedMotion();
+
+  const [loading, setLoading] = useState(true);
+  const [applicationsOpen, setApplicationsOpen] = useState(true);
+  const [closedMessage, setClosedMessage] = useState(
+    'Staff applications are currently closed. Please check back later.'
+  );
+  const [roleForms, setRoleForms] = useState<Record<StaffRole, RoleFormSetting>>(DEFAULT_ROLE_FORMS);
+
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [selectedRole, setSelectedRole] = useState<StaffRole | null>(null);
   const [roleClosedNotice, setRoleClosedNotice] = useState('');
-  const [roleForms, setRoleForms] = useState<Record<StaffRole, RoleFormSetting>>({
-    moderation: { isOpen: true, closedMessage: '' },
-    event_team: { isOpen: true, closedMessage: '' },
-    gaming_mod: { isOpen: true, closedMessage: '' },
-    media_team: { isOpen: true, closedMessage: '' },
-    entertainment_team: { isOpen: true, closedMessage: '' },
-  });
-  const [profileData, setProfileData] = useState({
-    country: '',
-    timezone: '',
-    age: '',
-  });
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const [profileData, setProfileData] = useState<ProfileData>({ country: '', timezone: '', age: '' });
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const activeQuestions = useMemo(() => {
-    if (!selectedRole) return [];
-    return [...COMMON_QUESTIONS, ...ROLE_QUESTIONS[selectedRole]];
-  }, [selectedRole]);
+
   useEffect(() => {
-    const loadSettings = async () => {
+    let cancelled = false;
+    (async () => {
       try {
         const response = await fetch('/api/settings', { cache: 'no-store' });
-        const result: AppSettingsResponse = await response.json();
+        const result = await response.json();
+        if (cancelled) return;
         if (result.success && result.data) {
-          setIsApplicationsOpen(result.data.isOpen);
-          setClosedMessage(result.data.closedMessage || 'Staff applications are currently closed. Please check back later.');
+          setApplicationsOpen(result.data.isOpen);
+          setClosedMessage(result.data.closedMessage || closedMessage);
           if (result.data.roleForms) {
             setRoleForms((prev) => {
               const next = { ...prev };
               for (const role of STAFF_ROLES) {
-                const incoming = result.data?.roleForms?.[role.id];
-                if (!incoming) continue;
-                next[role.id] = {
-                  isOpen: typeof incoming.isOpen === 'boolean' ? incoming.isOpen : true,
-                  closedMessage: incoming.closedMessage || '',
-                };
+                const incoming = result.data.roleForms?.[role.id];
+                if (incoming) {
+                  next[role.id] = {
+                    isOpen: typeof incoming.isOpen === 'boolean' ? incoming.isOpen : true,
+                    closedMessage: incoming.closedMessage || '',
+                  };
+                }
               }
               return next;
             });
           }
         }
       } catch (error) {
-        console.error('Failed to fetch staff application settings:', error);
+        console.error('Failed to load staff application settings:', error);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setLoading(false);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-    loadSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const resetFlow = () => {
-    setShowFormFlow(false);
-    setSelectedRole(null);
-    setRoleClosedNotice('');
-    setAgreedToTOS(false);
-    setProfileData({ country: '', timezone: '', age: '' });
-    setAnswers({});
-  };
-  const handleRoleSelect = (role: StaffRole) => {
-    const roleSetting = roleForms[role];
-    if (roleSetting && !roleSetting.isOpen) {
-      setSelectedRole(null);
-      setRoleClosedNotice(
-        roleSetting.closedMessage || `${getRoleLabel(role)} applications are currently closed.`
-      );
-      return;
-    }
-    setRoleClosedNotice('');
-    setSelectedRole(role);
-    setAnswers((prev) => {
-      const next = { ...prev };
-      const questionIds = [...COMMON_QUESTIONS, ...ROLE_QUESTIONS[role]].map((question) => question.id);
-      for (const id of questionIds) {
-        if (!next[id]) next[id] = '';
+
+  const openCount = useMemo(() => STAFF_ROLES.filter((role) => roleForms[role.id]?.isOpen ?? true).length, [roleForms]);
+
+  const step: Step = useMemo(() => {
+    if (!agreedToTerms) return 'terms';
+    if (status !== 'authenticated') return 'signin';
+    if (!selectedRole) return 'roles';
+    if (!(roleForms[selectedRole]?.isOpen ?? true)) return 'role-closed';
+    return 'form';
+  }, [agreedToTerms, status, selectedRole, roleForms]);
+
+  const handleSelectRole = useCallback(
+    (role: StaffRole) => {
+      const setting = roleForms[role];
+      setSelectedRole(role);
+      if (setting && !setting.isOpen) {
+        setRoleClosedNotice('');
+        return;
       }
-      return next;
-    });
-  };
-  const selectedRoleSetting = selectedRole ? roleForms[selectedRole] : null;
-  const selectedRoleVisual = selectedRole ? ROLE_VISUALS[selectedRole] : null;
-  const isSelectedRoleClosed = Boolean(selectedRoleSetting && !selectedRoleSetting.isOpen);
-  const selectedRoleClosedMessage =
-    (selectedRoleSetting?.closedMessage || '').trim() ||
-    (selectedRole ? `${getRoleLabel(selectedRole)} applications are currently closed.` : 'This application form is currently closed.');
-  const updateAnswer = (questionId: string, value: string) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: value,
-    }));
-  };
-  const validateForm = (): string | null => {
-    if (!session?.user?.id) return 'Please login with Discord before submitting.';
-    if (!selectedRole) return 'Please select one role before filling the form.';
-    if (!profileData.country.trim()) return 'Country is required.';
-    if (!profileData.timezone.trim()) return 'Timezone is required.';
-    if (!profileData.age.trim()) return 'Age is required.';
-    for (const question of activeQuestions) {
-      if (!answers[question.id]?.trim()) {
-        return `Please answer: ${question.title}`;
-      }
-    }
-    return null;
-  };
-  const buildPayload = () => {
+      const ids = [...COMMON_QUESTIONS, ...ROLE_QUESTIONS[role]].map((question) => question.id);
+      setAnswers((prev) => {
+        const next = { ...prev };
+        for (const id of ids) if (!(id in next)) next[id] = '';
+        return next;
+      });
+    },
+    [roleForms]
+  );
+
+  const handleSubmit = useCallback(async (): Promise<string | null> => {
+    if (!selectedRole || !session?.user?.id) return 'Please login with Discord before submitting.';
     const introduction = answers.introduction_purpose || '';
     const dailyAvailability = answers.daily_availability || '';
-    return {
+    const payload = {
       formVersion: 2,
       applicationRole: selectedRole,
-      discordUsername: session?.user?.name || '',
-      discordUserId: session?.user?.id || '',
+      discordUsername: session.user.name || '',
+      discordUserId: session.user.id,
       country: profileData.country.trim(),
       timezone: profileData.timezone.trim(),
       age: profileData.age.trim(),
@@ -239,9 +132,7 @@ export default function StaffApplicationPage() {
       whyJoin: introduction,
       dailyAvailability,
       hoursPerWeek: dailyAvailability,
-      roleAnswers: Object.fromEntries(
-        Object.entries(answers).map(([key, value]) => [key, value.trim()])
-      ),
+      roleAnswers: Object.fromEntries(Object.entries(answers).map(([key, value]) => [key, value.trim()])),
       moderationExperience: answers.moderation_experience || '',
       moderatorDefinition: answers.moderator_definition || '',
       leadershipExperience: answers.leadership_experience || '',
@@ -250,354 +141,240 @@ export default function StaffApplicationPage() {
       moderationBotsFamiliarity: answers.moderation_bots_familiarity || '',
       modCommandsKnowledge: answers.mod_commands_knowledge || '',
     };
-  };
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const validationError = validateForm();
-    if (validationError) {
-      alert(validationError);
-      return;
-    }
-    setIsSubmitting(true);
+
     try {
       const response = await fetch('/api/applications', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(buildPayload()),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-      const result: SubmitResponse = await response.json();
+      const result = await response.json();
       if (!response.ok || !result.success) {
-        alert(result.error || 'Failed to submit application. Please try again.');
-        return;
+        return result.error || 'Failed to submit application. Please try again.';
       }
-      setShowSuccessModal(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      resetFlow();
+      setShowSuccess(true);
+      setSelectedRole(null);
+      setAgreedToTerms(false);
+      setProfileData({ country: '', timezone: '', age: '' });
+      setAnswers({});
+      return null;
     } catch (error) {
       console.error('Failed to submit staff application:', error);
-      alert('Network error while submitting your application. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      return 'Network error while submitting your application. Please try again.';
     }
-  };
-  if (isLoading) {
+  }, [selectedRole, session, profileData, answers]);
+
+  const selectedRoleMeta = selectedRole ? getRoleMeta(selectedRole) : undefined;
+  const selectedRoleClosedMessage =
+    (selectedRole && roleForms[selectedRole]?.closedMessage?.trim()) ||
+    `${selectedRoleMeta?.label || 'This role'} applications are currently closed.`;
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-2 border-[rgb(var(--color-accent))] border-t-transparent" />
-      </div>
+      <main className="relative flex min-h-screen items-center justify-center overflow-x-clip bg-black">
+        <Atmosphere />
+        <span className="relative h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-white/70" />
+      </main>
     );
   }
+
+  if (!applicationsOpen) {
+    return (
+      <main className="relative min-h-screen overflow-x-clip bg-black">
+        <Atmosphere />
+        <div className="relative z-10 flex min-h-screen items-center justify-center px-5 py-24">
+          <GatePanel
+            icon={<FiLock className="h-6 w-6" />}
+            eyebrow="Applications closed"
+            title="Not accepting applications right now"
+            body={closedMessage}
+            accent="#A78BFA"
+          >
+            <Link
+              href="/"
+              className="fx-focus inline-flex items-center justify-center rounded-full bg-white px-7 py-3 text-[13.5px] font-bold text-black transition-colors hover:bg-slate-100"
+            >
+              Return home
+            </Link>
+          </GatePanel>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] relative overflow-hidden">
-      {theme === 'light' && (
-        <div className="fixed inset-0 -z-10">
-          <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" />
-          <div className="absolute top-0 -right-4 w-96 h-96 bg-cyan-500/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '1.8s' }} />
-          <div className="absolute -bottom-8 left-24 w-96 h-96 bg-sky-400/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-float" style={{ animationDelay: '4s' }} />
-        </div>
-      )}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={(event) => event.target === event.currentTarget && setShowSuccessModal(false)}>
-            <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-blue-500/20 shadow-blue-glow max-w-md w-full animate-scale-in">
-              <div className="text-center space-y-5">
-                <div className="flex justify-center">
-                  <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
-                    <FiCheckCircle className="w-9 h-9 text-green-500" />
-                  </div>
+    <main className="relative min-h-screen overflow-x-clip bg-black pb-24">
+      <Atmosphere />
+      <ApplicationHero openCount={openCount} totalCount={STAFF_ROLES.length} />
+
+      <div className="relative z-10 mx-auto mt-12 w-full max-w-[880px] px-5 sm:px-8">
+        <AnimatePresence mode="wait">
+          {step === 'terms' && (
+            <motion.div
+              key="terms"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -10 }}
+              transition={{ duration: 0.35, ease: EASE }}
+            >
+              <GatePanel
+                icon={<FiUsers className="h-6 w-6" />}
+                eyebrow="Before you start"
+                title="Terms of service"
+                body="A few ground rules for anyone joining the team — read them, then continue."
+                accent="#A78BFA"
+              >
+                <div className="mx-auto max-h-56 max-w-md space-y-3.5 overflow-y-auto rounded-2xl border border-white/8 bg-white/[0.02] p-5 text-left text-[13px] leading-relaxed text-white/55">
+                  <p><span className="font-bold text-white/85">Professional conduct.</span> Stay respectful, impartial, and responsible in every community interaction.</p>
+                  <p><span className="font-bold text-white/85">Confidentiality.</span> Internal decisions and staff conversations stay private.</p>
+                  <p><span className="font-bold text-white/85">Activity.</span> Every role requires consistent, reliable activity.</p>
+                  <p><span className="font-bold text-white/85">Accuracy.</span> Applications must be truthful and submitted from your own Discord account.</p>
                 </div>
-                <div className="space-y-2">
-                  <h2 className="text-3xl font-bold text-[rgb(var(--color-text-primary))]">Application Submitted</h2>
-                  <p className="text-[rgb(var(--color-text-secondary))]">
-                    Your staff application has been received successfully.
-                  </p>
-                  <p className="text-sm text-[rgb(var(--color-text-tertiary))]">
-                    If shortlisted, you will be contacted within 2 weeks.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowSuccessModal(false)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-6 py-3 rounded-2xl transition-all"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-        </div>
-      )}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
-        {!isApplicationsOpen ? (
-          <section className="text-center space-y-8 animate-fade-in">
-            <div className="flex justify-center">
-              <div className="relative w-52 h-52 sm:w-72 sm:h-72 animate-float">
-                <Image src="/Resume folder-bro.svg" alt="Applications Closed" fill className="object-contain" />
-              </div>
-            </div>
-            <div className="space-y-3">
-              <h1 className="text-4xl sm:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">Applications Closed</h1>
-              <p className="text-base sm:text-xl text-[rgb(var(--color-text-secondary))] max-w-2xl mx-auto font-light px-3">
-                {closedMessage}
-              </p>
-              <Link href="/" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-8 py-4 rounded-2xl transition-all shadow-apple-md hover:shadow-blue-glow mt-4">
-                Return Home
-              </Link>
-            </div>
-          </section>
-        ) : (
-          <section className="animate-fade-in space-y-7">
-            <header className="text-center space-y-4">
-              <h1 className="text-4xl sm:text-6xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">Staff Application</h1>
-              <p className="text-base sm:text-xl text-[rgb(var(--color-text-secondary))] max-w-3xl mx-auto font-light px-2">
-                Select a team role, answer the dedicated form, and submit through your Discord login.
-              </p>
-            </header>
-            {!showFormFlow ? (
-              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
-                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Terms of Service</h2>
-                <div className="space-y-4 text-[rgb(var(--color-text-secondary))] max-h-80 overflow-y-auto pr-1 text-sm leading-relaxed">
-                  <p><span className="font-semibold text-[rgb(var(--color-text-primary))]">1. Professional Conduct:</span> Staff members must remain respectful, impartial, and responsible in all community interactions.</p>
-                  <p><span className="font-semibold text-[rgb(var(--color-text-primary))]">2. Confidentiality:</span> Internal decisions and staff conversations are private and cannot be shared externally.</p>
-                  <p><span className="font-semibold text-[rgb(var(--color-text-primary))]">3. Activity:</span> Consistent activity is required for all selected staff roles.</p>
-                  <p><span className="font-semibold text-[rgb(var(--color-text-primary))]">4. Accuracy:</span> Application details must be truthful and submitted by your own Discord account.</p>
-                </div>
-                <div className="pt-4 border-t border-[rgb(var(--color-border))] space-y-4">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={agreedToTOS}
-                      onChange={(event) => setAgreedToTOS(event.target.checked)}
-                      className="w-5 h-5 mt-0.5 rounded border-2 border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg-secondary))] checked:bg-blue-600 checked:border-blue-600 focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span className="text-sm sm:text-base text-[rgb(var(--color-text-secondary))]">
-                      I have read and agree to the terms.
-                    </span>
-                  </label>
-                  <button
-                    onClick={() => {
-                      if (!agreedToTOS) {
-                        alert('Please agree to the Terms of Service before continuing.');
-                        return;
-                      }
-                      setShowFormFlow(true);
-                    }}
-                    className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black font-semibold px-8 py-4 rounded-2xl transition-all shadow-apple-md hover:shadow-blue-glow"
-                  >
-                    Continue to Role Selection
-                  </button>
-                </div>
-              </div>
-            ) : !session ? (
-              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))] shadow-apple-md text-center space-y-6">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#5865F2]/20">
-                  <FiLock className="w-7 h-7 text-[#5865F2]" />
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Discord Login Required</h2>
-                  <p className="text-[rgb(var(--color-text-secondary))] max-w-xl mx-auto">
-                    Please login with your Discord account to continue and submit your application.
-                  </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <TermsCheckbox onAgree={() => setAgreedToTerms(true)} />
+              </GatePanel>
+            </motion.div>
+          )}
+
+          {step === 'signin' && (
+            <motion.div
+              key="signin"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -10 }}
+              transition={{ duration: 0.35, ease: EASE }}
+            >
+              <GatePanel
+                icon={<FaDiscord className="h-6 w-6" />}
+                eyebrow="One more step"
+                title="Sign in with Discord"
+                body="Applications are tied to your Discord account so we can verify your identity and reach you."
+                accent="#5865F2"
+              >
+                <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                   <button
                     type="button"
-                    onClick={() => setShowFormFlow(false)}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-bg-secondary))] transition-all"
+                    onClick={() => setAgreedToTerms(false)}
+                    className="fx-focus inline-flex items-center justify-center rounded-full border border-white/10 px-6 py-3 text-[13px] font-bold text-white/60 transition-colors hover:border-white/20 hover:text-white"
                   >
-                    <FiArrowLeft className="w-4 h-4" />
                     Back
                   </button>
                   <button
                     type="button"
                     onClick={() => signIn('discord')}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold transition-all"
+                    className="fx-focus inline-flex items-center justify-center gap-2 rounded-full bg-[#5865F2] px-7 py-3 text-[13.5px] font-bold text-white transition-colors hover:bg-[#4752C4]"
                   >
-                    Login with Discord
+                    <FaDiscord className="h-4 w-4" />
+                    Continue with Discord
                   </button>
                 </div>
-              </div>
-            ) : !selectedRole ? (
-              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-[rgb(var(--color-border))] shadow-apple-md space-y-6">
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">Choose Your Team Role</h2>
-                  <button
-                    type="button"
-                    onClick={() => signOut({ callbackUrl: '/staff-application' })}
-                    className="text-xs sm:text-sm px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg transition-all"
-                  >
-                    Logout
-                  </button>
-                </div>
-                <p className="text-[rgb(var(--color-text-secondary))]">
-                  Select one option. You can submit one role application at a time.
-                </p>
-                {roleClosedNotice && (
-                  <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3">
-                    <p className="text-sm text-amber-700 dark:text-amber-400">{roleClosedNotice}</p>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {STAFF_ROLES.map((role) => {
-                    const roleSetting = roleForms[role.id];
-                    const isRoleOpen = roleSetting?.isOpen ?? true;
-                    const roleVisual = ROLE_VISUALS[role.id];
-                    const RoleIcon = roleVisual.Icon;
-                    return (
-                      <button
-                        key={role.id}
-                        type="button"
-                        onClick={() => handleRoleSelect(role.id)}
-                        className={`text-left border rounded-2xl p-5 transition-all ${
-                          isRoleOpen
-                            ? `${roleVisual.openCard} ${roleVisual.openGlow}`
-                            : 'bg-red-50/85 dark:bg-[rgb(var(--color-bg-secondary))]/60 border-red-300 dark:border-red-500/30 opacity-90 dark:opacity-75'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2">
-                            <RoleIcon className={`w-5 h-5 ${isRoleOpen ? roleVisual.openIcon : 'text-red-700 dark:text-red-300'}`} />
-                            <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">{role.label}</h3>
-                          </div>
-                          <span
-                            className={`text-[11px] sm:text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ${
-                              isRoleOpen
-                                ? roleVisual.openChip
-                                : 'bg-red-100 text-red-800 border border-red-300 dark:bg-red-500/20 dark:text-red-300 dark:border-red-400/30'
-                            }`}
-                          >
-                            {isRoleOpen ? 'OPEN' : 'CLOSED'}
-                          </span>
-                        </div>
-                        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{role.shortDescription}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : isSelectedRoleClosed ? (
-              <div className="glass-blue rounded-3xl p-6 sm:p-8 border border-red-500/30 shadow-apple-md space-y-5 text-center">
-                <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">{getRoleLabel(selectedRole)} Form Closed</h2>
-                <p className="text-[rgb(var(--color-text-secondary))]">{selectedRoleClosedMessage}</p>
-                <div className="flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole(null)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-bg-secondary))] transition-all"
-                  >
-                    <FiArrowLeft className="w-4 h-4" />
-                    Choose Another Role
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className={`glass-blue rounded-3xl p-6 sm:p-8 border ${selectedRoleVisual?.softBorder || 'border-blue-500/20'} shadow-apple-md space-y-5`}>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${selectedRoleVisual?.badge || 'bg-blue-500/10 text-blue-500'}`}>
-                        Selected Role
-                      </div>
-                      <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">{getRoleLabel(selectedRole)}</h2>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedRole(null)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-bg-secondary))] transition-all"
-                    >
-                      <FiArrowLeft className="w-4 h-4" />
-                      Change Role
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-3 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-2xl p-4">
-                    {session.user?.image ? (
-                      <img src={session.user.image} alt={session.user.name || 'User'} className={`w-12 h-12 rounded-full border ${selectedRoleVisual?.avatarBorder || 'border-blue-500'}`} />
-                    ) : (
-                      <div className={`w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border ${selectedRoleVisual?.avatarBorder || 'border-blue-500'}`}>
-                        <FiUser className={`w-5 h-5 ${selectedRoleVisual?.openIcon || 'text-blue-500'}`} />
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-semibold text-[rgb(var(--color-text-primary))] truncate">{session.user?.name || 'Discord User'}</p>
-                      <p className="text-xs text-[rgb(var(--color-text-tertiary))] font-mono truncate">ID: {session.user?.id}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className={`glass-blue rounded-3xl p-6 sm:p-8 border ${selectedRoleVisual?.softBorder || 'border-blue-500/20'} shadow-apple-md space-y-5`}>
-                  <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">Basic Information</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <label className="space-y-2">
-                      <span className="text-sm font-medium text-[rgb(var(--color-text-secondary))]">Country</span>
-                      <input
-                        type="text"
-                        value={profileData.country}
-                        onChange={(event) => setProfileData((prev) => ({ ...prev, country: event.target.value }))}
-                        placeholder="India"
-                        className={`w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 ${selectedRoleVisual?.focusRing || 'focus:ring-blue-500'}`}
-                      />
-                    </label>
-                    <label className="space-y-2">
-                      <span className="text-sm font-medium text-[rgb(var(--color-text-secondary))]">Timezone</span>
-                      <input
-                        type="text"
-                        value={profileData.timezone}
-                        onChange={(event) => setProfileData((prev) => ({ ...prev, timezone: event.target.value }))}
-                        placeholder="IST (UTC+5:30)"
-                        className={`w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 ${selectedRoleVisual?.focusRing || 'focus:ring-blue-500'}`}
-                      />
-                    </label>
-                    <label className="space-y-2">
-                      <span className="text-sm font-medium text-[rgb(var(--color-text-secondary))]">Age</span>
-                      <input
-                        type="number"
-                        min="13"
-                        value={profileData.age}
-                        onChange={(event) => setProfileData((prev) => ({ ...prev, age: event.target.value }))}
-                        placeholder="18"
-                        className={`w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 ${selectedRoleVisual?.focusRing || 'focus:ring-blue-500'}`}
-                      />
-                    </label>
-                  </div>
-                </div>
-                <div className={`glass-blue rounded-3xl p-6 sm:p-8 border ${selectedRoleVisual?.softBorder || 'border-blue-500/20'} shadow-apple-md space-y-6`}>
-                  <h3 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">Application Form</h3>
-                  {activeQuestions.map((question, index) => (
-                    <div key={question.id} className="space-y-2">
-                      <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))]">
-                        {index + 1}. {question.title}
-                      </label>
-                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] leading-relaxed">{question.prompt}</p>
-                      <textarea
-                        value={answers[question.id] || ''}
-                        onChange={(event) => updateAnswer(question.id, event.target.value)}
-                        rows={5}
-                        placeholder={question.placeholder}
-                        className={`w-full px-4 py-3.5 bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border))] rounded-xl text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 ${selectedRoleVisual?.focusRing || 'focus:ring-blue-500'} resize-y`}
-                      />
-                    </div>
-                  ))}
-                </div>
+              </GatePanel>
+            </motion.div>
+          )}
+
+          {step === 'roles' && (
+            <motion.div
+              key="roles"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -10 }}
+              transition={{ duration: 0.35, ease: EASE }}
+            >
+              <div className="mb-5 flex justify-end">
                 <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={`w-full flex items-center justify-center gap-2 text-white dark:text-black font-semibold px-8 py-4 rounded-2xl transition-all shadow-apple-md disabled:opacity-60 disabled:cursor-not-allowed ${selectedRoleVisual?.button || 'bg-blue-600 dark:bg-white'} ${selectedRoleVisual?.buttonHover || 'hover:bg-blue-700 dark:hover:bg-gray-200'}`}
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: '/staff-application' })}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-red-400/20 bg-red-400/10 px-3.5 py-2 text-[11.5px] font-bold text-red-300 transition-colors hover:bg-red-400/15"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white dark:border-black border-t-transparent" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <FiSend className="w-5 h-5" />
-                      Submit Application
-                    </>
-                  )}
+                  <FiLogOut className="h-3 w-3" />
+                  Logout
                 </button>
-              </form>
-            )}
-          </section>
-        )}
-      </main>
+              </div>
+              <RoleGrid roleForms={roleForms} closedNotice={roleClosedNotice} onSelect={handleSelectRole} />
+            </motion.div>
+          )}
+
+          {step === 'role-closed' && selectedRoleMeta && (
+            <motion.div
+              key="role-closed"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -10 }}
+              transition={{ duration: 0.35, ease: EASE }}
+            >
+              <GatePanel
+                icon={<FiClock className="h-6 w-6" />}
+                eyebrow={`${selectedRoleMeta.label} · closed`}
+                title="This role isn't taking applications"
+                body={selectedRoleClosedMessage}
+                accent={selectedRoleMeta.accent}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole(null)}
+                  className="fx-focus inline-flex items-center justify-center rounded-full bg-white px-7 py-3 text-[13.5px] font-bold text-black transition-colors hover:bg-slate-100"
+                >
+                  Choose another role
+                </button>
+              </GatePanel>
+            </motion.div>
+          )}
+
+          {step === 'form' && selectedRoleMeta && session && (
+            <motion.div
+              key="form"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -10 }}
+              transition={{ duration: 0.35, ease: EASE }}
+            >
+              <ApplicationForm
+                role={selectedRoleMeta}
+                session={session}
+                profileData={profileData}
+                onProfileChange={setProfileData}
+                answers={answers}
+                onAnswerChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
+                onChangeRole={() => setSelectedRole(null)}
+                onSubmit={handleSubmit}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <SuccessOverlay open={showSuccess} onClose={() => setShowSuccess(false)} />
+    </main>
+  );
+}
+
+function TermsCheckbox({ onAgree }: { onAgree: () => void }) {
+  const [checked, setChecked] = useState(false);
+  return (
+    <div className="mt-7 space-y-5">
+      <label className="mx-auto flex max-w-md cursor-pointer items-start gap-3 text-left select-none">
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={checked}
+          onClick={() => setChecked((prev) => !prev)}
+          className="fx-focus mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[6px] border transition-colors duration-200"
+          style={{
+            borderColor: checked ? '#A78BFA' : 'rgba(255,255,255,0.25)',
+            background: checked ? '#A78BFA' : 'transparent',
+          }}
+        >
+          {checked && <span className="h-2 w-2 rounded-[2px] bg-black" />}
+        </button>
+        <span className="text-[13.5px] leading-relaxed text-white/60">I have read and agree to the terms above.</span>
+      </label>
+      <button
+        type="button"
+        disabled={!checked}
+        onClick={onAgree}
+        className="fx-focus mx-auto flex w-full max-w-md items-center justify-center rounded-full bg-white py-3.5 text-[14px] font-extrabold text-black transition-all hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Continue
+      </button>
     </div>
   );
 }

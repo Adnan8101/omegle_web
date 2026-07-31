@@ -30,7 +30,6 @@ const ApplicationSettingsSchema = new Schema<IApplicationSettings>(
       event_team: { type: RoleFormSettingSchema, default: () => ({ isOpen: true, closedMessage: '' }) },
       gaming_mod: { type: RoleFormSettingSchema, default: () => ({ isOpen: true, closedMessage: '' }) },
       media_team: { type: RoleFormSettingSchema, default: () => ({ isOpen: true, closedMessage: '' }) },
-      entertainment_team: { type: RoleFormSettingSchema, default: () => ({ isOpen: true, closedMessage: '' }) },
     },
   },
   {
