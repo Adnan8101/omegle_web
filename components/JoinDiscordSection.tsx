@@ -27,7 +27,10 @@ export default function JoinDiscordSection() {
 
       <div className="mx-auto w-full max-w-5xl px-6 py-14 sm:px-10 sm:py-16">
         <Reveal scale={0.97}>
-          <div className="relative overflow-hidden rounded-[28px] border border-white/8 bg-white/[0.03]">
+          <div
+            className="relative overflow-hidden rounded-[28px] border border-[#5865F2]/20"
+            style={{ background: 'linear-gradient(160deg, rgba(88,101,242,0.12) 0%, rgba(88,101,242,0.03) 55%, rgba(255,255,255,0.02) 100%)' }}
+          >
             <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1.05fr_1fr]">
               {/* ── Artwork ─────────────────────────────────────────── */}
               <Reveal

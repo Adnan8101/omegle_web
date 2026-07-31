@@ -15,7 +15,9 @@ interface PodiumProps {
 
 const HEIGHT: Record<number, string> = { 1: 'sm:pb-9', 2: 'sm:pb-4', 3: 'sm:pb-0' };
 const AVATAR: Record<number, string> = { 1: 'h-24 w-24 sm:h-28 sm:w-28', 2: 'h-20 w-20', 3: 'h-20 w-20' };
-const ORDER: Record<number, string> = { 1: 'order-2', 2: 'order-1', 3: 'order-3' };
+// Desktop only — the classic left-to-right podium read (2nd, 1st, 3rd). On
+// mobile the cards stack in natural rank order (1st, 2nd, 3rd) top to bottom.
+const ORDER: Record<number, string> = { 1: 'sm:order-2', 2: 'sm:order-1', 3: 'sm:order-3' };
 
 /**
  * The top three as a real podium — #1 centred and raised with a crown, #2
