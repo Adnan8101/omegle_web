@@ -2,6 +2,7 @@
 import { signIn, signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import CrateReveal from '@/components/CrateReveal';
+import { ShopClosed } from './_components/ShopStates';
 import { useRouter } from 'next/navigation';
 import { useEffect,useRef,useState } from 'react';
 import {
@@ -268,31 +269,7 @@ export default function ShopPage() {
     );
   }
   if (!loading && shopDisabled) {
-    return (
-      <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-6">
-        <div className="glass-blue rounded-3xl p-10 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
-          <div className="text-center space-y-6">
-            <div className="p-5 bg-yellow-500/10 rounded-full border border-yellow-500/30 inline-block">
-              <FiShoppingCart className="w-10 h-10 text-yellow-500" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">
-                Shop is Closed
-              </h2>
-              <p className="text-[rgb(var(--color-text-secondary))]">
-                The shop is currently closed for maintenance. Please check back later!
-              </p>
-            </div>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all"
-            >
-              Go Home
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return <ShopClosed currencyName={currencyName} />;
   }
   return (
     <div className="min-h-screen bg-[rgb(var(--color-bg-primary))]">
