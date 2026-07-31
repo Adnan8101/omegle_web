@@ -14,10 +14,10 @@ import CooldownModal from './_components/CooldownModal';
 import ProductGrid, { ProductGridSkeleton } from './_components/ProductGrid';
 import PoolPanel from './_components/PoolPanel';
 import PurchaseModal from './_components/PurchaseModal';
+import PurchaseCeremony from './_components/PurchaseCeremony';
 import ShopHeader from './_components/ShopHeader';
 import ShopHero from './_components/ShopHero';
 import { EmptyShelves, ErrorToast, GuestNote, NoMatches, ShopClosed } from './_components/ShopStates';
-import SuccessReveal from './_components/SuccessReveal';
 import {
   availabilityOf,
   formatCooldownHHMM,
@@ -418,9 +418,10 @@ export default function ShopPage() {
       />
 
       {purchaseResult && (
-        <SuccessReveal
+        <PurchaseCeremony
           itemName={purchaseResult.itemName}
           itemThumbnail={items.find((item) => item.name === purchaseResult.itemName)?.thumbnail || null}
+          itemValueInr={items.find((item) => item.name === purchaseResult.itemName)?.price_inr ?? null}
           pricePaid={purchaseResult.pricePaid}
           currencyEmoji={currencyEmoji}
           redeemCode={purchaseResult.redeemCode}
