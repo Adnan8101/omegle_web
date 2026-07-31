@@ -41,6 +41,23 @@ export default function SiteNavbar() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [isHome]);
+
+  // Both the fixed (home) and sticky (everywhere else) variants share <body>
+  // as their containing block, so neither ever naturally leaves the
+  // viewport — without this, the pill just floats on top of whatever is
+  // scrolled beneath it, including the footer's own links. Fade it out as
+  // soon as the footer starts entering view.
+  const [nearFooter, setNearFooter] = useState(false);
+  useEffect(() => {
+    const footer = document.querySelector('footer');
+    if (!footer) return;
+    const observer = new IntersectionObserver(([entry]) => setNearFooter(entry.isIntersecting), {
+      rootMargin: '0px',
+      threshold: 0,
+    });
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, [pathname]);
   useEffect(() => {
     if (!mobileOpen) {
       document.body.style.overflow = '';
@@ -61,9 +78,17 @@ export default function SiteNavbar() {
   );
   return (
     <header
-      className={`${isHome ? 'fixed' : 'sticky'} top-4 sm:top-5 left-0 right-0 z-50 pointer-events-none`}
+      className={`${isHome ? 'fixed' : 'sticky'} top-4 sm:top-5 left-0 right-0 z-50 pointer-events-none transition-opacity duration-300 ease-out ${
+        nearFooter ? 'opacity-0' : 'opacity-100'
+      }`}
     >
-      <Reveal mount dir="down" distance={18} duration={0.7} className="mx-auto w-[92%] max-w-[900px] pointer-events-auto">
+      <Reveal
+        mount
+        dir="down"
+        distance={18}
+        duration={0.7}
+        className={`mx-auto w-[92%] max-w-[900px] ${nearFooter ? 'pointer-events-none' : 'pointer-events-auto'}`}
+      >
         <div className="h-[52px] sm:h-[58px] px-5 sm:px-6 flex items-center justify-between rounded-full border border-white/10 bg-[#0a0a0f]/85 backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
           <Link href="/" className="nav-brand flex items-center gap-3 translate-y-[1px]">
             <div className="relative w-7 h-7 sm:w-8 sm:h-8">

@@ -72,7 +72,7 @@ export default function SiteFooter() {
           marginBottom: 'clamp(-72px, -8vw, -38px)',
         }}
       >
-        <Reveal dir="up" distance={44} duration={0.9} scale={0.97} className="w-full">
+        <Reveal mount dir="up" distance={44} duration={0.9} scale={0.97} className="w-full">
           <ScrollParallax distance={18} className="w-full">
             <img
               src="/omeglee_footer.png"
@@ -104,7 +104,7 @@ export default function SiteFooter() {
       }}>
 
         {/* 3-column grid */}
-        <RevealGroup stagger={0.12} className="footer-grid relative z-[2]">
+        <RevealGroup mount stagger={0.12} className="footer-grid relative z-[2]">
 
           {/* Col 1 — Brand */}
           <Item>
@@ -144,7 +144,7 @@ export default function SiteFooter() {
             <h3 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 22px', letterSpacing: '-0.01em' }}>
               Pages
             </h3>
-            <RevealGroup stagger={0.055} delay={0.12} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+            <RevealGroup mount stagger={0.055} delay={0.12} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
               {pages.map((p) => (
                 <Item key={p.label} dir="left" distance={14} duration={0.45}>
                   <Link href={p.href} className="footer-link">{p.label}</Link>
@@ -160,7 +160,7 @@ export default function SiteFooter() {
             <h3 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 22px', letterSpacing: '-0.01em' }}>
               Forms &amp; Applications
             </h3>
-            <RevealGroup stagger={0.055} delay={0.18} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+            <RevealGroup mount stagger={0.055} delay={0.18} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
               {forms.map((f) => (
                 <Item key={f.label} dir="left" distance={14} duration={0.45}>
                   <Link href={f.href} className="footer-link">{f.label}</Link>
@@ -172,7 +172,7 @@ export default function SiteFooter() {
         </RevealGroup>
 
         {/* Divider + copyright */}
-        <Reveal style={{
+        <Reveal mount style={{
           position: 'relative', zIndex: 2,
           marginTop: 52,
           borderTop: '1px solid rgba(255,255,255,0.09)',
@@ -195,7 +195,7 @@ export default function SiteFooter() {
           overflow: 'hidden', padding: '0 16px',
           pointerEvents: 'none', userSelect: 'none',
         }}>
-        <Reveal dir="up" distance={30} duration={1} blur>
+        <Reveal mount dir="up" distance={30} duration={1} blur>
           <span aria-hidden style={{
             display: 'block',
             fontSize: 'clamp(40px,19vw,230px)',
