@@ -42,9 +42,12 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
-          // Stage 1 of HSTS rollout — widen to includeSubDomains/preload
-          // only after confirming nothing on a subdomain depends on plain HTTP.
-          { key: 'Strict-Transport-Security', value: 'max-age=86400' },
+          // `includeSubDomains` is safe to add here — unlike CSP/COOP this
+          // header can't block a script or resource, it only upgrades future
+          // requests to HTTPS. `preload` is deliberately left out: getting a
+          // domain into browsers' static preload lists takes weeks to
+          // reverse, so that's a separate decision to opt into explicitly.
+          { key: 'Strict-Transport-Security', value: 'max-age=86400; includeSubDomains' },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
