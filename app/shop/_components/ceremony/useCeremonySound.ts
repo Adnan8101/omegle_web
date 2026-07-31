@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-type Cue = 'drop' | 'open' | 'chime';
+type Cue = 'impact' | 'open' | 'rise' | 'chime';
 
 /**
  * A few synthesised tones — no audio files. `enabled` is a deliberate opt-in
@@ -34,17 +34,29 @@ export function useCeremonySound(enabled: boolean) {
       if (!ctx) return;
       const now = ctx.currentTime;
 
-      if (cue === 'drop') {
+      if (cue === 'impact') {
+        // A heavier landing thud than a simple drop — two layered low tones.
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(130, now);
-        osc.frequency.exponentialRampToValueAtTime(42, now + 0.22);
-        gain.gain.setValueAtTime(0.28, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(38, now + 0.26);
+        gain.gain.setValueAtTime(0.32, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
         osc.connect(gain).connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.32);
+        osc.stop(now + 0.4);
+
+        const thock = ctx.createOscillator();
+        const thockGain = ctx.createGain();
+        thock.type = 'triangle';
+        thock.frequency.setValueAtTime(210, now);
+        thock.frequency.exponentialRampToValueAtTime(90, now + 0.08);
+        thockGain.gain.setValueAtTime(0.18, now);
+        thockGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        thock.connect(thockGain).connect(ctx.destination);
+        thock.start(now);
+        thock.stop(now + 0.14);
       }
 
       if (cue === 'open') {
@@ -61,6 +73,21 @@ export function useCeremonySound(enabled: boolean) {
           osc.start(now + delay);
           osc.stop(now + delay + 0.55);
         });
+      }
+
+      if (cue === 'rise') {
+        // A slow ascending shimmer under the item lifting out of the crate.
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(980, now + 1.1);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.09, now + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.3);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 1.35);
       }
 
       if (cue === 'chime') {

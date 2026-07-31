@@ -184,32 +184,28 @@ export default function SiteFooter() {
           <span style={{ fontSize: 15, color: '#8A8A95' }}>Designed with ❤️ by the Omeglee Community</span>
         </Reveal>
 
-        {/* Giant outlined OMEGLEE wordmark — thin elegant stroke, AUI-style.
-            Lives in the reserved bottom padding zone, fully below the divider line. */}
+        {/* Giant OMEGLEE wordmark — a soft, fully-filled background flourish
+            (not an outline), scaled purely off viewport width so it always
+            fits edge-to-edge instead of hitting a fixed-px floor and
+            overflowing on narrow phones. Lives in the reserved bottom
+            padding zone, fully below the divider line. */}
         <div style={{
-          position: 'absolute', bottom: 'clamp(-30px,-1.5vw,-14px)', left: '50%', transform: 'translateX(-50%)',
-          zIndex: 1, pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap',
+          position: 'absolute', inset: 'auto 0 clamp(-30px,-1.5vw,-14px) 0',
+          zIndex: 1, display: 'flex', justifyContent: 'center',
+          overflow: 'hidden', padding: '0 16px',
+          pointerEvents: 'none', userSelect: 'none',
         }}>
-        <Reveal dir="up" distance={30} duration={1} blur style={{ position: 'relative' }}>
-          {/* faint orange under-stroke, offset a touch for a two-tone edge */}
+        <Reveal dir="up" distance={30} duration={1} blur>
           <span aria-hidden style={{
-            position: 'absolute', left: '1px', top: '1px',
-            fontSize: 'clamp(96px,17vw,244px)', fontWeight: 800, letterSpacing: '-0.045em',
-            lineHeight: 0.86, display: 'block',
-            color: 'transparent',
-            WebkitTextStroke: '1.5px rgba(255,138,24,0.14)',
-          }}>
-            OMEGLEE
-          </span>
-          <span style={{
-            position: 'relative',
-            fontSize: 'clamp(96px,17vw,244px)',
+            display: 'block',
+            fontSize: 'clamp(40px,19vw,230px)',
             fontWeight: 800,
             letterSpacing: '-0.045em',
             lineHeight: 0.86,
-            display: 'block',
-            color: 'transparent',
-            WebkitTextStroke: '1.5px rgba(80,130,255,0.30)',
+            whiteSpace: 'nowrap',
+            backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(151,110,246,0.32) 55%, rgba(124,63,228,0.24) 100%)',
+            WebkitBackgroundClip: 'text', backgroundClip: 'text',
+            WebkitTextFillColor: 'transparent', color: 'transparent',
           }}>
             OMEGLEE
           </span>

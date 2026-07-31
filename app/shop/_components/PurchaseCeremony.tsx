@@ -18,6 +18,7 @@ import {
 } from 'react-icons/fi';
 import CurrencyMark from '@/components/ui/CurrencyMark';
 import { formatNumber } from '../_lib/types';
+import CrateStage from './ceremony/CrateStage';
 import ParticleField from './ceremony/ParticleField';
 import RewardCrate from './ceremony/RewardCrate';
 import { useCeremonySound } from './ceremony/useCeremonySound';
@@ -40,20 +41,35 @@ interface PurchaseCeremonyProps {
 const EASE = [0.22, 1, 0.36, 1] as const;
 const SOUND_KEY = 'omeglee:ceremony-sound';
 
-const PHASE_ORDER: CeremonyPhase[] = ['focus', 'drop', 'anticipate', 'opening', 'reveal', 'receipt'];
+const PHASE_ORDER: CeremonyPhase[] = [
+  'focus',
+  'fall',
+  'impact',
+  'anticipate',
+  'opening',
+  'emerge',
+  'reveal',
+  'receipt',
+];
 const PHASE_MS: Record<Exclude<CeremonyPhase, 'receipt'>, number> = {
-  focus: 480,
-  drop: 550,
-  anticipate: 1050,
-  opening: 800,
-  reveal: 1650,
+  focus: 700,
+  fall: 1300,
+  impact: 550,
+  anticipate: 2000,
+  opening: 1050,
+  emerge: 1900,
+  reveal: 2600,
 };
 
 /**
- * The reward moment, in full: background focus → box drop → anticipation →
- * lid opening → item reveal → a fade into the receipt below. Every beat
- * advances itself on a timer; a skip control and Escape both jump straight
- * to the receipt, and `prefers-reduced-motion` starts there outright.
+ * The reward moment, as a ten-second short film: the shop dims → the crate
+ * falls out of the sky trailing light → it lands on the stage floor with a
+ * shockwave → it sits there, seams glowing, daring you to wait → the lid
+ * pops and light floods out → the item rises out of the crate on a beam of
+ * light → it settles into its final hover, name and price fading in → a
+ * fade into the receipt below. Every beat advances itself on a timer; a skip
+ * control and Escape both jump straight to the receipt, and
+ * `prefers-reduced-motion` starts there outright.
  */
 export default function PurchaseCeremony({
   itemName,
@@ -107,11 +123,13 @@ export default function PurchaseCeremony({
   }, [reduce]);
 
   useEffect(() => {
-    if (phase === 'drop') playCue('drop');
+    if (phase === 'impact') playCue('impact');
     if (phase === 'opening') playCue('open');
+    if (phase === 'emerge') playCue('rise');
     if (phase === 'reveal') playCue('chime');
-    if (phase === 'anticipate' && !reduce) {
-      stage.start({ x: [0, -5, 5, -3, 3, -1, 1, 0] }, { duration: 0.36, ease: 'easeOut' });
+    if (phase === 'impact' && !reduce) {
+      // A camera kick on landing, distinct from the crate's own squash-and-shake.
+      stage.start({ x: [0, -8, 6, -3, 0], y: [0, 5, -2, 0] }, { duration: 0.32, ease: 'easeOut' });
     }
   }, [phase, playCue, reduce, stage]);
 
@@ -166,11 +184,21 @@ export default function PurchaseCeremony({
         className="fixed inset-0 bg-black/92 backdrop-blur-xl"
       />
 
+      {cinematic && <CrateStage phase={phase} />}
+
+      {cinematic && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0"
+          style={{ background: 'radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.55) 100%)' }}
+        />
+      )}
+
       {!reduce && cinematic && (
         <ParticleField
           mode="ambient"
-          count={22}
-          colors={['#ffd77a40', '#ffffff30', '#7cc4ff30']}
+          count={30}
+          colors={['#ffd77a4d', '#ffffff38', '#7cc4ff38']}
           className="pointer-events-none fixed inset-0"
         />
       )}
@@ -194,67 +222,140 @@ export default function PurchaseCeremony({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 1.03 }}
             transition={{ duration: 0.5, ease: EASE }}
-            className="fixed inset-0 flex flex-col items-center justify-center px-6"
+            className="fixed inset-0 flex flex-col items-center px-6"
+            style={{ justifyContent: 'flex-end', paddingBottom: 'clamp(88px, 27vh, 230px)' }}
           >
             <motion.div animate={stage} className="relative flex flex-col items-center">
               <RewardCrate phase={phase} />
 
-              {phase === 'anticipate' && (
+              {phase === 'impact' && (
                 <ParticleField
                   mode="burst"
-                  count={30}
-                  originY={0.82}
-                  colors={['#d4d4dc', '#8f8f99']}
+                  count={40}
+                  originY={0.86}
+                  colors={['#d4d4dc', '#8f8f99', '#5a5a63']}
                   className="pointer-events-none absolute inset-[-40px]"
                 />
               )}
-              {(phase === 'opening' || phase === 'reveal') && (
+              {(phase === 'opening' || phase === 'emerge') && (
                 <ParticleField
                   mode="burst"
-                  count={64}
+                  count={120}
                   originY={0.4}
+                  sparkRatio={0.4}
                   colors={['#ffd77a', '#ffffff', '#ffb84d']}
-                  className="pointer-events-none absolute inset-[-90px]"
+                  className="pointer-events-none absolute inset-[-140px]"
+                />
+              )}
+              {phase === 'reveal' && (
+                <ParticleField
+                  mode="confetti"
+                  count={30}
+                  colors={['#ffd77a', '#ffffff', '#7cc4ff', '#34D399']}
+                  className="pointer-events-none fixed inset-0"
                 />
               )}
 
               <AnimatePresence>
-                {phase === 'reveal' && (
+                {(phase === 'emerge' || phase === 'reveal') && (
                   <motion.div
                     key="reveal-content"
-                    initial={{ opacity: 0, y: 26, scale: 0.92 }}
-                    animate={{ opacity: 1, y: -18, scale: 1 }}
-                    transition={{ duration: 0.6, ease: EASE }}
+                    initial={{ opacity: 0, y: 54, scale: 0.45 }}
+                    animate={
+                      phase === 'emerge'
+                        ? { opacity: 0.94, y: 16, scale: 0.8 }
+                        : { opacity: 1, y: -18, scale: 1 }
+                    }
+                    transition={
+                      phase === 'emerge'
+                        ? { duration: PHASE_MS.emerge / 1000, ease: [0.16, 1, 0.3, 1] }
+                        : { type: 'spring', stiffness: 230, damping: 20, mass: 0.85 }
+                    }
                     className="absolute bottom-full mb-2 flex flex-col items-center text-center"
                   >
+                    {/* light beam the item rises out on */}
                     <motion.div
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
-                      className="h-[104px] w-[104px] overflow-hidden rounded-[22px] border border-[#ffd77a]/30 bg-white/[0.04]"
-                      style={{ boxShadow: '0 0 40px -8px rgba(255,215,122,0.5)' }}
-                    >
-                      {itemThumbnail ? (
-                        <img src={itemThumbnail} alt={itemName} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center">
-                          <FiPackage className="h-10 w-10 text-white/25" />
-                        </span>
-                      )}
-                    </motion.div>
-                    <h2 className="mt-4 max-w-[22ch] text-[22px] font-extrabold tracking-[-0.02em] text-white">
-                      {itemName}
-                    </h2>
-                    <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
-                      <span className="flex items-center gap-1.5 text-[13px] font-semibold text-white/50 tabular-nums">
-                        <CurrencyMark emoji={currencyEmoji} size={13} />
-                        <span className="text-[#ffd77a]">{formatNumber(pricePaid)}</span>
-                      </span>
-                      {itemValueInr ? (
-                        <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[11.5px] font-bold text-emerald-300">
-                          ₹{formatNumber(itemValueInr)} value
-                        </span>
-                      ) : null}
+                      aria-hidden
+                      className="pointer-events-none absolute bottom-[-14px] left-1/2 -z-10 -translate-x-1/2 rounded-full"
+                      style={{
+                        width: 92,
+                        background: 'linear-gradient(180deg, transparent 0%, rgba(255,215,122,0.35) 45%, rgba(255,215,122,0.85) 100%)',
+                        filter: 'blur(18px)',
+                      }}
+                      initial={{ opacity: 0, height: 30, scaleY: 0 }}
+                      animate={{
+                        opacity: phase === 'emerge' ? 0.95 : 0.4,
+                        height: phase === 'emerge' ? 230 : 170,
+                        scaleY: 1,
+                      }}
+                      transition={{ duration: 0.9, ease: EASE }}
+                    />
+
+                    <div className="relative">
+                      <motion.div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-[-22px] rounded-full"
+                        style={{ background: 'radial-gradient(circle, rgba(255,215,122,0.45) 0%, transparent 70%)' }}
+                        animate={{ scale: [1, 1.18, 1], opacity: [0.6, 1, 0.6] }}
+                        transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                      />
+                      <motion.div
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+                        className="relative h-[112px] w-[112px] overflow-hidden rounded-[24px] border border-[#ffd77a]/40 bg-white/[0.04]"
+                        style={{ boxShadow: '0 0 44px -6px rgba(255,215,122,0.6)' }}
+                      >
+                        {itemThumbnail ? (
+                          <img src={itemThumbnail} alt={itemName} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="flex h-full w-full items-center justify-center">
+                            <FiPackage className="h-10 w-10 text-white/25" />
+                          </span>
+                        )}
+                        {phase === 'reveal' && (
+                          <motion.div
+                            key="shine"
+                            aria-hidden
+                            className="pointer-events-none absolute inset-0"
+                            style={{
+                              background: 'linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.55) 50%, transparent 60%)',
+                            }}
+                            initial={{ x: '-120%' }}
+                            animate={{ x: '120%' }}
+                            transition={{ duration: 1.1, delay: 0.35, ease: EASE }}
+                          />
+                        )}
+                      </motion.div>
                     </div>
+
+                    {phase === 'reveal' && (
+                      <>
+                        <motion.h2
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, ease: EASE, delay: 0.15 }}
+                          className="mt-4 max-w-[22ch] text-[22px] font-extrabold tracking-[-0.02em] text-white"
+                        >
+                          {itemName}
+                        </motion.h2>
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, ease: EASE, delay: 0.28 }}
+                          className="mt-2.5 flex flex-wrap items-center justify-center gap-2"
+                        >
+                          <span className="flex items-center gap-1.5 text-[13px] font-semibold text-white/50 tabular-nums">
+                            <CurrencyMark emoji={currencyEmoji} size={13} />
+                            <span className="text-[#ffd77a]">{formatNumber(pricePaid)}</span>
+                          </span>
+                          {itemValueInr ? (
+                            <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[11.5px] font-bold text-emerald-300">
+                              ₹{formatNumber(itemValueInr)} value
+                            </span>
+                          ) : null}
+                        </motion.div>
+                      </>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

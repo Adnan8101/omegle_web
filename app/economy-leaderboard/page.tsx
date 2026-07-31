@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion';
 import { FiAlertCircle, FiArrowLeft, FiRefreshCw, FiTrendingUp } from 'react-icons/fi';
 import { Item, Magnetic, Reveal, RevealGroup, Tilt, Words } from '@/components/motion';
+import Atmosphere from '@/components/shop/Atmosphere';
 import SegmentedControl from '@/components/ui/SegmentedControl';
 import LadderRow from './_components/LadderRow';
 import LeaderboardSkeleton from './_components/LeaderboardSkeleton';
@@ -84,17 +85,8 @@ export default function EconomyLeaderboardPage() {
   );
 
   return (
-    <main className="relative min-h-screen bg-[rgb(var(--color-bg-primary))] pb-20 sm:pb-24">
-      {/* Ambient lighting */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[900px] overflow-hidden">
-        <div
-          className="absolute left-1/2 top-[-14%] h-[600px] w-[1000px] -translate-x-1/2"
-          style={{
-            background: 'radial-gradient(ellipse at 50% 40%, rgba(245,158,11,0.15) 0%, rgba(124,58,237,0.07) 45%, transparent 72%)',
-            filter: 'blur(70px)',
-          }}
-        />
-      </div>
+    <main className="relative min-h-screen overflow-x-clip bg-black pb-20 sm:pb-24">
+      <Atmosphere />
 
       <div className="relative z-10 mx-auto w-full max-w-[1080px] px-5 pt-28 sm:px-8 sm:pt-32">
         {/* ── Back ─────────────────────────────────────────────────── */}
@@ -155,16 +147,10 @@ export default function EconomyLeaderboardPage() {
             </Item>
           </RevealGroup>
 
+          {/* No ambient glow behind the artwork — it's a flat black-bg
+              render, so lighting it would only draw a visible rectangle
+              around it instead of letting it sit on the page's own black. */}
           <Reveal dir="right" distance={36} blur scale={0.96} className="relative order-1 lg:order-2">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute"
-              style={{
-                inset: '-10%',
-                background: 'radial-gradient(ellipse at center, rgba(245,158,11,0.16) 0%, rgba(124,58,237,0.08) 45%, transparent 70%)',
-                filter: 'blur(50px)',
-              }}
-            />
             <Tilt max={5} scale={1.012} perspective={1400} className="relative w-full">
               <Image
                 src="/omeglee_lb.png"

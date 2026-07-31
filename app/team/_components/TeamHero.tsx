@@ -25,19 +25,7 @@ export default function TeamHero({ headcount, departments, since }: TeamHeroProp
   ];
 
   return (
-    <section className="relative w-full overflow-hidden">
-      {/* Ambient lighting */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute left-1/2 top-[-8%] h-[600px] w-[980px] -translate-x-1/2"
-          style={{
-            background:
-              'radial-gradient(ellipse at 50% 35%, rgba(124,58,237,0.18) 0%, rgba(34,211,238,0.08) 45%, transparent 72%)',
-            filter: 'blur(64px)',
-          }}
-        />
-      </div>
-
+    <section className="relative z-10 w-full overflow-hidden">
       <div className="relative z-10 mx-auto w-full max-w-[1180px] px-5 pt-28 sm:px-8 sm:pt-32">
         <Reveal mount dir="down" distance={12} className="mb-9">
           <Magnetic strength={0.3} max={10} className="inline-flex">
@@ -72,16 +60,10 @@ export default function TeamHero({ headcount, departments, since }: TeamHeroProp
           </RevealGroup>
         </div>
 
-        {/* ── Portrait ─────────────────────────────────────────────── */}
+        {/* ── Portrait — sits directly on the page's own black, no glow
+              behind it, so the art's baked-in black background disappears
+              into the page instead of reading as a floating rectangle ── */}
         <Reveal mount dir="up" distance={36} duration={0.95} delay={0.32} scale={0.97} className="relative mt-10 sm:mt-14">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[720px] -translate-x-1/2 -translate-y-1/2"
-            style={{
-              background: 'radial-gradient(ellipse at center, rgba(124,58,237,0.22) 0%, rgba(34,211,238,0.1) 42%, transparent 72%)',
-              filter: 'blur(60px)',
-            }}
-          />
           <Tilt max={4} scale={1.012} perspective={1500} className="relative mx-auto w-full max-w-[640px]">
             <Image
               src="/Omeglee_Team.png"

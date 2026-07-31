@@ -138,16 +138,11 @@ export function ShopClosed({ currencyName }: { currencyName: string }) {
 
   return (
     <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/2 h-[40rem] w-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5865F2] opacity-10 blur-[120px]" />
-      </div>
-
+      {/* No local ambient glow here — the shop's own <Atmosphere /> already
+          lights this page, so the mascot sits straight on true black. */}
       <RevealGroup mount stagger={0.12} className="relative z-10 w-full max-w-2xl text-center">
         <Item className="mb-8 flex justify-center" scale={0.95}>
-          <div className="relative">
-            <div className="absolute -inset-4 rounded-full bg-gradient-to-b from-[#5865F2]/20 to-transparent blur-2xl" />
-            <CartMascot size={200} className="relative z-10 drop-shadow-2xl" />
-          </div>
+          <CartMascot size={200} className="relative z-10 drop-shadow-2xl" />
         </Item>
 
         <Item>

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { FiAlertCircle, FiArrowUpRight, FiRefreshCw, FiUsers } from 'react-icons/fi';
 import { Item, Magnetic, Reveal, RevealGroup } from '@/components/motion';
+import Atmosphere from '@/components/shop/Atmosphere';
 import SegmentedControl from '@/components/ui/SegmentedControl';
 import MemberCard from './_components/MemberCard';
 import MemberSpotlight from './_components/MemberSpotlight';
@@ -66,7 +67,9 @@ export default function TeamPage() {
   const closeSpotlight = useCallback(() => setSpotlight(null), []);
 
   return (
-    <main className="relative min-h-screen bg-[rgb(var(--color-bg-primary))]">
+    <main className="relative min-h-screen overflow-x-clip bg-black">
+      <Atmosphere />
+
       <TeamHero headcount={headcount} departments={populated.length} since={since} />
 
       <div className="relative z-10 mx-auto w-full max-w-[1180px] px-5 pb-20 pt-4 sm:px-8 sm:pb-24">
