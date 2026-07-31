@@ -75,8 +75,10 @@ export default function SiteFooter() {
         <Reveal mount dir="up" distance={44} duration={0.9} scale={0.97} className="w-full">
           <ScrollParallax distance={18} className="w-full">
             <img
-              src="/omeglee_footer.png"
+              src="/omeglee_footer.webp"
               alt="The Omeglee crew"
+              width={1825}
+              height={862}
               draggable={false}
               style={{
                 width: '100%',

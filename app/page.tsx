@@ -276,10 +276,10 @@ export default function Home() {
                   transformStyle: 'preserve-3d',
                 }}>
                   <Image
-                    src="/phone_mockup_screenshot2_8K.png"
+                    src="/phone_mockup_screenshot2_8K.webp"
                     alt="Omeglee Mobile App"
-                    width={400}
-                    height={800}
+                    width={547}
+                    height={1200}
                     priority
                     style={{
                       width: '100%',
@@ -309,10 +309,10 @@ export default function Home() {
                   transformStyle: 'preserve-3d',
                 }}>
                   <Image
-                    src="/phone_mockup_screenshot2_8K.png"
+                    src="/phone_mockup_screenshot2_8K.webp"
                     alt="Omeglee Discord Server Channels"
-                    width={400}
-                    height={800}
+                    width={547}
+                    height={1200}
                     priority
                     style={{
                       width: '100%',
@@ -342,10 +342,10 @@ export default function Home() {
                   transformStyle: 'preserve-3d',
                 }}>
                   <Image
-                    src="/phone_mockup_screenshot1_8K.png"
+                    src="/phone_mockup_screenshot1_8K.webp"
                     alt="Omeglee Discord Server Welcome"
-                    width={400}
-                    height={800}
+                    width={547}
+                    height={1200}
                     priority
                     style={{
                       width: '100%',
