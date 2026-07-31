@@ -139,49 +139,100 @@ export function ShopClosed({ currencyName }: { currencyName: string }) {
   const seconds = Math.floor((diff % (1000 * 60)) / 1000);
   
   const pad = (n: number) => n.toString().padStart(2, '0');
-  const timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 
   const formattedDate = targetDate 
-    ? targetDate.toLocaleDateString('en-US', { day: 'numeric', month: 'long' }) + ' 12:00 AM'
+    ? targetDate.toLocaleDateString('en-US', { day: 'numeric', month: 'long' }) + ' at 12:00 AM'
     : '';
 
   return (
-    <div className="relative z-10 flex min-h-screen items-center justify-center px-5 py-24">
-      <RevealGroup mount stagger={0.1} className="w-full max-w-lg text-center">
-        <Item dir="none" scale={0.9} className="flex justify-center">
-          <CartMascot size={250} />
+    <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20 sm:px-6 lg:px-8">
+      {/* Subtle background glow */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute left-1/2 top-1/2 h-[40rem] w-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5865F2] opacity-10 blur-[120px]" />
+      </div>
+
+      <RevealGroup mount stagger={0.12} className="relative z-10 w-full max-w-2xl text-center">
+        <Item className="flex justify-center mb-8" scale={0.95}>
+          <div className="relative">
+            <div className="absolute -inset-4 rounded-full bg-gradient-to-b from-[#5865F2]/20 to-transparent blur-2xl" />
+            <CartMascot size={200} className="relative z-10 drop-shadow-2xl" />
+          </div>
         </Item>
+
         <Item>
-          <h1 className="sx-display mt-1 text-[clamp(30px,6vw,44px)] font-extrabold text-[var(--sx-ink)]">
-            <Words text="The shop is closed" mount delay={0.2} />
+          <h1 className="sx-display text-[clamp(2.2rem,5vw,3.5rem)] font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-[var(--sx-ink)] to-[var(--sx-ink-3)] drop-shadow-sm pb-1">
+            <Words text="The Shop is Resting" mount delay={0.2} />
           </h1>
         </Item>
-        <Item blur>
-          <p className="mx-auto mt-4 max-w-sm text-[15px] leading-relaxed text-[var(--sx-ink-2)]">
-            We&apos;ve pulled the shutters down for a bit of maintenance. Your {currencyName} is safe.
+
+        <Item blur className="mt-4">
+          <div className="mx-auto max-w-lg space-y-2">
+            <p className="text-[15px] sm:text-[16px] leading-relaxed text-[var(--sx-ink-2)] font-medium">
+              We&apos;re currently doing a little maintenance and restocking our shelves. 
+              Don&apos;t worry, your <strong className="font-bold text-[var(--sx-ink)]">{currencyName}</strong> is perfectly safe.
+            </p>
             {mounted && targetDate && (
-              <span className="block mt-2">
-                The shop will be open on <strong className="text-[var(--sx-ink)]">{formattedDate}</strong>.
-              </span>
+              <p className="text-[14px] sm:text-[15px] font-semibold text-[#5865F2] drop-shadow-sm">
+                We will reopen on {formattedDate}.
+              </p>
             )}
-          </p>
+          </div>
         </Item>
+
         {mounted && targetDate && (
-          <Item blur className="mt-6 flex justify-center">
-            <div className="flex flex-col items-center p-4 rounded-2xl border bg-white shadow-sm" style={{ borderColor: 'var(--sx-hair)' }}>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--sx-ink-3)] mb-1">Opening In</span>
-              <span className="text-3xl font-black text-[#5865F2] tabular-nums tracking-tight">{timeString}</span>
+          <Item blur className="mt-10 flex justify-center">
+            <div className="relative flex flex-col items-center">
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[rgb(var(--color-bg-primary))] px-4 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--sx-ink-3)] z-10 rounded-full">
+                Opening In
+              </span>
+              <div className="flex gap-4 sm:gap-6 rounded-3xl border p-6 sm:p-8 shadow-2xl backdrop-blur-xl" style={{ borderColor: 'var(--sx-hair)', background: 'rgba(255, 255, 255, 0.03)' }}>
+                {/* Hours */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-b from-[rgba(255,255,255,0.06)] to-transparent border border-[var(--sx-hair)] shadow-inner">
+                    <span className="text-3xl sm:text-4xl font-black tabular-nums tracking-tighter text-[var(--sx-ink)]">
+                      {pad(hours)}
+                    </span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[var(--sx-ink-3)]">Hours</span>
+                </div>
+
+                <div className="flex items-center text-2xl font-black text-[var(--sx-ink-3)] -mt-6">:</div>
+
+                {/* Minutes */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-b from-[rgba(255,255,255,0.06)] to-transparent border border-[var(--sx-hair)] shadow-inner">
+                    <span className="text-3xl sm:text-4xl font-black tabular-nums tracking-tighter text-[var(--sx-ink)]">
+                      {pad(minutes)}
+                    </span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[var(--sx-ink-3)]">Mins</span>
+                </div>
+
+                <div className="flex items-center text-2xl font-black text-[var(--sx-ink-3)] -mt-6">:</div>
+
+                {/* Seconds */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-b from-[#5865F2]/10 to-transparent border border-[#5865F2]/30 shadow-inner">
+                    <span className="text-3xl sm:text-4xl font-black tabular-nums tracking-tighter text-[#5865F2]">
+                      {pad(seconds)}
+                    </span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#5865F2]">Secs</span>
+                </div>
+              </div>
             </div>
           </Item>
         )}
-        <Item className="mt-8 flex justify-center" scale={0.94}>
-          <Magnetic strength={0.24} max={10}>
+
+        <Item className="mt-12 flex justify-center" scale={0.96}>
+          <Magnetic strength={0.3} max={15}>
             <Link
               href="/"
-              className="sx-focus group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-[14px] font-bold text-black transition-colors hover:bg-[#eceaff]"
+              className="sx-focus group relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-full bg-[#5865F2] px-8 py-4 text-[14px] font-bold text-white transition-transform hover:scale-105 active:scale-95 shadow-[0_12px_30px_-10px_rgba(88,101,242,0.6)] hover:bg-[#4752C4]"
             >
-              <FiArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
-              Back to Omeglee
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+              <FiArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+              Return to Homepage
             </Link>
           </Magnetic>
         </Item>
