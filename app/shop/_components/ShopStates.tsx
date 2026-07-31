@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { FiAlertCircle, FiArrowLeft, FiArrowUpRight, FiSearch, FiX } from 'react-icons/fi';
 import { FaDiscord } from 'react-icons/fa';
+import React, { useEffect, useState } from 'react';
 import { Item, Magnetic, Reveal, RevealGroup, Words } from '@/components/motion';
 
 /** The mascot with an empty basket — reused wherever there's nothing to show. */
@@ -113,6 +114,37 @@ export function NoMatches({ query, onClear }: { query: string; onClear: () => vo
 
 /** Shop toggled off by an admin. */
 export function ShopClosed({ currencyName }: { currencyName: string }) {
+  const [mounted, setMounted] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  const [targetDate, setTargetDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    const currentDate = new Date();
+    // Next day at 12:00 AM
+    const nextDay = new Date(currentDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    nextDay.setHours(0, 0, 0, 0);
+    setTargetDate(nextDay);
+
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const diff = targetDate ? Math.max(0, targetDate.getTime() - now) : 0;
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+  const formattedDate = targetDate 
+    ? targetDate.toLocaleDateString('en-US', { day: 'numeric', month: 'long' }) + ' 12:00 AM'
+    : '';
+
   return (
     <div className="relative z-10 flex min-h-screen items-center justify-center px-5 py-24">
       <RevealGroup mount stagger={0.1} className="w-full max-w-lg text-center">
@@ -126,10 +158,22 @@ export function ShopClosed({ currencyName }: { currencyName: string }) {
         </Item>
         <Item blur>
           <p className="mx-auto mt-4 max-w-sm text-[15px] leading-relaxed text-[var(--sx-ink-2)]">
-            We&apos;ve pulled the shutters down for a bit of maintenance. Your {currencyName} is safe — the
-            shelves will be back shortly.
+            We&apos;ve pulled the shutters down for a bit of maintenance. Your {currencyName} is safe.
+            {mounted && targetDate && (
+              <span className="block mt-2">
+                The shop will be open on <strong className="text-[var(--sx-ink)]">{formattedDate}</strong>.
+              </span>
+            )}
           </p>
         </Item>
+        {mounted && targetDate && (
+          <Item blur className="mt-6 flex justify-center">
+            <div className="flex flex-col items-center p-4 rounded-2xl border bg-white shadow-sm" style={{ borderColor: 'var(--sx-hair)' }}>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--sx-ink-3)] mb-1">Opening In</span>
+              <span className="text-3xl font-black text-[#5865F2] tabular-nums tracking-tight">{timeString}</span>
+            </div>
+          </Item>
+        )}
         <Item className="mt-8 flex justify-center" scale={0.94}>
           <Magnetic strength={0.24} max={10}>
             <Link
