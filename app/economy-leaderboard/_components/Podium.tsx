@@ -26,7 +26,7 @@ export default function Podium({ entries, currencyEmoji, currencyName }: PodiumP
   const reduce = useReducedMotion();
 
   return (
-    <div className="flex flex-col items-end gap-4 sm:flex-row sm:items-end sm:gap-5">
+    <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end sm:gap-5">
       {entries.map((entry) => {
         const tier = TIERS[entry.position] ?? TIERS[3];
         const isFirst = entry.position === 1;
