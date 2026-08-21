@@ -44,7 +44,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/Main_logo_omegle-ezgif.com-video-to-gif-converter-2.gif" />
       </head>
-      <body className={`${displayFont.variable} ${bodyFont.variable} font-sans`}>
+      <body className={`${displayFont.variable} ${bodyFont.variable} font-sans`} suppressHydrationWarning>
         <Providers>
           <ThemeProvider>
             <FrontendNavbarMount />

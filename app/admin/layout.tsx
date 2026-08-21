@@ -1,5 +1,6 @@
 'use client';
 import { useTheme } from '@/contexts/ThemeContext';
+import { DEV_BYPASS_PERMISSIONS, isLocalDevBypass } from '@/lib/devAuth';
 import { QrCodeIcon, Dices, Disc3, Cherry } from 'lucide-react';
 import { signOut,useSession } from 'next-auth/react';
 import Image from 'next/image';
@@ -10,6 +11,7 @@ import {
 FiActivity,
 FiAlertOctagon,
 FiBarChart2,
+FiBookOpen,
 FiCreditCard,
 FiDollarSign,
 FiFileText,
@@ -37,6 +39,9 @@ function isPathnameAllowed(pathname: string, perms: any): boolean {
     if (!perms) return false;
     if (perms.hasFullAccess) return true;
     if (pathname === '/admin/dashboard') {
+        return perms.hasAnyAccess;
+    }
+    if (pathname.startsWith('/training') || pathname.startsWith('/admin/training')) {
         return perms.hasAnyAccess;
     }
     if (perms.hasCasinoAccess && pathname.startsWith('/admin/shop')) {
@@ -73,10 +78,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [mounted, setMounted] = useState(false);
     const { theme, toggleTheme } = useTheme();
+    const effectivePermissions = session?.user?.permissions ?? (isLocalDevBypass ? DEV_BYPASS_PERMISSIONS : undefined);
     useEffect(() => {
         setMounted(true);
     }, []);
     useEffect(() => {
+        if (isLocalDevBypass) return;
         if (status === 'unauthenticated') {
             router.replace('/admin');
         } else if (status === 'authenticated') {
@@ -129,7 +136,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     if (pathname === '/admin' || pathname === '/admin/signin') {
         return <>{children}</>;
     }
-    if (status === 'unauthenticated' || (status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess)) {
+    if (!isLocalDevBypass && (status === 'unauthenticated' || (status === 'authenticated' && !session?.user?.permissions?.hasAnyAccess))) {
         return (
             <div className="min-h-screen bg-[rgb(var(--color-bg-primary))] flex items-center justify-center p-4">
                 <div className="glass-blue rounded-3xl p-8 border border-[rgb(var(--color-border))] shadow-apple-lg max-w-md w-full">
@@ -173,6 +180,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             name: 'Dashboard',
             href: '/admin/dashboard',
             icon: <FiHome className="w-5 h-5" />,
+            requiresAnyAccess: true,
+        },
+        {
+            name: 'Training',
+            href: '/training',
+            icon: <FiBookOpen className="w-5 h-5" />,
             requiresAnyAccess: true,
         },
         {
@@ -253,7 +266,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresSrModAccess: true,
         },
     ].filter(item => {
-        const perms = session?.user?.permissions;
+        const perms = effectivePermissions;
         if (perms?.hasFullAccess) {
             return true;
         }
@@ -457,11 +470,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </nav>
                 {}
                 <div className="p-4 md:p-6 border-t border-[rgb(var(--color-border))] space-y-2">
-                    {session?.user?.name && (
+                    {(session?.user?.name || isLocalDevBypass) && (
                         <div className="px-4 py-3 mb-2 flex items-center justify-between">
                             <div>
                                 <p className="text-xs text-[rgb(var(--color-text-tertiary))]">Signed in as</p>
-                                <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{session.user.name}</p>
+                                <p className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                                    {session?.user?.name || 'Local Dev (bypass)'}
+                                </p>
                             </div>
                             <button
                                 onClick={toggleTheme}

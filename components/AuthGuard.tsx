@@ -1,4 +1,5 @@
 'use client';
+import { DEV_BYPASS_PERMISSIONS, isLocalDevBypass } from '@/lib/devAuth';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { ReactNode,useEffect } from 'react';
@@ -51,7 +52,9 @@ export function AuthGuard({
 }: AuthGuardProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const effectivePermissions = session?.user?.permissions ?? (isLocalDevBypass ? DEV_BYPASS_PERMISSIONS : undefined);
   useEffect(() => {
+    if (isLocalDevBypass) return;
     if (status === 'unauthenticated') {
       router.replace(fallbackUrl);
       return;
@@ -62,11 +65,11 @@ export function AuthGuard({
       if (requireFullAccess) {
         hasAccess = perms?.hasFullAccess ?? false;
       } else if (requireModeratorAccess) {
-        hasAccess = perms?.hasFullAccess || perms?.hasModeratorAccess ?? false;
+        hasAccess = Boolean(perms?.hasFullAccess || perms?.hasModeratorAccess);
       } else if (requireViewAccess) {
-        hasAccess = perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasViewOnlyAccess ?? false;
+        hasAccess = Boolean(perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasViewOnlyAccess);
       } else if (requireCasinoAccess) {
-        hasAccess = perms?.hasFullAccess || perms?.hasCasinoAccess ?? false;
+        hasAccess = Boolean(perms?.hasFullAccess || perms?.hasCasinoAccess);
       } else {
         hasAccess = perms?.hasAnyAccess ?? false;
       }
@@ -79,17 +82,17 @@ export function AuthGuard({
   if (status === 'loading') {
     return <LoadingSpinner />;
   }
-  if (status === 'authenticated') {
-    const perms = session?.user?.permissions;
+  if (status === 'authenticated' || isLocalDevBypass) {
+    const perms = effectivePermissions;
     let hasAccess = false;
     if (requireFullAccess) {
       hasAccess = perms?.hasFullAccess ?? false;
     } else if (requireModeratorAccess) {
-      hasAccess = perms?.hasFullAccess || perms?.hasModeratorAccess ?? false;
+      hasAccess = Boolean(perms?.hasFullAccess || perms?.hasModeratorAccess);
     } else if (requireViewAccess) {
-      hasAccess = perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasViewOnlyAccess ?? false;
+      hasAccess = Boolean(perms?.hasFullAccess || perms?.hasModeratorAccess || perms?.hasViewOnlyAccess);
     } else if (requireCasinoAccess) {
-      hasAccess = perms?.hasFullAccess || perms?.hasCasinoAccess ?? false;
+      hasAccess = Boolean(perms?.hasFullAccess || perms?.hasCasinoAccess);
     } else {
       hasAccess = perms?.hasAnyAccess ?? false;
     }

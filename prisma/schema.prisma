@@ -1722,6 +1722,38 @@ model SlotSymbol {
   @@map("slot_symbols")
 }
 
+// ------------------------------------------------------------
+// Staff Training page — self-answering policy chatbot memory.
+// Local keyword matches and LLM fallback answers both get written
+// here so repeat/similar questions are answered from storage
+// instead of re-querying an LLM provider.
+// ------------------------------------------------------------
+
+model TrainingChatMemory {
+  id             String   @id @default(uuid())
+  normalized_key String   @unique
+  question       String
+  answer         String
+  source         String   // 'local' | 'gemini' | 'groq' | 'cerebras' | 'openrouter'
+  section_ids    String[] @default([])
+  hit_count      Int      @default(1)
+  asked_by       String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@map("training_chat_memory")
+  @@index([source])
+  @@index([updated_at])
+}
+
+model TrainingChatRateLimit {
+  user_id      String   @id
+  window_start DateTime @default(now())
+  count        Int      @default(0)
+
+  @@map("training_chat_rate_limits")
+}
+
 // Spin history (spec §12). id doubles as the public "Spin ID".
 model SlotSpin {
   id             String   @id @default(uuid())
