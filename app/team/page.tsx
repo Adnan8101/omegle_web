@@ -48,7 +48,7 @@ export default function TeamPage() {
   );
 
   const everyone = useMemo(
-    () => (team ? [...team.founders, ...team.developers, ...team.management] : []),
+    () => (team ? [...team.founders, ...team.admins, ...team.core_team] : []),
     [team]
   );
 

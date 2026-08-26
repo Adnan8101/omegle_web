@@ -2,7 +2,7 @@ import { authOptions } from '@/lib/auth';
 import { prismaBot } from '@/lib/prismaBot';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
-const VALID_DESIGNATIONS = ['Founder', 'Bot Developer', 'Management'];
+const VALID_DESIGNATIONS = ['Founder', 'Admin', 'Core Team'];
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

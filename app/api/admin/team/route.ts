@@ -3,7 +3,7 @@ import { prismaBot } from '@/lib/prismaBot';
 import { getLiveUserProfiles } from '@/lib/teamBotClient';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
-const VALID_DESIGNATIONS = ['Founder', 'Bot Developer', 'Management'];
+const VALID_DESIGNATIONS = ['Founder', 'Admin', 'Core Team'];
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);

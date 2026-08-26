@@ -24,15 +24,23 @@ export async function GET() {
         };
       })
       .filter((m) => m.profile !== null);
-    const founders = membersWithProfiles.filter((m) => m.designation === 'Founder');
-    const developers = membersWithProfiles.filter((m) => m.designation === 'Bot Developer');
-    const management = membersWithProfiles.filter((m) => m.designation === 'Management');
+    const founders = membersWithProfiles.filter(
+      (m) => m.designation === 'Founder' || m.designation?.toLowerCase() === 'founder'
+    );
+    const admins = membersWithProfiles.filter(
+      (m) => m.designation === 'Admin' || m.designation?.toLowerCase() === 'admin'
+    );
+    const core_team = membersWithProfiles.filter(
+      (m) =>
+        m.designation === 'Core Team' ||
+        m.designation?.toLowerCase() === 'core team'
+    );
     return NextResponse.json({
       success: true,
       data: {
         founders,
-        developers,
-        management,
+        admins,
+        core_team,
       },
     });
   } catch (error: any) {

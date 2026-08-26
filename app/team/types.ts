@@ -17,8 +17,8 @@ export interface TeamMember {
 
 export interface TeamData {
   founders: TeamMember[];
-  developers: TeamMember[];
-  management: TeamMember[];
+  admins: TeamMember[];
+  core_team: TeamMember[];
 }
 
 export type DepartmentId = keyof TeamData;
@@ -30,6 +30,6 @@ export interface Department {
 
 export const DEPARTMENTS: Department[] = [
   { id: 'founders', label: 'Founders' },
-  { id: 'developers', label: 'Developers' },
-  { id: 'management', label: 'Management' },
+  { id: 'admins', label: 'Admins' },
+  { id: 'core_team', label: 'Core Team' },
 ];
