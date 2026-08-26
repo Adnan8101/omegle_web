@@ -1,4 +1,4 @@
-import type { TeamMember } from './types';
+import { DEPARTMENTS, type Department, type TeamMember } from './types';
 
 /** "Mar 2024" — team tenure, from the real `created_at` on the roster row. */
 export function formatJoined(value: string | null | undefined): string | null {
@@ -26,4 +26,14 @@ export function initialsOf(member: TeamMember): string {
 export function swapGifForWebp(event: React.SyntheticEvent<HTMLImageElement>) {
   const image = event.currentTarget;
   if (image.src.includes('.gif')) image.src = image.src.replace('.gif', '.webp');
+}
+
+/**
+ * Match a roster row's designation back to its rank so the spotlight can wear
+ * the same chrome — colour and glyph — as the card it was opened from.
+ */
+export function departmentOf(designation: string | null | undefined): Department | null {
+  const value = designation?.trim().toLowerCase();
+  if (!value) return null;
+  return DEPARTMENTS.find((department) => department.role.toLowerCase() === value) ?? null;
 }

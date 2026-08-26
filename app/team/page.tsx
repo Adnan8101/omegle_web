@@ -11,7 +11,8 @@ import MemberCard from './_components/MemberCard';
 import MemberSpotlight from './_components/MemberSpotlight';
 import TeamHero from './_components/TeamHero';
 import TeamSkeleton from './_components/TeamSkeleton';
-import { DEPARTMENTS, type DepartmentId, type TeamData, type TeamMember } from './types';
+import { TIER_ICONS } from './_components/tierIcons';
+import { DEPARTMENTS, type Department, type DepartmentId, type TeamData, type TeamMember } from './types';
 import { joinedYear } from './utils';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -57,7 +58,11 @@ export default function TeamPage() {
     return { headcount: everyone.length, since: years.length ? Math.min(...years) : null };
   }, [everyone]);
 
-  const visible = filter === 'all' ? everyone : team?.[filter] ?? [];
+  /** Rank order is the page order — founders, then admins, then core team. */
+  const sections = useMemo(
+    () => populated.filter((dept) => filter === 'all' || filter === dept.id),
+    [populated, filter]
+  );
 
   const filterOptions = useMemo(
     () => [{ id: 'all', label: 'Everyone' }, ...populated.map((d) => ({ id: d.id, label: d.label }))],
@@ -106,7 +111,7 @@ export default function TeamPage() {
         {state === 'ready' && populated.length > 0 && (
           <>
             {populated.length > 1 && (
-              <Reveal dir="up" distance={16} className="mb-9 flex justify-center">
+              <Reveal dir="up" distance={16} className="mb-11 flex justify-center">
                 <SegmentedControl
                   options={filterOptions}
                   value={filter}
@@ -125,18 +130,30 @@ export default function TeamPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduce ? undefined : { opacity: 0 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+                className="flex flex-col gap-12 sm:gap-14"
               >
-                {visible.map((member, index) => (
-                  <motion.div
-                    key={member.id}
-                    layout={!reduce}
-                    initial={reduce ? false : { opacity: 0, y: 18, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: Math.min(index, 8) * 0.04 }}
-                  >
-                    <MemberCard member={member} onOpen={setSpotlight} />
-                  </motion.div>
+                {sections.map((department, sectionIndex) => (
+                  <section key={department.id}>
+                    <RankHeading department={department} count={department.count} />
+
+                    <div className={`grid ${department.grid}`}>
+                      {(team?.[department.id] ?? []).map((member, index) => (
+                        <motion.div
+                          key={member.id}
+                          layout={!reduce}
+                          initial={reduce ? false : { opacity: 0, y: 18, scale: 0.97 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{
+                            duration: 0.4,
+                            ease: [0.22, 1, 0.36, 1],
+                            delay: Math.min(sectionIndex * 2 + index, 10) * 0.04,
+                          }}
+                        >
+                          <MemberCard member={member} tier={department.id} onOpen={setSpotlight} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </motion.div>
             </AnimatePresence>
@@ -148,6 +165,26 @@ export default function TeamPage() {
 
       <MemberSpotlight member={spotlight} onClose={closeSpotlight} />
     </main>
+  );
+}
+
+/** Section heading for one rank — same hairline rule the leaderboard uses,
+    tinted with the colour its cards carry. */
+function RankHeading({ department, count }: { department: Department; count: number }) {
+  const Icon = TIER_ICONS[department.id];
+
+  return (
+    <div className="mb-5 flex items-center gap-3">
+      <Icon className="h-3.5 w-3.5 flex-shrink-0" style={{ color: department.ink }} />
+      <h2 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--fx-ink-3)]">
+        {department.label}
+      </h2>
+      <hr
+        className="flex-1 border-0"
+        style={{ height: 1, background: `linear-gradient(90deg, ${department.ring}, transparent)` }}
+      />
+      <span className="fx-num text-[12px] font-bold text-[var(--fx-ink-3)]">{count}</span>
+    </div>
   );
 }
 

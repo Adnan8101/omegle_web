@@ -6,7 +6,8 @@ import { FiCheck, FiCopy, FiX } from 'react-icons/fi';
 import { FaDiscord } from 'react-icons/fa';
 import { DEFAULT_ACCENT, hexToRgbTriplet } from '@/lib/color';
 import type { TeamMember } from '../types';
-import { formatJoined, initialsOf, swapGifForWebp } from '../utils';
+import { departmentOf, formatJoined, initialsOf, swapGifForWebp } from '../utils';
+import { TIER_ICONS } from './tierIcons';
 
 interface MemberSpotlightProps {
   member: TeamMember | null;
@@ -86,6 +87,10 @@ export default function MemberSpotlight({ member, onClose }: MemberSpotlightProp
 
   const accent = member?.profile.accentColor || DEFAULT_ACCENT;
   const joined = formatJoined(member?.created_at);
+  // Rank chrome, so the panel reads as the same tier as the card behind it.
+  const department = departmentOf(member?.designation);
+  const rank = department?.ink ?? accent;
+  const RankIcon = department ? TIER_ICONS[department.id] : null;
 
   return (
     <AnimatePresence>
@@ -183,9 +188,10 @@ export default function MemberSpotlight({ member, onClose }: MemberSpotlightProp
 
                 <div className="min-w-0 flex-1 pb-1">
                   <span
-                    className="mb-1.5 inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em]"
-                    style={{ color: accent, borderColor: `${accent}4d`, background: `${accent}14` }}
+                    className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.09em]"
+                    style={{ color: rank, borderColor: `${rank}4d`, background: `${rank}14` }}
                   >
+                    {RankIcon && <RankIcon className="h-2.5 w-2.5" />}
                     {member.designation}
                   </span>
                   <h2
