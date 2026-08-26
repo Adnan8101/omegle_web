@@ -17,21 +17,51 @@ async function decorate(userIds: string[]) {
         select: { user_id: true, username: true, display_name: true, avatar_url: true },
     });
     const map = new Map(cached.map((row) => [row.user_id, row]));
-    const missing = unique.filter((userId) => !map.has(userId));
+
+    // Fetch users that are either missing from cache entirely OR have no avatar cached
+    const missing = unique.filter((userId) => !map.has(userId) || !map.get(userId)?.avatar_url);
+
+    const fetched: Array<{ user_id: string; username: string; display_name: string; avatar_url: string | null }> = [];
+
     await Promise.all(
-        missing.slice(0, 25).map(async (userId) => {
+        missing.slice(0, 50).map(async (userId) => {
             const member = await getDiscordUser(userId);
             if (!member?.user) return;
-            map.set(userId, {
+            const entry = {
                 user_id: userId,
                 username: member.user.username,
-                display_name: member.nick || member.user.global_name || member.user.username,
+                display_name: member.nick || member.user.global_name || member.user.username || userId,
                 avatar_url: member.user.avatar
-                    ? `https://cdn.discordapp.com/avatars/${userId}/${member.user.avatar}.png`
+                    ? `https://cdn.discordapp.com/avatars/${userId}/${member.user.avatar}.png?size=128`
                     : null,
-            });
+            };
+            map.set(userId, entry);
+            fetched.push(entry);
         })
     );
+
+    // Persist newly fetched / refreshed user data back to DB cache
+    if (fetched.length > 0) {
+        await Promise.allSettled(
+            fetched.map((entry) =>
+                prismaBot.discordUserCache.upsert({
+                    where: { user_id: entry.user_id },
+                    create: {
+                        user_id: entry.user_id,
+                        username: entry.username,
+                        display_name: entry.display_name,
+                        avatar_url: entry.avatar_url,
+                    },
+                    update: {
+                        username: entry.username,
+                        display_name: entry.display_name,
+                        avatar_url: entry.avatar_url,
+                    },
+                })
+            )
+        );
+    }
+
     return map;
 }
 
