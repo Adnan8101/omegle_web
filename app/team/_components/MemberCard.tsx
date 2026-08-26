@@ -51,10 +51,7 @@ function FeatureCard({ member, department, onOpen }: VariantProps) {
     <SpotlightCard
       accent={department.ink}
       className="fx-lift group relative h-full w-full overflow-hidden rounded-[var(--fx-r-lg)]"
-      style={{
-        borderColor: department.ring,
-        boxShadow: `0 34px 70px -46px ${department.glow}, var(--fx-shadow)`,
-      }}
+      style={{ borderColor: department.ring }}
     >
       <HitArea member={member} onOpen={onOpen} />
 
