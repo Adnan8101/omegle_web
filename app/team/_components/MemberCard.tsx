@@ -34,8 +34,7 @@ export default function MemberCard({ member, tier, onOpen }: MemberCardProps) {
   const accent = profile.accentColor || DEFAULT_ACCENT;
   const joined = formatJoined(created_at);
 
-  // Whether this tier gets a real banner image
-  const showBanner = tier === 'founders' || tier === 'admins';
+
 
   // Size tokens per tier
   const sizes = TIER_SIZES[tier];
@@ -53,7 +52,7 @@ export default function MemberCard({ member, tier, onOpen }: MemberCardProps) {
         className="relative w-full overflow-hidden"
         style={{ height: sizes.bannerH, background: `linear-gradient(135deg, ${accent}44, transparent 70%)` }}
       >
-        {showBanner && profile.banner ? (
+        {profile.banner ? (
           <img
             src={profile.banner}
             alt=""
@@ -61,18 +60,12 @@ export default function MemberCard({ member, tier, onOpen }: MemberCardProps) {
             onError={swapGifForWebp}
             className="absolute inset-0 h-full w-full object-cover opacity-75 transition-transform duration-[900ms] ease-[var(--fx-ease)] group-hover:scale-[1.05]"
           />
-        ) : showBanner ? (
+        ) : (
+          /* No banner — accent gradient fallback */
           <span
             aria-hidden
             className="absolute inset-0 transition-transform duration-[900ms] ease-[var(--fx-ease)] group-hover:scale-[1.05]"
             style={{ background: `radial-gradient(120% 140% at 15% 0%, ${accent}55 0%, transparent 60%)` }}
-          />
-        ) : (
-          /* Core team: subtle department gradient, no real banner */
-          <span
-            aria-hidden
-            className="absolute inset-0"
-            style={{ background: `linear-gradient(135deg, ${department.glow}, transparent 65%)` }}
           />
         )}
         {/* Bottom fade into card body */}

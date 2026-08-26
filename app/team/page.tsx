@@ -2,17 +2,17 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { FiAlertCircle, FiArrowUpRight, FiRefreshCw, FiUsers } from 'react-icons/fi';
 import { Item, Magnetic, Reveal, RevealGroup } from '@/components/motion';
 import Atmosphere from '@/components/shop/Atmosphere';
-import SegmentedControl from '@/components/ui/SegmentedControl';
+
 import MemberCard from './_components/MemberCard';
 import MemberSpotlight from './_components/MemberSpotlight';
 import TeamHero from './_components/TeamHero';
 import TeamSkeleton from './_components/TeamSkeleton';
 import { TIER_ICONS } from './_components/tierIcons';
-import { DEPARTMENTS, type Department, type DepartmentId, type TeamData, type TeamMember } from './types';
+import { DEPARTMENTS, type Department, type TeamData, type TeamMember } from './types';
 import { joinedYear } from './utils';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -21,8 +21,7 @@ export default function TeamPage() {
   const [team, setTeam] = useState<TeamData | null>(null);
   const [state, setState] = useState<LoadState>('loading');
   const [spotlight, setSpotlight] = useState<TeamMember | null>(null);
-  /** Null until the roster lands — the highest populated rank then wins. */
-  const [filter, setFilter] = useState<DepartmentId | null>(null);
+
   const reduce = useReducedMotion();
 
   const loadTeam = useCallback(async () => {
@@ -57,21 +56,6 @@ export default function TeamPage() {
     const years = everyone.map((m) => joinedYear(m.created_at)).filter((y): y is number => y !== null);
     return { headcount: everyone.length, since: years.length ? Math.min(...years) : null };
   }, [everyone]);
-
-  /**
-   * One rank on screen at a time. Derived rather than synced in an effect so a
-   * roster that arrives late — or a rank that empties out — always lands on a
-   * real tab instead of a blank grid.
-   */
-  const active = useMemo(() => {
-    const chosen = populated.find((dept) => dept.id === filter);
-    return chosen ?? populated[0] ?? null;
-  }, [populated, filter]);
-
-  const filterOptions = useMemo(
-    () => populated.map((dept) => ({ id: dept.id, label: dept.label })),
-    [populated]
-  );
 
   const closeSpotlight = useCallback(() => setSpotlight(null), []);
 
@@ -112,47 +96,33 @@ export default function TeamPage() {
           />
         )}
 
-        {state === 'ready' && active && (
+        {state === 'ready' && populated.length > 0 && (
           <>
-            {filterOptions.length > 1 && (
-              <Reveal dir="up" distance={16} className="mb-9 flex justify-center">
-                <SegmentedControl
-                  options={filterOptions}
-                  value={active.id}
-                  onChange={(id) => setFilter(id as DepartmentId)}
-                  layoutId="team-filter"
-                  variant="surface"
-                  size="lg"
-                />
-              </Reveal>
-            )}
-
-            <AnimatePresence mode="popLayout">
+            {populated.map((dept, deptIndex) => (
               <motion.section
-                key={active.id}
+                key={dept.id}
                 initial={reduce ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={reduce ? undefined : { opacity: 0 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                aria-label={active.label}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1], delay: deptIndex * 0.1 }}
+                aria-label={dept.label}
+                className={deptIndex > 0 ? 'mt-12' : ''}
               >
-                <RankMeta department={active} count={active.count} />
+                <RankMeta department={dept} count={dept.count} />
 
-                <div className={`grid ${active.grid}`}>
-                  {(team?.[active.id] ?? []).map((member, index) => (
+                <div className={`grid ${dept.grid}`}>
+                  {(team?.[dept.id] ?? []).map((member, index) => (
                     <motion.div
                       key={member.id}
-                      layout={!reduce}
                       initial={reduce ? false : { opacity: 0, y: 18, scale: 0.97 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: Math.min(index, 8) * 0.04 }}
                     >
-                      <MemberCard member={member} tier={active.id} onOpen={setSpotlight} />
+                      <MemberCard member={member} tier={dept.id} onOpen={setSpotlight} />
                     </motion.div>
                   ))}
                 </div>
               </motion.section>
-            </AnimatePresence>
+            ))}
 
             <JoinCallout />
           </>

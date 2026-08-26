@@ -92,10 +92,6 @@ export default function MemberSpotlight({ member, onClose }: MemberSpotlightProp
   const rank = department?.ink ?? accent;
   const RankIcon = department ? TIER_ICONS[department.id] : null;
 
-  // Only founders and admins get real banner images
-  const showBanner = department
-    ? department.id === 'founders' || department.id === 'admins'
-    : false;
 
   return (
     <AnimatePresence>
@@ -124,34 +120,32 @@ export default function MemberSpotlight({ member, onClose }: MemberSpotlightProp
             }
           >
             {/* Banner */}
-            <div className="relative w-full overflow-hidden" style={{ height: showBanner ? undefined : 100 }}>
-              <div className={`relative w-full overflow-hidden ${showBanner ? 'h-36 sm:h-40' : 'h-full'}`}>
-                {showBanner && member.profile.banner ? (
-                  <img
-                    src={member.profile.banner}
-                    alt=""
-                    aria-hidden
-                    onError={swapGifForWebp}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : (
-                  <div
-                    aria-hidden
-                    className="absolute inset-0"
-                    style={{
-                      background: `radial-gradient(120% 140% at 20% 0%, ${accent}66 0%, transparent 62%), radial-gradient(100% 120% at 85% 15%, ${accent}33 0%, transparent 58%)`,
-                    }}
-                  />
-                )}
+            <div className="relative h-36 w-full overflow-hidden sm:h-40">
+              {member.profile.banner ? (
+                <img
+                  src={member.profile.banner}
+                  alt=""
+                  aria-hidden
+                  onError={swapGifForWebp}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
                 <div
                   aria-hidden
                   className="absolute inset-0"
                   style={{
-                    background:
-                      'linear-gradient(to top, rgb(var(--color-bg-secondary)) 2%, rgba(0,0,0,0.45) 50%, transparent 100%)',
+                    background: `radial-gradient(120% 140% at 20% 0%, ${accent}66 0%, transparent 62%), radial-gradient(100% 120% at 85% 15%, ${accent}33 0%, transparent 58%)`,
                   }}
                 />
-              </div>
+              )}
+              <div
+                aria-hidden
+                className="absolute inset-0"
+                style={{
+                  background:
+                    'linear-gradient(to top, rgb(var(--color-bg-secondary)) 2%, rgba(0,0,0,0.45) 50%, transparent 100%)',
+                }}
+              />
               <button
                 type="button"
                 onClick={onClose}
