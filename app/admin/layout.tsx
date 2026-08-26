@@ -22,7 +22,7 @@ FiMic,
 FiMoon,
 FiChevronDown,
 FiChevronRight,
-FiShield,
+FiAward,
 FiShoppingCart,
 FiSun,
 FiUserPlus,
@@ -229,9 +229,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             requiresSrModAccess: true,
         },
         {
-            name: 'VC Automation',
-            href: '/admin/vc-automation',
-            icon: <FiShield className="w-5 h-5" />,
+            name: 'Weekly Activity Roles',
+            href: '/admin/weekly-activity',
+            icon: <FiAward className="w-5 h-5" />,
             requiresFullAccess: true,
         },
         {
@@ -302,8 +302,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         if (href === '/admin/vctranscript') {
             return pathname.startsWith('/admin/vctranscript') && !pathname.startsWith('/admin/vctranscript/chatlogs');
         }
-        if (href === '/admin/vc-automation') {
-            return pathname.startsWith('/admin/vc-automation');
+        if (href === '/admin/weekly-activity') {
+            return pathname.startsWith('/admin/weekly-activity');
         }
         if (href === '/admin/gambling/wheel') {
             return pathname.startsWith('/admin/gambling/wheel');

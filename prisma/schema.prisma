@@ -10,59 +10,15 @@ datasource db {
   url      = env("BOT_DATABASE_WRITE_URL")
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // User interaction tracking for mutual engagement analysis
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // =====================================
 // MANUAL SYSTEM MODELS
 // =====================================
 
-
-
-
-
 // =====================================
 // VOICE TRACKING SYSTEM
 // =====================================
-
-
 
 // =====================================
 // END MANUAL SYSTEM MODELS
@@ -70,9 +26,6 @@ datasource db {
 // =====================================
 // UNBAN APPEAL SYSTEM MODELS
 // =====================================
-
-
-
 
 // =====================================
 // END UNBAN APPEAL SYSTEM MODELS
@@ -82,10 +35,6 @@ datasource db {
 // MESSAGE TRACKING SYSTEM MODELS
 // =====================================
 
-
-
-
-
 // =====================================
 // END MESSAGE TRACKING SYSTEM MODELS
 // =====================================
@@ -93,11 +42,6 @@ datasource db {
 // =====================================
 // ECONOMY / POINTS SYSTEM MODELS
 // =====================================
-
-
-
-
-
 
 // Category-based rewards for advanced mode
 
@@ -107,16 +51,6 @@ datasource db {
 
 // Shop item toggles
 
-
-
-
-
-
-
-
-
-
-
 // =====================================
 // END ECONOMY / POINTS SYSTEM MODELS
 // =====================================
@@ -124,7 +58,6 @@ datasource db {
 // =====================================
 // DISCORD USER CACHE
 // =====================================
-
 
 // =====================================
 // END DISCORD USER CACHE
@@ -134,7 +67,6 @@ datasource db {
 // DISCORD CHANNEL CACHE
 // =====================================
 
-
 // =====================================
 // END DISCORD CHANNEL CACHE
 // =====================================
@@ -143,27 +75,13 @@ datasource db {
 // INVITE SYSTEM
 // =====================================
 
-
-
-
-
-
 // =====================================
 // GUILD SETTINGS
 // =====================================
 
-
-
-
-
-
 // =====================================
 // DONATOR / SUBSCRIPTION SYSTEM
 // =====================================
-
-
-
-
 
 // =====================================
 // END DONATOR SYSTEM
@@ -206,16 +124,18 @@ model AdminRole {
   guild_id   String   @id
   role_id    String
   updated_at DateTime @updatedAt
+
   @@map("admin_roles")
 }
 
 model AfkSettings {
-  allowed_channels String // JSON string
+  allowed_channels    String // JSON string
   allowed_channels_v2 Json?
-  allowed_roles    String // JSON string
-  allowed_roles_v2 Json?
-  enabled          Int    @default(1)
-  guild_id         String @id
+  allowed_roles       String // JSON string
+  allowed_roles_v2    Json?
+  enabled             Int    @default(1)
+  guild_id            String @id
+
   @@map("afk_settings")
 }
 
@@ -224,6 +144,7 @@ model AfkUser {
   reason    String?
   timestamp DateTime @default(now())
   user_id   String
+
   @@id([guild_id, user_id])
   @@map("afk_users")
 }
@@ -236,9 +157,10 @@ model AgVouch {
   target_user_id     String
   updated_at         DateTime @updatedAt
   vouched_by_user_id String
-  @@map("ag_vouches")
+
   @@unique([guild_id, target_user_id, vouched_by_user_id])
   @@index([guild_id, vouched_by_user_id])
+  @@map("ag_vouches")
 }
 
 model AllowedGuild {
@@ -247,50 +169,53 @@ model AllowedGuild {
   guild_id   String   @unique
   guild_name String?
   id         String   @id @default(uuid())
-  @@map("allowed_guilds")
+
   @@index([guild_id])
+  @@map("allowed_guilds")
 }
 
 model AppealConfig {
-  appeal_server_id      String   // Appeal server where tickets are created
+  appeal_server_id      String // Appeal server where tickets are created
   button_text           String   @default("Open Appeal")
-  closed_category_id    String?  // Category for closed tickets
+  closed_category_id    String? // Category for closed tickets
   created_at            DateTime @default(now())
   embed_description     String   @default("Click the button below to submit an unban appeal.")
   embed_title           String   @default("Unban Appeal")
-  guild_id              String   // Main server ID where the config was set
+  guild_id              String // Main server ID where the config was set
   id                    String   @id @default(uuid())
-  main_server_id        String   // Main server where bans are checked
-  opening_category_id   String   // Category for new tickets
-  opening_message       String?  // Custom opening message
-  panel_message_id      String?  // Message ID of the ticket panel
+  main_server_id        String // Main server where bans are checked
+  opening_category_id   String // Category for new tickets
+  opening_message       String? // Custom opening message
+  panel_message_id      String? // Message ID of the ticket panel
   staff_role_ids        String[] // Staff roles that can manage tickets
-  ticket_channel_id     String   // Channel where the ticket panel is sent
-  transcript_channel_id String   // Channel for transcripts
+  ticket_channel_id     String // Channel where the ticket panel is sent
+  transcript_channel_id String // Channel for transcripts
   updated_at            DateTime @updatedAt
-  @@map("appeal_configs")
+
   @@unique([main_server_id, appeal_server_id])
   @@index([appeal_server_id])
   @@index([guild_id])
+  @@map("appeal_configs")
 }
 
 model AppealTicket {
-  appeal_server_id  String    // Appeal server where ticket is created
-  channel_id        String?   // Ticket channel ID
-  claimed_by        String?   // Staff member who claimed
+  appeal_server_id String // Appeal server where ticket is created
+  channel_id       String? // Ticket channel ID
+  claimed_by       String? // Staff member who claimed
   closed_at        DateTime?
-  config_id         String    // Reference to AppealConfig
-  display_id        Int       // Display number (e.g., 1234)
-  main_server_id    String    // Main server the user is banned from
-  opened_at        DateTime  @default(now())
-  status            String    @default("open") // 'open' | 'claimed' | 'closed'
-  status_v2         AppealTicketStatus?
-  ticket_id        String    @id @default(uuid())
-  user_id           String    // User who created the appeal
-  @@map("appeal_tickets")
+  config_id        String // Reference to AppealConfig
+  display_id       Int // Display number (e.g., 1234)
+  main_server_id   String // Main server the user is banned from
+  opened_at        DateTime            @default(now())
+  status           String              @default("open") // 'open' | 'claimed' | 'closed'
+  status_v2        AppealTicketStatus?
+  ticket_id        String              @id @default(uuid())
+  user_id          String // User who created the appeal
+
   @@index([appeal_server_id, status])
   @@index([appeal_server_id, user_id])
   @@index([channel_id])
+  @@map("appeal_tickets")
 }
 
 model AppealTicketMessage {
@@ -303,10 +228,11 @@ model AppealTicketMessage {
   embeds            Json?
   id                String   @id @default(uuid())
   sender_id         String
-  sender_type       String   // 'user' | 'staff'
+  sender_type       String // 'user' | 'staff'
   ticket_id         String
-  @@map("appeal_ticket_messages")
+
   @@index([ticket_id])
+  @@map("appeal_ticket_messages")
 }
 
 model AutoRole {
@@ -315,13 +241,15 @@ model AutoRole {
   guild_id   String
   id         String   @id @default(uuid())
   role_id    String
-  @@map("auto_roles")
+
   @@unique([guild_id, role_id])
+  @@map("auto_roles")
 }
 
 model AutomodChannelLink {
-  enabled   Boolean @default(false)
-  guild_id  String  @id
+  enabled  Boolean @default(false)
+  guild_id String  @id
+
   @@map("automod_channel_link")
 }
 
@@ -334,8 +262,9 @@ model BanTracking {
   risk_level   String   @default("medium") // low, medium, high
   target_id    String
   timestamp    DateTime @default(now())
-  @@map("ban_tracking")
+
   @@index([guild_id, moderator_id, timestamp])
+  @@map("ban_tracking")
 }
 
 model BannedWord {
@@ -344,6 +273,7 @@ model BannedWord {
   guild_id   String
   id         String   @id @default(uuid())
   word       String
+
   @@map("banned_words")
 }
 
@@ -352,6 +282,7 @@ model BotCmdAllowedChannel {
   channel_id String
   created_at DateTime @default(now())
   guild_id   String
+
   @@id([guild_id, channel_id])
   @@map("botcmd_allowed_channels")
 }
@@ -365,9 +296,10 @@ model CCPingCommand {
   name       String
   role_id    String
   updated_at DateTime @updatedAt
-  @@map("ccping_commands")
+
   @@unique([guild_id, name])
   @@index([guild_id])
+  @@map("ccping_commands")
 }
 
 model CCPingPermit {
@@ -377,33 +309,35 @@ model CCPingPermit {
   id         String   @id @default(uuid())
   is_role    Boolean  @default(false)
   target_id  String
-  @@map("ccping_permits")
+
   @@unique([guild_id, target_id])
   @@index([guild_id])
+  @@map("ccping_permits")
 }
 
 model ChatLog {
-  channel_id         String
-  channel_name       String?
-  content_length     Int?
-  created_at         DateTime @default(now())
-  deleted_at           DateTime?
-  guild_id           String
-  id                 String   @id @default(uuid())
-  in_voice_chat      Boolean? @default(false)
-  mentioned_user_ids String?  // JSON array of mentioned user IDs (from @mentions)
+  channel_id            String
+  channel_name          String?
+  content_length        Int?
+  created_at            DateTime          @default(now())
+  deleted_at            DateTime?
+  guild_id              String
+  id                    String            @id @default(uuid())
+  in_voice_chat         Boolean?          @default(false)
+  mentioned_user_ids    String? // JSON array of mentioned user IDs (from @mentions)
   mentioned_user_ids_v2 Json?
-  message_id         String
-  replied_to_id      String?  // Track who they're replying to
-  user_cache         DiscordUserCache? @relation(fields: [user_id], references: [user_id], onDelete: NoAction)
-  user_id            String
-  @@map("chat_logs")
+  message_id            String
+  replied_to_id         String? // Track who they're replying to
+  user_cache            DiscordUserCache? @relation(fields: [user_id], references: [user_id], onDelete: NoAction)
+  user_id               String
+
   @@index([created_at])
   @@index([guild_id, channel_id])
   @@index([guild_id, created_at])
   @@index([guild_id, user_id, created_at])
   @@index([guild_id, user_id])
   @@index([user_id, created_at])
+  @@map("chat_logs")
 }
 
 model CommandHash {
@@ -411,11 +345,12 @@ model CommandHash {
   hash          String
   id            String   @id @default(uuid())
   last_deployed DateTime @default(now())
-  scope_id      String?  // null for global, guild_id for guild
-  scope_type    String   // 'global' | 'guild'
-  @@map("command_hashes")
+  scope_id      String? // null for global, guild_id for guild
+  scope_type    String // 'global' | 'guild'
+
   @@unique([command_name, scope_type, scope_id])
   @@index([scope_type, scope_id])
+  @@map("command_hashes")
 }
 
 model CustomCommand {
@@ -426,9 +361,10 @@ model CustomCommand {
   name       String
   role_id    String
   updated_at DateTime @updatedAt
-  @@map("custom_commands")
+
   @@unique([guild_id, name])
   @@index([guild_id])
+  @@map("custom_commands")
 }
 
 model CustomCommandPermittedUser {
@@ -438,10 +374,11 @@ model CustomCommandPermittedUser {
   guild_id         String
   id               String   @id @default(uuid())
   is_role          Boolean  @default(false)
-  target_id  String   // User or Role ID
-  @@map("custom_command_permitted_users")
+  target_id        String // User or Role ID
+
   @@unique([guild_id, target_id])
   @@index([guild_id])
+  @@map("custom_command_permitted_users")
 }
 
 model DiscordChannelCache {
@@ -450,60 +387,63 @@ model DiscordChannelCache {
   guild_id    String
   is_deleted  Boolean  @default(false)
   name        String
-  parent_id      String?              // Category channel ID
-  parent_name    String?              // Category channel name
+  parent_id   String? // Category channel ID
+  parent_name String? // Category channel name
   position    Int      @default(0)
-  type           Int      @default(2)  // 0=text, 2=voice, 13=stage, etc.
+  type        Int      @default(2) // 0=text, 2=voice, 13=stage, etc.
   updated_at  DateTime @updatedAt
-  @@map("discord_channel_cache")
+
   @@index([guild_id])
   @@index([name])
+  @@map("discord_channel_cache")
 }
 
 model DiscordUserCache {
   avatar_url    String?
   chat_logs     ChatLog[]
-  created_at    DateTime @default(now())
-  discriminator String   @default("0")
+  created_at    DateTime  @default(now())
+  discriminator String    @default("0")
   display_name  String
   global_name   String?
-  in_guild      Boolean  @default(true)
+  in_guild      Boolean   @default(true)
   joined_at     String?
   nickname      String?
-  roles          String?  // JSON array of role IDs
+  roles         String? // JSON array of role IDs
   tickets       Ticket[]
-  updated_at    DateTime @updatedAt
-  user_id       String   @id
+  updated_at    DateTime  @updatedAt
+  user_id       String    @id
   username      String
-  @@map("discord_user_cache")
+
   @@index([display_name])
   @@index([username])
+  @@map("discord_user_cache")
 }
 
 model DonatorPlan {
-  created_at       DateTime              @default(now())
-  created_by       String // Admin user ID
-  crypto_enabled   Boolean               @default(true)
-  description      String?
-  enabled          Boolean               @default(true)
-  guild_id         String
-  id               String                @id @default(uuid())
-  linked_role_id   String // Role ID to assign when user purchases
+  created_at           DateTime              @default(now())
+  created_by           String // Admin user ID
+  crypto_enabled       Boolean               @default(true)
+  description          String?
+  enabled              Boolean               @default(true)
+  guild_id             String
+  id                   String                @id @default(uuid())
+  linked_role_id       String // Role ID to assign when user purchases
   nowpayments_payments NowPaymentsPayment[]
-  ozy_enabled      Boolean               @default(false)
-  paused           Boolean               @default(false)
-  payments         RazorpayPayment[]
-  perks            String[] // Array of perks/benefits
-  price            Int // Price in USD (will be converted to INR)
-  price_crypto     Int? // Optional Crypto price override in USD (will default to price if null)
-  price_ozy        Int? // Ozy amount charged for direct balance purchases
-  subscriptions    DonatorSubscription[]
-  title            String // e.g., "Premium", "Gold", "Platinum"
-  updated_at       DateTime              @updatedAt
-  @@map("donator_plans")
+  ozy_enabled          Boolean               @default(false)
+  paused               Boolean               @default(false)
+  payments             RazorpayPayment[]
+  perks                String[] // Array of perks/benefits
+  price                Int // Price in USD (will be converted to INR)
+  price_crypto         Int? // Optional Crypto price override in USD (will default to price if null)
+  price_ozy            Int? // Ozy amount charged for direct balance purchases
+  subscriptions        DonatorSubscription[]
+  title                String // e.g., "Premium", "Gold", "Platinum"
+  updated_at           DateTime              @updatedAt
+
   @@unique([guild_id, title])
   @@index([guild_id])
   @@index([linked_role_id])
+  @@map("donator_plans")
 }
 
 model DonatorSubscription {
@@ -520,12 +460,13 @@ model DonatorSubscription {
   status       String      @default("active") // active, cancelled, expired
   updated_at   DateTime    @updatedAt
   user_id      String
-  @@map("donator_subscriptions")
+
   @@unique([guild_id, user_id, plan_id])
   @@index([created_at])
   @@index([guild_id, user_id])
   @@index([status])
   @@index([user_id])
+  @@map("donator_subscriptions")
 }
 
 model EconomyAllowedChannel {
@@ -533,6 +474,7 @@ model EconomyAllowedChannel {
   channel_id String
   created_at DateTime @default(now())
   guild_id   String
+
   @@id([guild_id, channel_id])
   @@map("economy_allowed_channels")
 }
@@ -542,20 +484,22 @@ model EconomyBlacklistCategory {
   category_id String
   created_at  DateTime @default(now())
   guild_id    String
+
   @@id([guild_id, category_id])
-  @@map("economy_blacklist_categories")
   @@index([guild_id])
+  @@map("economy_blacklist_categories")
 }
 
 model EconomyBlacklistChannel {
   added_by     String
   channel_id   String
-  channel_type String   // 'text' or 'voice'
+  channel_type String // 'text' or 'voice'
   created_at   DateTime @default(now())
   guild_id     String
+
   @@id([guild_id, channel_id])
-  @@map("economy_blacklist_channels")
   @@index([guild_id, channel_type])
+  @@map("economy_blacklist_channels")
 }
 
 model EconomyBlacklistMember {
@@ -565,9 +509,10 @@ model EconomyBlacklistMember {
   reason     String?
   user_id    String
   user_name  String?
+
   @@id([guild_id, user_id])
-  @@map("economy_blacklist_members")
   @@index([guild_id])
+  @@map("economy_blacklist_members")
 }
 
 model EconomyBlacklistRole {
@@ -575,9 +520,10 @@ model EconomyBlacklistRole {
   created_at DateTime @default(now())
   guild_id   String
   role_id    String
+
   @@id([guild_id, role_id])
-  @@map("economy_blacklist_roles")
   @@index([guild_id])
+  @@map("economy_blacklist_roles")
 }
 
 model EconomyCategoryReward {
@@ -587,178 +533,187 @@ model EconomyCategoryReward {
   guild_id             String
   id                   String   @id @default(uuid())
   message_enabled      Boolean  @default(true)
-  msg_min_length     Int      @default(5)       // Min message length
-  msg_min_per_minute Int      @default(3)       // Min valid messages in a minute to earn
-  msg_ozy_amount     Int      @default(1)       // Coins per cycle
+  msg_min_length       Int      @default(5) // Min message length
+  msg_min_per_minute   Int      @default(3) // Min valid messages in a minute to earn
+  msg_ozy_amount       Int      @default(1) // Coins per cycle
   updated_at           DateTime @updatedAt
-  vc_count_bots      Boolean  @default(false)   // Include bots in member count
+  vc_count_bots        Boolean  @default(false) // Include bots in member count
   vc_enabled           Boolean  @default(true)
-  vc_ignore_deafened Boolean  @default(false)   // Ignore users who are deafened
-  vc_ignore_self_muted Boolean @default(false)  // Ignore users who are self-muted
-  vc_min_members     Int      @default(1)       // Min members in VC
-  vc_minutes_per_point Int    @default(5)       // Minutes per cycle
-  vc_ozy_amount      Int      @default(1)       // Coins per cycle
-  @@map("economy_category_rewards")
+  vc_ignore_deafened   Boolean  @default(false) // Ignore users who are deafened
+  vc_ignore_self_muted Boolean  @default(false) // Ignore users who are self-muted
+  vc_min_members       Int      @default(1) // Min members in VC
+  vc_minutes_per_point Int      @default(5) // Minutes per cycle
+  vc_ozy_amount        Int      @default(1) // Coins per cycle
+
   @@unique([guild_id, category_id])
   @@index([guild_id])
+  @@map("economy_category_rewards")
 }
 
 model EconomyClaimLog {
-  amount        Int      // messages count or minutes
-  claim_type    String   // 'messages' or 'voice'
+  amount        Int // messages count or minutes
+  claim_type    String // 'messages' or 'voice'
   created_at    DateTime @default(now())
   guild_id      String
   id            String   @id @default(uuid())
   points_earned Int
   user_id       String
-  @@map("economy_claim_logs")
+
   @@index([guild_id, created_at])
   @@index([guild_id, user_id])
+  @@map("economy_claim_logs")
 }
 
 model EconomyConfig {
-  advanced_mode       Boolean  @default(false)
-  afk_channel_id      String?
-  ag_role_id          String?
-  casino_logs_channel_id String?
-  cbl_role_id         String?
-  coins_per_invite      Int      @default(100)  // Coins earned when someone joins via invite
-  count_bots            Boolean  @default(false) // Include bots in member count
-  created_at          DateTime @default(now())
-  currency_emoji      String   @default("🪙")
-  currency_name       String   @default("Ozy")
-  ozy_inr_rate        Float    @default(18.0)
-  economy_channel_id  String?
-  enabled             Boolean  @default(false)
-  guild_id            String   @id
-  ignore_afk_channel  Boolean  @default(true)
-  ignore_deafened     Boolean  @default(false)
-  ignore_self_muted   Boolean  @default(false)
-  invites_enabled     Boolean  @default(true)
-  leaderboard_sync    Boolean  @default(true)
-  logs_channel_id     String?
-  min_message_length  Int      @default(5)
-  minutes_per_point     Int      @default(5)     // Minutes per cycle
-  msg_ozy_amount        Int      @default(1)     // Coins per cycle
-  require_two_members   Int      @default(1)     // Min members in VC
-  shop_enabled        Boolean  @default(true)
-  updated_at          DateTime @updatedAt
-  vc_ozy_amount         Int      @default(1)     // Coins per cycle
-  vc_enabled          Boolean  @default(true)
-  message_enabled     Boolean  @default(true)
-  afk_verify_enabled  Boolean  @default(false)
-  afk_verify_min      Int      @default(80)
-  afk_verify_max      Int      @default(90)
-  purchase_cooldown_enabled Boolean @default(false) // Global cooldown between shop purchases
-  purchase_cooldown_hours   Int     @default(24)    // Cooldown duration in hours
-  max_grind_enabled         Boolean @default(false) // Cap daily earning time
-  max_grind_hours           Int     @default(8)     // Max earning hours per GMT day
-  msg_min_per_minute        Int     @default(3)     // Min valid messages in a minute to earn
-  msg_count_emojis          Boolean @default(false) // Count emojis toward message length
-  msg_count_stickers        Boolean @default(false) // Count sticker-only messages as valid
+  advanced_mode             Boolean  @default(false)
+  afk_channel_id            String?
+  ag_role_id                String?
+  casino_logs_channel_id    String?
+  cbl_role_id               String?
+  coins_per_invite          Int      @default(100) // Coins earned when someone joins via invite
+  count_bots                Boolean  @default(false) // Include bots in member count
+  created_at                DateTime @default(now())
+  currency_emoji            String   @default("🪙")
+  currency_name             String   @default("Ozy")
+  ozy_inr_rate              Float    @default(18.0)
+  economy_channel_id        String?
+  enabled                   Boolean  @default(false)
+  guild_id                  String   @id
+  ignore_afk_channel        Boolean  @default(true)
+  ignore_deafened           Boolean  @default(false)
+  ignore_self_muted         Boolean  @default(false)
+  invites_enabled           Boolean  @default(true)
+  leaderboard_sync          Boolean  @default(true)
+  logs_channel_id           String?
+  min_message_length        Int      @default(5)
+  minutes_per_point         Int      @default(5) // Minutes per cycle
+  msg_ozy_amount            Int      @default(1) // Coins per cycle
+  require_two_members       Int      @default(1) // Min members in VC
+  shop_enabled              Boolean  @default(true)
+  updated_at                DateTime @updatedAt
+  vc_ozy_amount             Int      @default(1) // Coins per cycle
+  vc_enabled                Boolean  @default(true)
+  message_enabled           Boolean  @default(true)
+  afk_verify_enabled        Boolean  @default(false)
+  afk_verify_min            Int      @default(80)
+  afk_verify_max            Int      @default(90)
+  purchase_cooldown_enabled Boolean  @default(false) // Global cooldown between shop purchases
+  purchase_cooldown_hours   Int      @default(24) // Cooldown duration in hours
+  max_grind_enabled         Boolean  @default(false) // Cap daily earning time
+  max_grind_hours           Int      @default(8) // Max earning hours per GMT day
+  msg_min_per_minute        Int      @default(3) // Min valid messages in a minute to earn
+  msg_count_emojis          Boolean  @default(false) // Count emojis toward message length
+  msg_count_stickers        Boolean  @default(false) // Count sticker-only messages as valid
+
   @@map("economy_config")
 }
 
 model EconomyDailyGrind {
-  created_at      DateTime @default(now())
-  day             String   // GMT/UTC calendar day, YYYY-MM-DD
-  earned_seconds  Int      @default(0) // Earning-eligible VC seconds credited today
-  guild_id        String
-  updated_at      DateTime @updatedAt
-  user_id         String
+  created_at     DateTime @default(now())
+  day            String // GMT/UTC calendar day, YYYY-MM-DD
+  earned_seconds Int      @default(0) // Earning-eligible VC seconds credited today
+  guild_id       String
+  updated_at     DateTime @updatedAt
+  user_id        String
+
   @@id([guild_id, user_id, day])
-  @@map("economy_daily_grind")
   @@index([guild_id, day])
+  @@map("economy_daily_grind")
 }
 
 model EconomyIgnoredChannel {
   channel_id String
   guild_id   String
+
   @@id([guild_id, channel_id])
   @@map("economy_ignored_channels")
 }
 
 model EconomyInvite {
-  active          Boolean  @default(true)  // Whether the invited user is still in the server
-  coins_earned    Int      @default(0)     // Coins earned from this invite
+  active          Boolean   @default(true) // Whether the invited user is still in the server
+  coins_earned    Int       @default(0) // Coins earned from this invite
   created_at      DateTime  @default(now())
   guild_id        String
   id              String    @id @default(cuid())
-  invite_code     String   // The invite code used
-  invited_user_id String   // Who was invited
-  inviter_id      String   // Who created the invite
+  invite_code     String // The invite code used
+  invited_user_id String // Who was invited
+  inviter_id      String // Who created the invite
   joined_at       DateTime  @default(now())
   left_at         DateTime?
   updated_at      DateTime  @updatedAt
-  @@map("economy_invites")
+
   @@unique([guild_id, invited_user_id]) // One invite per user per guild
   @@index([guild_id])
   @@index([invite_code])
   @@index([invited_user_id])
   @@index([inviter_id])
+  @@map("economy_invites")
 }
 
 model EconomyInviteStats {
-  active_invites    Int      @default(0)  // Number of users still in server
-  coins_earned      Int      @default(0)  // Total coins from invites
+  active_invites Int      @default(0) // Number of users still in server
+  coins_earned   Int      @default(0) // Total coins from invites
   created_at     DateTime @default(now())
-  fake_invites      Int      @default(0)  // Number of detected fake invites
+  fake_invites   Int      @default(0) // Number of detected fake invites
   guild_id       String
   id             String   @id @default(cuid())
   total_invites  Int      @default(0)
   updated_at     DateTime @updatedAt
-  user_id           String   // The inviter
-  @@map("economy_invite_stats")
+  user_id        String // The inviter
+
   @@unique([guild_id, user_id])
   @@index([guild_id])
+  @@map("economy_invite_stats")
 }
 
 model EconomyMessageProgress {
-  accumulated_msgs  Int      @default(0)    // Progress towards next cycle
-  category_id       String   // Category or "global"
+  accumulated_msgs Int      @default(0) // Progress towards next cycle
+  category_id      String // Category or "global"
   created_at       DateTime @default(now())
   guild_id         String
   id               String   @id @default(uuid())
   updated_at       DateTime @updatedAt
   user_id          String
-  @@map("economy_message_progress")
+
   @@unique([guild_id, user_id, category_id])
   @@index([guild_id, user_id])
+  @@map("economy_message_progress")
 }
 
 model EconomyPointLog {
-  admin_id    String?  // For manual adjustments
+  admin_id   String? // For manual adjustments
   amount     Int
   created_at DateTime @default(now())
   guild_id   String
   id         String   @id @default(uuid())
   reason     String
-  source      String   // 'messages', 'voice', 'manual', 'claim'
+  source     String // 'messages', 'voice', 'manual', 'claim'
   user_id    String
-  @@map("economy_point_logs")
+
   @@index([guild_id, created_at])
   @@index([guild_id, user_id])
+  @@map("economy_point_logs")
 }
 
 model EconomyUser {
-  created_at         DateTime @default(now())
+  created_at         DateTime  @default(now())
   deleted_at         DateTime?
   guild_id           String
-  id                 String   @id @default(uuid())
-  leaderboard_points Int      @default(0)
+  id                 String    @id @default(uuid())
+  leaderboard_points Int       @default(0)
   month_start        String?
-  monthly_points     Int      @default(0)
-  total_messages     Int      @default(0)
-  total_points       Int      @default(0)
-  total_vc_minutes   Int      @default(0)
-  updated_at         DateTime @updatedAt
+  monthly_points     Int       @default(0)
+  total_messages     Int       @default(0)
+  total_points       Int       @default(0)
+  total_vc_minutes   Int       @default(0)
+  updated_at         DateTime  @updatedAt
   user_id            String
-  valid_messages     Int      @default(0)
+  valid_messages     Int       @default(0)
   week_start         String?
-  weekly_points      Int      @default(0)
+  weekly_points      Int       @default(0)
   temp_blocked_until DateTime?
   temp_block_reason  String?
-  @@map("economy_users")
+
   @@unique([guild_id, user_id])
   @@index([guild_id, created_at])
   @@index([guild_id, leaderboard_points])
@@ -766,33 +721,36 @@ model EconomyUser {
   @@index([guild_id, total_points])
   @@index([guild_id, weekly_points])
   @@index([user_id, created_at])
+  @@map("economy_users")
 }
 
 model EconomyVCProgress {
-  accumulated_seconds Int      @default(0)    // Progress towards next cycle
-  category_id         String   // Category or "global"
+  accumulated_seconds Int      @default(0) // Progress towards next cycle
+  category_id         String // Category or "global"
   created_at          DateTime @default(now())
   guild_id            String
   id                  String   @id @default(uuid())
   updated_at          DateTime @updatedAt
   user_id             String
-  @@map("economy_vc_progress")
+
   @@unique([guild_id, user_id, category_id])
   @@index([guild_id, user_id])
+  @@map("economy_vc_progress")
 }
 
 model EconomyVoiceSession {
-  channel_id        String
-  guild_id          String
-  id                String    @id @default(uuid())
-  is_deafened       Boolean   @default(false)
-  is_muted          Boolean   @default(false)
-  joined_at         DateTime  @default(now())
-  left_at           DateTime?
-  minutes_earned    Int       @default(0)
-  user_id           String
-  @@map("economy_voice_sessions")
+  channel_id     String
+  guild_id       String
+  id             String    @id @default(uuid())
+  is_deafened    Boolean   @default(false)
+  is_muted       Boolean   @default(false)
+  joined_at      DateTime  @default(now())
+  left_at        DateTime?
+  minutes_earned Int       @default(0)
+  user_id        String
+
   @@index([guild_id, user_id])
+  @@map("economy_voice_sessions")
 }
 
 model EmergencyMode {
@@ -800,30 +758,33 @@ model EmergencyMode {
   enabled_at DateTime @default(now())
   enabled_by String
   guild_id   String   @id
-  mode_type    String?  // "raid", "scam_attack", "bot_attack"
+  mode_type  String? // "raid", "scam_attack", "bot_attack"
   reason     String?
+
   @@map("emergency_modes")
 }
 
 model GreetConfig {
-  autodelete_time   Int      @default(0) // seconds, 0 = disabled
-  channel_id        String
-  created_at        DateTime @default(now())
-  created_by        String
-  enabled           Boolean  @default(true)
-  greet_name        String
-  guild_id          String
-  id                String   @id @default(uuid())
-  message           String   @db.Text
-  updated_at        DateTime @updatedAt
-  @@map("greet_configs")
+  autodelete_time Int      @default(0) // seconds, 0 = disabled
+  channel_id      String
+  created_at      DateTime @default(now())
+  created_by      String
+  enabled         Boolean  @default(true)
+  greet_name      String
+  guild_id        String
+  id              String   @id @default(uuid())
+  message         String   @db.Text
+  updated_at      DateTime @updatedAt
+
   @@unique([guild_id, greet_name])
   @@index([guild_id])
+  @@map("greet_configs")
 }
 
 model GuildCaseCounter {
   guild_id         String @id
   last_case_number Int    @default(0)
+
   @@map("guild_case_counter")
 }
 
@@ -832,15 +793,17 @@ model GuildPrefix {
   guild_id   String   @id
   prefix     String   @default(".")
   updated_at DateTime @updatedAt
+
   @@map("guild_prefixes")
 }
 
 model GuildSettings {
   created_at    DateTime @default(now())
   guild_id      String   @id
-  main_guild_id   String?  // Reference to main guild for appeal servers
-  unban_role_id   String?  // Role that can unban across servers
+  main_guild_id String? // Reference to main guild for appeal servers
+  unban_role_id String? // Role that can unban across servers
   updated_at    DateTime @updatedAt
+
   @@map("guild_settings")
 }
 
@@ -850,6 +813,7 @@ model JailConfig {
   guild_id   String   @id
   role_id    String
   updated_at DateTime @updatedAt
+
   @@map("jail_configs")
 }
 
@@ -860,8 +824,9 @@ model JailedUser {
   jailed_by  String
   reason     String?
   user_id    String
-  @@map("jailed_users")
+
   @@unique([guild_id, user_id])
+  @@map("jailed_users")
 }
 
 model JailerPermit {
@@ -870,8 +835,9 @@ model JailerPermit {
   guild_id   String
   id         String   @id @default(uuid())
   user_id    String
-  @@map("jailer_permits")
+
   @@unique([guild_id, user_id])
+  @@map("jailer_permits")
 }
 
 model MailCategory {
@@ -883,6 +849,7 @@ model MailCategory {
   id                    String   @id @default(uuid())
   name                  String
   staff_role_ids        String[]
+
   @@map("mail_categories")
 }
 
@@ -894,6 +861,7 @@ model MailConfig {
   inbox_category_id     String
   staff_message         String?
   transcript_channel_id String?
+
   @@map("mail_config")
 }
 
@@ -911,22 +879,25 @@ model Manual {
   reviewed_by    String[] @default([])
   target_id      String
   updated_at     DateTime @updatedAt
-  @@map("manuals")
+
   @@index([guild_id, manual_number])
   @@index([guild_id, moderator_id])
   @@index([guild_id, target_id])
+  @@map("manuals")
 }
 
 model ManualConfig {
-  enabled         Boolean @default(true)
-  guild_id        String  @id
-  log_channel_id  String?
+  enabled        Boolean @default(true)
+  guild_id       String  @id
+  log_channel_id String?
+
   @@map("manual_config")
 }
 
 model ManualCounter {
   guild_id           String @id
   last_manual_number Int    @default(0)
+
   @@map("manual_counters")
 }
 
@@ -936,9 +907,10 @@ model MediaBypassRole {
   guild_id   String
   id         String   @id @default(cuid())
   role_id    String
-  @@map("media_bypass_roles")
+
   @@unique([guild_id, role_id])
   @@index([guild_id])
+  @@map("media_bypass_roles")
 }
 
 model MediaBypassUser {
@@ -947,9 +919,10 @@ model MediaBypassUser {
   guild_id   String
   id         String   @id @default(cuid())
   user_id    String
-  @@map("media_bypass_users")
+
   @@unique([guild_id, user_id])
   @@index([guild_id])
+  @@map("media_bypass_users")
 }
 
 model MediaChannel {
@@ -958,14 +931,16 @@ model MediaChannel {
   created_at     DateTime @default(now())
   guild_id       String
   thread_enabled Boolean  @default(true) // Auto-create threads for media posts
+
   @@id([guild_id, channel_id])
-  @@map("media_channels")
   @@index([guild_id])
+  @@map("media_channels")
 }
 
 model MessageTrackingBlacklistChannel {
   channel_id String
   guild_id   String
+
   @@id([guild_id, channel_id])
   @@map("message_tracking_blacklist_channels")
 }
@@ -973,6 +948,7 @@ model MessageTrackingBlacklistChannel {
 model MessageTrackingBlacklistRole {
   guild_id String
   role_id  String
+
   @@id([guild_id, role_id])
   @@map("message_tracking_blacklist_roles")
 }
@@ -980,6 +956,7 @@ model MessageTrackingBlacklistRole {
 model MessageTrackingConfig {
   enabled  Boolean @default(false)
   guild_id String  @id
+
   @@map("message_tracking_config")
 }
 
@@ -989,23 +966,26 @@ model ModActionBlock {
   id           String   @id @default(uuid())
   moderator_id String
   reason       String
-  @@map("mod_action_blocks")
+
   @@unique([guild_id, moderator_id])
+  @@map("mod_action_blocks")
 }
 
 model ModActionRateLimit {
-  action       String   // 'ban', 'kick'
+  action       String // 'ban', 'kick'
   guild_id     String
   id           String   @id @default(uuid())
   moderator_id String
   timestamp    DateTime @default(now())
-  @@map("mod_action_rate_limits")
+
   @@index([guild_id, moderator_id, timestamp])
+  @@map("mod_action_rate_limits")
 }
 
 model ModConfig {
   guild_id       String  @id
   log_channel_id String?
+
   @@map("mod_config")
 }
 
@@ -1016,78 +996,82 @@ model ModCooldownOverride {
   guild_id     String
   id           String   @id @default(uuid())
   moderator_id String
-  @@map("mod_cooldown_overrides")
+
   @@unique([guild_id, moderator_id])
   @@index([expires_at])
+  @@map("mod_cooldown_overrides")
 }
 
 model ModRole {
-  added_by      String
-  addmanual      Boolean @default(false)
-  av             Boolean @default(false)
-  ban            Boolean @default(false)
-  case           Boolean @default(false)
-  created_at    DateTime @default(now())
-  delcase        Boolean @default(false)
-  deletemanual   Boolean @default(false)
-  dm             Boolean @default(false)
-  economy        Boolean @default(false)
-  editmanual     Boolean @default(false)
-  guild_id      String
-  hide           Boolean @default(false)
-  id            String   @id @default(uuid())
-  kick           Boolean @default(false)
-  limit_role_id String?
-  lock           Boolean @default(false)
-  manuals    Boolean @default(false)
-  modleaderboard Boolean @default(false)
-  modlogs        Boolean @default(false)
-  modstats       Boolean @default(false)
-  move           Boolean @default(false)
-  mute           Boolean @default(false)
-  nick           Boolean @default(false)
-  purge          Boolean @default(false)
-  reason         Boolean @default(false)
-  role           Boolean @default(false)
-  role_id       String
-  slowmode       Boolean @default(false)
-  suggestion     Boolean @default(false)
-  tempblock      Boolean @default(false)
-  timeout        Boolean @default(false)
-  unban          Boolean @default(false)
-  warn           Boolean @default(false)
-  wv             Boolean @default(false)
-  @@map("mod_roles")
+  added_by       String
+  addmanual      Boolean  @default(false)
+  av             Boolean  @default(false)
+  ban            Boolean  @default(false)
+  case           Boolean  @default(false)
+  created_at     DateTime @default(now())
+  delcase        Boolean  @default(false)
+  deletemanual   Boolean  @default(false)
+  dm             Boolean  @default(false)
+  economy        Boolean  @default(false)
+  editmanual     Boolean  @default(false)
+  guild_id       String
+  hide           Boolean  @default(false)
+  id             String   @id @default(uuid())
+  kick           Boolean  @default(false)
+  limit_role_id  String?
+  lock           Boolean  @default(false)
+  manuals        Boolean  @default(false)
+  modleaderboard Boolean  @default(false)
+  modlogs        Boolean  @default(false)
+  modstats       Boolean  @default(false)
+  move           Boolean  @default(false)
+  mute           Boolean  @default(false)
+  nick           Boolean  @default(false)
+  purge          Boolean  @default(false)
+  reason         Boolean  @default(false)
+  role           Boolean  @default(false)
+  role_id        String
+  slowmode       Boolean  @default(false)
+  suggestion     Boolean  @default(false)
+  tempblock      Boolean  @default(false)
+  timeout        Boolean  @default(false)
+  unban          Boolean  @default(false)
+  warn           Boolean  @default(false)
+  wv             Boolean  @default(false)
+
   @@unique([guild_id, role_id])
   @@index([guild_id])
+  @@map("mod_roles")
 }
 
 model ModSafetyConfig {
   enabled    Boolean  @default(true)
   guild_id   String   @id
   updated_at DateTime @updatedAt
+
   @@map("mod_safety_config")
 }
 
 model ModerationCase {
   action           String
   action_v2        ModerationAction?
-  active           Boolean  @default(true)
+  active           Boolean           @default(true)
   case_number      Int
-  created_at       DateTime @default(now())
+  created_at       DateTime          @default(now())
   deleted_at       DateTime?
   duration_seconds Int?
   guild_id         String
-  id               String   @id @default(uuid())
+  id               String            @id @default(uuid())
   moderator_id     String
   reason           String?
   target_id        String
-  @@map("moderation_cases")
+
   @@index([created_at])
   @@index([guild_id, case_number])
   @@index([guild_id, created_at])
   @@index([guild_id, moderator_id])
   @@index([guild_id, target_id])
+  @@map("moderation_cases")
 }
 
 model ModeratorCooldown {
@@ -1096,6 +1080,7 @@ model ModeratorCooldown {
   guild_id       String
   moderator_id   String
   reason         String?
+
   @@id([guild_id, moderator_id])
   @@map("moderator_cooldowns")
 }
@@ -1109,34 +1094,36 @@ model ModeratorStats {
   mutes        Int    @default(0)
   unmutes      Int    @default(0)
   warns        Int    @default(0)
-  @@map("moderator_stats")
+
   @@unique([guild_id, moderator_id])
+  @@map("moderator_stats")
 }
 
 model NowPaymentsPayment {
-  created_at        DateTime    @default(now())
-  guild_id          String
-  id                String      @id @default(uuid())
-  invoice_id        String?     @unique // NowPayments invoice ID (null if not invoice)
-  order_id          String      @unique // Our internal UUID order ID
-  pay_amount        Float?      // Crypto amount paid (from webhook)
-  pay_currency      String?     // Crypto string e.g. "ltc", "usdttrc20"
-  payment_id        String?     @unique // NowPayments payment ID (null at creation)
-  payment_url       String?     // Invoice checkout URL
-  plan              DonatorPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
-  plan_id           String
-  price_amount      Int         // Amount in USD cents
-  price_currency    String      @default("usd")
-  status            String      @default("waiting") // waiting, confirming, confirmed, sending, partially_paid, finished, failed, refunded, expired
-  updated_at        DateTime    @updatedAt
-  user_id           String
-  webhook_data      Json?       // Raw webhook payload
-  @@map("nowpayments_payments")
+  created_at     DateTime    @default(now())
+  guild_id       String
+  id             String      @id @default(uuid())
+  invoice_id     String?     @unique // NowPayments invoice ID (null if not invoice)
+  order_id       String      @unique // Our internal UUID order ID
+  pay_amount     Float? // Crypto amount paid (from webhook)
+  pay_currency   String? // Crypto string e.g. "ltc", "usdttrc20"
+  payment_id     String?     @unique // NowPayments payment ID (null at creation)
+  payment_url    String? // Invoice checkout URL
+  plan           DonatorPlan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+  plan_id        String
+  price_amount   Int // Amount in USD cents
+  price_currency String      @default("usd")
+  status         String      @default("waiting") // waiting, confirming, confirmed, sending, partially_paid, finished, failed, refunded, expired
+  updated_at     DateTime    @updatedAt
+  user_id        String
+  webhook_data   Json? // Raw webhook payload
+
   @@index([guild_id])
   @@index([order_id])
   @@index([payment_id])
   @@index([status])
   @@index([user_id])
+  @@map("nowpayments_payments")
 }
 
 model PendingMailMessage {
@@ -1146,21 +1133,23 @@ model PendingMailMessage {
   guild_id    String
   id          String   @id @default(uuid())
   user_id     String
-  @@map("pending_mail_messages")
+
   @@unique([guild_id, user_id])
   @@index([guild_id, user_id])
+  @@map("pending_mail_messages")
 }
 
 model Permission {
   effect       String // 'allow' | 'deny'
   effect_v2    PermissionEffect?
   guild_id     String
-  id           String @id @default(uuid())
+  id           String            @id @default(uuid())
   permission   String
   subject_id   String
   subject_type String // 'user' | 'role'
-  @@map("permissions")
+
   @@index([guild_id, subject_type, subject_id])
+  @@map("permissions")
 }
 
 model RazorpayPayment {
@@ -1179,12 +1168,13 @@ model RazorpayPayment {
   updated_at        DateTime    @updatedAt
   user_id           String
   webhook_data      Json? // Raw webhook response from Razorpay
-  @@map("razorpay_payments")
+
   @@index([guild_id])
   @@index([razorpay_id])
   @@index([razorpay_order_id])
   @@index([status])
   @@index([user_id])
+  @@map("razorpay_payments")
 }
 
 model Reminder {
@@ -1196,9 +1186,10 @@ model Reminder {
   message    String
   remind_at  DateTime
   user_id    String
-  @@map("reminders")
+
   @@index([guild_id, user_id])
   @@index([remind_at, completed])
+  @@map("reminders")
 }
 
 model SafetyAdmin {
@@ -1206,6 +1197,7 @@ model SafetyAdmin {
   added_by String
   guild_id String
   user_id  String
+
   @@id([guild_id, user_id])
   @@map("safety_admins")
 }
@@ -1217,6 +1209,7 @@ model ShopBudget {
   total_added Int      @default(0)
   total_spent Int      @default(0)
   updated_at  DateTime @updatedAt
+
   @@map("shop_budgets")
 }
 
@@ -1231,43 +1224,45 @@ model ShopBudgetLog {
   item_id       String?
   item_name     String?
   status        String   @default("SUCCESS")
-  type          String   // 'PURCHASE' or 'REFILL'
+  type          String // 'PURCHASE' or 'REFILL'
   user_id       String?
   user_name     String?
-  @@map("shop_budget_logs")
+
   @@index([created_at])
   @@index([guild_id])
+  @@map("shop_budget_logs")
 }
 
 model ShopItem {
-  created_at       DateTime  @default(now())
-  created_by       String
-  description      String?
-  enabled          Boolean   @default(true)
-  expires_at       DateTime?
-  expires_in_days  Int?
-  guild_id         String
-  id               String    @id @default(uuid())
-  income_amount    Int?
-  name             String
-  price            Int       @default(0)
-  price_inr         Int       @default(0)
-  actual_inr        Int       @default(0)
+  created_at         DateTime  @default(now())
+  created_by         String
+  description        String?
+  enabled            Boolean   @default(true)
+  expires_at         DateTime?
+  expires_in_days    Int?
+  guild_id           String
+  id                 String    @id @default(uuid())
+  income_amount      Int?
+  name               String
+  price              Int       @default(0)
+  price_inr          Int       @default(0)
+  actual_inr         Int       @default(0)
   price_ozy_override Boolean   @default(false)
-  reply_message    String?
-  required_balance Int?
-  role_given_id    String?
-  role_removed_id  String?
-  role_required_id String?
-  sort_order       Int       @default(0)
-  stock            Int?
-  thumbnail        String?
-  time_hours       Int?
-  updated_at       DateTime  @updatedAt
-  @@map("shop_items")
+  reply_message      String?
+  required_balance   Int?
+  role_given_id      String?
+  role_removed_id    String?
+  role_required_id   String?
+  sort_order         Int       @default(0)
+  stock              Int?
+  thumbnail          String?
+  time_hours         Int?
+  updated_at         DateTime  @updatedAt
+
   @@unique([guild_id, name])
   @@index([guild_id])
   @@index([guild_id, sort_order])
+  @@map("shop_items")
 }
 
 model ShopItemToggle {
@@ -1276,30 +1271,32 @@ model ShopItemToggle {
   item_id    String
   updated_at DateTime @updatedAt
   updated_by String
+
   @@id([guild_id, item_id])
   @@map("shop_item_toggles")
 }
 
 model ShopPurchase {
-  created_at  DateTime  @default(now())
-  expires_at  DateTime?
-  guild_id    String
-  id          String    @id @default(uuid())
+  created_at      DateTime  @default(now())
+  expires_at      DateTime?
+  guild_id        String
+  id              String    @id @default(uuid())
   item_deleted_at DateTime?
-  item_id     String
-  item_name   String
-  price_paid  Int
-  proof_link  String?
-  redeem_code String    @unique
-  redeemed_at DateTime?
-  redeemed_by String?
-  status      String    @default("pending")
-  user_id     String
-  @@map("shop_purchases")
+  item_id         String
+  item_name       String
+  price_paid      Int
+  proof_link      String?
+  redeem_code     String    @unique
+  redeemed_at     DateTime?
+  redeemed_by     String?
+  status          String    @default("pending")
+  user_id         String
+
   @@index([expires_at])
   @@index([guild_id, user_id])
   @@index([item_deleted_at])
   @@index([redeem_code])
+  @@map("shop_purchases")
 }
 
 model Sticky {
@@ -1314,8 +1311,9 @@ model Sticky {
   last_posted_at   DateTime?
   sticky_id        String    @id @default(uuid())
   updated_at       DateTime  @updatedAt
-  @@map("stickies")
+
   @@index([guild_id, channel_id])
+  @@map("stickies")
 }
 
 model Suggestion {
@@ -1331,10 +1329,11 @@ model Suggestion {
   status            String    @default("pending") // pending, approved, denied, considered
   suggestion        String
   suggestion_number Int
-  @@map("suggestions")
+
   @@index([guild_id, suggestion_number])
   @@index([guild_id])
   @@index([status])
+  @@map("suggestions")
 }
 
 model SuggestionConfig {
@@ -1342,6 +1341,7 @@ model SuggestionConfig {
   enabled           Boolean @default(false)
   guild_id          String  @id
   sticky_message_id String?
+
   @@map("suggestion_config")
 }
 
@@ -1354,17 +1354,18 @@ model Ticket {
   guild_id              String
   last_staff_message_at DateTime?
   last_user_message_at  DateTime?
-  opened_at             DateTime  @default(now())
-  reason                String?   // 'general' | 'casino' | 'promo' | 'report_mod' | 'tech_support'
-  status                String    @default("pending") // 'pending' | 'open' | 'claimed' | 'closed'
+  opened_at             DateTime          @default(now())
+  reason                String? // 'general' | 'casino' | 'promo' | 'report_mod' | 'tech_support'
+  status                String            @default("pending") // 'pending' | 'open' | 'claimed' | 'closed'
   status_v2             TicketStatus?
-  ticket_id             String    @id @default(uuid())
+  ticket_id             String            @id @default(uuid())
   user_cache            DiscordUserCache? @relation(fields: [user_id], references: [user_id], onDelete: NoAction)
   user_id               String
-  @@map("tickets")
+
   @@index([claimed_by])
   @@index([guild_id, status])
   @@index([guild_id, user_id])
+  @@map("tickets")
 }
 
 model TicketMessage {
@@ -1377,17 +1378,19 @@ model TicketMessage {
   embeds            Json?
   id                String   @id @default(uuid())
   sender_id         String
-  sender_type       String   // 'user' | 'staff'
+  sender_type       String // 'user' | 'staff'
   ticket_id         String
-  @@map("ticket_messages")
+
   @@index([ticket_id])
+  @@map("ticket_messages")
 }
 
 model TimeoutSettings {
-  allowed_roles    String @default("[]") // JSON array of role IDs
-  default_duration Int    @default(1036800) // Default 12 days in seconds
+  allowed_roles     String @default("[]") // JSON array of role IDs
+  default_duration  Int    @default(1036800) // Default 12 days in seconds
   guild_id          String @id
   success_reactions String @default("[\"✅\",\"👍\",\"🔇\",\"⏰\",\"🤫\"]") // JSON array of emojis
+
   @@map("timeout_settings")
 }
 
@@ -1395,16 +1398,17 @@ model UserInteraction {
   guild_id                 String
   id                       String   @id @default(uuid())
   last_interaction         DateTime @default(now())
-  messages_in_same_channel Int   @default(0)  // Messages in same channels
-  messages_to_target    Int      @default(0)  // Replies to target
-  mutual_vc_duration    Int      @default(0)  // Total seconds in VC together
+  messages_in_same_channel Int      @default(0) // Messages in same channels
+  messages_to_target       Int      @default(0) // Replies to target
+  mutual_vc_duration       Int      @default(0) // Total seconds in VC together
   mutual_vc_sessions       Int      @default(0)
-  target_user_id        String   // User they interacted with
+  target_user_id           String // User they interacted with
   updated_at               DateTime @updatedAt
-  user_id               String   // Primary user
-  @@map("user_interactions")
+  user_id                  String // Primary user
+
   @@unique([guild_id, user_id, target_user_id])
   @@index([guild_id, user_id])
+  @@map("user_interactions")
 }
 
 model UserMessageStats {
@@ -1413,9 +1417,10 @@ model UserMessageStats {
   last_message_at DateTime?
   message_count   Int       @default(0)
   user_id         String
-  @@map("user_message_stats")
+
   @@unique([guild_id, user_id])
   @@index([guild_id, message_count])
+  @@map("user_message_stats")
 }
 
 model UserModerationStats {
@@ -1426,8 +1431,9 @@ model UserModerationStats {
   mutes    Int    @default(0)
   user_id  String
   warns    Int    @default(0)
-  @@map("user_moderation_stats")
+
   @@unique([guild_id, user_id])
+  @@map("user_moderation_stats")
 }
 
 model VCMap {
@@ -1437,59 +1443,10 @@ model VCMap {
   guild_id   String
   id         String   @id @default(uuid())
   vc_id      String
-  @@map("vc_maps")
+
   @@unique([guild_id, alias])
   @@index([guild_id])
-}
-
-model VoiceAutomationAuditLog {
-  action     String
-  created_at DateTime @default(now())
-  guild_id   String
-  id         String   @id @default(uuid())
-  meta       Json?
-  reason     String?
-  rule VoiceAutomationRule? @relation(fields: [rule_id], references: [id], onDelete: SetNull)
-  rule_id    String?
-  user_id    String?
-  @@map("vc_automation_audit_logs")
-  @@index([guild_id, created_at])
-  @@index([guild_id, rule_id])
-  @@index([guild_id, user_id])
-}
-
-model VoiceAutomationGranted {
-  granted_at DateTime @default(now())
-  guild_id   String
-  id         String   @id @default(uuid())
-  rule_id    String
-  user_id    String
-  @@map("vc_automation_granted")
-  @@unique([guild_id, rule_id, user_id])
-  @@index([guild_id, rule_id])
-  @@index([guild_id, user_id])
-}
-
-model VoiceAutomationRule {
-  audit_logs VoiceAutomationAuditLog[]
-  count_deafened       Boolean  @default(false)
-  created_at           DateTime @default(now())
-  created_by           String
-  enabled              Boolean  @default(true)
-  excluded_channel_ids String[] @default([])
-  guild_id             String
-  id                   String   @id @default(uuid())
-  name                 String
-  required_hours       Float
-  reward_role_id       String
-  rolling_days         Int
-  target_id            String   // category_id or channel_id
-  target_type          String   // "category" | "channel"
-  updated_at           DateTime @updatedAt
-  @@map("vc_automation_rules")
-  @@unique([guild_id, reward_role_id])
-  @@index([guild_id, enabled])
-  @@index([guild_id])
+  @@map("vc_maps")
 }
 
 model VoiceChannelRole {
@@ -1498,9 +1455,10 @@ model VoiceChannelRole {
   guild_id   String
   id         String   @id @default(uuid())
   role_id    String
-  @@map("voice_channel_roles")
+
   @@unique([guild_id, channel_id])
   @@index([guild_id])
+  @@map("voice_channel_roles")
 }
 
 model VoiceLog {
@@ -1513,12 +1471,12 @@ model VoiceLog {
   guild_id           String
   id                 String    @id @default(uuid())
   is_rejoin          Boolean?  @default(false)
-  join_order            Int?      // User's position in join order
+  join_order         Int? // User's position in join order
   joined_at          DateTime  @default(now())
   last_leaver_id     String?
-  leave_order           Int?      // User's position in leave order
+  leave_order        Int? // User's position in leave order
   left_at            DateTime?
-  members_present       String?   // JSON array of member IDs with join/leave times
+  members_present    String? // JSON array of member IDs with join/leave times
   members_present_v2 Json?
   messages_sent      Int?      @default(0)
   mute_count         Int?      @default(0)
@@ -1531,7 +1489,7 @@ model VoiceLog {
   user_id            String
   video_off_count    Int?      @default(0)
   video_on_count     Int?      @default(0)
-  @@map("voice_logs")
+
   @@index([guild_id, channel_id, joined_at])
   @@index([guild_id, channel_id])
   @@index([guild_id, user_id, channel_id, left_at, joined_at])
@@ -1539,6 +1497,7 @@ model VoiceLog {
   @@index([guild_id, user_id, left_at, joined_at])
   @@index([guild_id, user_id])
   @@index([joined_at])
+  @@map("voice_logs")
 }
 
 model VoiceTracking {
@@ -1548,16 +1507,17 @@ model VoiceTracking {
   joined_at         DateTime  @default(now())
   last_state_change DateTime  @default(now())
   left_at           DateTime?
-  time_deafened        Int      @default(0) // Time deafened
-  time_listening       Int      @default(0) // Time not muted/deafened (active listening)
-  time_muted           Int      @default(0) // Time with mic muted
-  time_speaking        Int      @default(0) // Time with mic on
+  time_deafened     Int       @default(0) // Time deafened
+  time_listening    Int       @default(0) // Time not muted/deafened (active listening)
+  time_muted        Int       @default(0) // Time with mic muted
+  time_speaking     Int       @default(0) // Time with mic on
   user_id           String
   was_deafened      Boolean   @default(false)
   was_muted         Boolean   @default(false)
-  @@map("voice_tracking")
+
   @@index([guild_id, channel_id])
   @@index([guild_id, user_id])
+  @@map("voice_tracking")
 }
 
 model VoiceUserStats {
@@ -1572,9 +1532,10 @@ model VoiceUserStats {
   total_time_speaking  Int       @default(0)
   updated_at           DateTime  @updatedAt
   user_id              String
-  @@map("voice_user_stats")
+
   @@unique([guild_id, user_id])
   @@index([guild_id])
+  @@map("voice_user_stats")
 }
 
 model WVAllowedRole {
@@ -1583,15 +1544,16 @@ model WVAllowedRole {
   guild_id   String
   id         String   @id @default(uuid())
   role_id    String
-  @@map("wv_allowed_roles")
+
   @@unique([guild_id, role_id])
   @@index([guild_id])
+  @@map("wv_allowed_roles")
 }
 
 model TeamMember {
   id              String   @id @default(uuid())
   discord_user_id String   @unique
-  designation     String   // "Founder" | "Admin" | "Core Team"
+  designation     String // "Founder" | "Admin" | "Core Team"
   position        Int      @default(0)
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
@@ -1743,5 +1705,115 @@ model SlotSpin {
   @@map("slot_spins")
 }
 
+model WeeklyActivityExclusion {
+  id         String   @id @default(uuid())
+  guild_id   String
+  user_id    String
+  reason     String?
+  created_by String
+  created_at DateTime @default(now())
 
+  @@unique([guild_id, user_id])
+  @@index([guild_id])
+  @@map("weekly_activity_exclusions")
+}
 
+model WeeklyActivityRule {
+  id             String                     @id @default(uuid())
+  guild_id       String
+  name           String
+  scope          String                     @default("all_server")
+  category_id    String?
+  activity_type  String                     @default("chat")
+  winner_count   Int                        @default(5)
+  reward_role_id String
+  enabled        Boolean                    @default(true)
+  created_by     String
+  created_at     DateTime                   @default(now())
+  updated_at     DateTime                   @updatedAt
+  results        WeeklyActivityResult[]
+  role_holders   WeeklyActivityRoleHolder[]
+  audit_logs     WeeklyActivityAuditLog[]
+
+  @@unique([guild_id, reward_role_id])
+  @@index([guild_id])
+  @@index([guild_id, enabled])
+  @@map("weekly_activity_rules")
+}
+
+model WeeklyActivityCycle {
+  id           String                 @id @default(uuid())
+  guild_id     String
+  start_at     DateTime
+  end_at       DateTime
+  status       String                 @default("active")
+  finalized_at DateTime?
+  created_at   DateTime               @default(now())
+  updated_at   DateTime               @updatedAt
+  results      WeeklyActivityResult[]
+
+  @@unique([guild_id, start_at])
+  @@index([guild_id, status])
+  @@index([guild_id, end_at])
+  @@map("weekly_activity_cycles")
+}
+
+model WeeklyActivityResult {
+  id             String              @id @default(uuid())
+  guild_id       String
+  cycle_id       String
+  rule_id        String
+  user_id        String
+  rank           Int
+  activity_value Int                 @default(0)
+  chat_messages  Int                 @default(0)
+  voice_seconds  Int                 @default(0)
+  is_winner      Boolean             @default(false)
+  role_state     String              @default("pending")
+  role_error     String?
+  attempts       Int                 @default(0)
+  created_at     DateTime            @default(now())
+  updated_at     DateTime            @updatedAt
+  cycle          WeeklyActivityCycle @relation(fields: [cycle_id], references: [id], onDelete: Cascade)
+  rule           WeeklyActivityRule  @relation(fields: [rule_id], references: [id], onDelete: Cascade)
+
+  @@unique([cycle_id, rule_id, user_id])
+  @@index([guild_id, rule_id])
+  @@index([cycle_id, rule_id, rank])
+  @@index([guild_id, rule_id, role_state])
+  @@map("weekly_activity_results")
+}
+
+model WeeklyActivityRoleHolder {
+  id         String             @id @default(uuid())
+  guild_id   String
+  rule_id    String
+  user_id    String
+  cycle_id   String?
+  granted_at DateTime           @default(now())
+  rule       WeeklyActivityRule @relation(fields: [rule_id], references: [id], onDelete: Cascade)
+
+  @@unique([guild_id, rule_id, user_id])
+  @@index([guild_id, rule_id])
+  @@index([guild_id, user_id])
+  @@map("weekly_activity_role_holders")
+}
+
+model WeeklyActivityAuditLog {
+  id         String              @id @default(uuid())
+  guild_id   String
+  rule_id    String?
+  cycle_id   String?
+  user_id    String?
+  action     String
+  reason     String?
+  meta       Json?
+  created_at DateTime            @default(now())
+  rule       WeeklyActivityRule? @relation(fields: [rule_id], references: [id], onDelete: SetNull)
+
+  @@index([guild_id, created_at])
+  @@index([guild_id, rule_id])
+  @@index([guild_id, cycle_id])
+  @@index([guild_id, user_id])
+  @@map("weekly_activity_audit_logs")
+}

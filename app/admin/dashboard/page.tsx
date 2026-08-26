@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect,useState } from 'react';
 import {
 FiActivity,
+FiAward,
 FiCheckCircle,
 FiClock,
 FiDollarSign,
@@ -21,6 +22,26 @@ interface Stats {
   considered: number;
   denied: number;
 }
+interface WeeklySummary {
+  totalRules: number;
+  enabledRules: number;
+  totalHolders: number;
+  failedOperations: number;
+  cycleEnd: string | null;
+  msRemaining: number;
+}
+function formatRemaining(ms: number): string {
+  if (ms <= 0) return 'Finalizing';
+  const totalMinutes = Math.ceil(ms / 60000);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (days === 0 && minutes > 0) parts.push(`${minutes}m`);
+  return parts.join(' ') || '0m';
+}
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -31,6 +52,7 @@ export default function AdminDashboard() {
     denied: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [weekly, setWeekly] = useState<WeeklySummary | null>(null);
   const DASHBOARD_CACHE_KEY = 'admin_dashboard_stats_v1';
   const DASHBOARD_CACHE_TTL_MS = 60_000;
   useEffect(() => {
@@ -52,14 +74,37 @@ export default function AdminDashboard() {
         } catch {
         }
         fetchStats();
+        fetchWeeklySummary();
       } else {
         setLoading(false);
       }
       router.prefetch('/admin/monitor');
       router.prefetch('/admin/shop');
       router.prefetch('/admin/dashboard/applications');
+      router.prefetch('/admin/weekly-activity');
     }
   }, [status, session, router]);
+  const fetchWeeklySummary = async () => {
+    try {
+      const [statsResponse, cycleResponse] = await Promise.all([
+        fetch('/api/weekly-activity/stats'),
+        fetch('/api/weekly-activity/cycle'),
+      ]);
+      if (!statsResponse.ok) return;
+      const statsData = await statsResponse.json();
+      const cycleData = cycleResponse.ok ? await cycleResponse.json() : null;
+      setWeekly({
+        totalRules: statsData.totalRules ?? 0,
+        enabledRules: statsData.enabledRules ?? 0,
+        totalHolders: statsData.totalHolders ?? 0,
+        failedOperations: statsData.failedOperations ?? 0,
+        cycleEnd: cycleData?.current?.end ?? null,
+        msRemaining: cycleData?.current?.msRemaining ?? 0,
+      });
+    } catch (error) {
+      console.error('Error fetching weekly activity summary:', error);
+    }
+  };
   const fetchStats = async () => {
     try {
       const response = await fetch('/api/applications/stats');
@@ -191,6 +236,54 @@ export default function AdminDashboard() {
           </p>
         </div>
       )}
+      {perms?.hasFullAccess && weekly && (
+        <div className="glass-blue rounded-3xl p-5 sm:p-6 md:p-8 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-apple-md">
+          <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6 flex-wrap">
+            <h2 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))]">Weekly Activity Roles</h2>
+            <Link
+              href="/admin/weekly-activity"
+              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Manage rules
+            </Link>
+          </div>
+          {weekly.totalRules === 0 ? (
+            <div className="p-4 sm:p-5 bg-[rgb(var(--color-bg-tertiary))] rounded-apple">
+              <p className="text-sm sm:text-base text-[rgb(var(--color-text-secondary))] mb-3">
+                No weekly rules configured yet. Create one to automatically reward your most active chat and voice members every week.
+              </p>
+              <Link
+                href="/admin/weekly-activity"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-apple text-sm font-medium apple-transition"
+              >
+                <FiAward className="w-4 h-4" />
+                Create First Rule
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              {[
+                { label: 'Active Rules', value: `${weekly.enabledRules} / ${weekly.totalRules}`, icon: <FiAward className="w-5 h-5 text-amber-500" /> },
+                { label: 'Members Holding Roles', value: weekly.totalHolders, icon: <FiUsers className="w-5 h-5 text-purple-500" /> },
+                { label: 'Cycle Ends In', value: formatRemaining(weekly.msRemaining), icon: <FiClock className="w-5 h-5 text-blue-500" /> },
+                {
+                  label: 'Pending Retries',
+                  value: weekly.failedOperations,
+                  icon: <FiShield className={`w-5 h-5 ${weekly.failedOperations > 0 ? 'text-orange-500' : 'text-green-500'}`} />,
+                },
+              ].map((card) => (
+                <div key={card.label} className="p-3 sm:p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-apple border border-[rgb(var(--color-border))]">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    {card.icon}
+                    <span className="text-xs text-[rgb(var(--color-text-tertiary))] truncate">{card.label}</span>
+                  </div>
+                  <p className="text-lg sm:text-2xl font-bold text-[rgb(var(--color-text-primary))]">{card.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <div className="glass-blue rounded-3xl p-5 sm:p-6 md:p-8 border border-[rgb(var(--color-border))] mb-6 sm:mb-8 shadow-apple-md">
         <h2 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-4 sm:mb-6">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -221,6 +314,20 @@ export default function AdminDashboard() {
                 </div>
               </Link>
             </>
+          )}
+          {perms?.hasFullAccess && (
+            <Link
+              href="/admin/weekly-activity"
+              className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-[rgb(var(--color-bg-tertiary))] hover:bg-[rgb(var(--color-hover))] active:scale-95 rounded-apple border border-[rgb(var(--color-border))] apple-transition group shadow-apple-sm touch-manipulation"
+            >
+              <div className="p-2.5 sm:p-3 bg-[rgb(var(--color-bg-primary))] rounded-apple group-hover:scale-110 apple-transition shrink-0">
+                <FiAward className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-semibold text-[rgb(var(--color-text-primary))] text-sm sm:text-base">Weekly Activity Roles</h3>
+                <p className="text-xs sm:text-sm text-[rgb(var(--color-text-tertiary))] font-light truncate">Reward top chat and VC members every week</p>
+              </div>
+            </Link>
           )}
           {perms?.hasFullAccess && (
             <Link
