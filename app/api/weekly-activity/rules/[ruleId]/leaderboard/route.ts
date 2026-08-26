@@ -1,6 +1,5 @@
 import { authOptions } from '@/lib/auth';
 import { GUILD_ID } from '@/lib/constants';
-import { getDiscordUser } from '@/lib/discord';
 import { prismaBot } from '@/lib/prismaBot';
 import { calculateLeaderboard } from '@/lib/weeklyActivity/aggregation';
 import { weeklyCycleConfig } from '@/lib/weeklyActivity/config';
@@ -9,6 +8,53 @@ import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 const MAX_ENTRIES = 100;
+const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+
+/** Fetch a Discord member directly from the API, bypassing all in-memory caches. */
+async function fetchDiscordMemberDirect(userId: string): Promise<{
+    username: string;
+    display_name: string;
+    avatar_url: string | null;
+} | null> {
+    if (!BOT_TOKEN) return null;
+    try {
+        // Try guild member first (gets nickname + guild avatar)
+        const memberRes = await fetch(
+            `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${userId}`,
+            { headers: { Authorization: `Bot ${BOT_TOKEN}` }, cache: 'no-store' }
+        );
+        if (memberRes.ok) {
+            const m = await memberRes.json();
+            const user = m.user;
+            const avatarHash = m.avatar || user?.avatar || null;
+            return {
+                username: user?.username || userId,
+                display_name: m.nick || user?.global_name || user?.username || userId,
+                avatar_url: avatarHash
+                    ? `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png?size=128`
+                    : null,
+            };
+        }
+        // Fall back to user endpoint
+        const userRes = await fetch(
+            `https://discord.com/api/v10/users/${userId}`,
+            { headers: { Authorization: `Bot ${BOT_TOKEN}` }, cache: 'no-store' }
+        );
+        if (userRes.ok) {
+            const user = await userRes.json();
+            return {
+                username: user.username || userId,
+                display_name: user.global_name || user.username || userId,
+                avatar_url: user.avatar
+                    ? `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.png?size=128`
+                    : null,
+            };
+        }
+    } catch {
+        // ignore
+    }
+    return null;
+}
 
 async function decorate(userIds: string[]) {
     const unique = Array.from(new Set(userIds)).slice(0, MAX_ENTRIES);
@@ -18,29 +64,25 @@ async function decorate(userIds: string[]) {
     });
     const map = new Map(cached.map((row) => [row.user_id, row]));
 
-    // Fetch users that are either missing from cache entirely OR have no avatar cached
+    // Re-fetch users missing from DB cache OR whose avatar_url is null.
+    // We bypass the discord.ts in-memory userCache intentionally — it gets
+    // seeded from DB entries that may have null avatar_url, causing stale
+    // cache hits that never reach the Discord API.
     const missing = unique.filter((userId) => !map.has(userId) || !map.get(userId)?.avatar_url);
 
     const fetched: Array<{ user_id: string; username: string; display_name: string; avatar_url: string | null }> = [];
 
     await Promise.all(
         missing.slice(0, 50).map(async (userId) => {
-            const member = await getDiscordUser(userId);
-            if (!member?.user) return;
-            const entry = {
-                user_id: userId,
-                username: member.user.username,
-                display_name: member.nick || member.user.global_name || member.user.username || userId,
-                avatar_url: member.user.avatar
-                    ? `https://cdn.discordapp.com/avatars/${userId}/${member.user.avatar}.png?size=128`
-                    : null,
-            };
+            const info = await fetchDiscordMemberDirect(userId);
+            if (!info) return;
+            const entry = { user_id: userId, ...info };
             map.set(userId, entry);
             fetched.push(entry);
         })
     );
 
-    // Persist newly fetched / refreshed user data back to DB cache
+    // Write fetched data back to DB cache so future calls are instant
     if (fetched.length > 0) {
         await Promise.allSettled(
             fetched.map((entry) =>

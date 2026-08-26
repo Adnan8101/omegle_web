@@ -113,7 +113,12 @@ export async function getDiscordUsers(userIds: string[]): Promise<Map<string, Di
         joined_at: '',
         _fromGuild: false,
       };
-      userCache.set(dbU.user_id, { data: fakeMember, timestamp: Date.now() });
+      // Only store in in-memory cache if we have a real avatar — otherwise a
+      // future getDiscordUser() call would return this null-avatar entry from
+      // cache instead of hitting the live Discord API.
+      if (dbU.avatar_url) {
+        userCache.set(dbU.user_id, { data: fakeMember, timestamp: Date.now() });
+      }
       results.set(dbU.user_id, fakeMember);
     }
     const missingFromDb = toFetch.filter(id => !foundInDb.has(id));
