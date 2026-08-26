@@ -17,7 +17,34 @@ function getAvatarUrl(userId: string, avatarHash: string | null): string | null 
 function getBannerUrl(userId: string, bannerHash: string | null): string | null {
   if (!bannerHash) return null;
   const extension = bannerHash.startsWith('a_') ? 'gif' : 'webp';
-  return `https://cdn.discordapp.com/banners/${userId}/${bannerHash}.${extension}?size=512`;
+  return `https://cdn.discordapp.com/banners/${userId}/${bannerHash}.${extension}?size=1024`;
+}
+
+/**
+ * Force a `size` on a Discord CDN asset. Profiles reaching us from the bot's
+ * HTTP API are built there, so their banners often arrive at the CDN default —
+ * far too small once a banner is stretched across a card. Rewriting the query
+ * here means both paths hand the UI the same crisp URL.
+ */
+function withCdnSize(url: string | null | undefined, size: number): string | null {
+  if (!url) return null;
+  if (!url.startsWith('https://cdn.discordapp.com/')) return url;
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.set('size', String(size));
+    return parsed.toString();
+  } catch {
+    return url; // Malformed URL — better the original than nothing.
+  }
+}
+
+/** Banners get stretched wide, avatars stay small: size each accordingly. */
+function withSizedAssets(profile: DiscordUserProfile): DiscordUserProfile {
+  return {
+    ...profile,
+    avatar: withCdnSize(profile.avatar, 256),
+    banner: withCdnSize(profile.banner, 1024),
+  };
 }
 export async function getLiveUserProfile(userId: string): Promise<DiscordUserProfile | null> {
   const cached = cache.get(userId);
@@ -32,8 +59,9 @@ export async function getLiveUserProfile(userId: string): Promise<DiscordUserPro
     if (response.ok) {
       const data = await response.json();
       if (data.success && data.user) {
-        cache.set(userId, { profile: data.user, expiresAt: Date.now() + CACHE_TTL_MS });
-        return data.user;
+        const profile = withSizedAssets(data.user);
+        cache.set(userId, { profile, expiresAt: Date.now() + CACHE_TTL_MS });
+        return profile;
       }
     }
   } catch (error) {

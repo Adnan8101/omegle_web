@@ -16,13 +16,13 @@ import { DEPARTMENTS, type Department, type DepartmentId, type TeamData, type Te
 import { joinedYear } from './utils';
 
 type LoadState = 'loading' | 'ready' | 'error';
-type Filter = DepartmentId | 'all';
 
 export default function TeamPage() {
   const [team, setTeam] = useState<TeamData | null>(null);
   const [state, setState] = useState<LoadState>('loading');
   const [spotlight, setSpotlight] = useState<TeamMember | null>(null);
-  const [filter, setFilter] = useState<Filter>('all');
+  /** Null until the roster lands — the highest populated rank then wins. */
+  const [filter, setFilter] = useState<DepartmentId | null>(null);
   const reduce = useReducedMotion();
 
   const loadTeam = useCallback(async () => {
@@ -58,14 +58,18 @@ export default function TeamPage() {
     return { headcount: everyone.length, since: years.length ? Math.min(...years) : null };
   }, [everyone]);
 
-  /** Rank order is the page order — founders, then admins, then core team. */
-  const sections = useMemo(
-    () => populated.filter((dept) => filter === 'all' || filter === dept.id),
-    [populated, filter]
-  );
+  /**
+   * One rank on screen at a time. Derived rather than synced in an effect so a
+   * roster that arrives late — or a rank that empties out — always lands on a
+   * real tab instead of a blank grid.
+   */
+  const active = useMemo(() => {
+    const chosen = populated.find((dept) => dept.id === filter);
+    return chosen ?? populated[0] ?? null;
+  }, [populated, filter]);
 
   const filterOptions = useMemo(
-    () => [{ id: 'all', label: 'Everyone' }, ...populated.map((d) => ({ id: d.id, label: d.label }))],
+    () => populated.map((dept) => ({ id: dept.id, label: dept.label })),
     [populated]
   );
 
@@ -108,14 +112,14 @@ export default function TeamPage() {
           />
         )}
 
-        {state === 'ready' && populated.length > 0 && (
+        {state === 'ready' && active && (
           <>
-            {populated.length > 1 && (
-              <Reveal dir="up" distance={16} className="mb-11 flex justify-center">
+            {filterOptions.length > 1 && (
+              <Reveal dir="up" distance={16} className="mb-9 flex justify-center">
                 <SegmentedControl
                   options={filterOptions}
-                  value={filter}
-                  onChange={(id) => setFilter(id as Filter)}
+                  value={active.id}
+                  onChange={(id) => setFilter(id as DepartmentId)}
                   layoutId="team-filter"
                   variant="surface"
                   size="lg"
@@ -124,38 +128,30 @@ export default function TeamPage() {
             )}
 
             <AnimatePresence mode="popLayout">
-              <motion.div
-                key={filter}
+              <motion.section
+                key={active.id}
                 initial={reduce ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduce ? undefined : { opacity: 0 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="flex flex-col gap-12 sm:gap-14"
+                aria-label={active.label}
               >
-                {sections.map((department, sectionIndex) => (
-                  <section key={department.id}>
-                    <RankHeading department={department} count={department.count} />
+                <RankMeta department={active} count={active.count} />
 
-                    <div className={`grid ${department.grid}`}>
-                      {(team?.[department.id] ?? []).map((member, index) => (
-                        <motion.div
-                          key={member.id}
-                          layout={!reduce}
-                          initial={reduce ? false : { opacity: 0, y: 18, scale: 0.97 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{
-                            duration: 0.4,
-                            ease: [0.22, 1, 0.36, 1],
-                            delay: Math.min(sectionIndex * 2 + index, 10) * 0.04,
-                          }}
-                        >
-                          <MemberCard member={member} tier={department.id} onOpen={setSpotlight} />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </motion.div>
+                <div className={`grid ${active.grid}`}>
+                  {(team?.[active.id] ?? []).map((member, index) => (
+                    <motion.div
+                      key={member.id}
+                      layout={!reduce}
+                      initial={reduce ? false : { opacity: 0, y: 18, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: Math.min(index, 8) * 0.04 }}
+                    >
+                      <MemberCard member={member} tier={active.id} onOpen={setSpotlight} />
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.section>
             </AnimatePresence>
 
             <JoinCallout />
@@ -168,22 +164,23 @@ export default function TeamPage() {
   );
 }
 
-/** Section heading for one rank — same hairline rule the leaderboard uses,
-    tinted with the colour its cards carry. */
-function RankHeading({ department, count }: { department: Department; count: number }) {
+/**
+ * Slim rule above the grid — the tab already names the rank, so this carries
+ * only the glyph, the headcount, and the rank's tint.
+ */
+function RankMeta({ department, count }: { department: Department; count: number }) {
   const Icon = TIER_ICONS[department.id];
 
   return (
     <div className="mb-5 flex items-center gap-3">
       <Icon className="h-3.5 w-3.5 flex-shrink-0" style={{ color: department.ink }} />
-      <h2 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--fx-ink-3)]">
-        {department.label}
-      </h2>
+      <span className="text-[11.5px] font-bold uppercase tracking-[0.12em] text-[var(--fx-ink-3)]">
+        <span className="fx-num">{count}</span> {count === 1 ? 'member' : 'members'}
+      </span>
       <hr
         className="flex-1 border-0"
         style={{ height: 1, background: `linear-gradient(90deg, ${department.ring}, transparent)` }}
       />
-      <span className="fx-num text-[12px] font-bold text-[var(--fx-ink-3)]">{count}</span>
     </div>
   );
 }

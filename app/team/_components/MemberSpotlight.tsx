@@ -92,6 +92,11 @@ export default function MemberSpotlight({ member, onClose }: MemberSpotlightProp
   const rank = department?.ink ?? accent;
   const RankIcon = department ? TIER_ICONS[department.id] : null;
 
+  // Only founders and admins get real banner images
+  const showBanner = department
+    ? department.id === 'founders' || department.id === 'admins'
+    : false;
+
   return (
     <AnimatePresence>
       {member && (
@@ -119,45 +124,47 @@ export default function MemberSpotlight({ member, onClose }: MemberSpotlightProp
             }
           >
             {/* Banner */}
-            <div className="relative h-36 w-full overflow-hidden sm:h-40">
-              {member.profile.banner ? (
-                <img
-                  src={member.profile.banner}
-                  alt=""
-                  aria-hidden
-                  onError={swapGifForWebp}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
+            <div className="relative w-full overflow-hidden" style={{ height: showBanner ? undefined : 100 }}>
+              <div className={`relative w-full overflow-hidden ${showBanner ? 'h-36 sm:h-40' : 'h-full'}`}>
+                {showBanner && member.profile.banner ? (
+                  <img
+                    src={member.profile.banner}
+                    alt=""
+                    aria-hidden
+                    onError={swapGifForWebp}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                ) : (
+                  <div
+                    aria-hidden
+                    className="absolute inset-0"
+                    style={{
+                      background: `radial-gradient(120% 140% at 20% 0%, ${accent}66 0%, transparent 62%), radial-gradient(100% 120% at 85% 15%, ${accent}33 0%, transparent 58%)`,
+                    }}
+                  />
+                )}
                 <div
                   aria-hidden
                   className="absolute inset-0"
                   style={{
-                    background: `radial-gradient(120% 140% at 20% 0%, ${accent}66 0%, transparent 62%), radial-gradient(100% 120% at 85% 15%, ${accent}33 0%, transparent 58%)`,
+                    background:
+                      'linear-gradient(to top, rgb(var(--color-bg-secondary)) 2%, rgba(0,0,0,0.45) 50%, transparent 100%)',
                   }}
                 />
-              )}
-              <div
-                aria-hidden
-                className="absolute inset-0"
-                style={{
-                  background:
-                    'linear-gradient(to top, rgb(var(--color-bg-secondary)) 2%, rgba(0,0,0,0.45) 50%, transparent 100%)',
-                }}
-              />
+              </div>
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close profile"
-                className="fx-focus absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
+                className="fx-focus absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white/80 backdrop-blur-md transition-colors hover:bg-black/70 hover:text-white"
               >
                 <FiX className="h-4 w-4" />
               </button>
             </div>
 
             <div className="px-6 pb-7">
-              {/* Identity */}
-              <div className="-mt-12 mb-5 flex items-end gap-4">
+              {/* Identity — avatar overlaps the banner, tag sits below both so it's never clipped */}
+              <div className="-mt-12 mb-2 flex items-end gap-4">
                 <div className="relative flex-shrink-0">
                   <div
                     aria-hidden
@@ -187,21 +194,26 @@ export default function MemberSpotlight({ member, onClose }: MemberSpotlightProp
                 </div>
 
                 <div className="min-w-0 flex-1 pb-1">
-                  <span
-                    className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.09em]"
-                    style={{ color: rank, borderColor: `${rank}4d`, background: `${rank}14` }}
-                  >
-                    {RankIcon && <RankIcon className="h-2.5 w-2.5" />}
-                    {member.designation}
-                  </span>
                   <h2
                     id="member-spotlight-name"
                     className="truncate text-2xl font-extrabold tracking-[-0.025em] text-[rgb(var(--color-text-primary))]"
                   >
                     {member.profile.displayName}
                   </h2>
+                  <p className="mt-0.5 truncate text-[13px] font-medium text-[var(--fx-ink-3)]">
+                    @{member.profile.username}
+                  </p>
                 </div>
               </div>
+
+              {/* Rank tag — fully below the banner area, always visible */}
+              <span
+                className="mb-5 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.09em]"
+                style={{ color: rank, borderColor: `${rank}4d`, background: `${rank}14` }}
+              >
+                {RankIcon && <RankIcon className="h-3 w-3 flex-shrink-0" />}
+                {member.designation}
+              </span>
 
               {/* Facts */}
               <dl className="mb-5 grid grid-cols-1 gap-px overflow-hidden rounded-[var(--fx-r-sm)] border border-[var(--fx-hairline)] bg-[var(--fx-hairline)] sm:grid-cols-2">

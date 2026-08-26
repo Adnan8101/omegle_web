@@ -28,7 +28,7 @@ export type CardVariant = 'feature' | 'standard' | 'compact';
 
 export interface Department {
   id: DepartmentId;
-  /** Section heading — plural. */
+  /** Tab label for this rank. */
   label: string;
   /** Badge text when the DB row has no designation of its own — singular. */
   role: string;
@@ -51,7 +51,7 @@ export interface Department {
 export const DEPARTMENTS: Department[] = [
   {
     id: 'founders',
-    label: 'Founders',
+    label: 'Founder',
     role: 'Founder',
     variant: 'feature',
     ink: '#FBBF24',
