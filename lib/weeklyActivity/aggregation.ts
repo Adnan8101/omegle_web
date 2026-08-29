@@ -22,6 +22,8 @@ export interface WeeklyRuleShape {
     reward_role_id: string;
     enabled: boolean;
     priority: number;
+    min_chat_messages: number;
+    min_voice_seconds: number;
 }
 
 export interface ScopeChannels {
@@ -98,8 +100,20 @@ export async function aggregateRuleActivity(
 
     const excluded = await getExcludedUserIds(rule.guild_id);
     const userIds = new Set<string>([...chatTotals.keys(), ...voiceTotals.keys()]);
+
+    const minChat = Math.max(0, rule.min_chat_messages ?? 0);
+    const minVoice = Math.max(0, rule.min_voice_seconds ?? 0);
+
     return Array.from(userIds)
-        .filter((userId) => !excluded.has(userId))
+        .filter((userId) => {
+            if (excluded.has(userId)) return false;
+            const chat = chatTotals.get(userId) || 0;
+            const voice = voiceTotals.get(userId) || 0;
+            // Apply minimum thresholds — 0 means no minimum
+            if (needsChat && minChat > 0 && chat < minChat) return false;
+            if (needsVoice && minVoice > 0 && voice < minVoice) return false;
+            return true;
+        })
         .map((userId) => ({
             userId,
             chatMessages: chatTotals.get(userId) || 0,

@@ -62,6 +62,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             return NextResponse.json({ error: 'Rule not found' }, { status: 404 });
         }
         const body = await request.json();
+        const resolvedActivityType = body.activity_type ?? existing.activity_type;
+        const needsChat = resolvedActivityType === 'chat' || resolvedActivityType === 'both';
+        const needsVoice = resolvedActivityType === 'vc' || resolvedActivityType === 'both';
         const merged = {
             name: body.name ?? existing.name,
             scope: body.scope ?? existing.scope,
@@ -70,11 +73,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                 : body.category_id !== undefined
                     ? body.category_id
                     : existing.category_id,
-            activity_type: body.activity_type ?? existing.activity_type,
+            activity_type: resolvedActivityType,
             winner_count: Number(body.winner_count ?? existing.winner_count),
             reward_role_id: body.reward_role_id ?? existing.reward_role_id,
             enabled: body.enabled !== undefined ? Boolean(body.enabled) : existing.enabled,
             priority: body.priority !== undefined ? Number(body.priority) : existing.priority,
+            // Threshold fields — reset to 0 for activity types that don't use them
+            min_chat_messages: needsChat
+                ? Math.max(0, Math.trunc(Number(body.min_chat_messages ?? existing.min_chat_messages ?? 0)))
+                : 0,
+            min_voice_seconds: needsVoice
+                ? Math.max(0, Math.trunc(Number(body.min_voice_seconds ?? existing.min_voice_seconds ?? 0)))
+                : 0,
         };
         const validation = await validateRuleInput(GUILD_ID, merged);
         if (!validation.ok) {
@@ -91,6 +101,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                 reward_role_id: merged.reward_role_id,
                 enabled: merged.enabled,
                 priority: merged.priority,
+                min_chat_messages: merged.min_chat_messages,
+                min_voice_seconds: merged.min_voice_seconds,
             },
         });
         const enabledChanged = existing.enabled !== rule.enabled;

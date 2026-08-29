@@ -40,6 +40,8 @@ interface WeeklyRule {
     reward_role_id: string;
     enabled: boolean;
     priority: number;
+    min_chat_messages: number;
+    min_voice_seconds: number;
     created_at: string;
     holder_count?: number;
     failure_count?: number;
@@ -231,9 +233,16 @@ function RuleModal({ rule, roles, categories, rulesCount, onClose, onSave }: Rul
         reward_role_id: rule?.reward_role_id || '',
         enabled: rule?.enabled ?? true,
         priority: rule?.priority?.toString() ?? rulesCount.toString(),
+        // Advanced / minimum threshold fields (stored in seconds for vc, raw count for chat)
+        min_chat_messages: rule?.min_chat_messages?.toString() ?? '0',
+        min_voice_seconds: rule?.min_voice_seconds?.toString() ?? '0',
     });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const [showAdvanced, setShowAdvanced] = useState(
+        // Auto-open if existing rule has thresholds set
+        !!(rule?.min_chat_messages || rule?.min_voice_seconds)
+    );
 
     const set = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
     const selectedRole = roles.find((role) => role.id === form.reward_role_id);
@@ -264,6 +273,8 @@ function RuleModal({ rule, roles, categories, rulesCount, onClose, onSave }: Rul
                     reward_role_id: form.reward_role_id,
                     enabled: form.enabled,
                     priority: parseInt(form.priority, 10) || 0,
+                    min_chat_messages: Math.max(0, parseInt(form.min_chat_messages, 10) || 0),
+                    min_voice_seconds: Math.max(0, parseInt(form.min_voice_seconds, 10) || 0),
                 }),
             });
             const data = await response.json();
@@ -440,6 +451,92 @@ function RuleModal({ rule, roles, categories, rulesCount, onClose, onSave }: Rul
                         <p className="text-xs text-blue-300">
                             Multiple rules can share the same role. Users who win a lower-priority rule first are automatically excluded from higher-priority rule pools.
                         </p>
+                    </div>
+
+                    {/* ── Advanced: Minimum Thresholds ── */}
+                    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgb(var(--color-border))' }}>
+                        <button
+                            type="button"
+                            onClick={() => setShowAdvanced((v) => !v)}
+                            className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold transition-colors hover:bg-[rgb(var(--color-hover))]"
+                            style={{ background: 'rgb(var(--color-bg-primary))' }}
+                        >
+                            <span className="flex items-center gap-2 text-[rgb(var(--color-text-primary))]">
+                                <FiZap className="w-4 h-4 text-amber-400" />
+                                Advanced — Minimum Activity Required
+                                {(parseInt(form.min_chat_messages) > 0 || parseInt(form.min_voice_seconds) > 0) && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>ON</span>
+                                )}
+                            </span>
+                            <FiChevronDown className={`w-4 h-4 text-[rgb(var(--color-text-tertiary))] transition-transform duration-200 ${showAdvanced ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {showAdvanced && (
+                            <div className="p-4 space-y-4" style={{ background: 'rgb(var(--color-bg-secondary))', borderTop: '1px solid rgb(var(--color-border))' }}>
+                                <p className="text-xs text-[rgb(var(--color-text-tertiary))]">
+                                    Only users who meet <strong className="text-[rgb(var(--color-text-primary))]">all</strong> minimums are eligible for the top-N ranking.
+                                    Set to <strong className="text-[rgb(var(--color-text-primary))]">0</strong> to disable a threshold (everyone qualifies).
+                                    At cycle end, members who no longer meet the minimum lose the role.
+                                </p>
+
+                                {/* Min Messages (chat / both) */}
+                                {(form.activity_type === 'chat' || form.activity_type === 'both') && (
+                                    <div>
+                                        <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-2">
+                                            <FiMessageSquare className="inline w-3.5 h-3.5 mr-1.5 text-blue-400" />
+                                            Minimum Messages
+                                            <span className="ml-2 font-normal text-xs text-[rgb(var(--color-text-tertiary))]">0 = no minimum</span>
+                                        </label>
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="number" min="0" max="100000"
+                                                value={form.min_chat_messages}
+                                                onChange={(e) => set('min_chat_messages', e.target.value)}
+                                                placeholder="e.g. 50"
+                                                className="w-full px-4 py-2.5 rounded-xl text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                                style={{ background: 'rgb(var(--color-bg-primary))', border: '1px solid rgb(var(--color-border))' }}
+                                            />
+                                            <span className="text-sm text-[rgb(var(--color-text-tertiary))] whitespace-nowrap">messages / week</span>
+                                        </div>
+                                        {parseInt(form.min_chat_messages) > 0 && (
+                                            <p className="mt-1.5 text-xs text-amber-400">
+                                                Members need at least <strong>{parseInt(form.min_chat_messages).toLocaleString()}</strong> messages this week to qualify.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Min Voice (vc / both) — input in HOURS, stored as seconds */}
+                                {(form.activity_type === 'vc' || form.activity_type === 'both') && (
+                                    <div>
+                                        <label className="block text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-2">
+                                            <FiMic className="inline w-3.5 h-3.5 mr-1.5 text-purple-400" />
+                                            Minimum Voice Hours
+                                            <span className="ml-2 font-normal text-xs text-[rgb(var(--color-text-tertiary))]">0 = no minimum</span>
+                                        </label>
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="number" min="0" max="168" step="0.5"
+                                                value={Math.round((parseInt(form.min_voice_seconds) || 0) / 36) / 100}
+                                                onChange={(e) => {
+                                                    const hours = parseFloat(e.target.value) || 0;
+                                                    set('min_voice_seconds', Math.round(hours * 3600).toString());
+                                                }}
+                                                placeholder="e.g. 2"
+                                                className="w-full px-4 py-2.5 rounded-xl text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-tertiary))] focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                                                style={{ background: 'rgb(var(--color-bg-primary))', border: '1px solid rgb(var(--color-border))' }}
+                                            />
+                                            <span className="text-sm text-[rgb(var(--color-text-tertiary))] whitespace-nowrap">hours / week</span>
+                                        </div>
+                                        {parseInt(form.min_voice_seconds) > 0 && (
+                                            <p className="mt-1.5 text-xs text-amber-400">
+                                                Members need at least <strong>{(parseInt(form.min_voice_seconds) / 3600).toFixed(1)}h</strong> in voice channels this week to qualify.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Enable toggle (edit only) */}
@@ -941,6 +1038,18 @@ export default function WeeklyActivityPage() {
                                                             <FiTag className="w-4 h-4" />
                                                             @{role?.name || rule.reward_role_id}
                                                         </span>
+                                                        {rule.min_chat_messages > 0 && (
+                                                            <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' }}>
+                                                                <FiMessageSquare className="w-3 h-3" />
+                                                                ≥{rule.min_chat_messages.toLocaleString()} msgs
+                                                            </span>
+                                                        )}
+                                                        {rule.min_voice_seconds > 0 && (
+                                                            <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }}>
+                                                                <FiMic className="w-3 h-3" />
+                                                                ≥{(rule.min_voice_seconds / 3600).toFixed(1)}h VC
+                                                            </span>
+                                                        )}
                                                     </div>
 
                                                     {/* Holder avatars */}

@@ -45,6 +45,8 @@ interface LeaderboardResponse {
         reward_role_id: string;
         enabled: boolean;
         priority: number;
+        min_chat_messages: number;
+        min_voice_seconds: number;
     };
     crossExcludedCount: number;
     cycle: {
@@ -328,6 +330,24 @@ export default function WeeklyActivityRuleDetailPage() {
                 </div>
 
                 {/* Cross-exclusion info */}
+                {/* Minimum threshold info */}
+                {(rule.min_chat_messages > 0 || rule.min_voice_seconds > 0) && (
+                    <div className="mb-4 flex flex-wrap gap-3">
+                        {rule.min_chat_messages > 0 && (
+                            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold" style={{ background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.25)', color: '#f59e0b' }}>
+                                <FiMessageSquare className="w-4 h-4 flex-shrink-0" />
+                                Minimum {rule.min_chat_messages.toLocaleString()} messages required to qualify
+                            </div>
+                        )}
+                        {rule.min_voice_seconds > 0 && (
+                            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold" style={{ background: 'rgba(168,85,247,0.10)', border: '1px solid rgba(168,85,247,0.25)', color: '#c084fc' }}>
+                                <FiMic className="w-4 h-4 flex-shrink-0" />
+                                Minimum {(rule.min_voice_seconds / 3600).toFixed(1)}h in voice channels required to qualify
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {crossExcludedCount > 0 && (
                     <div className="mb-5 flex items-start gap-3 p-4 rounded-xl" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
                         <FiZap className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />

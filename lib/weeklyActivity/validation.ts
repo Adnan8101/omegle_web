@@ -19,6 +19,8 @@ export interface RuleInput {
     reward_role_id: string;
     enabled?: boolean;
     priority?: number;
+    min_chat_messages?: number;
+    min_voice_seconds?: number;
 }
 
 export interface ValidationResult {
@@ -52,6 +54,21 @@ export function validateRuleShape(input: Partial<RuleInput>): ValidationResult {
     }
     if (!input.reward_role_id || !/^\d{5,25}$/.test(String(input.reward_role_id))) {
         return { ok: false, error: 'A valid reward role must be selected.', code: 'invalid_role' };
+    }
+    // Validate minimum thresholds
+    const needsChat = input.activity_type === 'chat' || input.activity_type === 'both';
+    const needsVoice = input.activity_type === 'vc' || input.activity_type === 'both';
+    if (needsChat && input.min_chat_messages !== undefined) {
+        const v = Number(input.min_chat_messages);
+        if (!Number.isInteger(v) || v < 0 || v > 100000) {
+            return { ok: false, error: 'Minimum messages must be between 0 and 100,000.', code: 'invalid_min_chat' };
+        }
+    }
+    if (needsVoice && input.min_voice_seconds !== undefined) {
+        const v = Number(input.min_voice_seconds);
+        if (!Number.isInteger(v) || v < 0 || v > 604800) {
+            return { ok: false, error: 'Minimum voice time must be between 0 and 604,800 seconds (1 week).', code: 'invalid_min_voice' };
+        }
     }
     return { ok: true };
 }

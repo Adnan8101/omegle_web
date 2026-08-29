@@ -1719,22 +1719,24 @@ model WeeklyActivityExclusion {
 }
 
 model WeeklyActivityRule {
-  id             String                     @id @default(uuid())
-  guild_id       String
-  name           String
-  scope          String                     @default("all_server")
-  category_id    String?
-  activity_type  String                     @default("chat")
-  winner_count   Int                        @default(5)
-  reward_role_id String
-  enabled        Boolean                    @default(true)
-  priority       Int                        @default(0)
-  created_by     String
-  created_at     DateTime                   @default(now())
-  updated_at     DateTime                   @updatedAt
-  results        WeeklyActivityResult[]
-  role_holders   WeeklyActivityRoleHolder[]
-  audit_logs     WeeklyActivityAuditLog[]
+  id                  String                     @id @default(uuid())
+  guild_id            String
+  name                String
+  scope               String                     @default("all_server")
+  category_id         String?
+  activity_type       String                     @default("chat")
+  winner_count        Int                        @default(5)
+  reward_role_id      String
+  enabled             Boolean                    @default(true)
+  priority            Int                        @default(0)
+  min_chat_messages   Int                        @default(0)
+  min_voice_seconds   Int                        @default(0)
+  created_by          String
+  created_at          DateTime                   @default(now())
+  updated_at          DateTime                   @updatedAt
+  results             WeeklyActivityResult[]
+  role_holders        WeeklyActivityRoleHolder[]
+  audit_logs          WeeklyActivityAuditLog[]
 
   @@index([guild_id])
   @@index([guild_id, enabled])

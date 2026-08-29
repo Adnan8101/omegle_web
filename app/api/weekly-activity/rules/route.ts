@@ -49,15 +49,20 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
         const body = await request.json();
+        const activityType = String(body.activity_type || 'chat');
+        const needsChat = activityType === 'chat' || activityType === 'both';
+        const needsVoice = activityType === 'vc' || activityType === 'both';
         const input = {
             name: body.name,
             scope: body.scope,
             category_id: body.category_id ?? null,
-            activity_type: body.activity_type,
+            activity_type: activityType,
             winner_count: Number(body.winner_count),
             reward_role_id: body.reward_role_id,
             enabled: body.enabled ?? true,
             priority: Number(body.priority ?? 0),
+            min_chat_messages: needsChat ? Math.max(0, Math.trunc(Number(body.min_chat_messages ?? 0))) : 0,
+            min_voice_seconds: needsVoice ? Math.max(0, Math.trunc(Number(body.min_voice_seconds ?? 0))) : 0,
         };
         const validation = await validateRuleInput(GUILD_ID, input);
         if (!validation.ok) {
@@ -77,6 +82,8 @@ export async function POST(request: NextRequest) {
                 reward_role_id: input.reward_role_id,
                 enabled: Boolean(input.enabled),
                 priority,
+                min_chat_messages: input.min_chat_messages,
+                min_voice_seconds: input.min_voice_seconds,
                 created_by: session.user.id,
             },
         });
@@ -94,6 +101,8 @@ export async function POST(request: NextRequest) {
                     winner_count: rule.winner_count,
                     reward_role_id: rule.reward_role_id,
                     priority: rule.priority,
+                    min_chat_messages: rule.min_chat_messages,
+                    min_voice_seconds: rule.min_voice_seconds,
                 },
             },
         });
