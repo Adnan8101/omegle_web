@@ -1728,6 +1728,7 @@ model WeeklyActivityRule {
   winner_count   Int                        @default(5)
   reward_role_id String
   enabled        Boolean                    @default(true)
+  priority       Int                        @default(0)
   created_by     String
   created_at     DateTime                   @default(now())
   updated_at     DateTime                   @updatedAt
@@ -1735,9 +1736,9 @@ model WeeklyActivityRule {
   role_holders   WeeklyActivityRoleHolder[]
   audit_logs     WeeklyActivityAuditLog[]
 
-  @@unique([guild_id, reward_role_id])
   @@index([guild_id])
   @@index([guild_id, enabled])
+  @@index([guild_id, priority])
   @@map("weekly_activity_rules")
 }
 

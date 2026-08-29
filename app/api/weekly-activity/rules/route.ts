@@ -14,9 +14,10 @@ export async function GET() {
         if (!session.user.permissions?.hasFullAccess) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
+        // Sort by priority ASC, then created_at ASC for deterministic ordering
         const rules = await prismaBot.weeklyActivityRule.findMany({
             where: { guild_id: GUILD_ID },
-            orderBy: { created_at: 'asc' },
+            orderBy: [{ priority: 'asc' }, { created_at: 'asc' }],
         });
         const enriched = await Promise.all(
             rules.map(async (rule) => {
@@ -56,24 +57,15 @@ export async function POST(request: NextRequest) {
             winner_count: Number(body.winner_count),
             reward_role_id: body.reward_role_id,
             enabled: body.enabled ?? true,
+            priority: Number(body.priority ?? 0),
         };
         const validation = await validateRuleInput(GUILD_ID, input);
         if (!validation.ok) {
             return NextResponse.json({ error: validation.error, code: validation.code }, { status: 400 });
         }
-        const conflict = await prismaBot.weeklyActivityRule.findFirst({
-            where: { guild_id: GUILD_ID, reward_role_id: input.reward_role_id },
-        });
-        if (conflict) {
-            return NextResponse.json(
-                {
-                    error: `This role is already awarded by rule "${conflict.name}". Each role can only belong to one weekly activity rule.`,
-                    conflictRuleId: conflict.id,
-                    conflictRuleName: conflict.name,
-                },
-                { status: 409 }
-            );
-        }
+        // Determine next priority if not specified
+        const priority = Number.isInteger(input.priority) ? input.priority : 0;
+
         const rule = await prismaBot.weeklyActivityRule.create({
             data: {
                 guild_id: GUILD_ID,
@@ -84,6 +76,7 @@ export async function POST(request: NextRequest) {
                 winner_count: input.winner_count,
                 reward_role_id: input.reward_role_id,
                 enabled: Boolean(input.enabled),
+                priority,
                 created_by: session.user.id,
             },
         });
@@ -100,6 +93,7 @@ export async function POST(request: NextRequest) {
                     activity_type: rule.activity_type,
                     winner_count: rule.winner_count,
                     reward_role_id: rule.reward_role_id,
+                    priority: rule.priority,
                 },
             },
         });

@@ -1,7 +1,7 @@
 import { authOptions } from '@/lib/auth';
 import { GUILD_ID } from '@/lib/constants';
 import { prismaBot } from '@/lib/prismaBot';
-import { calculateLeaderboard } from '@/lib/weeklyActivity/aggregation';
+import { calculateAllRulesWithExclusion, calculateLeaderboard } from '@/lib/weeklyActivity/aggregation';
 import { weeklyCycleConfig } from '@/lib/weeklyActivity/config';
 import { getCycleBounds, getPreviousCycleBounds } from '@/lib/weeklyActivity/weeklyCycle';
 import { getServerSession } from 'next-auth';
@@ -31,8 +31,8 @@ async function fetchDiscordMemberDirect(userId: string): Promise<{
                 username: user?.username || userId,
                 display_name: m.nick || user?.global_name || user?.username || userId,
                 avatar_url: avatarHash
-                    ? `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png?size=128`
-                    : null,
+                    ? `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.webp?size=128`
+                    : `https://cdn.discordapp.com/embed/avatars/${parseInt(userId) % 5}.png`,
             };
         }
         // Fall back to user endpoint
@@ -46,8 +46,8 @@ async function fetchDiscordMemberDirect(userId: string): Promise<{
                 username: user.username || userId,
                 display_name: user.global_name || user.username || userId,
                 avatar_url: user.avatar
-                    ? `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.png?size=128`
-                    : null,
+                    ? `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.webp?size=128`
+                    : `https://cdn.discordapp.com/embed/avatars/${parseInt(userId) % 5}.png`,
             };
         }
     } catch {
@@ -65,9 +65,6 @@ async function decorate(userIds: string[]) {
     const map = new Map(cached.map((row) => [row.user_id, row]));
 
     // Re-fetch users missing from DB cache OR whose avatar_url is null.
-    // We bypass the discord.ts in-memory userCache intentionally — it gets
-    // seeded from DB entries that may have null avatar_url, causing stale
-    // cache hits that never reach the Discord API.
     const missing = unique.filter((userId) => !map.has(userId) || !map.get(userId)?.avatar_url);
 
     const fetched: Array<{ user_id: string; username: string; display_name: string; avatar_url: string | null }> = [];
@@ -129,6 +126,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         const current = getCycleBounds(now, config);
         const previous = getPreviousCycleBounds(current.start, config);
 
+        // Load all enabled rules to compute cross-exclusion context
+        const allRules = await prismaBot.weeklyActivityRule.findMany({
+            where: { guild_id: GUILD_ID, enabled: true },
+            orderBy: [{ priority: 'asc' }, { created_at: 'asc' }],
+        });
+
         const [currentCycle, previousCycle, holders] = await Promise.all([
             prismaBot.weeklyActivityCycle.findUnique({
                 where: { guild_id_start_at: { guild_id: GUILD_ID, start_at: current.start } },
@@ -142,7 +145,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             }),
         ]);
 
-        const projected = await calculateLeaderboard(rule, current.start, current.end);
+        // Compute cross-rule aware leaderboard for this rule
+        const allLeaderboards = await calculateAllRulesWithExclusion(allRules as any, current.start, current.end);
+        const thisRuleResult = allLeaderboards.get(rule.id) ?? await calculateLeaderboard(rule as any, current.start, current.end);
+        const crossExcludedCount = (allLeaderboards.get(rule.id) as any)?.crossExcludedCount ?? 0;
+
         const previousResults = previousCycle
             ? await prismaBot.weeklyActivityResult.findMany({
                 where: { cycle_id: previousCycle.id, rule_id: rule.id, rank: { gt: 0 } },
@@ -152,7 +159,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             : [];
 
         const userMap = await decorate([
-            ...projected.entries.slice(0, MAX_ENTRIES).map((entry) => entry.userId),
+            ...thisRuleResult.entries.slice(0, MAX_ENTRIES).map((entry) => entry.userId),
             ...previousResults.map((result) => result.user_id),
             ...holders.map((holder) => holder.user_id),
         ]);
@@ -169,6 +176,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
         return NextResponse.json({
             rule,
+            crossExcludedCount,
             cycle: {
                 start: current.start.toISOString(),
                 end: current.end.toISOString(),
@@ -186,7 +194,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                     finalizedAt: previousCycle.finalized_at?.toISOString() || null,
                 }
                 : null,
-            projected: projected.entries.slice(0, MAX_ENTRIES).map((entry) => ({
+            projected: thisRuleResult.entries.slice(0, MAX_ENTRIES).map((entry) => ({
                 ...describe(entry.userId),
                 rank: entry.rank,
                 activityValue: entry.activityValue,

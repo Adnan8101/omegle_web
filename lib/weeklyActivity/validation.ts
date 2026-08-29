@@ -18,6 +18,7 @@ export interface RuleInput {
     winner_count: number;
     reward_role_id: string;
     enabled?: boolean;
+    priority?: number;
 }
 
 export interface ValidationResult {

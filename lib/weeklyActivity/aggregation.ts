@@ -21,6 +21,7 @@ export interface WeeklyRuleShape {
     winner_count: number;
     reward_role_id: string;
     enabled: boolean;
+    priority: number;
 }
 
 export interface ScopeChannels {
@@ -117,13 +118,61 @@ export async function getExcludedUserIds(guildId: string): Promise<Set<string>> 
 export async function calculateLeaderboard(
     rule: WeeklyRuleShape,
     start: Date,
-    end: Date
+    end: Date,
+    alreadyAwardedUserIds?: Set<string>
 ): Promise<{ entries: LeaderboardEntry[]; winners: LeaderboardEntry[] }> {
     const raw = await aggregateRuleActivity(rule, start, end);
+
+    // Filter out users already awarded by a higher-priority rule this cycle
+    const filteredRaw = alreadyAwardedUserIds && alreadyAwardedUserIds.size > 0
+        ? raw.filter((entry) => !alreadyAwardedUserIds.has(entry.userId))
+        : raw;
+
     const entries = buildLeaderboardEntries(
-        raw,
+        filteredRaw,
         rule.activity_type as WeeklyActivityType,
         rule.winner_count
     );
     return { entries, winners: selectWinners(entries, rule.winner_count) };
+}
+
+/**
+ * Cross-rule aware leaderboard calculation.
+ *
+ * Rules are processed in priority order (ASC). Users who win an earlier rule
+ * are excluded from all subsequent rules — matching StatsBot's statroles
+ * mutual-exclusion behaviour.
+ *
+ * Returns a map of ruleId → { entries, winners, crossExcludedCount }
+ */
+export async function calculateAllRulesWithExclusion(
+    rules: WeeklyRuleShape[],
+    start: Date,
+    end: Date
+): Promise<Map<string, { entries: LeaderboardEntry[]; winners: LeaderboardEntry[]; crossExcludedCount: number }>> {
+    // Sort by priority ASC, then created_at order (index order) as tiebreaker
+    const sorted = [...rules].sort((a, b) => a.priority - b.priority);
+    const awardedUserIds = new Set<string>();
+    const result = new Map<string, { entries: LeaderboardEntry[]; winners: LeaderboardEntry[]; crossExcludedCount: number }>();
+
+    for (const rule of sorted) {
+        const raw = await aggregateRuleActivity(rule, start, end);
+
+        // Count how many would have been in the running without cross-exclusion
+        const withoutExclusion = buildLeaderboardEntries(raw, rule.activity_type as WeeklyActivityType, rule.winner_count);
+        const crossExcludedCount = withoutExclusion.filter((e) => awardedUserIds.has(e.userId)).length;
+
+        const filteredRaw = raw.filter((entry) => !awardedUserIds.has(entry.userId));
+        const entries = buildLeaderboardEntries(filteredRaw, rule.activity_type as WeeklyActivityType, rule.winner_count);
+        const winners = selectWinners(entries, rule.winner_count);
+
+        // Mark winners as awarded — they won't appear in subsequent rules
+        for (const winner of winners) {
+            awardedUserIds.add(winner.userId);
+        }
+
+        result.set(rule.id, { entries, winners, crossExcludedCount });
+    }
+
+    return result;
 }

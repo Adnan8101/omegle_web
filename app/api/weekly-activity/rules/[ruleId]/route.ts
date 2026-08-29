@@ -74,29 +74,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             winner_count: Number(body.winner_count ?? existing.winner_count),
             reward_role_id: body.reward_role_id ?? existing.reward_role_id,
             enabled: body.enabled !== undefined ? Boolean(body.enabled) : existing.enabled,
+            priority: body.priority !== undefined ? Number(body.priority) : existing.priority,
         };
         const validation = await validateRuleInput(GUILD_ID, merged);
         if (!validation.ok) {
             return NextResponse.json({ error: validation.error, code: validation.code }, { status: 400 });
-        }
-        if (merged.reward_role_id !== existing.reward_role_id) {
-            const conflict = await prismaBot.weeklyActivityRule.findFirst({
-                where: {
-                    guild_id: GUILD_ID,
-                    reward_role_id: merged.reward_role_id,
-                    NOT: { id: ruleId },
-                },
-            });
-            if (conflict) {
-                return NextResponse.json(
-                    {
-                        error: `This role is already awarded by rule "${conflict.name}".`,
-                        conflictRuleId: conflict.id,
-                        conflictRuleName: conflict.name,
-                    },
-                    { status: 409 }
-                );
-            }
         }
         const rule = await prismaBot.weeklyActivityRule.update({
             where: { id: ruleId },
@@ -108,6 +90,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                 winner_count: merged.winner_count,
                 reward_role_id: merged.reward_role_id,
                 enabled: merged.enabled,
+                priority: merged.priority,
             },
         });
         const enabledChanged = existing.enabled !== rule.enabled;
@@ -125,6 +108,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                     winner_count: rule.winner_count,
                     reward_role_id: rule.reward_role_id,
                     enabled: rule.enabled,
+                    priority: rule.priority,
                 },
             },
         });
